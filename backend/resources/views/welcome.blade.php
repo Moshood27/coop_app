@@ -25,6 +25,7 @@
 
                 <div class="hidden md:flex items-center gap-8">
                     <a href="#features" class="text-sm font-medium hover:text-primary-600 transition-colors">Features</a>
+                    <a href="#resolutions" class="text-sm font-medium hover:text-primary-600 transition-colors">Resolutions</a>
                     <a href="#leadership" class="text-sm font-medium hover:text-primary-600 transition-colors">Leadership</a>
                     <a href="{{ url('/about-us') }}" class="text-sm font-medium hover:text-primary-600 transition-colors">About</a>
                     <a href="#download" class="text-sm font-medium hover:text-primary-600 transition-colors">App</a>
@@ -45,6 +46,7 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
             <a href="#features" class="block text-base font-medium text-slate-600 dark:text-slate-400">Features</a>
+            <a href="#resolutions" class="block text-base font-medium text-slate-600 dark:text-slate-400">Resolutions</a>
             <a href="#leadership" class="block text-base font-medium text-slate-600 dark:text-slate-400">Leadership</a>
             <a href="{{ url('/about-us') }}" class="block text-base font-medium text-slate-600 dark:text-slate-400">About</a>
             <a href="#download" class="block text-base font-medium text-slate-600 dark:text-slate-400">App</a>
@@ -242,183 +244,223 @@
     </section>
 
     <!-- 2025/2026 Resolutions -->
-    <section id="resolutions" class="py-24 bg-white dark:bg-slate-950">
+    <section id="resolutions" class="py-24 bg-white dark:bg-slate-950 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs font-bold mb-6 border border-primary-200 dark:border-primary-800">
-                    <i data-lucide="calendar" class="w-3 h-3"></i>
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-[10px] font-black mb-6 border border-primary-200 dark:border-primary-800 uppercase tracking-[0.2em]">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                     2025/2026 RESOLUTIONS
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-bold mb-6">Updated <span class="text-primary-600">Guidelines & Fees</span></h2>
-                <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                <h2 class="text-4xl sm:text-6xl font-black mb-6 tracking-tighter">
+                    Updated <span class="text-primary-600">Guidelines</span> & <span class="bg-primary-600 text-white px-2 rounded-lg">Fees</span>
+                </h2>
+                <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
                     Review the latest resolutions approved for the 2025/2026 financial year to stay informed about our cooperative's operations.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <!-- Financial Fees and Charges -->
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600">
-                            <i data-lucide="banknote" class="w-5 h-5"></i>
+                <div class="group bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-6 mb-10">
+                        <div class="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 shrink-0">
+                            <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600">
+                                <i data-lucide="banknote" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold">Financial Fees & Charges</h3>
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">Financial Fees <br class="hidden sm:block"/>& Charges</h3>
+                            <div class="h-1.5 w-12 bg-primary-500 rounded-full mt-3"></div>
+                        </div>
                     </div>
-                    <ul class="space-y-3">
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Admission Form</span>
-                            <span class="font-bold">₦2,000</span>
+
+                    <ul class="space-y-4">
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Admission Form</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦2,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Development Levy</span>
-                            <span class="font-bold">₦2,000</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Development Levy</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦2,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Dawah Fund</span>
-                            <span class="font-bold">₦500</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Dawah Fund</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦500</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Identity Card (Compulsory)</span>
-                            <span class="font-bold">₦1,200</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Identity Card (Compulsory)</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦1,200</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Bye-Law / Pass Book</span>
-                            <span class="font-bold">₦500 / ₦500</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Bye-Law / Pass Book</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦500 / ₦500</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Minimum Share & Saving</span>
-                            <span class="font-bold">₦1,000</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Minimum Share & Saving</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦1,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Admin Charge (Regular / Distant)</span>
-                            <span class="font-bold">₦300 / ₦1,000</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Admin Charge (Regular / Distant)</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦300 / ₦1,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Loan Form / Seal</span>
-                            <span class="font-bold">₦1,000</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Loan Form / Seal</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦1,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Minimum Business Contribution</span>
-                            <span class="font-bold">₦5,000</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Minimum Business Contribution</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦5,000</span>
                         </li>
-                        <li class="flex justify-between text-sm border-b border-slate-200 dark:border-slate-800 pb-2">
-                            <span class="text-slate-600 dark:text-slate-400">Lateness Fine</span>
-                            <span class="font-bold">₦50 / ₦100</span>
+                        <li class="flex justify-between items-center text-sm border-b border-slate-200/60 dark:border-slate-800 pb-3">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Lateness Fine</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦50 / ₦100</span>
                         </li>
-                        <li class="flex justify-between text-sm">
-                            <span class="text-slate-600 dark:text-slate-400">Absenteeism (With / Without Msg)</span>
-                            <span class="font-bold">₦300 / ₦500</span>
+                        <li class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500 dark:text-slate-400 font-medium italic">Absenteeism (With / Without Msg)</span>
+                            <span class="font-black text-slate-900 dark:text-white text-base">₦300 / ₦500</span>
                         </li>
                     </ul>
                 </div>
 
                 <!-- Credit and Loan Limits -->
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600">
-                            <i data-lucide="trending-up" class="w-5 h-5"></i>
+                <div class="group bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-6 mb-10">
+                        <div class="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 shrink-0">
+                            <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold">Credit & Loan Limits</h3>
-                    </div>
-                    <div class="space-y-6">
                         <div>
-                            <p class="text-sm text-slate-500 mb-2">Overall Limits</p>
+                            <h3 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">Credit & <br class="hidden sm:block"/>Loan Limits</h3>
+                            <div class="h-1.5 w-12 bg-emerald-500 rounded-full mt-3"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-8">
+                        <div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Overall Limits</p>
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                    <p class="text-xs text-slate-500">Minimum</p>
-                                    <p class="text-lg font-bold">₦50,000</p>
+                                <div class="bg-white dark:bg-slate-800/50 p-5 rounded-[2rem] border border-slate-200/50 dark:border-slate-700/50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Minimum</p>
+                                    <p class="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">₦50,000</p>
                                 </div>
-                                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                    <p class="text-xs text-slate-500">Maximum</p>
-                                    <p class="text-lg font-bold">₦3,000,000</p>
+                                <div class="bg-white dark:bg-slate-800/50 p-5 rounded-[2rem] border border-slate-200/50 dark:border-slate-700/50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Maximum</p>
+                                    <p class="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">₦3,000,000</p>
                                 </div>
                             </div>
                         </div>
                         <div>
-                            <p class="text-sm text-slate-500 mb-2">New Member Loan Limits</p>
-                            <ul class="space-y-2">
-                                <li class="flex justify-between text-sm bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <span>First Loan Max</span>
-                                    <span class="font-bold">₦1,000,000</span>
-                                </li>
-                                <li class="flex justify-between text-sm bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <span>Second Loan Max</span>
-                                    <span class="font-bold">₦2,000,000</span>
-                                </li>
-                                <li class="flex justify-between text-sm bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <span>Subsequent Loans Max</span>
-                                    <span class="font-bold">₦3,000,000</span>
-                                </li>
-                            </ul>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">New Member Loan Limits</p>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center bg-white dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                                    <span class="text-sm font-medium text-slate-600 dark:text-slate-400 italic">First Loan Max</span>
+                                    <span class="font-black text-slate-900 dark:text-white">₦1,000,000</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-white dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                                    <span class="text-sm font-medium text-slate-600 dark:text-slate-400 italic">Second Loan Max</span>
+                                    <span class="font-black text-slate-900 dark:text-white">₦2,000,000</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-white dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                                    <span class="text-sm font-medium text-slate-600 dark:text-slate-400 italic">Subsequent Loans Max</span>
+                                    <span class="font-black text-slate-900 dark:text-white">₦3,000,000</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Loan Tenure -->
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600">
-                            <i data-lucide="clock" class="w-5 h-5"></i>
+                <div class="group bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 hover:border-blue-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-6 mb-10">
+                        <div class="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 shrink-0">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold">Loan Tenure</h3>
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">Loan <br class="hidden sm:block"/>Tenure</h3>
+                            <div class="h-1.5 w-12 bg-blue-500 rounded-full mt-3"></div>
+                        </div>
                     </div>
+
                     <div class="grid grid-cols-1 gap-4">
-                        <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center justify-between p-6 bg-white dark:bg-slate-800/50 rounded-[2rem] border border-slate-200/50 dark:border-slate-700/50">
                             <div>
-                                <p class="text-xs text-slate-500">₦50,000 – ₦1,000,000</p>
-                                <p class="font-bold text-lg">12 Months</p>
+                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">₦50,000 – ₦1,000,000</p>
+                                <p class="font-black text-2xl text-slate-900 dark:text-white tracking-tighter">12 Months</p>
                             </div>
-                            <i data-lucide="calendar-range" class="w-6 h-6 text-slate-300"></i>
+                            <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-300">
+                                <i data-lucide="calendar-range" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center justify-between p-6 bg-white dark:bg-slate-800/50 rounded-[2rem] border border-slate-200/50 dark:border-slate-700/50">
                             <div>
-                                <p class="text-xs text-slate-500">₦1,001,000 – ₦2,000,000</p>
-                                <p class="font-bold text-lg">15 Months</p>
+                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">₦1,001,000 – ₦2,000,000</p>
+                                <p class="font-black text-2xl text-slate-900 dark:text-white tracking-tighter">15 Months</p>
                             </div>
-                            <i data-lucide="calendar-range" class="w-6 h-6 text-slate-300"></i>
+                            <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-300">
+                                <i data-lucide="calendar-range" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center justify-between p-6 bg-white dark:bg-slate-800/50 rounded-[2rem] border border-slate-200/50 dark:border-slate-700/50">
                             <div>
-                                <p class="text-xs text-slate-500">₦2,001,000 – ₦3,000,000</p>
-                                <p class="font-bold text-lg">18 Months</p>
+                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">₦2,001,000 – ₦3,000,000</p>
+                                <p class="font-black text-2xl text-slate-900 dark:text-white tracking-tighter">18 Months</p>
                             </div>
-                            <i data-lucide="calendar-range" class="w-6 h-6 text-slate-300"></i>
+                            <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-300">
+                                <i data-lucide="calendar-range" class="w-6 h-6"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Operational and Governance Rules -->
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-600">
-                            <i data-lucide="gavel" class="w-5 h-5"></i>
+                <div class="group bg-slate-50 dark:bg-slate-900/40 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 hover:border-amber-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-amber-500/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-6 mb-10">
+                        <div class="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 shrink-0">
+                            <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-600">
+                                <i data-lucide="gavel" class="w-6 h-6"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold">Operational Rules</h3>
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">Operational <br class="hidden sm:block"/>Rules</h3>
+                            <div class="h-1.5 w-12 bg-amber-500 rounded-full mt-3"></div>
+                        </div>
                     </div>
+
                     <ul class="space-y-4">
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Financial Year:</span> Muharram to Dhul-Hijja.</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Financial Year:</span> Muharram to Dhul-Hijja.</p>
                         </li>
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Admissions:</span> New members admitted quarterly (3 times a year).</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Admissions:</span> New members admitted quarterly (3 times a year).</p>
                         </li>
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Meetings:</span> Held every fifteen days in two batches.</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Meetings:</span> Held every fifteen days in two batches.</p>
                         </li>
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Expansion:</span> Distant membership and corporate bodies now approved.</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Expansion:</span> Distant membership and corporate bodies approved.</p>
                         </li>
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Uniformity:</span> Implementation of a uniform program for all Arms.</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Uniformity:</span> Implementation of a uniform program for all Arms.</p>
                         </li>
-                        <li class="flex gap-4">
-                            <div class="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-1"><i data-lucide="check" class="w-3 h-3"></i></div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-bold text-slate-900 dark:text-white">Identity Card:</span> Usage is compulsory for all members.</p>
+                        <li class="flex gap-4 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400"><span class="font-black text-slate-900 dark:text-white">Identity Card:</span> Usage is compulsory for all members.</p>
                         </li>
                     </ul>
                 </div>
