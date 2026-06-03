@@ -149,10 +149,7 @@ class AppServiceProvider extends ServiceProvider
             $client->addScope(\Google\Service\Drive::DRIVE);
 
             if (!empty($config['refreshToken'])) {
-                $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
-                if (isset($token['error'])) {
-                    throw new \Exception("Google Drive Authentication Error: " . ($token['error_description'] ?? $token['error']));
-                }
+                $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
             }
 
             $service = new \Google\Service\Drive($client);
@@ -161,16 +158,17 @@ class AppServiceProvider extends ServiceProvider
                 'useDisplayPaths' => true
             ];
 
-            $root = $config['folderId'] ?? 'root';
-
-            if (!empty($config['teamDriveId'])) {
-                $options['teamDriveId'] = $config['teamDriveId'];
-                $root = null;
-            }
-
+            // If a folderId is provided, we use it as the root shared folder
+            // and we set the adapter root to null to avoid it trying to
+            // find a folder named as the ID.
+            $root = 'root';
             if (!empty($config['folderId'])) {
                 $options['sharedFolderId'] = $config['folderId'];
                 $root = null;
+            }
+
+            if (!empty($config['teamDriveId'])) {
+                $options['teamDriveId'] = $config['teamDriveId'];
             }
 
             $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $root, $options);
