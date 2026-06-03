@@ -64,5 +64,6 @@
     <script>
         lucide.createIcons();
     </script>
+    @include('tawk-widget')
 </body>
 </html>

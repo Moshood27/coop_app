@@ -740,5 +740,6 @@
             }
         });
     </script>
+    @include('tawk-widget')
 </body>
 </html>
