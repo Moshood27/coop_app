@@ -18,7 +18,7 @@ return [
          * The name of this application. You can use this name to monitor
          * the backups.
          */
-        'name' => env('APP_NAME', 'ATTAQWA'),
+        'name' => 'ATTAQWA',
 
         'source' => [
             'files' => [
@@ -296,7 +296,7 @@ return [
      */
     'monitor_backups' => [
         [
-            'name' => env('APP_NAME', 'ATTAQWA'),
+            'name' => 'ATTAQWA',
             'disks' => ['google'],
             'health_checks' => [
                 MaximumAgeInDays::class => 1,

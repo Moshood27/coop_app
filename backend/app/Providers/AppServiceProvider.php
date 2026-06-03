@@ -143,17 +143,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Google Drive Storage Driver
         Storage::extend('google', function ($app, $config) {
+            if (empty($config['clientId']) || empty($config['clientSecret']) || empty($config['refreshToken'])) {
+                throw new \Exception('Google Drive storage driver is missing credentials. Please ensure GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, and GOOGLE_DRIVE_REFRESH_TOKEN are set in your .env file.');
+            }
+
             $client = new \Google\Client();
-            $client->setClientId($config['clientId'] ?? '');
-            $client->setClientSecret($config['clientSecret'] ?? '');
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
             $client->addScope(\Google\Service\Drive::DRIVE);
 
-            if (!empty($config['refreshToken'])) {
-                $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
-                if ($client->isAccessTokenExpired()) {
-                    $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
-                }
-            }
+            $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
 
             $service = new \Google\Service\Drive($client);
 
@@ -197,9 +196,12 @@ class AppServiceProvider extends ServiceProvider
                     }
                 }
             };
-            $driver = new \League\Flysystem\Filesystem($adapter);
 
-            return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new \League\Flysystem\Filesystem($adapter),
+                $adapter,
+                $config
+            );
         });
     }
 }
