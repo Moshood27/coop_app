@@ -173,12 +173,15 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $adapter = new class($service, $root, $options) extends \Masbug\Flysystem\GoogleDriveAdapter {
-                public function listContents(string $path, bool $recursive): iterable
+                public function listContents(string $directory, bool $recursive): iterable
                 {
                     try {
-                        return parent::listContents($path, $recursive);
-                    } catch (\League\Flysystem\UnableToReadFile $e) {
-                        return [];
+                        $it = parent::listContents($directory, $recursive);
+                        foreach ($it as $item) {
+                            yield $item;
+                        }
+                    } catch (\Throwable $e) {
+                        // Return empty iterable
                     }
                 }
 
@@ -186,7 +189,7 @@ class AppServiceProvider extends ServiceProvider
                 {
                     try {
                         return parent::getMetadata($path);
-                    } catch (\League\Flysystem\UnableToReadFile $e) {
+                    } catch (\Throwable $e) {
                         return false;
                     }
                 }
