@@ -150,6 +150,9 @@ class AppServiceProvider extends ServiceProvider
 
             if (!empty($config['refreshToken'])) {
                 $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+                if ($client->isAccessTokenExpired()) {
+                    $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+                }
             }
 
             $service = new \Google\Service\Drive($client);
