@@ -172,7 +172,25 @@ class AppServiceProvider extends ServiceProvider
                 $options['teamDriveId'] = $config['teamDriveId'];
             }
 
-            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $root, $options);
+            $adapter = new class($service, $root, $options) extends \Masbug\Flysystem\GoogleDriveAdapter {
+                public function listContents(string $path, bool $recursive): iterable
+                {
+                    try {
+                        return parent::listContents($path, $recursive);
+                    } catch (\League\Flysystem\UnableToReadFile $e) {
+                        return [];
+                    }
+                }
+
+                public function getMetadata(string $path)
+                {
+                    try {
+                        return parent::getMetadata($path);
+                    } catch (\League\Flysystem\UnableToReadFile $e) {
+                        return false;
+                    }
+                }
+            };
             $driver = new \League\Flysystem\Filesystem($adapter);
 
             return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
