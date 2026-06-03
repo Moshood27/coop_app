@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Pennant\Feature;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
@@ -139,5 +140,25 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RoleDetached::class, LogRoleChange::class);
         Event::listen(PermissionAttached::class, LogRoleChange::class);
         Event::listen(PermissionDetached::class, LogRoleChange::class);
+
+        // Register Google Drive Storage Driver
+        Storage::extend('google', function ($app, $config) {
+            $options = [];
+
+            if (!empty($config['teamDriveId'] ?? null)) {
+                $options['teamDriveId'] = $config['teamDriveId'];
+            }
+
+            $client = new \Google\Client();
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
+            $client->refreshToken($config['refreshToken']);
+
+            $service = new \Google\Service\Drive($client);
+            $adapter = new \MasBug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? '/', $options);
+            $driver = new \League\Flysystem\Filesystem($adapter);
+
+            return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
+        });
     }
 }

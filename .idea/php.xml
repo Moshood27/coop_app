@@ -335,6 +335,9 @@
       <path value="$PROJECT_DIR$/backend/vendor/laravel/pennant" />
       <path value="$PROJECT_DIR$/backend/vendor/resend/resend-laravel" />
       <path value="$PROJECT_DIR$/backend/vendor/resend/resend-php" />
+      <path value="$PROJECT_DIR$/backend/vendor/google/apiclient" />
+      <path value="$PROJECT_DIR$/backend/vendor/masbug/flysystem-google-drive-ext" />
+      <path value="$PROJECT_DIR$/backend/vendor/google/apiclient-services" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">

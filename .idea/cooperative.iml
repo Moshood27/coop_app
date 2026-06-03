@@ -327,6 +327,9 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/laravel/pennant" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/resend/resend-laravel" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/resend/resend-php" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/google/apiclient" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/google/apiclient-services" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/masbug/flysystem-google-drive-ext" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
