@@ -143,22 +143,31 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Google Drive Storage Driver
         Storage::extend('google', function ($app, $config) {
-            $options = [];
-
-            if (!empty($config['teamDriveId'] ?? null)) {
-                $options['teamDriveId'] = $config['teamDriveId'];
-            }
-
             $client = new \Google\Client();
             $client->setClientId($config['clientId']);
             $client->setClientSecret($config['clientSecret']);
+            $client->addScope(\Google\Service\Drive::DRIVE);
 
             if (!empty($config['refreshToken'])) {
+                $client->setRefreshToken($config['refreshToken']);
                 $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
             }
 
             $service = new \Google\Service\Drive($client);
-            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? '/', $options);
+
+            $options = [
+                'useDisplayPaths' => true
+            ];
+
+            if (!empty($config['folderId'])) {
+                $options['useDisplayPaths'] = false;
+            }
+
+            if (!empty($config['teamDriveId'])) {
+                $options['teamDriveId'] = $config['teamDriveId'];
+            }
+
+            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? 'root', $options);
             $driver = new \League\Flysystem\Filesystem($adapter);
 
             return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
