@@ -105,7 +105,7 @@ function navigateTo(route) {
             <button @click="navigateTo('/login')" class="text-lg font-medium text-left">Log in</button>
             <button 
               @click="navigateTo('/register')"
-              class="bg-brand-600 text-white px-5 py-3 rounded-xl font-bold text-center"
+              class="bg-brand-600  px-5 py-3 rounded-xl font-bold text-center"
             >
               Get Started
             </button>
