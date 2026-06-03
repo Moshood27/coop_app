@@ -62,8 +62,15 @@ return [
                 (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
             'dump' => [
-                'add_extra_option' => '--ssl-mode=DISABLED --column-statistics=0',
-                'use_single_transaction' => true,
+//                'add_extra_option' => '--ssl-mode=DISABLED --column-statistics=0',
+//                'use_single_transaction' => true,
+                'add_extra_option' => '--skip-column-statistics --skip-ssl',
+
+                /*
+                 * Your error suggests using mariadb-dump instead of mysqldump.
+                 * Most servers link both, but let's be explicit if needed.
+                 */
+                'dump_binary_path' => '/usr/bin/',
             ],
         ],
 
