@@ -155,7 +155,7 @@ class AppServiceProvider extends ServiceProvider
             $client->refreshToken($config['refreshToken']);
 
             $service = new \Google\Service\Drive($client);
-            $adapter = new \MasBug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? '/', $options);
+            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? '/', $options);
             $driver = new \League\Flysystem\Filesystem($adapter);
 
             return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
