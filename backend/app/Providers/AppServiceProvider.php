@@ -152,7 +152,11 @@ class AppServiceProvider extends ServiceProvider
             $client->setClientSecret($config['clientSecret']);
             $client->addScope(\Google\Service\Drive::DRIVE);
 
-            $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+            $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+
+            if (isset($token['error'])) {
+                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']));
+            }
 
             $service = new \Google\Service\Drive($client);
 
