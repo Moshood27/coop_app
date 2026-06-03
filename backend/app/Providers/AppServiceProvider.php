@@ -158,10 +158,6 @@ class AppServiceProvider extends ServiceProvider
                 'useDisplayPaths' => true
             ];
 
-            if (!empty($config['folderId'])) {
-                $options['useDisplayPaths'] = false;
-            }
-
             if (!empty($config['teamDriveId'])) {
                 $options['teamDriveId'] = $config['teamDriveId'];
             }
