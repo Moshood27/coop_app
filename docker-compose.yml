@@ -39,6 +39,7 @@ services:
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    command: --mysql-native-password=ON
     volumes:
       - old-db-data:/var/lib/mysql # Points to the volume with your data
     networks:
