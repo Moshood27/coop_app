@@ -70,7 +70,7 @@ function navigateTo(route) {
           <button @click="navigateTo('/login')" class="hover:text-brand-600 transition-colors">Log in</button>
           <button 
             @click="navigateTo('/register')"
-            class="bg-brand-600 text-white px-5 py-2.5 rounded-full hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 active:scale-95"
+            class="bg-brand-600  px-5 py-2.5 rounded-full hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 active:scale-95"
           >
             Get Started
           </button>
