@@ -149,7 +149,6 @@ class AppServiceProvider extends ServiceProvider
             $client->addScope(\Google\Service\Drive::DRIVE);
 
             if (!empty($config['refreshToken'])) {
-                $client->setRefreshToken($config['refreshToken']);
                 $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
             }
 
