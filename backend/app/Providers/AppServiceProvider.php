@@ -155,7 +155,8 @@ class AppServiceProvider extends ServiceProvider
             $service = new \Google\Service\Drive($client);
 
             $options = [
-                'useDisplayPaths' => true
+                'useDisplayPaths' => true,
+                'useHasDir' => true
             ];
 
             // If a folderId is provided, we use it as the root shared folder
