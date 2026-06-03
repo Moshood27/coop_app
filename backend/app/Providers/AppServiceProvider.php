@@ -144,12 +144,15 @@ class AppServiceProvider extends ServiceProvider
         // Register Google Drive Storage Driver
         Storage::extend('google', function ($app, $config) {
             $client = new \Google\Client();
-            $client->setClientId($config['clientId']);
-            $client->setClientSecret($config['clientSecret']);
+            $client->setClientId($config['clientId'] ?? '');
+            $client->setClientSecret($config['clientSecret'] ?? '');
             $client->addScope(\Google\Service\Drive::DRIVE);
 
             if (!empty($config['refreshToken'])) {
-                $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+                $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+                if (isset($token['error'])) {
+                    throw new \Exception("Google Drive Authentication Error: " . ($token['error_description'] ?? $token['error']));
+                }
             }
 
             $service = new \Google\Service\Drive($client);
@@ -158,11 +161,19 @@ class AppServiceProvider extends ServiceProvider
                 'useDisplayPaths' => true
             ];
 
+            $root = $config['folderId'] ?? 'root';
+
             if (!empty($config['teamDriveId'])) {
                 $options['teamDriveId'] = $config['teamDriveId'];
+                $root = null;
             }
 
-            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folderId'] ?? 'root', $options);
+            if (!empty($config['folderId'])) {
+                $options['sharedFolderId'] = $config['folderId'];
+                $root = null;
+            }
+
+            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $root, $options);
             $driver = new \League\Flysystem\Filesystem($adapter);
 
             return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter, $config);
