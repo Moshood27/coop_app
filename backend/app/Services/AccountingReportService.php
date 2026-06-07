@@ -1249,6 +1249,81 @@ class AccountingReportService
     }
 
     /**
+     * Build Branch-by-Branch Wallet Transactions Report.
+     */
+    public function buildBranchWalletTransactionsReport(?int $branchId = null, ?string $from = null, ?string $to = null): array
+    {
+        $fromDate = $from ? Carbon::parse($from)->startOfDay() : null;
+        $toDate = $to ? Carbon::parse($to)->endOfDay() : null;
+
+        $branches = \App\Models\Branch::when($branchId, fn($q) => $q->where('id', $branchId))
+            ->with(['users.walletTransactions' => function ($query) use ($fromDate, $toDate) {
+                if ($fromDate) {
+                    $query->where('created_at', '>=', $fromDate);
+                }
+                if ($toDate) {
+                    $query->where('created_at', '<=', $toDate);
+                }
+                $query->latest();
+            }])->get();
+
+        $report = [
+            'branches' => [],
+            'grand_total_credits' => 0,
+            'grand_total_debits' => 0,
+            'grand_total_net' => 0,
+            'grand_total_members_count' => 0,
+            'from' => $from,
+            'to' => $to,
+        ];
+
+        foreach ($branches as $branch) {
+            $branchData = [
+                'branch_id' => $branch->id,
+                'branch_name' => $branch->name,
+                'members' => [],
+                'total_credits' => 0,
+                'total_debits' => 0,
+                'total_net' => 0,
+            ];
+
+            foreach ($branch->users as $user) {
+                $credits = $user->walletTransactions->where('type', 'credit')->sum('amount');
+                $debits = $user->walletTransactions->where('type', 'debit')->sum('amount');
+
+                if ($user->walletTransactions->count() > 0) {
+                    $branchData['members'][] = [
+                        'member_name' => $user->full_name,
+                        'membership_number' => $user->membership_number,
+                        'credits' => (float)$credits,
+                        'debits' => (float)$debits,
+                        'net' => (float)($credits - $debits),
+                        'transaction_count' => $user->walletTransactions->count(),
+                        'last_transaction_date' => $user->walletTransactions->max('created_at'),
+                    ];
+                    $branchData['total_credits'] += (float)$credits;
+                    $branchData['total_debits'] += (float)$debits;
+                }
+            }
+
+            if (!empty($branchData['members'])) {
+                $branchData['total_net'] = $branchData['total_credits'] - $branchData['total_debits'];
+                // Sort members by net descending
+                usort($branchData['members'], fn($a, $b) => $b['net'] <=> $a['net']);
+
+                $report['branches'][] = $branchData;
+                $report['grand_total_credits'] += $branchData['total_credits'];
+                $report['grand_total_debits'] += $branchData['total_debits'];
+                $report['grand_total_members_count'] += count($branchData['members']);
+            }
+        }
+
+        $report['grand_total_net'] = $report['grand_total_credits'] - $report['grand_total_debits'];
+
+        return $report;
+    }
+
+    /**
      * Build Branch-by-Branch Member Balances Report (Savings, Shares, Gold, etc).
      */
     public function buildBranchMemberBalancesReport(?int $branchId = null, float $goldPrice = 0.0): array

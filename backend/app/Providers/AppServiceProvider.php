@@ -151,11 +151,16 @@ class AppServiceProvider extends ServiceProvider
             $client->setClientId($config['clientId']);
             $client->setClientSecret($config['clientSecret']);
             $client->addScope(\Google\Service\Drive::DRIVE);
+            $client->setAccessType('offline');
 
             $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
 
             if (isset($token['error'])) {
-                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']));
+                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']) . '. Refresh Token used: ' . substr($config['refreshToken'], 0, 5) . '...');
+            }
+
+            if (!$client->getAccessToken()) {
+                throw new \Exception('Google Drive Authentication Error: Access token could not be retrieved.');
             }
 
             $service = new \Google\Service\Drive($client);
@@ -174,7 +179,7 @@ class AppServiceProvider extends ServiceProvider
                 $root = null;
             }
 
-            if (!empty($config['teamDriveId'])) {
+            if (!empty($config['teamDriveId']) && $config['teamDriveId'] !== 'null') {
                 $options['teamDriveId'] = $config['teamDriveId'];
             }
 

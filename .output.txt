@@ -1,0 +1,348 @@
+backend/app/Filament:
+Imports  Member  Pages  RelationManagers  Resources  Traits  Widgets
+backend/app/Filament/Imports:
+backend/app/Filament/Member:
+Widgets
+backend/app/Filament/Member/Widgets:
+backend/app/Filament/Pages:
+AdminProfile.php              LoanMonitoring.php
+AppStatusSettings.php         ManageBackups.php
+AppropriationAccount.php      MemberBalancesBranchReport.php
+Auth                          MigrationImport.php
+BalanceSheet.php              OfficialReports.php
+BranchPerformanceMap.php      QardHasanBranchReport.php
+ContributionBranchReport.php  SchemeBranchReport.php
+Dashboard.php                 ShuraAnalytics.php
+DataImport.php                TrialBalance.php
+IncomeAndExpenditure.php      UsersByBranchReport.php
+LoanAnalysisReport.php
+backend/app/Filament/Pages/Auth:
+Login.php  Register.php
+backend/app/Filament/RelationManagers:
+ActivitiesRelationManager.php
+backend/app/Filament/Resources:
+AdministrativeChargeResource      ProductResource
+AgmCandidateResource              ProductResource.php
+AgmCandidateResource.php          ProjectInvestmentResource
+AgmSessionResource                ProjectInvestmentResource.php
+AgmSessionResource.php            ProjectProfitResource
+AttendanceExcuseResource          ProjectProfitResource.php
+AttendanceExcuseResource.php      ProjectProposalResource
+AuditTrailResource                ProjectProposalResource.php
+AuditTrailResource.php            ProjectResource
+AuthLogResource                   ProjectResource.php
+BranchResource                    QardHasanResource
+BranchResource.php                QardHasanResource.php
+CategoryResource                  SadaqahProjectResource
+CategoryResource.php              SadaqahProjectResource.php
+CharityEntryResource              SavingsGoalResource
+CharityEntryResource.php          SavingsGoalResource.php
+ChatAuditResource                 SavingsGroupResource
+ChatAuditResource.php             SavingsGroupResource.php
+ChatCannedResponseResource        SchemeResource
+ChatCannedResponseResource.php    SchemeResource.php
+ChatMessageResource               ShariaBoardMemberResource
+ChatMessageResource.php           ShariaBoardMemberResource.php
+ChatRoomResource                  ShariaDisputeResource
+ChatRoomResource.php              ShariaDisputeResource.php
+ContributionResource              ShariahAuditLogResource
+ContributionResource.php          ShariahAuditLogResource.php
+ExpenseEntryResource              StaffResource
+ExpenseEntryResource.php          StaffResource.php
+FeatureToggleResource             StoreOrderResource
+FeatureToggleResource.php         StoreOrderResource.php
+FineResource                      SupportMessageResource
+FineResource.php                  SupportMessageResource.php
+GoalBookingResource               SuspiciousActionResource
+GoalBookingResource.php           TakafulContributionResource
+IncomeEntryResource               TakafulContributionResource.php
+IncomeEntryResource.php           TakafulPoolEntryResource
+LedgerAccountResource             TakafulPoolEntryResource.php
+LedgerAccountResource.php         UserBadgeResource
+LedgerJournalResource             UserBadgeResource.php
+LedgerJournalResource.php         UserResource
+LoanPenaltyResource               UserResource.php
+LoanPenaltyResource.php           UtilityTransactionResource
+LoanRequestResource               UtilityTransactionResource.php
+LoanRequestResource.php           VendorResource
+MeetingResource                   VendorResource.php
+MeetingResource.php               WalletTransactionResource
+MemberApplicationResource         WalletTransactionResource.php
+MemberApplicationResource.php     WhitelistedIpResource
+MigrationDiscrepancyResource      WhitelistedIpResource.php
+MigrationDiscrepancyResource.php  WithdrawalRequestResource
+NursingMotherResource             WithdrawalRequestResource.php
+NursingMotherResource.php         ZakatResource
+PendingApprovalResource           ZakatResource.php
+PendingApprovalResource.php
+backend/app/Filament/Resources/AdministrativeChargeResource:
+Pages
+backend/app/Filament/Resources/AdministrativeChargeResource/Pages:
+backend/app/Filament/Resources/AgmCandidateResource:
+Pages
+backend/app/Filament/Resources/AgmCandidateResource/Pages:
+CreateAgmCandidate.php  EditAgmCandidate.php  ListAgmCandidates.php
+backend/app/Filament/Resources/AgmSessionResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/AgmSessionResource/Pages:
+CreateAgmSession.php  EditAgmSession.php  ListAgmSessions.php
+backend/app/Filament/Resources/AgmSessionResource/RelationManagers:
+CandidatesRelationManager.php  VotesRelationManager.php
+backend/app/Filament/Resources/AttendanceExcuseResource:
+Pages
+backend/app/Filament/Resources/AttendanceExcuseResource/Pages:
+ListAttendanceExcuses.php
+backend/app/Filament/Resources/AuditTrailResource:
+Pages
+backend/app/Filament/Resources/AuditTrailResource/Pages:
+ListAuditTrails.php
+backend/app/Filament/Resources/AuthLogResource:
+Pages
+backend/app/Filament/Resources/AuthLogResource/Pages:
+backend/app/Filament/Resources/BranchResource:
+Pages
+backend/app/Filament/Resources/BranchResource/Pages:
+CreateBranch.php  EditBranch.php  ListBranches.php
+backend/app/Filament/Resources/CategoryResource:
+Pages
+backend/app/Filament/Resources/CategoryResource/Pages:
+CreateCategory.php  EditCategory.php  ListCategories.php
+backend/app/Filament/Resources/CharityEntryResource:
+Pages
+backend/app/Filament/Resources/CharityEntryResource/Pages:
+ListCharityEntries.php
+backend/app/Filament/Resources/ChatAuditResource:
+Pages
+backend/app/Filament/Resources/ChatAuditResource/Pages:
+ListChatAudits.php
+backend/app/Filament/Resources/ChatCannedResponseResource:
+Pages
+backend/app/Filament/Resources/ChatCannedResponseResource/Pages:
+CreateChatCannedResponse.php  ListChatCannedResponses.php
+EditChatCannedResponse.php
+backend/app/Filament/Resources/ChatMessageResource:
+Pages
+backend/app/Filament/Resources/ChatMessageResource/Pages:
+ListChatMessages.php
+backend/app/Filament/Resources/ChatRoomResource:
+Pages  RelationManagers  Widgets
+backend/app/Filament/Resources/ChatRoomResource/Pages:
+ChatRoomView.php  CreateChatRoom.php  EditChatRoom.php  ListChatRooms.php
+backend/app/Filament/Resources/ChatRoomResource/RelationManagers:
+MembersRelationManager.php  MessagesRelationManager.php
+backend/app/Filament/Resources/ChatRoomResource/Widgets:
+ChatStatsWidget.php
+backend/app/Filament/Resources/ContributionResource:
+Pages
+backend/app/Filament/Resources/ContributionResource/Pages:
+CreateContribution.php  EditContribution.php  ListContributions.php
+backend/app/Filament/Resources/ExpenseEntryResource:
+Pages
+backend/app/Filament/Resources/ExpenseEntryResource/Pages:
+CreateExpenseEntry.php  EditExpenseEntry.php  ListExpenseEntries.php
+backend/app/Filament/Resources/FeatureToggleResource:
+Pages
+backend/app/Filament/Resources/FeatureToggleResource/Pages:
+CreateFeatureToggle.php  EditFeatureToggle.php  ListFeatureToggles.php
+backend/app/Filament/Resources/FineResource:
+Pages
+backend/app/Filament/Resources/FineResource/Pages:
+ListFines.php
+backend/app/Filament/Resources/GoalBookingResource:
+Pages
+backend/app/Filament/Resources/GoalBookingResource/Pages:
+CreateGoalBooking.php  EditGoalBooking.php  ListGoalBookings.php
+backend/app/Filament/Resources/IncomeEntryResource:
+Pages
+backend/app/Filament/Resources/IncomeEntryResource/Pages:
+CreateIncomeEntry.php  EditIncomeEntry.php  ListIncomeEntries.php
+backend/app/Filament/Resources/LedgerAccountResource:
+Pages
+backend/app/Filament/Resources/LedgerAccountResource/Pages:
+CreateLedgerAccount.php  EditLedgerAccount.php  ListLedgerAccounts.php
+backend/app/Filament/Resources/LedgerJournalResource:
+Pages
+backend/app/Filament/Resources/LedgerJournalResource/Pages:
+CreateLedgerJournal.php  ListLedgerJournals.php
+EditLedgerJournal.php    ViewLedgerJournal.php
+backend/app/Filament/Resources/LoanPenaltyResource:
+Pages
+backend/app/Filament/Resources/LoanPenaltyResource/Pages:
+ListLoanPenalties.php
+backend/app/Filament/Resources/LoanRequestResource:
+Pages
+backend/app/Filament/Resources/LoanRequestResource/Pages:
+CreateLoanRequest.php  EditLoanRequest.php  ListLoanRequests.php
+backend/app/Filament/Resources/MeetingResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/MeetingResource/Pages:
+CreateMeeting.php  EditMeeting.php  ListMeetings.php
+backend/app/Filament/Resources/MeetingResource/RelationManagers:
+AttendanceRecordsRelationManager.php
+backend/app/Filament/Resources/MemberApplicationResource:
+Pages
+backend/app/Filament/Resources/MemberApplicationResource/Pages:
+ListMemberApplications.php  ViewMemberApplication.php
+backend/app/Filament/Resources/MigrationDiscrepancyResource:
+Pages
+backend/app/Filament/Resources/MigrationDiscrepancyResource/Pages:
+ListMigrationDiscrepancies.php
+backend/app/Filament/Resources/NursingMotherResource:
+Pages
+backend/app/Filament/Resources/NursingMotherResource/Pages:
+ListNursingMothers.php
+backend/app/Filament/Resources/PendingApprovalResource:
+Pages
+backend/app/Filament/Resources/PendingApprovalResource/Pages:
+ListPendingApprovals.php
+backend/app/Filament/Resources/ProductResource:
+Pages
+backend/app/Filament/Resources/ProductResource/Pages:
+CreateProduct.php  EditProduct.php  ListProducts.php
+backend/app/Filament/Resources/ProjectInvestmentResource:
+Pages
+backend/app/Filament/Resources/ProjectInvestmentResource/Pages:
+ListProjectInvestments.php
+backend/app/Filament/Resources/ProjectProfitResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/ProjectProfitResource/Pages:
+CreateProjectProfit.php  EditProjectProfit.php  ListProjectProfits.php
+backend/app/Filament/Resources/ProjectProfitResource/RelationManagers:
+PayoutsRelationManager.php
+backend/app/Filament/Resources/ProjectProposalResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/ProjectProposalResource/Pages:
+CreateProjectProposal.php  EditProjectProposal.php  ListProjectProposals.php
+backend/app/Filament/Resources/ProjectProposalResource/RelationManagers:
+CommentsRelationManager.php
+backend/app/Filament/Resources/ProjectResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/ProjectResource/Pages:
+CreateProject.php  EditProject.php  ListProjects.php
+backend/app/Filament/Resources/ProjectResource/RelationManagers:
+InvestmentsRelationManager.php  UpdatesRelationManager.php
+ProfitsRelationManager.php
+backend/app/Filament/Resources/QardHasanResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/QardHasanResource/Pages:
+CreateQardHasan.php  EditQardHasan.php  ListQardHasans.php
+backend/app/Filament/Resources/QardHasanResource/RelationManagers:
+RepaymentsRelationManager.php
+backend/app/Filament/Resources/SadaqahProjectResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/SadaqahProjectResource/Pages:
+ManageSadaqahProjects.php
+backend/app/Filament/Resources/SadaqahProjectResource/RelationManagers:
+backend/app/Filament/Resources/SavingsGoalResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/SavingsGoalResource/Pages:
+CreateSavingsGoal.php  EditSavingsGoal.php  ListSavingsGoals.php
+backend/app/Filament/Resources/SavingsGoalResource/RelationManagers:
+BookingsRelationManager.php
+backend/app/Filament/Resources/SavingsGroupResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/SavingsGroupResource/Pages:
+CreateSavingsGroup.php  EditSavingsGroup.php  ListSavingsGroups.php
+backend/app/Filament/Resources/SavingsGroupResource/RelationManagers:
+MembersRelationManager.php
+backend/app/Filament/Resources/SchemeResource:
+Pages
+backend/app/Filament/Resources/SchemeResource/Pages:
+CreateScheme.php  EditScheme.php  ListSchemes.php
+backend/app/Filament/Resources/ShariaBoardMemberResource:
+Pages
+backend/app/Filament/Resources/ShariaBoardMemberResource/Pages:
+CreateShariaBoardMember.php  ListShariaBoardMembers.php
+EditShariaBoardMember.php
+backend/app/Filament/Resources/ShariaDisputeResource:
+Pages
+backend/app/Filament/Resources/ShariaDisputeResource/Pages:
+EditShariaDispute.php  ListShariaDisputes.php
+backend/app/Filament/Resources/ShariahAuditLogResource:
+Pages
+backend/app/Filament/Resources/ShariahAuditLogResource/Pages:
+ListShariahAuditLogs.php
+backend/app/Filament/Resources/StaffResource:
+Pages
+backend/app/Filament/Resources/StaffResource/Pages:
+EditStaff.php  ListStaff.php
+backend/app/Filament/Resources/StoreOrderResource:
+Pages
+backend/app/Filament/Resources/StoreOrderResource/Pages:
+CreateStoreOrder.php  ListStoreOrders.php
+EditStoreOrder.php    ViewStoreOrder.php
+backend/app/Filament/Resources/SupportMessageResource:
+Pages
+backend/app/Filament/Resources/SupportMessageResource/Pages:
+ListSupportMessages.php
+backend/app/Filament/Resources/SuspiciousActionResource:
+Pages
+backend/app/Filament/Resources/SuspiciousActionResource/Pages:
+backend/app/Filament/Resources/TakafulContributionResource:
+Pages
+backend/app/Filament/Resources/TakafulContributionResource/Pages:
+ListTakafulContributions.php
+backend/app/Filament/Resources/TakafulPoolEntryResource:
+Pages
+backend/app/Filament/Resources/TakafulPoolEntryResource/Pages:
+ListTakafulPoolEntries.php
+backend/app/Filament/Resources/UserBadgeResource:
+Pages
+backend/app/Filament/Resources/UserBadgeResource/Pages:
+CreateUserBadge.php  EditUserBadge.php  ListUserBadges.php
+backend/app/Filament/Resources/UserResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/UserResource/Pages:
+CreateUser.php  EditUser.php  ListUsers.php
+backend/app/Filament/Resources/UserResource/RelationManagers:
+BeneficiariesRelationManager.php
+ChatRoomsRelationManager.php
+ContributionsRelationManager.php
+JuniorAccountsRelationManager.php
+ProjectInvestmentsRelationManager.php
+ProjectProfitPayoutsRelationManager.php
+QardHasanRepaymentsRelationManager.php
+QardHasansRelationManager.php
+SavingsGoalsRelationManager.php
+StoreOrdersRelationManager.php
+SupportMessagesRelationManager.php
+TakafulContributionsRelationManager.php
+TakafulPoolEntriesRelationManager.php
+WalletTransactionsRelationManager.php
+WithdrawalRequestsRelationManager.php
+backend/app/Filament/Resources/UtilityTransactionResource:
+Pages
+backend/app/Filament/Resources/UtilityTransactionResource/Pages:
+CreateUtilityTransaction.php  ListUtilityTransactions.php
+EditUtilityTransaction.php    ViewUtilityTransaction.php
+backend/app/Filament/Resources/VendorResource:
+Pages  RelationManagers
+backend/app/Filament/Resources/VendorResource/Pages:
+CreateVendor.php  EditVendor.php  ListVendors.php
+backend/app/Filament/Resources/VendorResource/RelationManagers:
+OwnerChatRelationManager.php
+backend/app/Filament/Resources/WalletTransactionResource:
+Pages
+backend/app/Filament/Resources/WalletTransactionResource/Pages:
+CreateWalletTransaction.php  ListWalletTransactions.php
+EditWalletTransaction.php
+backend/app/Filament/Resources/WhitelistedIpResource:
+Pages
+backend/app/Filament/Resources/WhitelistedIpResource/Pages:
+CreateWhitelistedIp.php  EditWhitelistedIp.php  ListWhitelistedIps.php
+backend/app/Filament/Resources/WithdrawalRequestResource:
+Pages
+backend/app/Filament/Resources/WithdrawalRequestResource/Pages:
+ListWithdrawalRequests.php
+backend/app/Filament/Resources/ZakatResource:
+Pages
+backend/app/Filament/Resources/ZakatResource/Pages:
+ListZakats.php
+backend/app/Filament/Traits:
+HasWipeAction.php
+backend/app/Filament/Widgets:
+ChatOverviewWidget.php   RecentWalletActivity.php     SystemHealthChart.php
+FinanceSnapshot.php      SecurityAlertsWidget.php     TotalCollectionsToday.php
+MemberGrowthChart.php    ShuraOverviewWidget.php      UserGrowthChart.php
+OnlineMembersWidget.php  ShuraParticipationChart.php
+RecentPayouts.php        StoreOverview.php

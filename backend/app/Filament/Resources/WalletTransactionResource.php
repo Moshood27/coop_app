@@ -154,6 +154,13 @@ class WalletTransactionResource extends Resource
                     ->url(fn (WalletTransaction $record) => route('admin.print.wallet-receipt', $record))
                     ->openUrlInNewTab(),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('branchReport')
+                    ->label('Branch Report')
+                    ->icon('heroicon-o-document-chart-bar')
+                    ->url(fn () => \App\Filament\Pages\WalletTransactionsBranchReport::getUrl())
+                    ->color('info'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
