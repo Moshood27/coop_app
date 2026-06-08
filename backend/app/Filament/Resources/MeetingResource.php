@@ -182,6 +182,13 @@ class MeetingResource extends Resource
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('attendance_qr')
+                    ->label('Attendance QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('success')
+                    ->modalContent(fn (Meeting $record) => view('filament.resources.meetings.attendance-qr', ['meeting' => $record]))
+                    ->modalSubmitAction(false)
+                    ->visible(fn (Meeting $record): bool => $record->status === 'ongoing'),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

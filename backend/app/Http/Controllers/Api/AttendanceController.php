@@ -122,7 +122,8 @@ class AttendanceController extends Controller
     public function markAttendance(Request $request, Meeting $meeting)
     {
         $request->validate([
-            'pin' => 'required|string',
+            'pin' => 'nullable|string', // pin is optional if qr_token is provided
+            'qr_token' => 'nullable|string',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'device_uuid' => 'required|string',
@@ -132,8 +133,22 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Meeting is not ongoing'], 400);
         }
 
-        if ($meeting->pin !== $request->pin) {
-            return response()->json(['message' => 'Invalid PIN'], 400);
+        // Validate either PIN or QR Token
+        if ($request->filled('qr_token')) {
+            $cacheKey = "meeting_{$meeting->id}_qr_token";
+            $storedToken = \Illuminate\Support\Facades\Cache::get($cacheKey);
+            if (!$storedToken || $storedToken !== $request->qr_token) {
+                return response()->json(['message' => 'Invalid or expired QR code'], 400);
+            }
+            // Successfully used QR token, refresh it for the next person
+            $this->attendanceService->refreshAttendanceQrToken($meeting);
+        } else {
+            if (!$request->filled('pin')) {
+                return response()->json(['message' => 'Either PIN or QR code is required'], 400);
+            }
+            if ($meeting->pin !== $request->pin) {
+                return response()->json(['message' => 'Invalid PIN'], 400);
+            }
         }
 
         if (is_null($meeting->venue_lat) || is_null($meeting->venue_lng)) {
@@ -203,4 +218,15 @@ class AttendanceController extends Controller
         return response()->json(['message' => $message, 'record' => $record]);
     }
 
+    public function getAttendanceQrPayload(Meeting $meeting)
+    {
+        // Only admins can see this
+        if (!auth()->user()->is_admin) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $payload = $this->attendanceService->getAttendanceQrPayload($meeting);
+
+        return response()->json(['payload' => $payload]);
+    }
 }

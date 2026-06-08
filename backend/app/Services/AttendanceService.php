@@ -9,10 +9,46 @@ use App\Models\User;
 use App\Models\WalletTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class AttendanceService
 {
+    /**
+     * Get or generate a rolling QR token for a meeting.
+     */
+    public function getAttendanceQrPayload(Meeting $meeting): string
+    {
+        $cacheKey = "meeting_{$meeting->id}_qr_token";
+        $token = Cache::get($cacheKey);
+
+        if (!$token) {
+            $token = $this->refreshAttendanceQrToken($meeting);
+        }
+
+        $params = [
+            'meeting_id' => $meeting->id,
+            'token' => $token,
+        ];
+
+        return 'attaqwa:attendance?' . http_build_query($params);
+    }
+
+    /**
+     * Refresh the rolling QR token for a meeting.
+     */
+    public function refreshAttendanceQrToken(Meeting $meeting): string
+    {
+        $cacheKey = "meeting_{$meeting->id}_qr_token";
+        $token = Str::random(16);
+        Cache::put($cacheKey, $token, now()->addSeconds(60)); // 60s window but refreshed every scan/2s
+
+        // Optional: Broadcast here if needed
+        // broadcast(new \App\Events\AttendanceQrRefreshed($meeting, $token));
+
+        return $token;
+    }
+
     /**
      * Check if a user is late for a meeting.
      */

@@ -79,11 +79,30 @@
             </div>
             
             <div class="space-y-6">
-              <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Enter Meeting PIN</label>
-                <input v-model="pin" type="text" maxlength="10" placeholder="••••••" 
-                       class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-center text-3xl font-black tracking-[0.4em] focus:bg-white focus:border-emerald-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-slate-200" />
-                <p class="text-[9px] text-slate-400 mt-2 text-center font-bold uppercase">The PIN is announced by the Imam or Chairman</p>
+              <div class="grid grid-cols-1 gap-4">
+                <div>
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Option 1: Enter Meeting PIN</label>
+                  <input v-model="pin" type="text" maxlength="10" placeholder="••••••" 
+                         class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-center text-3xl font-black tracking-[0.4em] focus:bg-white focus:border-emerald-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-slate-200" />
+                  <p class="text-[9px] text-slate-400 mt-2 text-center font-bold uppercase">The PIN is announced by the Imam or Chairman</p>
+                </div>
+
+                <div class="relative py-2 flex items-center">
+                  <div class="flex-grow border-t border-slate-200"></div>
+                  <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
+                  <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Option 2: Scan Admin QR Code</label>
+                  <button @click="scanQr" :disabled="submitting || !location"
+                          class="w-full bg-white border-2 border-emerald-600 text-emerald-600 font-black py-4 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-widest text-xs active:scale-[0.98] transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                    </svg>
+                    Scan Attendance QR
+                  </button>
+                </div>
               </div>
 
               <div class="p-5 bg-slate-50 rounded-2xl flex items-center gap-4 border border-slate-100">
@@ -220,6 +239,7 @@
 import {ref, onMounted, onUnmounted, computed} from 'vue'
 import { Geolocation } from '@capacitor/geolocation'
 import { Device } from '@capacitor/device'
+import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning'
 import AppHeader from '../components/AppHeader.vue'
 import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
@@ -247,6 +267,48 @@ const submittingApology = ref(false)
 const timeRemaining = ref('')
 const countdownInterval = ref(null)
 const refreshingStatus = ref(false)
+
+const canScan = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
+
+const scanQr = async () => {
+  if (!canScan) {
+    modal.alert('Scanning is only available on the mobile app.')
+    return
+  }
+  if (!location.value) {
+    modal.alert('Please capture your location first.')
+    return
+  }
+  try {
+    const perm = await BarcodeScanner.checkPermissions()
+    if (perm.camera !== 'granted') {
+      const req = await BarcodeScanner.requestPermissions()
+      if (req.camera !== 'granted') {
+        modal.alert('Camera permission denied')
+        return
+      }
+    }
+    const { barcodes } = await BarcodeScanner.scan({ formats: ['qrCode'], lensFacing: 'back' })
+    const code = Array.isArray(barcodes) && barcodes[0]
+      ? (barcodes[0].rawValue || barcodes[0].displayValue || barcodes[0].content || '')
+      : ''
+    
+    if (code && code.startsWith('attaqwa:attendance?')) {
+      const urlStr = code.replace('attaqwa:attendance', 'http://localhost')
+      const url = new URL(urlStr)
+      const qrToken = url.searchParams.get('token')
+      if (qrToken) {
+        await submitAttendance(qrToken)
+      } else {
+        modal.alert('Invalid Attendance QR code: Token missing')
+      }
+    } else {
+      modal.alert('Invalid QR code format. Please scan a valid Attendance QR.')
+    }
+  } catch (e) {
+    modal.alert(e?.message || 'Failed to scan QR')
+  }
+}
 
 const canSubmitApology = computed(() => {
   if (!meeting.value) return false
@@ -365,17 +427,23 @@ const getLocation = async () => {
   }
 }
 
-const submitAttendance = async () => {
-  if (!pin.value) return
+const submitAttendance = async (qrToken = null) => {
+  if (!qrToken && !pin.value) return
   submitting.value = true
   try {
     const info = await Device.getId()
-    const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-attendance`, {
-      pin: pin.value,
+    const payload = {
       lat: location.value.lat,
       lng: location.value.lng,
       device_uuid: info.identifier
-    })
+    }
+    if (qrToken) {
+      payload.qr_token = qrToken
+    } else {
+      payload.pin = pin.value
+    }
+
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-attendance`, payload)
     record.value = res.data.record
     modal.alert(res.data.message || "Attendance marked successfully!")
     fetchHistory()

@@ -85,6 +85,9 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->gro
     Route::post('/push/token', [ProfileController::class, 'savePushToken']);
     Route::post('/fcm-token', [ProfileController::class, 'savePushToken']);
 
+    // Attendance QR (for admins to show on screen)
+    Route::get('/meetings/{meeting}/attendance-qr-payload', [AttendanceController::class, 'getAttendanceQrPayload']);
+
 
     // Takaful (Mutual Protection Pool) admin endpoints
     Route::get('/takaful/summary', [AdminTakafulController::class, 'summary']);
