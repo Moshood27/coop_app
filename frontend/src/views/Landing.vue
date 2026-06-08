@@ -138,8 +138,7 @@ function navigateTo(route) {
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button 
               @click="navigateTo('/register')"
-              class="w-full sm:w-auto bg-brand-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-brand-700 transition-all shadow-xl shadow-brand-200 active:scale-95"
-            >
+              class="bg-brand-600  px-5 py-3 rounded-xl font-bold text-center">
               Start Saving Now
             </button>
             <button 
