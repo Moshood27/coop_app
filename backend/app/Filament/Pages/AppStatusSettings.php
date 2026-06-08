@@ -221,6 +221,7 @@ class AppStatusSettings extends Page
                         Toggle::make('zakat_enabled')->label('Zakat'),
                         Toggle::make('junior_coop_enabled')->label('Junior Coop'),
                         Toggle::make('projects_enabled')->label('Projects'),
+                        Toggle::make('project_payment_enabled')->label('Project Payments'),
                         Toggle::make('chat_help_enabled')->label('Chat & Help'),
                         Toggle::make('withdrawals_enabled')->label('Withdrawals Enabled')
                             ->helperText('Global kill switch for all withdrawals.'),
@@ -242,6 +243,7 @@ class AppStatusSettings extends Page
             'zakat_enabled' => 'zakat-enabled',
             'junior_coop_enabled' => 'junior-coop-enabled',
             'projects_enabled' => 'projects-enabled',
+            'project_payment_enabled' => 'project-payment-enabled',
             'chat_help_enabled' => 'chat-help-enabled',
             'withdrawals_enabled' => 'withdrawals-enabled',
         ];

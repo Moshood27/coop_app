@@ -24,11 +24,11 @@
             <label class="lbl">Scheme</label>
             <select v-model="selectedSchemeId" class="inp">
               <option value="">Select Scheme</option>
-              <option value="combined">Shares & Savings (50/50 Split)</option>
-              <option v-for="s in schemes" :key="s.id" :value="s.id">{{ s.name }}</option>
+              <option v-if="hasSharesAndSavings" value="combined">Shares & Savings (50/50 Split)</option>
+              <option v-for="s in filteredSchemes" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
           </div>
-          <div>
+          <div v-if="appStatusStore.features['project-payment-enabled']">
             <label class="lbl">Project (optional)</label>
             <select v-model="selectedProjectId" class="inp">
               <option value="">No Project</option>
@@ -211,6 +211,21 @@ const basePath = (baseRaw && baseRaw.startsWith('./')) ? '/' : (baseRaw.endsWith
 const isNative = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
 
 const schemes = ref([])
+const hasSharesAndSavings = computed(() => {
+  const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
+  const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
+  return !!(shares && savings)
+})
+const filteredSchemes = computed(() => {
+  const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
+  const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
+  
+  return schemes.value.filter(s => {
+    if (shares && s.id === shares.id) return false
+    if (savings && s.id === savings.id) return false
+    return true
+  })
+})
 const projects = ref([])
 const paymentList = ref([])
 const selectedSchemeId = ref('')

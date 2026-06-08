@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,8 +54,7 @@ class SchemeResource extends Resource
                     ->label('Minimum Amount')
                     ->money('ngn', true)
                     ->sortable(),
-                IconColumn::make('active')
-                    ->boolean()
+                ToggleColumn::make('active')
                     ->label('Active')
                     ->sortable(),
             ])

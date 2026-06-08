@@ -303,6 +303,7 @@ class DashboardController extends Controller
                 'zakat-enabled' => Feature::for('global')->active('zakat-enabled'),
                 'junior-coop-enabled' => Feature::for('global')->active('junior-coop-enabled'),
                 'projects-enabled' => Feature::for('global')->active('projects-enabled'),
+                'project-payment-enabled' => Feature::for('global')->active('project-payment-enabled'),
                 'chat-help-enabled' => Feature::for('global')->active('chat-help-enabled'),
             ],
             'is_ramadan' => $this->priceService->isRamadan(),
