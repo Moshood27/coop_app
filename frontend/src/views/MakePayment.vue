@@ -54,10 +54,10 @@
             Add to List
           </button>
         </div>
-        <div class="mt-3 flex items-center gap-2">
-          <input id="fine" type="checkbox" v-model="isFine" class="accent-blue-700">
-<!--          <label for="fine" class="text-sm text-slate-700">Lateness/Apology Fine (Audit)</label>-->
-        </div>
+<!--        <div class="mt-3 flex items-center gap-2">-->
+<!--          <input id="fine" type="checkbox" v-model="isFine" class="accent-blue-700">-->
+<!--      <label for="fine" class="text-sm text-slate-700">Lateness/Apology Fine (Audit)</label>&ndash;&gt;-->
+<!--        </div>-->
       </div>
     </div>
 
