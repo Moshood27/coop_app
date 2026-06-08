@@ -13,6 +13,13 @@ class EditMeeting extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('attendance_qr')
+                ->label('Attendance QR')
+                ->icon('heroicon-o-qr-code')
+                ->color('success')
+                ->modalContent(fn () => view('filament.resources.meetings.attendance-qr', ['meeting' => $this->record]))
+                ->modalSubmitAction(false)
+                ->visible(fn (): bool => in_array($this->record->status, ['scheduled', 'ongoing'])),
             Actions\DeleteAction::make(),
         ];
     }

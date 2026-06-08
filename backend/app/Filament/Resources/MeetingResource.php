@@ -188,7 +188,7 @@ class MeetingResource extends Resource
                     ->color('success')
                     ->modalContent(fn (Meeting $record) => view('filament.resources.meetings.attendance-qr', ['meeting' => $record]))
                     ->modalSubmitAction(false)
-                    ->visible(fn (Meeting $record): bool => $record->status === 'ongoing'),
+                    ->visible(fn (Meeting $record): bool => in_array($record->status, ['scheduled', 'ongoing'])),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

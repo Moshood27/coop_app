@@ -2,8 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\AttendanceQrPage;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\Register;
+use App\Filament\Resources\MeetingResource;
 use App\Filament\Resources\ChatRoomResource;
 use App\Filament\Resources\ChatRoomResource\Widgets\ChatStatsWidget;
 use App\Filament\Resources\ChatAuditResource;
@@ -90,6 +93,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             // Explicitly register key resources to ensure they appear in navigation
             ->resources([
+                MeetingResource::class,
                 AgmCandidateResource::class,
                 AgmSessionResource::class,
                 BranchResource::class,
@@ -128,6 +132,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
+                AttendanceQrPage::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

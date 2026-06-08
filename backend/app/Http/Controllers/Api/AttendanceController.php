@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\AttendanceMarked;
 use App\Http\Controllers\Controller;
 use App\Models\Meeting;
 use App\Models\AttendanceRecord;
@@ -137,9 +138,17 @@ class AttendanceController extends Controller
         if ($request->filled('qr_token')) {
             $cacheKey = "meeting_{$meeting->id}_qr_token";
             $storedToken = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
             if (!$storedToken || $storedToken !== $request->qr_token) {
                 return response()->json(['message' => 'Invalid or expired QR code'], 400);
             }
+
+            // Atomically consume the token to prevent race conditions
+            $pulledToken = \Illuminate\Support\Facades\Cache::pull($cacheKey);
+            if ($pulledToken !== $request->qr_token) {
+                return response()->json(['message' => 'QR code already used by another member'], 400);
+            }
+
             // Successfully used QR token, refresh it for the next person
             $this->attendanceService->refreshAttendanceQrToken($meeting);
         } else {
@@ -202,6 +211,8 @@ class AttendanceController extends Controller
                 'device_uuid' => $request->device_uuid,
             ]
         );
+
+        broadcast(new AttendanceMarked($meeting, $record));
 
         $message = 'Attendance marked successfully';
         if ($this->attendanceService->isLate($meeting, $record->attended_at)) {

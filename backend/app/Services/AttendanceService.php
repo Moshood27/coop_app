@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\AttendanceQrRefreshed;
 use App\Models\AttendanceRecord;
 use App\Models\CharityEntry;
 use App\Models\Meeting;
@@ -23,15 +24,10 @@ class AttendanceService
         $token = Cache::get($cacheKey);
 
         if (!$token) {
-            $token = $this->refreshAttendanceQrToken($meeting);
+            return $this->refreshAttendanceQrToken($meeting);
         }
 
-        $params = [
-            'meeting_id' => $meeting->id,
-            'token' => $token,
-        ];
-
-        return 'attaqwa:attendance?' . http_build_query($params);
+        return $this->formatPayload($meeting, $token);
     }
 
     /**
@@ -43,10 +39,22 @@ class AttendanceService
         $token = Str::random(16);
         Cache::put($cacheKey, $token, now()->addSeconds(60)); // 60s window but refreshed every scan/2s
 
-        // Optional: Broadcast here if needed
-        // broadcast(new \App\Events\AttendanceQrRefreshed($meeting, $token));
+        $payload = $this->formatPayload($meeting, $token);
 
-        return $token;
+        // Broadcast to any admins watching the QR screen
+        broadcast(new AttendanceQrRefreshed($meeting, $payload));
+
+        return $payload;
+    }
+
+    protected function formatPayload(Meeting $meeting, string $token): string
+    {
+        $params = [
+            'meeting_id' => $meeting->id,
+            'token' => $token,
+        ];
+
+        return 'attaqwa:attendance?' . http_build_query($params);
     }
 
     /**

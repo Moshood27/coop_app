@@ -21,7 +21,7 @@
           </svg>
           Scan or Paste QR
         </h3>
-        <p class="text-xs text-slate-500 mb-3">Paste the QR payload text here. Camera scanning will be added later.</p>
+        <p class="text-xs text-slate-500 mb-3">Scan or paste the QR payload text here.</p>
         <textarea v-model.trim="qr" rows="3" class="inp text-sm mb-4" placeholder="attaqwa:pay?to_type=membership&to=...&amount=...&note=..."></textarea>
         <div class="flex flex-wrap gap-2">
           <button @click="paste" class="btn-muted px-4 py-2">Paste</button>
@@ -110,6 +110,13 @@
         </div>
       </div>
     </div>
+
+    <WebQrScanner 
+      v-if="showWebScanner" 
+      @scan="handleScan" 
+      @close="showWebScanner = false"
+      @error="(e) => scanError = e?.message || 'Camera error'" 
+    />
   </div>
 </template>
 
@@ -117,14 +124,18 @@
 import { ref } from 'vue'
 import axios from '../http.js'
 import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning'
+import { Capacitor } from '@capacitor/core'
+import WebQrScanner from '../components/WebQrScanner.vue'
 
-const canScan = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
+const isNative = Capacitor.isNativePlatform()
+const canScan = true
 
 const qr = ref('')
 const loading = ref(false)
 const error = ref('')
 const scanError = ref('')
 const scanning = ref(false)
+const showWebScanner = ref(false)
 
 const multiple = ref(false)
 const branches = ref([])
@@ -157,7 +168,12 @@ async function paste() {
 
 async function scan() {
   scanError.value = ''
-  if (!canScan) { scanError.value = 'Scanning is only available on the mobile app.'; return }
+  
+  if (!isNative) {
+    showWebScanner.value = true
+    return
+  }
+
   try {
     const perm = await BarcodeScanner.checkPermissions()
     if (perm.camera !== 'granted') {
@@ -185,6 +201,17 @@ async function scan() {
 
 async function stopScan() {
   // No persistent preview to stop when using single-shot scan()
+}
+
+async function handleScan(code) {
+  showWebScanner.value = false
+  if (code) {
+    qr.value = String(code)
+    await new Promise(r => setTimeout(r, 10))
+    await resolve()
+  } else {
+    scanError.value = 'No QR code detected'
+  }
 }
 
 async function resolve() {

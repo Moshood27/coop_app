@@ -232,6 +232,13 @@
       </div>
     </div>
     <AppBottomNav />
+    
+    <WebQrScanner 
+      v-if="showWebScanner" 
+      @scan="handleScan" 
+      @close="showWebScanner = false"
+      @error="(e) => modal.alert(e?.message || 'Camera error')" 
+    />
   </div>
 </template>
 
@@ -240,8 +247,10 @@ import {ref, onMounted, onUnmounted, computed} from 'vue'
 import { Geolocation } from '@capacitor/geolocation'
 import { Device } from '@capacitor/device'
 import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning'
+import { Capacitor } from '@capacitor/core'
 import AppHeader from '../components/AppHeader.vue'
 import AppBottomNav from '../components/AppBottomNav.vue'
+import WebQrScanner from '../components/WebQrScanner.vue'
 import axios from '../http'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
@@ -267,18 +276,22 @@ const submittingApology = ref(false)
 const timeRemaining = ref('')
 const countdownInterval = ref(null)
 const refreshingStatus = ref(false)
+const showWebScanner = ref(false)
 
-const canScan = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
+const isNative = Capacitor.isNativePlatform()
+const canScan = true // Always true now as we have web fallback
 
 const scanQr = async () => {
-  if (!canScan) {
-    modal.alert('Scanning is only available on the mobile app.')
-    return
-  }
   if (!location.value) {
     modal.alert('Please capture your location first.')
     return
   }
+
+  if (!isNative) {
+    showWebScanner.value = true
+    return
+  }
+
   try {
     const perm = await BarcodeScanner.checkPermissions()
     if (perm.camera !== 'granted') {
@@ -424,6 +437,22 @@ const getLocation = async () => {
     }
   } finally {
     locating.value = false
+  }
+}
+
+const handleScan = async (code) => {
+  showWebScanner.value = false
+  if (code && code.startsWith('attaqwa:attendance?')) {
+    const urlStr = code.replace('attaqwa:attendance', 'http://localhost')
+    const url = new URL(urlStr)
+    const qrToken = url.searchParams.get('token')
+    if (qrToken) {
+      await submitAttendance(qrToken)
+    } else {
+      modal.alert('Invalid Attendance QR code: Token missing')
+    }
+  } else {
+    modal.alert('Invalid QR code format. Please scan a valid Attendance QR.')
   }
 }
 

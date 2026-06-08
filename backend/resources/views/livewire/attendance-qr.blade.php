@@ -21,4 +21,18 @@
         </div>
         <p class="text-[10px] text-gray-400 italic">Refreshes every 2 seconds or on each scan</p>
     </div>
+
+    @if(count($recentAttendees) > 0)
+    <div class="w-full max-w-xs mt-6">
+        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3 border-b pb-1">Recent Scans</h4>
+        <div class="space-y-2">
+            @foreach($recentAttendees as $attendee)
+            <div class="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded-lg animate-in fade-in slide-in-from-top-1">
+                <span class="font-medium text-gray-700 dark:text-gray-300">{{ $attendee['member_name'] }}</span>
+                <span class="text-xs text-gray-400">{{ $attendee['attended_at'] }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 </div>
