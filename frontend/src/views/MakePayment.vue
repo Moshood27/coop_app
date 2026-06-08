@@ -56,7 +56,7 @@
         </div>
         <div class="mt-3 flex items-center gap-2">
           <input id="fine" type="checkbox" v-model="isFine" class="accent-blue-700">
-          <label for="fine" class="text-sm text-slate-700">Lateness/Apology Fine (Audit)</label>
+<!--          <label for="fine" class="text-sm text-slate-700">Lateness/Apology Fine (Audit)</label>-->
         </div>
       </div>
     </div>
@@ -93,13 +93,13 @@
           <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-1">Choose Source</p>
           
           <!-- Online Gateway -->
-          <div @click="source = 'gateway'" :class="['p-3 rounded-xl border-2 flex items-center justify-between cursor-pointer transition-all', source === 'gateway' ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-white']">
+          <div :class="['p-3 rounded-xl border-2 flex items-center justify-between opacity-60 cursor-not-allowed transition-all border-slate-100 bg-slate-50']">
             <div class="flex items-center gap-3">
-              <div :class="['w-4 h-4 rounded-full border-2 flex items-center justify-center', source === 'gateway' ? 'border-blue-600' : 'border-slate-300']">
-                <div v-if="source === 'gateway'" class="w-2 h-2 rounded-full bg-blue-600"></div>
+              <div class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center">
               </div>
-              <span class="text-xs font-bold text-slate-700 uppercase">Online Payment</span>
+              <span class="text-xs font-bold text-slate-500 uppercase">Online Payment</span>
             </div>
+            <span class="text-[9px] font-bold text-slate-400 uppercase">Unavailable</span>
           </div>
 
           <!-- Wallet -->
@@ -114,14 +114,13 @@
           </div>
 
           <!-- Special Savings -->
-          <div v-if="specialSavingsBalance > 0" @click="source = 'special_savings'" :class="['p-3 rounded-xl border-2 flex items-center justify-between cursor-pointer transition-all', source === 'special_savings' ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-white']">
+          <div v-if="specialSavingsBalance > 0" :class="['p-3 rounded-xl border-2 flex items-center justify-between opacity-60 cursor-not-allowed transition-all border-slate-100 bg-slate-50']">
             <div class="flex items-center gap-3">
-              <div :class="['w-4 h-4 rounded-full border-2 flex items-center justify-center', source === 'special_savings' ? 'border-blue-600' : 'border-slate-300']">
-                <div v-if="source === 'special_savings'" class="w-2 h-2 rounded-full bg-blue-600"></div>
+              <div class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center">
               </div>
-              <span class="text-xs font-bold text-blue-700 uppercase">Special Savings</span>
+              <span class="text-xs font-bold text-slate-500 uppercase">Special Savings</span>
             </div>
-            <span class="text-[10px] font-bold text-blue-600">₦ {{ Number(specialSavingsBalance).toLocaleString() }}</span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase">Unavailable</span>
           </div>
         </div>
 
@@ -233,7 +232,7 @@ const selectedProjectId = ref('')
 const inputAmount = ref('')
 const loading = ref(false)
 const isFine = ref(false)
-const source = ref('gateway')
+const source = ref('wallet')
 const outstandingLoan = ref(null)
 const specialSavingsBalance = ref(0)
 const enabledGateways = computed(() => {
