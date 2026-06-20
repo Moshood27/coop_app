@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\WalletTransactionResource\Pages;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Models\Scheme;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -15,6 +16,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WalletTransactionResource extends Resource
 {
@@ -133,17 +139,48 @@ class WalletTransactionResource extends Resource
                 IconColumn::make('withdrawable')->boolean()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options([
                         'credit' => 'Credit',
                         'debit' => 'Debit',
                     ]),
-                Tables\Filters\SelectFilter::make('user_id')
+                SelectFilter::make('user_id')
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                     ->searchable(['surname', 'name', 'other_names'])
                     ->preload(),
+                SelectFilter::make('source')
+                    ->label('Gateway/Source')
+                    ->options(fn() => WalletTransaction::distinct()->whereNotNull('source')->pluck('source', 'source')->toArray())
+                    ->searchable(),
+                SelectFilter::make('scheme_id')
+                    ->label('Passbook Record (Scheme)')
+                    ->options(fn() => Scheme::pluck('name', 'id')->toArray())
+                    ->query(function (Builder $query, array $data) {
+                        if (empty($data['value'])) return $query;
+                        $schemeId = (int) $data['value'];
+                        return $query->where(function ($q) use ($schemeId) {
+                            $q->whereJsonContains('meta->distribution', ['scheme_id' => $schemeId])
+                              ->orWhereJsonContains('meta->distribution', ['scheme_id' => (string)$schemeId]);
+                        });
+                    }),
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['to'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -155,6 +192,13 @@ class WalletTransactionResource extends Resource
                     ->openUrlInNewTab(),
             ])
             ->headerActions([
+                Tables\Actions\Action::make('downloadReport')
+                    ->label('Download Report')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function (Table $table) {
+                        return static::exportReport($table->getFilteredQuery());
+                    }),
                 Tables\Actions\Action::make('branchReport')
                     ->label('Branch Report')
                     ->icon('heroicon-o-document-chart-bar')
@@ -209,5 +253,70 @@ class WalletTransactionResource extends Resource
                 auth()->user()->hasRole('Branch Manager'),
                 fn (Builder $query) => $query->whereHas('user', fn (Builder $q) => $q->where('branch_id', auth()->user()->branch_id))
             );
+    }
+
+    public static function exportReport(Builder $query): StreamedResponse
+    {
+        $transactions = $query->with(['user.branch'])->latest()->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="wallet-transactions-report-' . now()->format('Y-m-d') . '.csv"',
+        ];
+
+        return response()->streamDownload(function () use ($transactions) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Date',
+                'Member Name',
+                'Membership #',
+                'Branch',
+                'Type',
+                'Amount',
+                'Gateway/Source',
+                'Passbook/Scheme',
+                'Category',
+                'Reference'
+            ]);
+
+            foreach ($transactions as $tx) {
+                if ($tx->source === 'wallet_allocation' && !empty($tx->meta['distribution'])) {
+                    $schemes = Scheme::whereIn('id', collect($tx->meta['distribution'])->pluck('scheme_id'))->pluck('name', 'id');
+                    foreach ($tx->meta['distribution'] as $item) {
+                        fputcsv($handle, [
+                            $tx->created_at->format('Y-m-d H:i:s'),
+                            $tx->user?->full_name ?? '-',
+                            $tx->user?->membership_number ?? '-',
+                            $tx->user?->branch?->name ?? '-',
+                            ucfirst((string)$tx->type),
+                            number_format((float)$item['amount'], 2, '.', ''),
+                            'Wallet (Allocation)',
+                            $schemes[$item['scheme_id']] ?? ('Scheme #' . $item['scheme_id']),
+                            ucwords(str_replace('_', ' ', (string)($item['category'] ?? 'deposit'))),
+                            $tx->reference
+                        ]);
+                    }
+                } else {
+                    $source = $tx->source ?? '-';
+                    if (!empty($tx->meta['channel'])) {
+                        $source .= ' (' . $tx->meta['channel'] . ')';
+                    }
+                    fputcsv($handle, [
+                        $tx->created_at->format('Y-m-d H:i:s'),
+                        $tx->user?->full_name ?? '-',
+                        $tx->user?->membership_number ?? '-',
+                        $tx->user?->branch?->name ?? '-',
+                        ucfirst((string)$tx->type),
+                        number_format((float)$tx->amount, 2, '.', ''),
+                        $source,
+                        'Wallet',
+                        $tx->type === 'credit' ? 'Wallet Top-up' : 'Miscellaneous',
+                        $tx->reference
+                    ]);
+                }
+            }
+
+            fclose($handle);
+        }, 'wallet-transactions-report-' . now()->format('Y-m-d') . '.csv', $headers);
     }
 }

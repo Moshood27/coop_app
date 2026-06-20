@@ -44,7 +44,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobilAlle-menu" class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
             <a href="#features" class="block text-base font-medium text-slate-600 dark:text-slate-400">Features</a>
             <a href="#resolutions" class="block text-base font-medium text-slate-600 dark:text-slate-400">Resolutions</a>
             <a href="#leadership" class="block text-base font-medium text-slate-600 dark:text-slate-400">Leadership</a>
