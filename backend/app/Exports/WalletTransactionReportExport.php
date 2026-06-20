@@ -7,9 +7,11 @@ use App\Models\Scheme;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use Illuminate\Support\Collection;
 
-class WalletTransactionReportExport implements FromCollection, WithHeadings, WithMapping
+class WalletTransactionReportExport implements FromCollection, WithHeadings, WithMapping, WithEvents
 {
     protected $filters;
     protected $schemes;
@@ -71,7 +73,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                         'date' => $tx->created_at,
                         'member' => $tx->user?->name ?? 'N/A',
                         'membership_no' => $tx->user?->membership_number ?? 'N/A',
-                        'branch' => $tx->user?->branch?->name ?? 'N/A',
+                        'branch' => $tx->user?->branch?->name ?? 'Unassigned',
                         'type' => strtoupper($tx->type),
                         'amount' => $item['amount'] ?? $tx->amount,
                         'source' => $tx->source,
@@ -96,7 +98,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                     'date' => $tx->created_at,
                     'member' => $tx->user?->name ?? 'N/A',
                     'membership_no' => $tx->user?->membership_number ?? 'N/A',
-                    'branch' => $tx->user?->branch?->name ?? 'N/A',
+                    'branch' => $tx->user?->branch?->name ?? 'Unassigned',
                     'type' => strtoupper($tx->type),
                     'amount' => $tx->amount,
                     'source' => $tx->source,
@@ -107,6 +109,13 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                     'status' => 'Success',
                 ]);
             }
+        }
+
+        if (!empty($this->filters['sort_by_branch'])) {
+            return $reportData->sortBy([
+                [fn($row) => $row['branch'] === 'Unassigned' ? 'ZZZ' : $row['branch'], 'asc'],
+                ['date', 'desc'],
+            ]);
         }
 
         return $reportData;
@@ -156,6 +165,15 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
             $row['scheme'],
             $row['purpose'],
             $row['status'],
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $event->sheet->getDelegate()->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+            },
         ];
     }
 }

@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ListRecords;
 
 class ListWalletTransactions extends ListRecords
@@ -71,6 +72,17 @@ class ListWalletTransactions extends ListRecords
                             'fine' => 'Fine Payment',
                             'withdrawal' => 'Withdrawal',
                         ]),
+                    Select::make('format')
+                        ->label('Format')
+                        ->options([
+                            'pdf' => 'PDF (.pdf)',
+                            'xlsx' => 'Excel (.xlsx)',
+                        ])
+                        ->default('pdf')
+                        ->required(),
+                    Toggle::make('sort_by_branch')
+                        ->label('Sort by Branch (Like Branch Report)')
+                        ->default(false),
                 ])
                 ->action(function (array $data) {
                     $user = auth()->user();
@@ -78,9 +90,20 @@ class ListWalletTransactions extends ListRecords
                         $data['branch_id'] = $user->branch_id;
                     }
 
+                    $filename = 'wallet-transactions-detailed-report-' . now()->format('Y-m-d');
+                    $format = $data['format'] ?? 'xlsx';
+
+                    if ($format === 'pdf') {
+                        return Excel::download(
+                            new WalletTransactionReportExport($data),
+                            $filename . '.pdf',
+                            \Maatwebsite\Excel\Excel::DOMPDF
+                        );
+                    }
+
                     return Excel::download(
                         new WalletTransactionReportExport($data),
-                        'wallet-transactions-detailed-report-' . now()->format('Y-m-d') . '.xlsx'
+                        $filename . '.xlsx'
                     );
                 }),
             Actions\CreateAction::make(),
