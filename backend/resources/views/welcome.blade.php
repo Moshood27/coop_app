@@ -36,7 +36,7 @@
                         <a href="https://attaqwacooposg.com/app/" class="text-sm font-medium hover:text-primary-600 transition-colors">Member Login</a>
                         <a href="#download" class="bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-4 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-all">Get the App</a>
                     </div>
-                    <button id="mobile-menu-button" class="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                    <button id="mobile-menu-button" type="button" class="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                         <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
                 </div>
@@ -719,25 +719,65 @@
     </footer>
 
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            lucide.createIcons();
 
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuLinks = mobileMenu.querySelectorAll('a');
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+            function toggleMenu() {
+                const isHidden = mobileMenu.classList.toggle('hidden');
 
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            const nav = document.querySelector('nav');
-            if (window.scrollY > 20) {
-                nav.classList.add('py-2', 'shadow-sm');
-            } else {
-                nav.classList.remove('py-2', 'shadow-sm');
+                // Update icon
+                const iconContainer = mobileMenuButton.querySelector('i') || mobileMenuButton.querySelector('svg');
+                const newIconName = isHidden ? 'menu' : 'x';
+
+                if (iconContainer) {
+                    const newIcon = document.createElement('i');
+                    newIcon.setAttribute('data-lucide', newIconName);
+                    newIcon.classList.add('w-6', 'h-6');
+                    iconContainer.replaceWith(newIcon);
+                    lucide.createIcons();
+                }
             }
+
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleMenu();
+                });
+
+                // Close mobile menu when clicking a link
+                mobileMenuLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            toggleMenu();
+                        }
+                    });
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenu.contains(e.target) && !mobileMenuButton.contains(e.target)) {
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            toggleMenu();
+                        }
+                    }
+                });
+            }
+
+            // Navbar scroll effect
+            window.addEventListener('scroll', () => {
+                const nav = document.querySelector('nav');
+                if (window.scrollY > 20) {
+                    nav.classList.add('py-2', 'shadow-sm');
+                } else {
+                    nav.classList.remove('py-2', 'shadow-sm');
+                }
+            });
         });
     </script>
     @include('tawk-widget')

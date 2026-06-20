@@ -6,6 +6,7 @@ use App\Filament\Traits\HasWipeAction;
 
 use App\Filament\Resources\WalletTransactionResource;
 use App\Models\Scheme;
+use App\Models\Branch;
 use App\Models\WalletTransaction;
 use App\Exports\WalletTransactionReportExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -29,7 +30,7 @@ class ListWalletTransactions extends ListRecords
     {
         return [
             $this->getWipeHeaderAction(),
-            Actions\Action::make('downloadReport')
+            Actions\Action::make('downloadDetailedReport')
                 ->label('Download Detailed Report')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
@@ -53,6 +54,11 @@ class ListWalletTransactions extends ListRecords
                                 ->mapWithKeys(fn($s) => [$s => ucfirst(str_replace('_', ' ', $s))])
                                 ->toArray();
                         }),
+                    Select::make('branch_id')
+                        ->label('Branch')
+                        ->options(Branch::pluck('name', 'id'))
+                        ->visible(fn() => auth()->user()->hasRole('super_admin'))
+                        ->searchable(),
                     Select::make('scheme_id')
                         ->label('Passbook Record (Scheme)')
                         ->options(Scheme::pluck('name', 'id'))

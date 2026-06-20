@@ -22,7 +22,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
 
     public function collection()
     {
-        $query = WalletTransaction::with('user')->orderBy('created_at', 'desc');
+        $query = WalletTransaction::with(['user.branch'])->orderBy('created_at', 'desc');
 
         if (!empty($this->filters['from_date'])) {
             $query->whereDate('created_at', '>=', $this->filters['from_date']);
@@ -71,6 +71,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                         'date' => $tx->created_at,
                         'member' => $tx->user?->name ?? 'N/A',
                         'membership_no' => $tx->user?->membership_number ?? 'N/A',
+                        'branch' => $tx->user?->branch?->name ?? 'N/A',
                         'type' => strtoupper($tx->type),
                         'amount' => $item['amount'] ?? $tx->amount,
                         'source' => $tx->source,
@@ -95,6 +96,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                     'date' => $tx->created_at,
                     'member' => $tx->user?->name ?? 'N/A',
                     'membership_no' => $tx->user?->membership_number ?? 'N/A',
+                    'branch' => $tx->user?->branch?->name ?? 'N/A',
                     'type' => strtoupper($tx->type),
                     'amount' => $tx->amount,
                     'source' => $tx->source,
@@ -127,6 +129,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
             'Date',
             'Member',
             'Membership #',
+            'Branch',
             'Type',
             'Amount',
             'Source',
@@ -144,6 +147,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
             $row['date']->format('Y-m-d H:i:s'),
             $row['member'],
             $row['membership_no'],
+            $row['branch'],
             $row['type'],
             number_format($row['amount'], 2),
             ucfirst(str_replace('_', ' ', $row['source'])),
