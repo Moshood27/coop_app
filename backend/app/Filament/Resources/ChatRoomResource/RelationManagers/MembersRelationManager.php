@@ -41,7 +41,7 @@ class MembersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('user.name')
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('role')

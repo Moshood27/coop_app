@@ -71,7 +71,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
 
                     $reportData->push([
                         'date' => $tx->created_at,
-                        'member' => $tx->user?->name ?? 'N/A',
+                        'member' => $tx->user?->full_name ?? 'N/A',
                         'membership_no' => $tx->user?->membership_number ?? 'N/A',
                         'branch' => $tx->user?->branch?->name ?? 'Unassigned',
                         'type' => strtoupper($tx->type),
@@ -96,7 +96,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
 
                 $reportData->push([
                     'date' => $tx->created_at,
-                    'member' => $tx->user?->name ?? 'N/A',
+                    'member' => $tx->user?->full_name ?? 'N/A',
                     'membership_no' => $tx->user?->membership_number ?? 'N/A',
                     'branch' => $tx->user?->branch?->name ?? 'Unassigned',
                     'type' => strtoupper($tx->type),

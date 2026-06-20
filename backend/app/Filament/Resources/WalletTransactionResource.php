@@ -111,9 +111,8 @@ class WalletTransactionResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('created_at')->label('Time')->dateTime()->sortable(),
-                TextColumn::make('user.surname')
+                TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
                     ->searchable(['surname', 'name', 'other_names'])
                     ->sortable(),
                 TextColumn::make('user.branch.name')

@@ -50,7 +50,7 @@ class ChatAuditResource extends Resource
                 Tables\Columns\TextColumn::make('room.name')
                     ->label('Room')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Sender')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('body')

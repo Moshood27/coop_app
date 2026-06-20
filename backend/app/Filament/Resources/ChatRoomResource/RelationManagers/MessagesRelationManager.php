@@ -19,7 +19,7 @@ class MessagesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('body')
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Sender')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
