@@ -23,6 +23,8 @@ use Spatie\Permission\Events\RoleAttached;
 use Spatie\Permission\Events\RoleDetached;
 use Spatie\Permission\Events\PermissionAttached;
 use Spatie\Permission\Events\PermissionDetached;
+use Laragear\WebAuthn\Contracts\WebAuthnChallengeRepository;
+use App\WebAuthn\CacheChallengeRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\Kyc\KycVerifier::class, function () {
             return new \App\Services\Kyc\KycVerifier();
         });
+
+        // Bind WebAuthn Challenge Repository to use Cache instead of Session for stateless API support
+        $this->app->singleton(WebAuthnChallengeRepository::class, CacheChallengeRepository::class);
     }
 
     /**
