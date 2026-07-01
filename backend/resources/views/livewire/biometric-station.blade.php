@@ -4,7 +4,22 @@
         <p class="text-sm text-gray-600">Search for a member to enroll or verify their fingerprint.</p>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-6 flex space-x-4">
+        <button
+            wire:click="toggleAutoEnroll"
+            class="px-4 py-2 rounded-lg font-medium transition {{ $autoEnrollMode ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+        >
+            {{ $autoEnrollMode ? 'Stop Auto-Enroll' : 'Start Auto-Enroll (Bulk)' }}
+        </button>
+        <button
+            wire:click="toggleAutoMark"
+            class="px-4 py-2 rounded-lg font-medium transition {{ $autoMarkMode ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+        >
+            {{ $autoMarkMode ? 'Stop Auto-Mark' : 'Start Auto-Mark (Continuous)' }}
+        </button>
+    </div>
+
+    <div class="mb-6" x-show="!autoMarkMode">
         <input
             type="text"
             wire:model.live.debounce.300ms="search"
@@ -15,7 +30,25 @@
         >
     </div>
 
-    @if(count($users) > 0)
+    @if($autoMarkMode)
+        <div class="mb-6 p-12 border-4 border-dashed border-green-200 rounded-3xl bg-green-50 text-center flex flex-col items-center">
+            <div class="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <x-heroicon-o-finger-print class="w-16 h-16 text-green-600 {{ $autoMarkMode ? 'animate-pulse' : '' }}" />
+            </div>
+            <h3 class="text-2xl font-bold text-green-800 mb-2">Continuous Attendance Mode Active</h3>
+            <p class="text-green-600 mb-6">The system is waiting for any member to touch the scanner.</p>
+            <button
+                type="button"
+                x-on:click="captureUsbTemplate('identify')"
+                :disabled="processing"
+                class="px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition shadow-lg"
+            >
+                Start Scanner for Next Member
+            </button>
+        </div>
+    @endif
+
+    @if(count($users) > 0 && !$autoMarkMode)
         <div class="mb-6 border rounded-lg divide-y bg-white">
             @foreach($users as $user)
                 <div
@@ -117,6 +150,11 @@
                     try {
                         const scannerUrl = "{{ config('cooperative.biometric.scanner_url', 'http://localhost:8080/biometric/scan') }}";
 
+                        // Handle Mixed Content Warnings
+                        if (window.location.protocol === 'https:' && scannerUrl.startsWith('http://') && !scannerUrl.includes('localhost') && !scannerUrl.includes('127.0.0.1')) {
+                            console.warn('Potential Mixed Content issue: Accessing HTTP scanner from HTTPS site.');
+                        }
+
                         // This integration point communicates with a local desktop service
                         // or browser extension that interfaces with the USB Biometric Scanner
                         // (DigitalPersona, ZKTeco, etc.)
@@ -135,6 +173,8 @@
 
                         if (action === 'enroll') {
                             $wire.saveUsbTemplate(template);
+                        } else if (action === 'identify') {
+                            $wire.identifyUsbTemplate(template);
                         } else {
                             // In verification, we send the captured template to match against stored one
                             $wire.verifyUsbTemplate(template);

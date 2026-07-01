@@ -144,6 +144,7 @@ class QardHasan extends Model
         });
 
         static::saving(function (QardHasan $loan) {
+            \Illuminate\Support\Facades\Log::info("Saving QardHasan: " . $loan->qard_id_string);
             // Auto-complete if fully paid
             if ($loan->paid_amount >= $loan->principal_amount && $loan->principal_amount > 0) {
                 if (!in_array($loan->status, ['cancelled', 'rejected'])) {

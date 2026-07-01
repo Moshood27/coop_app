@@ -38,8 +38,10 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
     */
     public function model(array $row)
     {
+        \Illuminate\Support\Facades\Log::info("Processing loan row for membership_no: " . ($row['membership_no'] ?? 'N/A'));
         $user = User::where('membership_number', $row['membership_no'])->first();
         if (!$user) {
+            \Illuminate\Support\Facades\Log::warning("User not found for membership_no: " . ($row['membership_no'] ?? 'N/A'));
             return null;
         }
 
@@ -104,6 +106,8 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
 
         // Explicitly set created_at as it might not be in $fillable
         $loan->created_at = $this->migrationDate;
+
+        \Illuminate\Support\Facades\Log::info("Returning loan model for user_id: {$user->id}, qard_id_string: {$loan->qard_id_string}");
 
         return $loan;
     }

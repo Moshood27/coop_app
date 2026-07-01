@@ -32,8 +32,20 @@ BIOMETRIC_SCANNER_URL=http://localhost:8080/biometric/scan
 ## Admin Interface
 
 -   **Biometric Attendance Station:** A dedicated Livewire component (`/admin/biometric-station/{meeting}`) for high-speed attendance marking.
+    -   **Bulk Enrollment Mode:** Automatically cycles through active members who lack biometric templates.
+    -   **Continuous Attendance Mode:** Waits for any member to touch the scanner, identifies them automatically, and marks attendance.
 -   **User Resource:** Admins can manually view or update biometric templates under the "Identity & Membership" tab of a member's profile.
 -   **Member Applications:** Biometrics can be captured during the application phase and are automatically transferred to the user profile upon approval.
+
+## VPS & Public IP Deployment
+
+When running the application on a live public IP (VPS environment):
+
+1.  **HTTPS Requirement:** Your VPS should be served over HTTPS.
+2.  **Mixed Content:** Browsers may block requests from an HTTPS site to an HTTP local service.
+    -   Use `http://localhost` or `http://127.0.0.1` as the `BIOMETRIC_SCANNER_URL` as these are often exempted from Mixed Content restrictions.
+    -   If using a custom domain for the local service, ensure it has a valid SSL certificate.
+3.  **CORS:** Ensure your `backend/.env` includes the public domain in `CORS_ALLOWED_ORIGINS`.
 
 ## Security Considerations
 

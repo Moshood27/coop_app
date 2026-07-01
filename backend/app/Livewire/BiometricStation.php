@@ -16,6 +16,8 @@ class BiometricStation extends Component
     public ?int $selectedUserId = null;
     public $search = '';
     public bool $isEnrolling = false;
+    public bool $autoEnrollMode = false;
+    public bool $autoMarkMode = false;
 
     public function mount(Meeting $meeting, ?User $initialUser = null)
     {
@@ -29,6 +31,38 @@ class BiometricStation extends Component
     {
         $this->selectedUserId = $userId;
         $this->isEnrolling = false;
+    }
+
+    public function toggleAutoEnroll()
+    {
+        $this->autoEnrollMode = !$this->autoEnrollMode;
+        if ($this->autoEnrollMode) {
+            $this->autoMarkMode = false;
+            $this->selectNextUserForEnrollment();
+        }
+    }
+
+    public function toggleAutoMark()
+    {
+        $this->autoMarkMode = !$this->autoMarkMode;
+        if ($this->autoMarkMode) {
+            $this->autoEnrollMode = false;
+            $this->selectedUserId = null;
+        }
+    }
+
+    protected function selectNextUserForEnrollment()
+    {
+        $nextUser = User::whereNull('biometric_template')
+            ->where('approval_status', 'approved')
+            ->first();
+
+        if ($nextUser) {
+            $this->selectedUserId = $nextUser->id;
+        } else {
+            $this->autoEnrollMode = false;
+            Notification::make()->title('No more members to enroll.')->info()->send();
+        }
     }
 
     public function getSelectedUserProperty()
@@ -47,6 +81,10 @@ class BiometricStation extends Component
 
             Notification::make()->title('Biometric enrolled via USB successfully for ' . $user->full_name)->success()->send();
             $this->dispatch('enrollment-completed');
+
+            if ($this->autoEnrollMode) {
+                $this->selectNextUserForEnrollment();
+            }
         } catch (\Exception $e) {
             Log::error('USB Biometric Enrollment Error: ' . $e->getMessage());
             Notification::make()->title('Enrollment failed: ' . $e->getMessage())->danger()->send();
@@ -76,6 +114,20 @@ class BiometricStation extends Component
             Log::error('USB Biometric Verification Error: ' . $e->getMessage());
             Notification::make()->title('Verification failed: ' . $e->getMessage())->danger()->send();
         }
+    }
+
+    public function identifyUsbTemplate($template)
+    {
+        $user = User::where('biometric_template', $template)->first();
+
+        if (!$user) {
+            Notification::make()->title('No matching member found for this fingerprint.')->danger()->send();
+            $this->dispatch('error-occurred');
+            return;
+        }
+
+        $this->selectedUserId = $user->id;
+        $this->markAttendance($user);
     }
 
     protected function markAttendance(User $user)

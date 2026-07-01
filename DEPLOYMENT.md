@@ -318,3 +318,11 @@ Notes
 Frontend/mobile
 - The Profile screen shows PIN status (Set/Not Set) and when it was set, and provides UI for both setting and resetting the PIN.
 - For mobile builds, ensure VITE_API_URL points to your backend origin (see section 7 for details).
+
+9) USB Biometric Scanner (Admin Station)
+To enable the centralized biometric station for multiple member enrollment and attendance:
+- Configure `BIOMETRIC_SCANNER_ENABLED=true` in `backend/.env`.
+- Set `BIOMETRIC_SCANNER_URL` (default: `http://localhost:8080/biometric/scan`).
+- Ensure the administrator's PC has the local biometric service running.
+- For VPS/HTTPS environments, use `http://localhost` or `http://127.0.0.1` to avoid Mixed Content blocks, or provide a secure local endpoint.
+- Refer to `BIOMETRIC_SYSTEM.md` for full architectural details and automatic modes (Bulk Enroll/Continuous Mark).

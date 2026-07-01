@@ -78,4 +78,31 @@ class BiometricController extends Controller
 
         return response()->json(['message' => 'USB Biometric template saved successfully']);
     }
+
+    /**
+     * Identify user by USB biometric template.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function identify(Request $request)
+    {
+        $request->validate([
+            'template' => 'required|string',
+        ]);
+
+        $user = \App\Models\User::where('biometric_template', $request->template)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'No matching member found'], 404);
+        }
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+                'membership_number' => $user->membership_number,
+            ]
+        ]);
+    }
 }

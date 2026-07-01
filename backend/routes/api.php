@@ -89,6 +89,9 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->gro
     // Attendance QR (for admins to show on screen)
     Route::get('/meetings/{meeting}/attendance-qr-payload', [AttendanceController::class, 'getAttendanceQrPayload']);
 
+    // Biometric Identification (for station)
+    Route::post('/biometrics/identify', [BiometricController::class, 'identify']);
+
 
     // Takaful (Mutual Protection Pool) admin endpoints
     Route::get('/takaful/summary', [AdminTakafulController::class, 'summary']);
