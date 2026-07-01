@@ -182,6 +182,14 @@ class MeetingResource extends Resource
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('attendance_biometric')
+                    ->label('Biometric Station')
+                    ->icon('heroicon-o-finger-print')
+                    ->color('primary')
+                    ->modalContent(fn (Meeting $record) => view('filament.resources.meetings.attendance-biometric', ['meeting' => $record]))
+                    ->modalSubmitAction(false)
+                    ->modalWidth('2xl')
+                    ->visible(fn (Meeting $record): bool => in_array($record->status, ['scheduled', 'ongoing'])),
                 Tables\Actions\Action::make('attendance_qr')
                     ->label('Attendance QR')
                     ->icon('heroicon-o-qr-code')

@@ -293,6 +293,16 @@ class AttendanceRecordsRelationManager extends RelationManager
                                 ->send();
                         }
                     }),
+                Tables\Actions\Action::make('biometricAction')
+                    ->label('Biometric Action')
+                    ->icon('heroicon-o-finger-print')
+                    ->color('primary')
+                    ->modalContent(fn ($record) => view('filament.resources.meetings.attendance-biometric-single', [
+                        'meeting' => $this->getOwnerRecord(),
+                        'user' => $record->user
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalWidth('xl'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
