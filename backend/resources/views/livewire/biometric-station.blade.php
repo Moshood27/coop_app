@@ -19,21 +19,23 @@
         </button>
     </div>
 
-    <div class="mb-6" x-show="!autoMarkMode">
-        <input
-            type="text"
-            wire:model.live.debounce.300ms="search"
-            placeholder="Search by name, surname or ID..."
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-            wire:keydown.enter.prevent=""
-            :disabled="processing"
-        >
-    </div>
+    @if(!$autoMarkMode)
+        <div class="mb-6">
+            <input
+                type="text"
+                wire:model.live.debounce.300ms="search"
+                placeholder="Search by name, surname or ID..."
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                wire:keydown.enter.prevent=""
+                :disabled="processing"
+            >
+        </div>
+    @endif
 
     @if($autoMarkMode)
         <div class="mb-6 p-12 border-4 border-dashed border-green-200 rounded-3xl bg-green-50 text-center flex flex-col items-center">
             <div class="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <x-heroicon-o-finger-print class="w-16 h-16 text-green-600 {{ $autoMarkMode ? 'animate-pulse' : '' }}" />
+                <x-heroicon-o-finger-print class="w-16 h-16 text-green-600 animate-pulse" />
             </div>
             <h3 class="text-2xl font-bold text-green-800 mb-2">Continuous Attendance Mode Active</h3>
             <p class="text-green-600 mb-6">The system is waiting for any member to touch the scanner.</p>
