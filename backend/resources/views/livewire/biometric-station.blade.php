@@ -39,7 +39,15 @@
     @endif
 
     @if($this->selectedUser)
-        <div class="mt-6 p-6 border rounded-xl bg-gray-50" x-data="webauthnHandler">
+        <div
+            class="mt-6 p-6 border rounded-xl bg-gray-50"
+            x-data="biometricStationHandler"
+            @start-webauthn-registration.window="handleRegistration($event.detail.options)"
+            @start-webauthn-verification.window="handleVerification($event.detail.options)"
+            @enrollment-completed.window="processing = false"
+            @attendance-marked.window="processing = false"
+            @error-occurred.window="processing = false"
+        >
             <div class="flex items-center space-x-4 mb-6">
                 <div class="h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-2xl font-bold">
                     {{ strtoupper(substr($this->selectedUser->name, 0, 1)) }}
@@ -80,56 +88,38 @@
         </div>
     @endif
 
+    @script
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('webauthnHandler', () => ({
+        if (!Alpine.data('biometricStationHandler')) {
+            Alpine.data('biometricStationHandler', () => ({
                 processing: false,
 
-                init() {
-                    window.addEventListener('start-webauthn-registration', async (event) => {
-                        this.processing = true;
-                        try {
-                            const options = event.detail.options;
-                            const publicKey = this.parseOptions(options);
+                async handleRegistration(options) {
+                    this.processing = true;
+                    try {
+                        const publicKey = this.parseOptions(options);
+                        const credential = await navigator.credentials.create({ publicKey });
+                        const credentialJSON = this.publicKeyCredentialToJSON(credential);
 
-                            const credential = await navigator.credentials.create({ publicKey });
-
-                            const credentialJSON = this.publicKeyCredentialToJSON(credential);
-
-                            @this.completeEnrollment(credentialJSON);
-                        } catch (e) {
-                            console.error(e);
-                            this.processing = false;
-                            // Error notification will be handled by Livewire if we send an event back
-                        }
-                    });
-
-                    window.addEventListener('enrollment-completed', () => {
+                        $wire.completeEnrollment(credentialJSON);
+                    } catch (e) {
+                        console.error('Registration failed', e);
                         this.processing = false;
-                    });
+                    }
+                },
 
-                    window.addEventListener('start-webauthn-verification', async (event) => {
-                        this.processing = true;
-                        try {
-                            const options = event.detail.options;
-                            const publicKey = this.parseOptions(options);
+                async handleVerification(options) {
+                    this.processing = true;
+                    try {
+                        const publicKey = this.parseOptions(options);
+                        const assertion = await navigator.credentials.get({ publicKey });
+                        const assertionJSON = this.publicKeyCredentialToJSON(assertion);
 
-                            const assertion = await navigator.credentials.get({ publicKey });
-
-                            const assertionJSON = this.publicKeyCredentialToJSON(assertion);
-
-                            @this.completeVerification(assertionJSON);
-                        } catch (e) {
-                            console.error(e);
-                            this.processing = false;
-                        } finally {
-                            // We don't set processing to false here yet, because markAttendance might take time
-                        }
-                    });
-
-                    // General reset if Livewire finishes its part
-                    Livewire.on('attendance-marked', () => { this.processing = false; });
-                    Livewire.on('error-occurred', () => { this.processing = false; });
+                        $wire.completeVerification(assertionJSON);
+                    } catch (e) {
+                        console.error('Verification failed', e);
+                        this.processing = false;
+                    }
                 },
 
                 bufferToBase64url(buffer) {
@@ -168,24 +158,17 @@
                     if (pubKeyCred instanceof Object) {
                         const obj = {};
                         for (const key in pubKeyCred) {
-                            // Skip functions
                             if (typeof pubKeyCred[key] === 'function') continue;
 
                             if (pubKeyCred[key] instanceof ArrayBuffer) {
                                 obj[key] = this.bufferToBase64url(pubKeyCred[key]);
                             } else if (typeof pubKeyCred[key] === 'object' && pubKeyCred[key] !== null) {
-                                // Specialized handling for response object
-                                if (key === 'response') {
-                                    obj[key] = this.publicKeyCredentialToJSON(pubKeyCred[key]);
-                                } else {
-                                    obj[key] = this.publicKeyCredentialToJSON(pubKeyCred[key]);
-                                }
+                                obj[key] = this.publicKeyCredentialToJSON(pubKeyCred[key]);
                             } else {
                                 obj[key] = pubKeyCred[key];
                             }
                         }
 
-                        // Handle AuthenticatorAttestationResponse/AuthenticatorAssertionResponse specific fields
                         if (pubKeyCred.getClientExtensionResults) {
                             obj.clientExtensionResults = pubKeyCred.getClientExtensionResults();
                         }
@@ -219,6 +202,7 @@
                     return cloned;
                 }
             }));
-        });
+        }
     </script>
+    @endscript
 </div>

@@ -59,6 +59,7 @@ class BiometricStation extends Component
 
             $this->dispatch('start-webauthn-registration', options: $options->data());
         } catch (\Exception $e) {
+            $this->dispatch('error-occurred');
             Notification::make()->title('Error starting enrollment: ' . $e->getMessage())->danger()->send();
         }
     }
@@ -80,6 +81,7 @@ class BiometricStation extends Component
                 $this->dispatch('enrollment-completed');
             }
         } catch (\Exception $e) {
+            $this->dispatch('error-occurred');
             Log::error('WebAuthn Registration Error: ' . $e->getMessage());
             Notification::make()->title('Enrollment failed: ' . $e->getMessage())->danger()->send();
         }
@@ -101,6 +103,7 @@ class BiometricStation extends Component
 
             $this->dispatch('start-webauthn-verification', options: $options->data());
         } catch (\Exception $e) {
+            $this->dispatch('error-occurred');
             Notification::make()->title('Error starting verification: ' . $e->getMessage())->danger()->send();
         }
     }
@@ -120,6 +123,7 @@ class BiometricStation extends Component
                 $this->markAttendance($user);
             }
         } catch (\Exception $e) {
+            $this->dispatch('error-occurred');
             Log::error('WebAuthn Verification Error: ' . $e->getMessage());
             Notification::make()->title('Verification failed: ' . $e->getMessage())->danger()->send();
         }
@@ -151,6 +155,7 @@ class BiometricStation extends Component
             Notification::make()->title('Present - Attendance marked for ' . $user->full_name)->success()->send();
         }
 
+        $this->dispatch('attendance-marked');
         $this->selectedUserId = null;
         $this->search = '';
     }
