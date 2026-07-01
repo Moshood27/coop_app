@@ -42,11 +42,11 @@
         <div
             class="mt-6 p-6 border rounded-xl bg-gray-50"
             x-data="biometricStationHandler"
-            @start-webauthn-registration.window="handleRegistration($event.detail.options)"
-            @start-webauthn-verification.window="handleVerification($event.detail.options)"
-            @enrollment-completed.window="processing = false"
-            @attendance-marked.window="processing = false"
-            @error-occurred.window="processing = false"
+            x-on:start-webauthn-registration.window="handleRegistration($event.detail.options)"
+            x-on:start-webauthn-verification.window="handleVerification($event.detail.options)"
+            x-on:enrollment-completed.window="processing = false"
+            x-on:attendance-marked.window="processing = false"
+            x-on:error-occurred.window="processing = false"
         >
             <div class="flex items-center space-x-4 mb-6">
                 <div class="h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-2xl font-bold">
