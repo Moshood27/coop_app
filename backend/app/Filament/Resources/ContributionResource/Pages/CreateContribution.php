@@ -39,6 +39,7 @@ class CreateContribution extends CreateRecord
             $scheme = $item['scheme_id'] ?? null;
             $amount = isset($item['amount']) ? (float) $item['amount'] : null;
             $projectId = $item['project_id'] ?? null;
+            $qardHasanId = $item['qard_hasan_id'] ?? null;
 
             if (! $scheme) {
                 throw ValidationException::withMessages([
@@ -63,6 +64,16 @@ class CreateContribution extends CreateRecord
             if (! empty($projectId)) {
                 $row['project_id'] = (int) $projectId;
             }
+            if (! empty($qardHasanId)) {
+                $row['qard_hasan_id'] = (int) $qardHasanId;
+                $row['category'] = 'loan_repayment';
+            } else {
+                // Check if the scheme name is "Loan Repayment" to set the category even if specific loan not linked
+                $schemeModel = \App\Models\Scheme::find($scheme);
+                if ($schemeModel && $schemeModel->name === 'Loan Repayment') {
+                    $row['category'] = 'loan_repayment';
+                }
+            }
             $normalizedItems[] = $row;
         }
 
@@ -79,6 +90,12 @@ class CreateContribution extends CreateRecord
                 ];
                 if (! empty($item['project_id'])) {
                     $row['project_id'] = (int) $item['project_id'];
+                }
+                if (! empty($item['qard_hasan_id'])) {
+                    $row['qard_hasan_id'] = (int) $item['qard_hasan_id'];
+                }
+                if (! empty($item['category'])) {
+                    $row['category'] = $item['category'];
                 }
 
                 $created = Contribution::create($row);

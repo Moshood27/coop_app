@@ -176,7 +176,7 @@ class UserResource extends Resource
                                         Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')->image()->disk('public_root')->directory('upload'),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
-                                            ->helperText('Capture raw template string from USB scanner service.')
+                                            ->helperText('Capture raw template string from USB scanner service. Configured in .env (BIOMETRIC_SCANNER_URL).')
                                             ->password()
                                             ->revealable()
                                             ->columnSpanFull(),

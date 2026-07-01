@@ -142,7 +142,7 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address'),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
-                                            ->helperText('Capture raw template string from USB scanner service.')
+                                            ->helperText('Configurable template from USB scanner service. Set BIOMETRIC_SCANNER_URL in .env.')
                                             ->password()
                                             ->revealable()
                                             ->columnSpanFull(),

@@ -33,7 +33,8 @@ class ContributionResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                     ->searchable(['surname', 'name', 'other_names'])
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->reactive(),
 
                 // For create: allow multiple schemes with amounts
                 Forms\Components\Repeater::make('items')
@@ -48,7 +49,28 @@ class ContributionResource extends Resource
                             ->options(Scheme::query()->pluck('name', 'id'))
                             ->searchable()
                             ->required()
+                            ->reactive()
                             ->rule('distinct'),
+                        Forms\Components\Select::make('qard_hasan_id')
+                            ->label('Link to Loan (Optional)')
+                            ->options(function (Forms\Get $get) {
+                                $userId = $get('../../user_id');
+                                if (!$userId) return [];
+                                return \App\Models\QardHasan::where('user_id', $userId)
+                                    ->whereIn('status', ['active', 'defaulted'])
+                                    ->get()
+                                    ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                            })
+                            ->searchable()
+                            ->visible(function (Forms\Get $get) {
+                                $userId = $get('../../user_id');
+                                if (!$userId) return false;
+                                return \App\Models\QardHasan::where('user_id', $userId)
+                                    ->whereIn('status', ['active', 'defaulted'])
+                                    ->exists();
+                            })
+                            ->helperText('Select a loan to deduct this payment from')
+                            ->nullable(),
                         Forms\Components\Select::make('project_id')
                             ->label('Project (optional)')
                             ->options(Project::query()->where('active', true)->pluck('name', 'id'))
@@ -76,6 +98,27 @@ class ContributionResource extends Resource
                     ->options(Scheme::withTrashed()->pluck('name', 'id'))
                     ->searchable()
                     ->required()
+                    ->hiddenOn('create'),
+                Forms\Components\Select::make('qard_hasan_id')
+                    ->label('Link to Loan (Optional)')
+                    ->options(function (Forms\Get $get, Contribution $record) {
+                        $userId = $record->user_id;
+                        if (!$userId) return [];
+                        return \App\Models\QardHasan::where('user_id', $userId)
+                            ->whereIn('status', ['active', 'defaulted'])
+                            ->get()
+                            ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                    })
+                    ->searchable()
+                    ->visible(function (Forms\Get $get, Contribution $record) {
+                        $userId = $record->user_id;
+                        if (!$userId) return false;
+                        return \App\Models\QardHasan::where('user_id', $userId)
+                            ->whereIn('status', ['active', 'defaulted'])
+                            ->exists();
+                    })
+                    ->helperText('Select a loan to deduct this payment from')
+                    ->nullable()
                     ->hiddenOn('create'),
                 Forms\Components\Select::make('project_id')
                     ->label('Project (optional)')
@@ -128,6 +171,10 @@ class ContributionResource extends Resource
                         return Str::mask($state, '*', 2, -2);
                     }),
                 TextColumn::make('scheme.name')->label('Scheme')->searchable(),
+                TextColumn::make('qard_hasan_id')
+                    ->label('Linked Loan')
+                    ->formatStateUsing(fn ($state) => $state ? "Loan #{$state}" : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('project.name')->label('Project')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('savingsGroup.name')->label('Savings Group')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')->money('ngn', true)->sortable(),

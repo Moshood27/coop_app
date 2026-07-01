@@ -58,4 +58,8 @@ return [
     'system_announcement' => env('SYSTEM_ANNOUNCEMENT', null),
     'play_store_url' => env('PLAY_STORE_URL', 'https://play.google.com/store/apps/details?id=com.attaqwa.app'),
     'loan_credit_score_enabled' => env('LOAN_CREDIT_SCORE_ENABLED', true),
+    'biometric' => [
+        'enabled' => env('BIOMETRIC_SCANNER_ENABLED', true),
+        'scanner_url' => env('BIOMETRIC_SCANNER_URL', 'http://localhost:8080/biometric/scan'),
+    ],
 ];

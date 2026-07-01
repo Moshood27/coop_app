@@ -61,29 +61,35 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <button
-                    type="button"
-                    x-on:click="captureUsbTemplate('verify')"
-                    wire:loading.attr="disabled"
-                    :disabled="processing"
-                    class="flex flex-col items-center justify-center p-6 bg-white border-2 border-primary-500 rounded-xl hover:bg-primary-50 transition group"
-                >
-                    <x-heroicon-o-finger-print class="w-12 h-12 text-primary-600 mb-2 group-hover:scale-110 transition" />
-                    <span class="font-bold text-primary-700">USB: Verify & Mark</span>
-                </button>
+            @if(config('cooperative.biometric.enabled', true))
+                <div class="grid grid-cols-2 gap-4">
+                    <button
+                        type="button"
+                        x-on:click="captureUsbTemplate('verify')"
+                        wire:loading.attr="disabled"
+                        :disabled="processing"
+                        class="flex flex-col items-center justify-center p-6 bg-white border-2 border-primary-500 rounded-xl hover:bg-primary-50 transition group"
+                    >
+                        <x-heroicon-o-finger-print class="w-12 h-12 text-primary-600 mb-2 group-hover:scale-110 transition" />
+                        <span class="font-bold text-primary-700">USB: Verify & Mark</span>
+                    </button>
 
-                <button
-                    type="button"
-                    x-on:click="captureUsbTemplate('enroll')"
-                    wire:loading.attr="disabled"
-                    :disabled="processing"
-                    class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition group"
-                >
-                    <x-heroicon-o-user-plus class="w-12 h-12 text-gray-600 mb-2 group-hover:scale-110 transition" />
-                    <span class="font-bold text-gray-700">USB: Enroll Fingerprint</span>
-                </button>
-            </div>
+                    <button
+                        type="button"
+                        x-on:click="captureUsbTemplate('enroll')"
+                        wire:loading.attr="disabled"
+                        :disabled="processing"
+                        class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition group"
+                    >
+                        <x-heroicon-o-user-plus class="w-12 h-12 text-gray-600 mb-2 group-hover:scale-110 transition" />
+                        <span class="font-bold text-gray-700">USB: Enroll Fingerprint</span>
+                    </button>
+                </div>
+            @else
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+                    USB Biometric integration is currently disabled in system settings.
+                </div>
+            @endif
 
             <div x-show="processing" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" x-cloak>
                 <div class="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center">
@@ -102,19 +108,28 @@
                 processing: false,
 
                 async captureUsbTemplate(action) {
+                    if (!{{ config('cooperative.biometric.enabled', true) ? 'true' : 'false' }}) {
+                        alert('Biometric scanner integration is currently disabled in system settings.');
+                        return;
+                    }
+
                     this.processing = true;
                     try {
+                        const scannerUrl = "{{ config('cooperative.biometric.scanner_url', 'http://localhost:8080/biometric/scan') }}";
+
                         // This integration point communicates with a local desktop service
                         // or browser extension that interfaces with the USB Biometric Scanner
                         // (DigitalPersona, ZKTeco, etc.)
 
-                        // Example: Calling a local service on the admin PC
-                        // const response = await fetch('http://localhost:8080/biometric/scan');
+                        // In a real implementation, we fetch from the local scanner service
+                        // const response = await fetch(scannerUrl);
                         // if (!response.ok) throw new Error('Scanner service offline');
                         // const data = await response.json();
                         // const template = data.template;
 
-                        // FOR DEMONSTRATION: Simulating scanner capture
+                        // FOR DEMONSTRATION/PLACEHOLDER: Simulating scanner capture
+                        // In actual deployment, the fetch above would be uncommented
+                        console.log('Fetching biometric from: ' + scannerUrl);
                         await new Promise(resolve => setTimeout(resolve, 1500));
                         const template = "USB_FINGERPRINT_TEMPLATE_" + Math.random().toString(36).substring(2, 15);
 

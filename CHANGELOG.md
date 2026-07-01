@@ -2,6 +2,14 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
+2026-07-01
+- Implemented USB Desktop Biometric Scanner integration for administrative enrollment.
+  - Replaced WebAuthn for centralized admin workflows with direct template capture.
+  - Added `biometric_template` storage to `users` and `member_applications`.
+  - Created `BiometricStation` Livewire component for high-speed attendance marking.
+  - Configurable scanner service URL and enabled status via `.env`.
+  - Documentation: BIOMETRIC_SYSTEM.md
+
 2026-05-12
 - Enhanced Flutterwave Dedicated Virtual Account (DVA) integration:
   - Added support for regenerating virtual accounts for members via `POST /api/virtual-account/regenerate-flutterwave`.

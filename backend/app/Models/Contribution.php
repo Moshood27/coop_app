@@ -37,6 +37,7 @@ class Contribution extends Model
         'reference',
         'status',
         'category',
+        'qard_hasan_id',
         'ledger_journal_id',
     ];
 
@@ -80,12 +81,21 @@ class Contribution extends Model
             if ($model->status === 'success' && $model->category === 'loan_repayment') {
                 try {
                     $user = $model->user;
-                    $q = QardHasan::where('user_id', $user->id)
-                        ->whereIn('status', ['active', 'defaulted'])
-                        ->whereColumn('paid_amount', '<', 'principal_amount')
-                        ->first();
 
-                    if ($q) {
+                    // If a specific loan is linked, use it, otherwise fallback to the first active loan
+                    $q = null;
+                    if ($model->qard_hasan_id) {
+                        $q = QardHasan::find($model->qard_hasan_id);
+                    }
+
+                    if (!$q) {
+                        $q = QardHasan::where('user_id', $user->id)
+                            ->whereIn('status', ['active', 'defaulted'])
+                            ->whereColumn('paid_amount', '<', 'principal_amount')
+                            ->first();
+                    }
+
+                    if ($q && in_array($q->status, ['active', 'defaulted'])) {
                         if (!QardHasanRepayment::where('reference', $model->reference)->exists()) {
                             $before = (float) $q->paid_amount;
                             $remaining = max(0, (float) $q->principal_amount - $before);
@@ -193,12 +203,21 @@ class Contribution extends Model
                     if ($model->category === 'loan_repayment') {
                         try {
                             $user = $model->user;
-                            $q = QardHasan::where('user_id', $user->id)
-                                ->whereIn('status', ['active', 'defaulted'])
-                                ->whereColumn('paid_amount', '<', 'principal_amount')
-                                ->first();
 
-                            if ($q) {
+                            // If a specific loan is linked, use it, otherwise fallback to the first active loan
+                            $q = null;
+                            if ($model->qard_hasan_id) {
+                                $q = QardHasan::find($model->qard_hasan_id);
+                            }
+
+                            if (!$q) {
+                                $q = QardHasan::where('user_id', $user->id)
+                                    ->whereIn('status', ['active', 'defaulted'])
+                                    ->whereColumn('paid_amount', '<', 'principal_amount')
+                                    ->first();
+                            }
+
+                            if ($q && in_array($q->status, ['active', 'defaulted'])) {
                                 if (!QardHasanRepayment::where('reference', $model->reference)->exists()) {
                                     $before = (float) $q->paid_amount;
                                     $remaining = max(0, (float) $q->principal_amount - $before);
