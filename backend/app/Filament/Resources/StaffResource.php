@@ -67,7 +67,7 @@ class StaffResource extends Resource
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('roles', fn ($q) => $q->whereIn('name', ['Staff', 'Branch Manager', 'Clerk', 'super_admin'])))
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('full_name')
                     ->searchable()
                     ->sortable()
                     ->description(fn (User $record) => $record->email),
@@ -122,7 +122,7 @@ class StaffResource extends Resource
                                     $creatorName = 'Unknown Member';
                                     try {
                                         // Try relationship first
-                                        $creatorName = $room->creator?->name;
+                                        $creatorName = $room->creator?->full_name;
                                     } catch (\Exception $e) {
                                         $creatorName = null;
                                     }
@@ -131,12 +131,12 @@ class StaffResource extends Resource
                                         // Try metadata fallback
                                         $creatorId = $room->metadata['creator_id'] ?? null;
                                         if ($creatorId) {
-                                            $creatorName = User::find($creatorId)?->name ?? "User #{$creatorId}";
+                                            $creatorName = User::find($creatorId)?->full_name ?? "User #{$creatorId}";
                                         } else {
                                             // Try first member
                                             $firstMember = $room->members()->first();
                                             if ($firstMember) {
-                                                $creatorName = User::find($firstMember->user_id)?->name ?? "User #{$firstMember->user_id}";
+                                                $creatorName = User::find($firstMember->user_id)?->full_name ?? "User #{$firstMember->user_id}";
                                             }
                                         }
                                     }

@@ -25,6 +25,7 @@ class AttendanceRecord extends Model
         'excuse_type',
         'excuse_proof_path',
         'excused_at',
+        'verified_biometrically',
     ];
 
     protected $casts = [
@@ -37,6 +38,7 @@ class AttendanceRecord extends Model
         'excuse_type' => 'string',
         'excuse_proof_path' => 'string',
         'excused_at' => 'datetime',
+        'verified_biometrically' => 'boolean',
     ];
 
     public function user(): BelongsTo

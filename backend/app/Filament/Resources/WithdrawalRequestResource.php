@@ -349,7 +349,7 @@ class WithdrawalRequestResource extends Resource
                             foreach ($admins as $admin) {
                                 $admin->notifyMember(
                                     'High-Value Withdrawal Approval Required',
-                                    "A withdrawal of ₦" . number_format((float)$record->amount, 2) . " for {$record->user?->name} requires your multi-sig approval.",
+                                    "A withdrawal of ₦" . number_format((float)$record->amount, 2) . " for {$record->user?->full_name} requires your multi-sig approval.",
                                     [
                                         'type' => 'high_value_withdrawal_approval',
                                         'withdrawal_id' => $record->id,

@@ -119,7 +119,7 @@ class CreateQardHasan extends CreateRecord
             // Best-effort SMS notifications
             try {
                 $sms = app(\App\Services\SmsService::class);
-                $member = $this->record->user?->name;
+                $member = $this->record->user?->full_name;
                 $amount = number_format((float) $this->record->principal_amount, 2);
                 foreach ($this->record->guarantors as $g) {
                     $msg = 'Guarantor request: Member '.($member).' requested a loan (ID: '.($this->record->qard_id_string).', ₦'.$amount.'). Please open your Coop app > Loans to Accept or Decline.';

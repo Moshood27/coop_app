@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\GeoService;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
+use Laragear\WebAuthn\Http\Requests\AssertionDeclarationRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
@@ -239,5 +240,99 @@ class AttendanceController extends Controller
         $payload = $this->attendanceService->getAttendanceQrPayload($meeting);
 
         return response()->json(['payload' => $payload]);
+    }
+
+    /**
+     * Get WebAuthn options for marking attendance.
+     */
+    public function biometricOptions(Request $request)
+    {
+        return $request->user()->createAssertionOptions();
+    }
+
+    /**
+     * Mark attendance using biometric verification.
+     */
+    public function markAttendanceBiometric(AssertionDeclarationRequest $request, Meeting $meeting)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'device_uuid' => 'required|string',
+        ]);
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => 'Meeting is not ongoing'], 400);
+        }
+
+        // Biometric verification is already done by AssertionDeclarationRequest!
+
+        if (is_null($meeting->venue_lat) || is_null($meeting->venue_lng)) {
+            return response()->json(['message' => 'Meeting venue location not set by admin'], 400);
+        }
+
+        // Check distance
+        $distance = $this->geoService->calculateDistance(
+            (float) $meeting->venue_lat,
+            (float) $meeting->venue_lng,
+            (float) $request->lat,
+            (float) $request->lng
+        );
+
+        $radius = (int) ($meeting->radius_meters ?: config('cooperative.attendance.radius_meters', 100));
+        if ($distance > $radius) {
+            return response()->json([
+                'message' => 'You are too far from the venue. You must be within ' . $radius . ' meters. Current distance: ' . round($distance, 2) . 'm.',
+                'distance' => round($distance, 2) . 'm'
+            ], 400);
+        }
+
+        $user = $request->user();
+
+        // Check for existing record
+        $existingRecord = AttendanceRecord::where('user_id', $user->id)
+            ->where('meeting_id', $meeting->id)
+            ->first();
+
+        $isExempt = $user->isInNursingMotherGracePeriod() || ($existingRecord && in_array($existingRecord->status, ['excused', 'pending_excuse']));
+
+        // One Person, One Vote: Check if this phone has already been used
+        $alreadyUsed = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->where('device_uuid', $request->device_uuid)
+            ->where('user_id', '!=', $user->id)
+            ->exists();
+
+        if ($alreadyUsed) {
+            return response()->json([
+                'message' => 'This device has already been used to mark attendance for another member in this meeting.'
+            ], 403);
+        }
+
+        $record = AttendanceRecord::updateOrCreate(
+            ['user_id' => $user->id, 'meeting_id' => $meeting->id],
+            [
+                'status' => 'present',
+                'attended_at' => now(),
+                'lat' => $request->lat,
+                'lng' => $request->lng,
+                'device_uuid' => $request->device_uuid,
+                'verified_biometrically' => true, // Set the flag
+            ]
+        );
+
+        broadcast(new AttendanceMarked($meeting, $record));
+
+        $message = 'Attendance marked successfully via Biometrics';
+        if ($this->attendanceService->isLate($meeting, $record->attended_at)) {
+            if ($isExempt) {
+                $message .= '. You were late, but no fine was charged due to your status.';
+            } else {
+                $this->attendanceService->chargeLatenessFine($user, $meeting);
+                $fineAmount = $meeting->apology_fine_amount ?? config('cooperative.attendance.apology_fine', 100);
+                $message .= '. You were late and charged a lateness fine of ' . number_format($fineAmount) . '.';
+            }
+        }
+
+        return response()->json(['message' => $message, 'record' => $record]);
     }
 }

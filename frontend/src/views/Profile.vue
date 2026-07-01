@@ -522,6 +522,50 @@
           </div>
         </div>
       </div>
+
+      <!-- Biometrics / Fingerprint -->
+      <div v-if="isSectionVisible('biometrics')" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-5 overflow-hidden relative">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 opacity-40 transition-transform duration-700 group-hover:scale-150" />
+        
+        <div class="flex items-center justify-between mb-4 relative z-10">
+          <div>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Biometric Security</p>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">Fingerprint & FaceID</h3>
+          </div>
+          <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="space-y-4 relative z-10">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 rounded-full" :class="hasBiometrics ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'"></div>
+              <span class="text-xs font-bold text-slate-700">{{ hasBiometrics ? 'Biometrics Active' : 'Not Registered' }}</span>
+            </div>
+            <button v-if="hasBiometrics" @click="deleteBiometrics" :disabled="biometricBusy" class="text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-3 py-2 rounded-xl active:scale-95 transition-all">
+              Remove
+            </button>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-relaxed px-1">
+            Secure your account and mark attendance instantly using your device's biometric sensors. This is faster and more secure than manual PIN entry.
+          </p>
+
+          <button v-if="!hasBiometrics" @click="registerBiometrics" :disabled="biometricBusy" 
+                  class="w-full h-14 bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-wider text-[11px] shadow-lg shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+            <span v-if="biometricBusy" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+            <template v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              Enable Biometric Access
+            </template>
+          </button>
+        </div>
+      </div>
     </div>
 
     <AppBottomNav />
@@ -574,6 +618,7 @@ import { useRouter } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
 import axios from '../http'
 import getImageUrl from '../utils/image'
+import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
 
 const router = useRouter()
 const appStatusStore = useAppStatusStore()
@@ -593,6 +638,7 @@ const sectionDefinitions = [
   { id: 'email_update', tab: 'security', keywords: ['email', 'update email', 'change email'] },
   { id: 'password_update', tab: 'security', keywords: ['password', 'update password', 'change password'] },
   { id: 'pin', tab: 'security', keywords: ['pin', 'transaction pin', 'reset pin', 'forgot pin'] },
+  { id: 'biometrics', tab: 'security', keywords: ['biometrics', 'fingerprint', 'faceid', 'touchid', 'login'] },
 ]
 
 const visibleSections = computed(() => {
@@ -688,6 +734,52 @@ const emailErrors = ref({})
 const passForm = ref({ current_password: '', new_password: '', confirm_password: '' })
 const passSaving = ref(false)
 const passErrors = ref({})
+
+const hasBiometrics = ref(false)
+const biometricBusy = ref(false)
+
+const checkBiometricStatus = async () => {
+  try {
+    const { data } = await axios.get('/api/biometrics/status')
+    hasBiometrics.value = data.has_biometrics
+  } catch (e) {}
+}
+
+const registerBiometrics = async () => {
+  if (!window.PublicKeyCredential) {
+    alert('Biometrics not supported on this device/browser.')
+    return
+  }
+
+  biometricBusy.value = true
+  try {
+    const { data: options } = await axios.get('/api/biometrics/register-options')
+    const publicKey = parseOptions(options)
+    const credential = await navigator.credentials.create({ publicKey })
+    await axios.post('/api/biometrics/register-verify', publicKeyCredentialToJSON(credential))
+    hasBiometrics.value = true
+    alert('Biometrics registered successfully!')
+  } catch (err) {
+    console.error(err)
+    alert(err?.response?.data?.message || 'Biometric registration failed. Ensure your device supports biometrics.')
+  } finally {
+    biometricBusy.value = false
+  }
+}
+
+const deleteBiometrics = async () => {
+  if (!confirm('Remove biometric credentials from your account?')) return
+  biometricBusy.value = true
+  try {
+    await axios.delete('/api/biometrics')
+    hasBiometrics.value = false
+    alert('Biometrics removed.')
+  } catch (err) {
+    alert('Failed to remove biometrics.')
+  } finally {
+    biometricBusy.value = false
+  }
+}
 
 // Transaction PIN form state
 const pinForm = ref({ current_password: '', new_pin: '', confirm_pin: '' })
@@ -1056,6 +1148,7 @@ const bandLabel = (band) => {
 onMounted(async () => {
   // Load profile
   try {
+    checkBiometricStatus()
     const { data } = await axios.get('/api/profile')
     profile.value = data
     emailForm.value.email = data?.email || ''

@@ -79,6 +79,23 @@
             </div>
             
             <div class="space-y-6">
+              <!-- Biometric Option (Fintech Style) -->
+              <div v-if="hasBiometrics">
+                 <button @click="markWithBiometrics" :disabled="submitting || !location"
+                         class="w-full h-24 bg-emerald-700 text-white rounded-3xl shadow-xl shadow-emerald-100 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                    </svg>
+                    Mark with Biometrics
+                 </button>
+                 <div class="relative py-4 flex items-center">
+                    <div class="flex-grow border-t border-slate-100"></div>
+                    <span class="flex-shrink mx-4 text-[9px] font-black text-slate-300 uppercase">Alternatively</span>
+                    <div class="flex-grow border-t border-slate-100"></div>
+                 </div>
+              </div>
+
               <div class="grid grid-cols-1 gap-4">
                 <div>
                   <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Option 1: Enter Meeting PIN</label>
@@ -252,6 +269,7 @@ import AppHeader from '../components/AppHeader.vue'
 import AppBottomNav from '../components/AppBottomNav.vue'
 import WebQrScanner from '../components/WebQrScanner.vue'
 import axios from '../http'
+import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
 import { getEcho } from '../realtime/echo'
@@ -277,6 +295,7 @@ const timeRemaining = ref('')
 const countdownInterval = ref(null)
 const refreshingStatus = ref(false)
 const showWebScanner = ref(false)
+const hasBiometrics = ref(false)
 
 const isNative = Capacitor.isNativePlatform()
 const canScan = true // Always true now as we have web fallback
@@ -483,6 +502,38 @@ const submitAttendance = async (qrToken = null) => {
   }
 }
 
+const markWithBiometrics = async () => {
+  if (!location.value) {
+    modal.alert('Please capture your location first.')
+    return
+  }
+  
+  submitting.value = true
+  try {
+    const { data: options } = await axios.get(`/api/meetings/${meeting.value.id}/biometric-options`)
+    const publicKey = parseOptions(options)
+    const assertion = await navigator.credentials.get({ publicKey })
+    
+    const info = await Device.getId()
+    const payload = {
+      ...publicKeyCredentialToJSON(assertion),
+      lat: location.value.lat,
+      lng: location.value.lng,
+      device_uuid: info.identifier
+    }
+    
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-biometric`, payload)
+    record.value = res.data.record
+    modal.alert(res.data.message || "Attendance marked successfully!")
+    fetchHistory()
+  } catch (err) {
+    console.error(err)
+    modal.alert(err.response?.data?.message || "Biometric verification failed. Please try PIN or QR.")
+  } finally {
+    submitting.value = false
+  }
+}
+
 const submitApology = async () => {
   if (!reason.value) return
   
@@ -513,6 +564,11 @@ const submitApology = async () => {
 
 onMounted(async () => {
   await fetchCurrentMeeting()
+
+  try {
+    const { data } = await axios.get('/api/biometrics/status')
+    hasBiometrics.value = data.has_biometrics
+  } catch (e) {}
 
   // Real-time listener
   try {

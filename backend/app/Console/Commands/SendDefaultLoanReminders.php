@@ -33,7 +33,7 @@ class SendDefaultLoanReminders extends Command
                 $countFlagged++;
                 if (!$dry) {
                     $loan->update(['defaulted_at' => now()]);
-                    $this->info("Flagged loan {$loan->qard_id_string} for member {$loan->user?->name} as defaulted (Overdue {$loan->getOverdueDays()} days).");
+                    $this->info("Flagged loan {$loan->qard_id_string} for member {$loan->user?->full_name} as defaulted (Overdue {$loan->getOverdueDays()} days).");
                 } else {
                     $this->info("[DRY] Would flag loan {$loan->qard_id_string} as defaulted.");
                 }
@@ -88,13 +88,13 @@ class SendDefaultLoanReminders extends Command
 
             $countUsers++;
             if ($dry) {
-                $this->info(sprintf('[DRY] Would send to %s <%s> | Loans: %d | Outstanding: %.2f', $user->name, $user->email, count($loansData), $totalOutstanding));
+                $this->info(sprintf('[DRY] Would send to %s <%s> | Loans: %d | Outstanding: %.2f', $user->full_name, $user->email, count($loansData), $totalOutstanding));
                 continue;
             }
 
             Mail::to($user->email)->send(new DefaultLoanReminder($user, $loansData, $totalOutstanding));
             $countEmails++;
-            $this->info(sprintf('Sent reminder to %s <%s> | Loans: %d | Outstanding: %.2f', $user->name, $user->email, count($loansData), $totalOutstanding));
+            $this->info(sprintf('Sent reminder to %s <%s> | Loans: %d | Outstanding: %.2f', $user->full_name, $user->email, count($loansData), $totalOutstanding));
         }
 
         $this->info(sprintf('Completed. Defaulters checked: %d, Flagged: %d, Emails sent: %d', $countUsers, $countFlagged, $countEmails));

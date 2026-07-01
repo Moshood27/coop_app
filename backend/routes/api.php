@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\ScoreController;
 use App\Http\Controllers\Api\GoldController;
 use App\Http\Controllers\Api\SavingsGroupController;
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\BiometricController;
 use App\Http\Controllers\Api\MeetingApologyController;
 
 Route::get('/health', function () {
@@ -218,6 +219,14 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/attendance/current', [AttendanceController::class, 'current']);
     Route::get('/attendance/history', [AttendanceController::class, 'history']);
     Route::post('/meetings/{meeting}/mark-attendance', [AttendanceController::class, 'markAttendance']);
+    Route::get('/meetings/{meeting}/biometric-options', [AttendanceController::class, 'biometricOptions']);
+    Route::post('/meetings/{meeting}/mark-biometric', [AttendanceController::class, 'markAttendanceBiometric']);
+
+    // Biometrics Registration
+    Route::get('/biometrics/status', [BiometricController::class, 'status']);
+    Route::get('/biometrics/register-options', [BiometricController::class, 'registerOptions']);
+    Route::post('/biometrics/register-verify', [BiometricController::class, 'registerVerify']);
+    Route::delete('/biometrics', [BiometricController::class, 'delete']);
     Route::post('/meetings/{meeting}/apology', [MeetingApologyController::class, 'store']);
 
     // VTU (Airtime, Data, Electricity, Cable TV)

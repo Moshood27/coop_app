@@ -443,7 +443,7 @@ class QardHasanResource extends Resource
                             foreach ($admins as $admin) {
                                 $admin->notifyMember(
                                     'High-Value Loan Approval Required',
-                                    "A loan of ₦" . number_format($record->principal_amount, 2) . " for {$record->user?->name} requires your multi-sig approval.",
+                                    "A loan of ₦" . number_format($record->principal_amount, 2) . " for {$record->user?->full_name} requires your multi-sig approval.",
                                     [
                                         'type' => 'high_value_loan_approval',
                                         'loan_id' => $record->id,

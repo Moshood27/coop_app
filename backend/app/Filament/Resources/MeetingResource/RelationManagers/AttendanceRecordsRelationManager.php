@@ -38,6 +38,9 @@ class AttendanceRecordsRelationManager extends RelationManager
                     ])
                     ->required(),
                 Forms\Components\DateTimePicker::make('attended_at'),
+                Forms\Components\Toggle::make('verified_biometrically')
+                    ->label('Verified via Fingerprint')
+                    ->disabled(),
                 Forms\Components\TextInput::make('device_uuid')
                     ->label('Device ID')
                     ->readOnly(),
@@ -105,6 +108,13 @@ class AttendanceRecordsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('attended_at')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\IconColumn::make('verified_biometrically')
+                    ->label('Biometric')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-finger-print')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('device_uuid')
                     ->label('Device ID')
                     ->searchable()
