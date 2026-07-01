@@ -57,7 +57,7 @@ class BiometricStation extends Component
 
             $options = app(AttestationCreator::class)->send($attestation)->then(fn($c) => $c->json);
 
-            $this->dispatch('start-webauthn-registration', options: $options->data());
+            $this->dispatch('start-webauthn-registration', options: $options->toArray());
         } catch (\Exception $e) {
             $this->dispatch('error-occurred');
             Notification::make()->title('Error starting enrollment: ' . $e->getMessage())->danger()->send();
@@ -101,7 +101,7 @@ class BiometricStation extends Component
             $assertion = new AssertionCreation($user);
             $options = app(AssertionCreator::class)->send($assertion)->then(fn($c) => $c->json);
 
-            $this->dispatch('start-webauthn-verification', options: $options->data());
+            $this->dispatch('start-webauthn-verification', options: $options->toArray());
         } catch (\Exception $e) {
             $this->dispatch('error-occurred');
             Notification::make()->title('Error starting verification: ' . $e->getMessage())->danger()->send();
