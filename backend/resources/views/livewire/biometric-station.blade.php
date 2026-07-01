@@ -32,7 +32,9 @@
                 </div>
             @endforeach
         </div>
-    @elseif($search && strlen($search) >= 2)
+    @endif
+
+    @if(count($users) === 0 && $search && strlen($search) >= 2)
         <div class="mb-6 p-4 text-center text-gray-500 italic border rounded-lg">
             No members found.
         </div>
