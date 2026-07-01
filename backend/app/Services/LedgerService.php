@@ -118,11 +118,11 @@ class LedgerService
     {
         return $this->recordByCode([
             'date' => $loan->approved_at ?? now(),
-            'reference' => $loan->reference,
+            'reference' => $loan->qard_id_string,
             'description' => "Qard Hasan Disbursement to {$loan->user->name}",
         ], [
-            ['code' => '1300', 'debit' => $loan->amount, 'description' => 'Loan Asset'],
-            ['code' => '1100', 'credit' => $loan->amount, 'description' => 'Bank Withdrawal'],
+            ['code' => '1300', 'debit' => $loan->principal_amount, 'description' => 'Loan Asset'],
+            ['code' => '1100', 'credit' => $loan->principal_amount, 'description' => 'Bank Withdrawal'],
         ]);
     }
 

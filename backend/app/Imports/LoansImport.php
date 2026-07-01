@@ -88,7 +88,7 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
             $perInstallment = round($originalAmount / $totalInstallments, 2);
         }
 
-        return new QardHasan([
+        $loan = new QardHasan([
             'user_id' => $user->id,
             'qard_id_string' => 'MIG-' . Str::upper(Str::random(8)),
             'principal_amount' => $originalAmount,
@@ -100,8 +100,12 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
             'approved_at' => $this->migrationDate,
             'received_at' => $receivedAt,
             'defaulted_at' => $defaultedAt,
-            'created_at' => $this->migrationDate,
         ]);
+
+        // Explicitly set created_at as it might not be in $fillable
+        $loan->created_at = $this->migrationDate;
+
+        return $loan;
     }
 
     public function rules(): array
