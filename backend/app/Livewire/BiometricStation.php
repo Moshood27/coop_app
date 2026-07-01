@@ -6,15 +6,6 @@ use App\Models\Meeting;
 use App\Models\User;
 use App\Models\AttendanceRecord;
 use App\Services\AttendanceService;
-use Laragear\WebAuthn\JsonTransport;
-use Laragear\WebAuthn\Attestation\Creator\AttestationCreation;
-use Laragear\WebAuthn\Attestation\Creator\AttestationCreator;
-use Laragear\WebAuthn\Attestation\Validator\AttestationValidation;
-use Laragear\WebAuthn\Attestation\Validator\AttestationValidator;
-use Laragear\WebAuthn\Assertion\Creator\AssertionCreation;
-use Laragear\WebAuthn\Assertion\Creator\AssertionCreator;
-use Laragear\WebAuthn\Assertion\Validator\AssertionValidation;
-use Laragear\WebAuthn\Assertion\Validator\AssertionValidator;
 use Livewire\Component;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -45,86 +36,44 @@ class BiometricStation extends Component
         return $this->selectedUserId ? User::find($this->selectedUserId) : null;
     }
 
-    public function startEnrollment()
+    public function saveUsbTemplate($template)
     {
         $user = $this->selectedUser;
         if (!$user) return;
 
         try {
-            $attestation = new AttestationCreation($user);
-            // We allow duplicates so they can register multiple fingers or on multiple devices (admin's station)
-            $attestation->uniqueCredentials = false;
+            $user->biometric_template = $template;
+            $user->save();
 
-            $options = app(AttestationCreator::class)->send($attestation)->then(fn($c) => $c->json);
-
-            $this->dispatch('start-webauthn-registration', options: $options->toArray());
+            Notification::make()->title('Biometric enrolled via USB successfully for ' . $user->full_name)->success()->send();
+            $this->dispatch('enrollment-completed');
         } catch (\Exception $e) {
-            $this->dispatch('error-occurred');
-            Notification::make()->title('Error starting enrollment: ' . $e->getMessage())->danger()->send();
-        }
-    }
-
-    public function completeEnrollment($data)
-    {
-        $user = $this->selectedUser;
-        if (!$user) return;
-
-        try {
-            $attestation = new AttestationValidation($user, new JsonTransport($data));
-            $success = app(AttestationValidator::class)->validate($attestation)->then(function ($v) {
-                $v->user->addCredential($v);
-                return true;
-            });
-
-            if ($success) {
-                Notification::make()->title('Biometric enrolled successfully for ' . $user->full_name)->success()->send();
-                $this->dispatch('enrollment-completed');
-            }
-        } catch (\Exception $e) {
-            $this->dispatch('error-occurred');
-            Log::error('WebAuthn Registration Error: ' . $e->getMessage());
+            Log::error('USB Biometric Enrollment Error: ' . $e->getMessage());
             Notification::make()->title('Enrollment failed: ' . $e->getMessage())->danger()->send();
         }
     }
 
-    public function startVerification()
+    public function verifyUsbTemplate($template)
     {
         $user = $this->selectedUser;
         if (!$user) return;
 
-        if ($user->webAuthnCredentials()->count() === 0) {
-            Notification::make()->title('User has no biometrics enrolled. Please enroll first.')->warning()->send();
+        if (!$user->biometric_template) {
+            Notification::make()->title('User has no USB biometrics enrolled. Please enroll first.')->warning()->send();
             return;
         }
 
         try {
-            $assertion = new AssertionCreation($user);
-            $options = app(AssertionCreator::class)->send($assertion)->then(fn($c) => $c->json);
-
-            $this->dispatch('start-webauthn-verification', options: $options->toArray());
-        } catch (\Exception $e) {
-            $this->dispatch('error-occurred');
-            Notification::make()->title('Error starting verification: ' . $e->getMessage())->danger()->send();
-        }
-    }
-
-    public function completeVerification($data)
-    {
-        $user = $this->selectedUser;
-        if (!$user) return;
-
-        try {
-            $assertion = new AssertionValidation(new JsonTransport($data), $user);
-            $success = app(AssertionValidator::class)->validate($assertion)->then(function ($v) {
-                return true;
-            });
-
-            if ($success) {
+            // Note: In a production environment with USB scanners like DigitalPersona,
+            // the template matching is often done via a specialized library.
+            // Here we verify that a template was received and it matches the stored one.
+            if ($user->biometric_template === $template) {
                 $this->markAttendance($user);
+            } else {
+                Notification::make()->title('Biometric verification failed. Template mismatch.')->danger()->send();
             }
         } catch (\Exception $e) {
-            $this->dispatch('error-occurred');
-            Log::error('WebAuthn Verification Error: ' . $e->getMessage());
+            Log::error('USB Biometric Verification Error: ' . $e->getMessage());
             Notification::make()->title('Verification failed: ' . $e->getMessage())->danger()->send();
         }
     }

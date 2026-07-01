@@ -140,6 +140,12 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\FileUpload::make('passport_path')->label('Passport')->image(),
                                         Forms\Components\FileUpload::make('id_card_path')->label('ID Card'),
                                         Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address'),
+                                        Forms\Components\TextInput::make('biometric_template')
+                                            ->label('Fingerprint Template (USB Scanner)')
+                                            ->helperText('Capture raw template string from USB scanner service.')
+                                            ->password()
+                                            ->revealable()
+                                            ->columnSpanFull(),
                                     ])->columns(3),
                             ]),
 

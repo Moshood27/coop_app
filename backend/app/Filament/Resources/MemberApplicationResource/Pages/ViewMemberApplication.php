@@ -179,6 +179,7 @@ class ViewMemberApplication extends ViewRecord
                             'passport_path' => $record->passport_path,
                             'id_card_path' => $record->id_card_path,
                             'proof_of_address_path' => $record->proof_of_address_path,
+                            'biometric_template' => $record->biometric_template,
                             'balance' => 0,
                         ]);
 

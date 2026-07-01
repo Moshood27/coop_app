@@ -174,6 +174,12 @@ class UserResource extends Resource
                                             ->helperText('Restricts certain features for the member'),
                                         Forms\Components\FileUpload::make('id_card_path')->label('ID Card')->image()->disk('public_root')->directory('upload'),
                                         Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')->image()->disk('public_root')->directory('upload'),
+                                        Forms\Components\TextInput::make('biometric_template')
+                                            ->label('Fingerprint Template (USB Scanner)')
+                                            ->helperText('Capture raw template string from USB scanner service.')
+                                            ->password()
+                                            ->revealable()
+                                            ->columnSpanFull(),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Membership')

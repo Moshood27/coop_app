@@ -81,6 +81,7 @@ class MemberApplication extends Model
         'passport_path',
         'id_card_path',
         'proof_of_address_path',
+        'biometric_template',
         'email_otp_hash',
         'sms_otp_hash',
         'otp_expires_at',

@@ -108,6 +108,7 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         'migrated_at',
         'verified_at',
         'discrepancy_reported_at',
+        'biometric_template',
         // Membership Enrolment Form Fields
         'surname',
         'other_names',

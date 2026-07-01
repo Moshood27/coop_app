@@ -27,10 +27,10 @@
                         <div class="font-bold">{{ $user->full_name }}</div>
                         <div class="text-xs text-gray-500">ID: {{ $user->membership_number }} | {{ $user->branch?->name }}</div>
                     </div>
-                    @if($user->webAuthnCredentials()->exists())
-                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">Registered</span>
+                    @if($user->biometric_template)
+                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">USB Template Saved</span>
                     @else
-                        <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">Not Enrolled</span>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">No USB Biometric</span>
                     @endif
                 </div>
             @endforeach
@@ -47,8 +47,6 @@
         <div
             wire:key="biometric-actions-{{ $selectedUserId }}"
             class="mt-6 p-6 border rounded-xl bg-gray-50"
-            x-on:start-webauthn-registration.window="handleRegistration($event.detail.options)"
-            x-on:start-webauthn-verification.window="handleVerification($event.detail.options)"
             x-on:enrollment-completed.window="processing = false"
             x-on:attendance-marked.window="processing = false"
             x-on:error-occurred.window="processing = false"
@@ -59,31 +57,31 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-bold">{{ $this->selectedUser->full_name }}</h3>
-                    <p class="text-sm text-gray-600">Selected for biometric action</p>
+                    <p class="text-sm text-gray-600">Selected for USB Biometric action</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <button
                     type="button"
-                    wire:click="startVerification"
+                    x-on:click="captureUsbTemplate('verify')"
                     wire:loading.attr="disabled"
                     :disabled="processing"
                     class="flex flex-col items-center justify-center p-6 bg-white border-2 border-primary-500 rounded-xl hover:bg-primary-50 transition group"
                 >
                     <x-heroicon-o-finger-print class="w-12 h-12 text-primary-600 mb-2 group-hover:scale-110 transition" />
-                    <span class="font-bold text-primary-700">Verify & Mark Present</span>
+                    <span class="font-bold text-primary-700">USB: Verify & Mark</span>
                 </button>
 
                 <button
                     type="button"
-                    wire:click="startEnrollment"
+                    x-on:click="captureUsbTemplate('enroll')"
                     wire:loading.attr="disabled"
                     :disabled="processing"
                     class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition group"
                 >
                     <x-heroicon-o-user-plus class="w-12 h-12 text-gray-600 mb-2 group-hover:scale-110 transition" />
-                    <span class="font-bold text-gray-700">Enroll New Fingerprint</span>
+                    <span class="font-bold text-gray-700">USB: Enroll Fingerprint</span>
                 </button>
             </div>
 
@@ -103,112 +101,34 @@
             Alpine.data('biometricStationHandler', () => ({
                 processing: false,
 
-                async handleRegistration(options) {
+                async captureUsbTemplate(action) {
                     this.processing = true;
                     try {
-                        const publicKey = this.parseOptions(options);
-                        const credential = await navigator.credentials.create({ publicKey });
-                        const credentialJSON = this.publicKeyCredentialToJSON(credential);
+                        // This integration point communicates with a local desktop service
+                        // or browser extension that interfaces with the USB Biometric Scanner
+                        // (DigitalPersona, ZKTeco, etc.)
 
-                        $wire.completeEnrollment(credentialJSON);
-                    } catch (e) {
-                        console.error('Registration failed', e);
-                        this.processing = false;
-                    }
-                },
+                        // Example: Calling a local service on the admin PC
+                        // const response = await fetch('http://localhost:8080/biometric/scan');
+                        // if (!response.ok) throw new Error('Scanner service offline');
+                        // const data = await response.json();
+                        // const template = data.template;
 
-                async handleVerification(options) {
-                    this.processing = true;
-                    try {
-                        const publicKey = this.parseOptions(options);
-                        const assertion = await navigator.credentials.get({ publicKey });
-                        const assertionJSON = this.publicKeyCredentialToJSON(assertion);
+                        // FOR DEMONSTRATION: Simulating scanner capture
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        const template = "USB_FINGERPRINT_TEMPLATE_" + Math.random().toString(36).substring(2, 15);
 
-                        $wire.completeVerification(assertionJSON);
-                    } catch (e) {
-                        console.error('Verification failed', e);
-                        this.processing = false;
-                    }
-                },
-
-                bufferToBase64url(buffer) {
-                    const byteView = new Uint8Array(buffer);
-                    let str = '';
-                    for (const charCode of byteView) {
-                        str += String.fromCharCode(charCode);
-                    }
-                    return btoa(str)
-                        .replace(/\+/g, '-')
-                        .replace(/\//g, '_')
-                        .replace(/=/g, '');
-                },
-
-                base64urlToBuffer(base64url) {
-                    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-                    const padLen = (4 - (base64.length % 4)) % 4;
-                    const str = atob(base64 + '='.repeat(padLen));
-                    const buffer = new ArrayBuffer(str.length);
-                    const byteView = new Uint8Array(buffer);
-                    for (let i = 0; i < str.length; i++) {
-                        byteView[i] = str.charCodeAt(i);
-                    }
-                    return buffer;
-                },
-
-                publicKeyCredentialToJSON(pubKeyCred) {
-                    if (pubKeyCred instanceof Array) {
-                        return pubKeyCred.map(p => this.publicKeyCredentialToJSON(p));
-                    }
-
-                    if (pubKeyCred instanceof ArrayBuffer) {
-                        return this.bufferToBase64url(pubKeyCred);
-                    }
-
-                    if (pubKeyCred instanceof Object) {
-                        const obj = {};
-                        for (const key in pubKeyCred) {
-                            if (typeof pubKeyCred[key] === 'function') continue;
-
-                            if (pubKeyCred[key] instanceof ArrayBuffer) {
-                                obj[key] = this.bufferToBase64url(pubKeyCred[key]);
-                            } else if (typeof pubKeyCred[key] === 'object' && pubKeyCred[key] !== null) {
-                                obj[key] = this.publicKeyCredentialToJSON(pubKeyCred[key]);
-                            } else {
-                                obj[key] = pubKeyCred[key];
-                            }
+                        if (action === 'enroll') {
+                            $wire.saveUsbTemplate(template);
+                        } else {
+                            // In verification, we send the captured template to match against stored one
+                            $wire.verifyUsbTemplate(template);
                         }
-
-                        if (pubKeyCred.getClientExtensionResults) {
-                            obj.clientExtensionResults = pubKeyCred.getClientExtensionResults();
-                        }
-
-                        return obj;
+                    } catch (e) {
+                        console.error('USB Capture failed', e);
+                        this.processing = false;
+                        alert('Could not communicate with the USB scanner. Please ensure the local biometric service is running.');
                     }
-
-                    return pubKeyCred;
-                },
-
-                parseOptions(options) {
-                    const cloned = JSON.parse(JSON.stringify(options));
-
-                    if (cloned.challenge) cloned.challenge = this.base64urlToBuffer(cloned.challenge);
-                    if (cloned.user && cloned.user.id) cloned.user.id = this.base64urlToBuffer(cloned.user.id);
-
-                    if (cloned.allowCredentials) {
-                        cloned.allowCredentials = cloned.allowCredentials.map(cred => ({
-                            ...cred,
-                            id: this.base64urlToBuffer(cred.id)
-                        }));
-                    }
-
-                    if (cloned.excludeCredentials) {
-                        cloned.excludeCredentials = cloned.excludeCredentials.map(cred => ({
-                            ...cred,
-                            id: this.base64urlToBuffer(cred.id)
-                        }));
-                    }
-
-                    return cloned;
                 }
             }));
         }
