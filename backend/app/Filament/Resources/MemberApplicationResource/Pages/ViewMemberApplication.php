@@ -26,6 +26,60 @@ class ViewMemberApplication extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('capture_biometric')
+                ->label('Capture Biometric')
+                ->icon('heroicon-o-finger-print')
+                ->color('primary')
+                ->visible(fn (MemberApplication $record) => $record->finalized_at === null)
+                ->form([
+                    Forms\Components\TextInput::make('biometric_template')
+                        ->label('Fingerprint Template')
+                        ->password()
+                        ->revealable()
+                        ->required()
+                        ->helperText('Capture template from USB scanner service.')
+                        ->suffixAction(
+                            Forms\Components\Actions\Action::make('scan')
+                                ->icon('heroicon-m-finger-print')
+                                ->color('primary')
+                                ->action(function () {})
+                                ->extraAttributes([
+                                    'x-on:click' => '
+                                        const scannerUrl = "' . config('cooperative.biometric.scanner_url') . '";
+                                        $el.classList.add("animate-pulse");
+                                        fetch(scannerUrl)
+                                            .then(response => {
+                                                if (!response.ok) throw new Error("Scanner service offline");
+                                                return response.json();
+                                            })
+                                            .then(data => {
+                                                if (data.template) {
+                                                    $wire.set("data.biometric_template", data.template);
+                                                    new FilamentNotification()
+                                                        .title("Biometric Captured")
+                                                        .success()
+                                                        .send();
+                                                } else {
+                                                    throw new Error("No template received from scanner.");
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.error(err);
+                                                new FilamentNotification()
+                                                    .title("Scanner Error")
+                                                    .body(err.message || "Ensure local scanner service is running.")
+                                                    .danger()
+                                                    .send();
+                                            })
+                                            .finally(() => $el.classList.remove("animate-pulse"));
+                                    '
+                                ])
+                        ),
+                ])
+                ->action(function (MemberApplication $record, array $data) {
+                    $record->update(['biometric_template' => $data['biometric_template']]);
+                    Notification::make()->title('Biometric template saved to application.')->success()->send();
+                }),
             Actions\Action::make('download')
                 ->label('Download Form')
                 ->icon('heroicon-o-arrow-down-tray')

@@ -25,17 +25,19 @@ BIOMETRIC_SCANNER_URL=http://localhost:8080/biometric/scan
 ## How It Works
 
 1.  **Local Service:** A small desktop application or browser extension must be running on the admin PC. This service listens for requests on the configured `BIOMETRIC_SCANNER_URL`.
-2.  **Enrollment:** When an admin clicks "Enroll Fingerprint", the system sends a request to the local service. The service triggers the USB scanner, captures the fingerprint, and returns a raw template string.
+2.  **Enrollment:** When an admin clicks the "Scan" icon next to the Biometric Template field (or the "Capture Biometric" button), the browser sends a request to the local service. The service triggers the USB scanner and returns a raw template string.
 3.  **Storage:** The template string is saved in the `biometric_template` column of the `users` or `member_applications` table.
-4.  **Verification:** During attendance marking at a `BiometricStation`, the admin selects a member and clicks "Verify & Mark". The scanner captures a fresh template, which is then compared against the stored template in the database.
+4.  **Verification:** During attendance marking at a `BiometricStation`, the admin selects a member and clicks "Verify & Mark". The scanner captures a fresh template, which is compared against the stored template.
 
 ## Admin Interface
 
--   **Biometric Attendance Station:** A dedicated Livewire component (`/admin/biometric-station/{meeting}`) for high-speed attendance marking.
-    -   **Bulk Enrollment Mode:** Automatically cycles through active members who lack biometric templates.
-    -   **Continuous Attendance Mode:** Waits for any member to touch the scanner, identifies them automatically, and marks attendance.
--   **User Resource:** Admins can manually view or update biometric templates under the "Identity & Membership" tab of a member's profile.
--   **Member Applications:** Biometrics can be captured during the application phase and are automatically transferred to the user profile upon approval.
+-   **Biometric Attendance Station:** A dedicated Livewire component (`/admin/biometric-station/{meeting}`) for high-speed attendance marking and bulk enrollment.
+-   **User Resource:** Admins can manually capture or update biometric templates using the "Scan" button in the member's profile.
+-   **Member Applications:** Admins can capture biometrics directly from the "View Application" page.
+
+## Removal of Simulation
+
+The system no longer uses mock templates. If the `BIOMETRIC_SCANNER_URL` is unreachable or the scanner fails to return a template, an error notification will be displayed. Ensure the local service is running and the scanner is connected.
 
 ## VPS & Public IP Deployment
 

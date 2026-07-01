@@ -159,17 +159,15 @@
                         // or browser extension that interfaces with the USB Biometric Scanner
                         // (DigitalPersona, ZKTeco, etc.)
 
-                        // In a real implementation, we fetch from the local scanner service
-                        // const response = await fetch(scannerUrl);
-                        // if (!response.ok) throw new Error('Scanner service offline');
-                        // const data = await response.json();
-                        // const template = data.template;
-
-                        // FOR DEMONSTRATION/PLACEHOLDER: Simulating scanner capture
-                        // In actual deployment, the fetch above would be uncommented
                         console.log('Fetching biometric from: ' + scannerUrl);
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        const template = "USB_FINGERPRINT_TEMPLATE_" + Math.random().toString(36).substring(2, 15);
+                        const response = await fetch(scannerUrl);
+                        if (!response.ok) throw new Error('Scanner service offline');
+                        const data = await response.json();
+                        const template = data.template;
+
+                        if (!template) {
+                            throw new Error('No fingerprint template received from scanner.');
+                        }
 
                         if (action === 'enroll') {
                             $wire.saveUsbTemplate(template);
