@@ -11,7 +11,8 @@ use App\Models\User;
 use App\Services\GeoService;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
-use Laragear\WebAuthn\Http\Requests\AssertionDeclarationRequest;
+use Laragear\WebAuthn\Http\Requests\AssertionRequest;
+use Laragear\WebAuthn\Http\Requests\AssertedRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
@@ -245,15 +246,15 @@ class AttendanceController extends Controller
     /**
      * Get WebAuthn options for marking attendance.
      */
-    public function biometricOptions(Request $request)
+    public function biometricOptions(AssertionRequest $request)
     {
-        return $request->user()->createAssertionOptions();
+        return $request->toVerify($request->user());
     }
 
     /**
      * Mark attendance using biometric verification.
      */
-    public function markAttendanceBiometric(AssertionDeclarationRequest $request, Meeting $meeting)
+    public function markAttendanceBiometric(AssertedRequest $request, Meeting $meeting)
     {
         $request->validate([
             'lat' => 'required|numeric',
@@ -265,7 +266,9 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Meeting is not ongoing'], 400);
         }
 
-        // Biometric verification is already done by AssertionDeclarationRequest!
+        if (!$request->login()) {
+            return response()->json(['message' => 'Biometric verification failed'], 422);
+        }
 
         if (is_null($meeting->venue_lat) || is_null($meeting->venue_lng)) {
             return response()->json(['message' => 'Meeting venue location not set by admin'], 400);

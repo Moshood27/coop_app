@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Laragear\WebAuthn\Http\Requests\AttestationDeclarationRequest;
-use Laragear\WebAuthn\Http\Requests\AssertionDeclarationRequest;
+use Laragear\WebAuthn\Http\Requests\AttestationRequest;
+use Laragear\WebAuthn\Http\Requests\AttestedRequest;
 use Laragear\WebAuthn\Models\WebAuthnCredential;
 
 class BiometricController extends Controller
@@ -13,23 +13,23 @@ class BiometricController extends Controller
     /**
      * Start the biometric registration process.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Laragear\WebAuthn\Http\Requests\AttestationRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function registerOptions(Request $request)
+    public function registerOptions(AttestationRequest $request)
     {
-        return $request->user()->createRegisterOptions();
+        return $request->toCreate();
     }
 
     /**
      * Complete the biometric registration process.
      *
-     * @param  \Laragear\WebAuthn\Http\Requests\AttestationDeclarationRequest  $request
+     * @param  \Laragear\WebAuthn\Http\Requests\AttestedRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function registerVerify(AttestationDeclarationRequest $request)
+    public function registerVerify(AttestedRequest $request)
     {
-        $request->user()->addCredential($request);
+        $request->save();
 
         return response()->json(['message' => 'Biometric credential registered successfully']);
     }
