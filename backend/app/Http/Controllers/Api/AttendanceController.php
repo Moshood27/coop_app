@@ -266,7 +266,7 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Meeting is not ongoing'], 400);
         }
 
-        if (!$request->login()) {
+        if (!auth('web')->getProvider()->validateCredentials($request->user(), $request->validated())) {
             return response()->json(['message' => 'Biometric verification failed'], 422);
         }
 
