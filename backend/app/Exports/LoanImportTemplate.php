@@ -16,7 +16,6 @@ class LoanImportTemplate implements FromCollection, WithHeadings
         return new Collection([
             [
                 'membership_number' => 'MEM001',
-                'email' => 'member@example.com',
                 'qard_id_string' => 'QH-2026-ABC123',
                 'principal_amount' => '50000',
                 'total_installments' => '10',
@@ -34,7 +33,6 @@ class LoanImportTemplate implements FromCollection, WithHeadings
     {
         return [
             'membership_number',
-            'email',
             'qard_id_string',
             'principal_amount',
             'total_installments',

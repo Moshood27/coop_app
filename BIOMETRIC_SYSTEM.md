@@ -10,6 +10,12 @@ The system allows administrators to enroll members' fingerprints using a USB bio
 
 The integration requires a local service running on the administrator's PC that interfaces with the USB scanner and provides an HTTP API for the browser.
 
+### URL Configuration
+
+Admins can configure the Scanner URL in two ways:
+1.  **Global Default:** Set `BIOMETRIC_SCANNER_URL` in the `backend/.env` file.
+2.  **Browser Override (Recommended):** Click the "Scanner Settings" button (or Right-Click the Scan icon in resources) to set a URL specific to that administrator's PC. This is stored in the browser's `localStorage`.
+
 ### Environment Variables
 
 Add the following to your `backend/.env` file:
@@ -18,7 +24,7 @@ Add the following to your `backend/.env` file:
 # Enable/Disable USB Biometric Scanner Integration
 BIOMETRIC_SCANNER_ENABLED=true
 
-# URL of the local biometric service running on the admin PC
+# Default URL of the local biometric service
 BIOMETRIC_SCANNER_URL=http://localhost:8080/biometric/scan
 ```
 
@@ -45,9 +51,13 @@ When running the application on a live public IP (VPS environment):
 
 1.  **HTTPS Requirement:** Your VPS should be served over HTTPS.
 2.  **Mixed Content:** Browsers may block requests from an HTTPS site to an HTTP local service.
-    -   Use `http://localhost` or `http://127.0.0.1` as the `BIOMETRIC_SCANNER_URL` as these are often exempted from Mixed Content restrictions.
-    -   If using a custom domain for the local service, ensure it has a valid SSL certificate.
-3.  **CORS:** Ensure your `backend/.env` includes the public domain in `CORS_ALLOWED_ORIGINS`.
+    -   `localhost` and `127.0.0.1` are usually exempted from Mixed Content blocks in modern browsers.
+    -   If you get a "Failed to fetch" error, ensure your local service is running and correctly configured.
+3.  **CORS:** This is the most common issue. The local service **must** send the `Access-Control-Allow-Origin` header.
+    -   The error: `blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present`.
+    -   **Solution:** Configure your local biometric service to allow the domain of your VPS (e.g., `https://attaqwacooposg.com`).
+    -   **Workaround:** Use a browser extension that allows CORS (e.g., "Allow CORS: Access-Control-Allow-Origin" for Chrome) while performing biometric administrative tasks.
+4.  **404 Errors:** If the browser connects but receives a 404, the **path** in your Scanner URL is likely incorrect for your specific biometric software. Check your vendor documentation for the correct endpoint.
 
 ## Security Considerations
 

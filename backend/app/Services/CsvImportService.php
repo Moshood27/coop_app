@@ -149,12 +149,10 @@ class CsvImportService
         [$summary, $errors] = $this->parseCsvAndUpsert($path, function(array $row) {
             $userId = $this->toInt($row['user_id'] ?? null);
             $membership = $row['membership_number'] ?? null;
-            $email = $row['email'] ?? null;
 
             $user = null;
             if ($userId) $user = User::find($userId);
             if (!$user && $membership) $user = User::where('membership_number', $membership)->first();
-            if (!$user && $email) $user = User::where('email', $email)->first();
             if (!$user) throw new \InvalidArgumentException('User not found for loan row');
 
             $qardString = $row['qard_id_string'] ?? null;

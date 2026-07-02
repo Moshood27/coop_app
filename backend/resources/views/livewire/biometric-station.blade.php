@@ -17,6 +17,15 @@
         >
             {{ $autoMarkMode ? 'Stop Auto-Mark' : 'Start Auto-Mark (Continuous)' }}
         </button>
+        <button
+            type="button"
+            x-on:click="window.biometricScanner.showConfigModal()"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition flex items-center"
+            title="Scanner Settings"
+        >
+            <x-heroicon-o-cog-6-tooth class="w-5 h-5 mr-1" />
+            Scanner Settings
+        </button>
     </div>
 
     @if(!$autoMarkMode)
@@ -150,26 +159,7 @@
 
                     this.processing = true;
                     try {
-                        const scannerUrl = "{{ config('cooperative.biometric.scanner_url', 'http://localhost:8080/biometric/scan') }}";
-
-                        // Handle Mixed Content Warnings
-                        if (window.location.protocol === 'https:' && scannerUrl.startsWith('http://') && !scannerUrl.includes('localhost') && !scannerUrl.includes('127.0.0.1')) {
-                            console.warn('Potential Mixed Content issue: Accessing HTTP scanner from HTTPS site.');
-                        }
-
-                        // This integration point communicates with a local desktop service
-                        // or browser extension that interfaces with the USB Biometric Scanner
-                        // (DigitalPersona, ZKTeco, etc.)
-
-                        console.log('Fetching biometric from: ' + scannerUrl);
-                        const response = await fetch(scannerUrl);
-                        if (!response.ok) throw new Error('Scanner service offline');
-                        const data = await response.json();
-                        const template = data.template;
-
-                        if (!template) {
-                            throw new Error('No fingerprint template received from scanner.');
-                        }
+                        const template = await window.biometricScanner.captureTemplate();
 
                         if (action === 'enroll') {
                             $wire.saveUsbTemplate(template);
@@ -180,9 +170,8 @@
                             $wire.verifyUsbTemplate(template);
                         }
                     } catch (e) {
-                        console.error('USB Capture failed', e);
                         this.processing = false;
-                        alert('Could not communicate with the USB scanner. Please ensure the local biometric service is running.');
+                        alert(e.message);
                     }
                 }
             }));

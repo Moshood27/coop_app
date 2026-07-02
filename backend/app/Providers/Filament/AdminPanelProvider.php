@@ -166,6 +166,10 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook('panels::body.end', fn () => view('filament.inactivity-handler'))
             ->renderHook('panels::body.end', fn () => \Livewire\Livewire::mount('admin-notification-listener'))
             ->renderHook('panels::body.end', fn () => view('tawk-widget'))
+            ->renderHook('panels::head.end', fn () => new \Illuminate\Support\HtmlString('
+                <script>window.biometricDefaultUrl = "' . config('cooperative.biometric.scanner_url') . '";</script>
+                <script src="' . asset('js/biometric.js') . '"></script>
+            '))
             ->middleware([
                 IpWhitelistMiddleware::class,
                 EncryptCookies::class,

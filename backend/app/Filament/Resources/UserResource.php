@@ -187,34 +187,27 @@ class UserResource extends Resource
                                                     ->action(function () {})
                                                     ->extraAttributes([
                                                         'x-on:click' => '
-                                                            const scannerUrl = "' . config('cooperative.biometric.scanner_url') . '";
                                                             $el.classList.add("animate-pulse");
-                                                            fetch(scannerUrl)
-                                                                .then(response => {
-                                                                    if (!response.ok) throw new Error("Scanner service offline");
-                                                                    return response.json();
-                                                                })
-                                                                .then(data => {
-                                                                    if (data.template) {
-                                                                        $wire.set("data.biometric_template", data.template);
-                                                                        new FilamentNotification()
-                                                                            .title("Biometric Captured")
-                                                                            .success()
-                                                                            .send();
-                                                                    } else {
-                                                                        throw new Error("No template received from scanner.");
-                                                                    }
+                                                            window.biometricScanner.captureTemplate()
+                                                                .then(template => {
+                                                                    $wire.set("data.biometric_template", template);
+                                                                    new FilamentNotification()
+                                                                        .title("Biometric Captured")
+                                                                        .success()
+                                                                        .send();
                                                                 })
                                                                 .catch(err => {
-                                                                    console.error(err);
                                                                     new FilamentNotification()
                                                                         .title("Scanner Error")
-                                                                        .body(err.message || "Ensure local scanner service is running.")
+                                                                        .body(err.message)
                                                                         .danger()
+                                                                        .persistent()
                                                                         .send();
                                                                 })
                                                                 .finally(() => $el.classList.remove("animate-pulse"));
-                                                        '
+                                                        ',
+                                                        'x-on:contextmenu.prevent' => 'window.biometricScanner.showConfigModal()',
+                                                        'title' => 'Left click to scan. Right click for settings.'
                                                     ])
                                             ),
                                     ])->columns(2),
