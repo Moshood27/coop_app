@@ -15,8 +15,8 @@ config(['database.connections.mysql.database' => 'coop_attaqwa']);
 config(['database.connections.mysql.username' => 'sail_attaqwa']);
 config(['database.connections.mysql.password' => 'pass_attaqwa']);
 
-$csvContent = "membership_number,qard_id_string,principal_amount,total_installments,per_installment,interval,admin_fee_flat,admin_fee_pct,paid_amount,status\n";
-$csvContent .= "MEM001,QH-DEBUG-001,50000,10,5000,monthly,0,1,0,active\n";
+$csvContent = "membership_number;qard_id_string;principal_amount;total_installments;per_installment;interval;admin_fee_flat;admin_fee_pct;paid_amount;status\r";
+$csvContent .= "MEM001;QH-DEBUG-001;50000;10;5000;monthly;0;1;0;active\r";
 
 $tempFile = tempnam(sys_get_temp_dir(), 'csv_debug');
 file_put_contents($tempFile, $csvContent);

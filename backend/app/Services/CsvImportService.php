@@ -222,6 +222,11 @@ class CsvImportService
      */
     protected function parseCsvAndUpsert(string $path, callable $upsert): array
     {
+        // Try to handle different line endings
+        if (PHP_VERSION_ID < 80100) {
+            @ini_set('auto_detect_line_endings', true);
+        }
+
         $handle = fopen($path, 'r');
         if ($handle === false) {
             return [[
@@ -238,8 +243,25 @@ class CsvImportService
         $updated = 0;
         $failed = 0;
         $errors = [];
+        $delimiter = ',';
 
-        while (($data = fgetcsv($handle)) !== false) {
+        // Detect delimiter from the first line
+        $firstLine = fgets($handle);
+        if ($firstLine !== false) {
+            $firstLine = preg_replace('/\x{FEFF}/u', '', $firstLine); // remove UTF-8 BOM
+            $delimiters = [',', ';', "\t", '|'];
+            $maxCols = 0;
+            foreach ($delimiters as $d) {
+                $cols = count(str_getcsv($firstLine, $d));
+                if ($cols > $maxCols) {
+                    $maxCols = $cols;
+                    $delimiter = $d;
+                }
+            }
+            rewind($handle);
+        }
+
+        while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
             $rowNum++;
             if ($rowNum === 1) {
                 $header = array_map(function($h) {
@@ -251,6 +273,7 @@ class CsvImportService
             }
             if (!$header) continue;
             if ($this->isEmptyRow($data)) continue;
+
             $row = [];
             foreach ($header as $i => $key) {
                 if ($key === '') continue;
