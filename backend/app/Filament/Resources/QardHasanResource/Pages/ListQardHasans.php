@@ -58,8 +58,15 @@ class ListQardHasans extends ListRecords
                         $path = $data['file']->getRealPath();
                         $res = $svc->importLoans($path);
                         $s = $res['summary'] ?? [];
+                        $errors = $res['errors'] ?? [];
                         $msg = sprintf('Processed: %d | Created: %d | Updated: %d | Failed: %d', $s['processed'] ?? 0, $s['created'] ?? 0, $s['updated'] ?? 0, $s['failed'] ?? 0);
-                        Notification::make()->success()->title('Loans import completed')->body($msg)->send();
+                        if (!empty($errors)) {
+                            $errorDetails = array_map(fn($e) => "Row {$e['row']}: {$e['error']}", array_slice($errors, 0, 5));
+                            $msg .= "\n\nErrors:\n" . implode("\n", $errorDetails);
+                            Notification::make()->warning()->title('Loans import completed with errors')->body($msg)->send();
+                        } else {
+                            Notification::make()->success()->title('Loans import completed')->body($msg)->send();
+                        }
                     } catch (\Throwable $e) {
                         Notification::make()->danger()->title('Import failed')->body($e->getMessage())->send();
                     }
