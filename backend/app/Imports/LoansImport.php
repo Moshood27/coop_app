@@ -18,12 +18,10 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
     use HandlesExcelDates;
 
     protected $migrationDate;
-    protected static $sweptUsers = [];
 
     public function __construct($migrationDate = null)
     {
         $this->migrationDate = $migrationDate ?: now();
-        self::$sweptUsers = []; // Reset for this instance
     }
 
     public function chunkSize(): int
@@ -43,27 +41,6 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
         if (!$user) {
             \Illuminate\Support\Facades\Log::warning("User not found for membership_no: " . ($row['membership_no'] ?? 'N/A'));
             return null;
-        }
-
-        // --- CLEAN SWEEP: Execute ONLY ONCE per user in this import session ---
-        if (!isset(self::$sweptUsers[$user->id])) {
-            // 1. Remove non-migration (demo) loans
-            $demoLoanIds = QardHasan::where('user_id', $user->id)
-                ->where('qard_id_string', 'NOT LIKE', 'MIG-%')
-                ->pluck('id');
-
-            QardHasanRepayment::whereIn('qard_hasan_id', $demoLoanIds)->delete();
-            QardHasan::whereIn('id', $demoLoanIds)->delete();
-
-            // 2. Remove previous migration loans to allow re-runs to update data/dates
-            $prevMigrationIds = QardHasan::where('user_id', $user->id)
-                ->where('qard_id_string', 'LIKE', 'MIG-%')
-                ->pluck('id');
-
-            QardHasanRepayment::whereIn('qard_hasan_id', $prevMigrationIds)->delete();
-            QardHasan::whereIn('id', $prevMigrationIds)->delete();
-
-            self::$sweptUsers[$user->id] = true;
         }
 
         $totalRepaid = (float) ($row['total_repaid_to_date'] ?? 0);
