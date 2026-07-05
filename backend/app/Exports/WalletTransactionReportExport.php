@@ -87,11 +87,19 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
             } else {
                 // Not a wallet allocation, or no distribution info
 
-                // If filtering by scheme or purpose, these transactions might be excluded
-                if (!empty($this->filters['scheme_id']) || !empty($this->filters['purpose'])) {
-                    // For now, we exclude non-allocation transactions if scheme/purpose filter is active
-                    // because we don't know their scheme/purpose.
+                // If filtering by scheme, these are excluded as they don't have a scheme
+                if (!empty($this->filters['scheme_id'])) {
                     continue;
+                }
+
+                // If filtering by purpose
+                if (!empty($this->filters['purpose'])) {
+                    // Allow if source matches purpose (e.g. loan_repayment source matches loan_repayment purpose)
+                    if ($this->filters['purpose'] === 'loan_repayment' && $tx->source === 'loan_repayment') {
+                        // Keep going
+                    } else {
+                        continue;
+                    }
                 }
 
                 $reportData->push([
@@ -105,7 +113,7 @@ class WalletTransactionReportExport implements FromCollection, WithHeadings, Wit
                     'gateway' => $tx->meta['channel'] ?? $tx->meta['processor'] ?? 'N/A',
                     'reference' => $tx->reference,
                     'scheme' => 'N/A',
-                    'purpose' => 'N/A',
+                    'purpose' => $tx->source === 'loan_repayment' ? 'Loan Repayment' : ($tx->type === 'credit' ? 'Wallet Top-up' : 'N/A'),
                     'status' => 'Success',
                 ]);
             }

@@ -108,6 +108,42 @@
         </table>
     </div>
 
+    @php($m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true))
+    @if($src === 'wallet_allocation' && !empty($m['distribution']))
+        <div class="section">
+            <strong>Allocation Details:</strong>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Scheme / Purpose</th>
+                        <th class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($m['distribution'] as $item)
+                        <tr>
+                            <td>
+                                @php($cat = $item['category'] ?? 'deposit')
+                                @if($cat === 'deposit') Contribution
+                                @elseif($cat === 'loan_repayment') Loan Repayment
+                                @elseif($cat === 'fine') Fine Payment
+                                @elseif($cat === 'withdrawal') Withdrawal
+                                @else {{ ucwords(str_replace('_', ' ', $cat)) }}
+                                @endif
+
+                                @if(!empty($item['scheme_id']))
+                                    @php($scheme = \App\Models\Scheme::find($item['scheme_id']))
+                                    ({{ $scheme?->name ?? 'Scheme #'.$item['scheme_id'] }})
+                                @endif
+                            </td>
+                            <td class="right">₦ {{ number_format((float)($item['amount'] ?? 0), 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
     <p class="footer">For support, contact the cooperative office with this reference: <strong>{{ $tx->reference ?? ('TX' . $tx->id) }}</strong>.</p>
 </body>
 </html>

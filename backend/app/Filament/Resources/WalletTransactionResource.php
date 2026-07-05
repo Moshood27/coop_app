@@ -185,6 +185,27 @@ class WalletTransactionResource extends Resource
                     ->label('Gateway/Source')
                     ->options(fn() => WalletTransaction::distinct()->whereNotNull('source')->pluck('source', 'source')->toArray())
                     ->searchable(),
+                SelectFilter::make('purpose')
+                    ->label('Purpose (Distribution)')
+                    ->options([
+                        'deposit' => 'Contribution',
+                        'loan_repayment' => 'Loan Repayment',
+                        'fine' => 'Fine Payment',
+                        'withdrawal' => 'Withdrawal',
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (empty($data['value'])) return $query;
+                        $category = $data['value'];
+                        return $query->where(function ($q) use ($category) {
+                            $q->whereJsonContains('meta->distribution', ['category' => $category]);
+                            if ($category === 'loan_repayment') {
+                                $q->orWhere('source', 'loan_repayment');
+                            }
+                            if ($category === 'deposit') {
+                                $q->orWhere('source', 'contribution'); // Just in case
+                            }
+                        });
+                    }),
                 SelectFilter::make('scheme_id')
                     ->label('Passbook Record (Scheme)')
                     ->options(fn() => Scheme::pluck('name', 'id')->toArray())
