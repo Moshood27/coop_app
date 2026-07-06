@@ -376,6 +376,7 @@ const scanQr = async () => {
 }
 
 const canSubmitApology = computed(() => {
+  if (!appStatusStore.attendanceApologyEnabled) return false
   if (!meeting.value) return false
   if (meeting.value.status !== 'scheduled' && meeting.value.status !== 'ongoing') return false
   

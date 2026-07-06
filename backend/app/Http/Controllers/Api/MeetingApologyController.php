@@ -15,6 +15,12 @@ class MeetingApologyController extends Controller
      */
     public function store(Request $request, Meeting $meeting)
     {
+        if (!Setting::get('attendance_apology_enabled', true)) {
+            return response()->json([
+                'message' => 'Meeting apologies are currently disabled by the administrator.'
+            ], 403);
+        }
+
         $request->validate([
             'reason' => 'required|string|max:1000',
             'excuse_type' => 'required|string|in:medical,nursing_mother,travel,official,other',
