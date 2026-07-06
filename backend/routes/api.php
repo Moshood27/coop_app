@@ -148,6 +148,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/profile/bank-details', [ProfileController::class, 'saveBankDetails']);
 
     // Security - Transaction PIN
+    Route::get('/security/pin/status', [SecurityController::class, 'pinStatus'])->middleware('throttle:api');
     Route::post('/security/pin/set', [SecurityController::class, 'setPin'])->middleware('throttle:api');
     Route::post('/security/pin/verify', [SecurityController::class, 'verifyPin'])->middleware('throttle:api');
     Route::post('/security/pin/reset/request', [SecurityController::class, 'requestPinReset'])->middleware('throttle:api');

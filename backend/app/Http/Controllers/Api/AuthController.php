@@ -30,6 +30,8 @@ class AuthController extends Controller
             'play_store_url' => Setting::get('play_store_url', config('cooperative.play_store_url')),
             'app_name' => config('app.name'),
             'transaction_pin_enabled' => (bool) Setting::get('transaction_pin_enabled', true),
+            'app_pin_login_enabled' => (bool) Setting::get('app_pin_login_enabled', false),
+            'set_transaction_pin_enabled' => (bool) Setting::get('set_transaction_pin_enabled', true),
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),

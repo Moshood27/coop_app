@@ -51,6 +51,7 @@ const GoldSavings = () => import('../views/GoldSavings.vue')
 const Attendance = () => import('../views/Attendance.vue')
 const MaintenanceMode = () => import('../views/MaintenanceMode.vue')
 const UpdateRequired = () => import('../views/UpdateRequired.vue')
+const PinLock = () => import('../views/PinLock.vue')
 
 const SavingsGroups = () => import('../views/SavingsGroups.vue')
 const SavingsGroupDetail = () => import('../views/SavingsGroupDetail.vue')
@@ -99,6 +100,7 @@ const routes = [
   { path: '/attendance', name: 'attendance', component: Attendance, meta: { requiresAuth: true } },
   { path: '/maintenance', name: 'maintenance', component: MaintenanceMode, meta: { skipOnboarding: true, skipStatusCheck: true } },
   { path: '/update-required', name: 'update-required', component: UpdateRequired, meta: { skipOnboarding: true, skipStatusCheck: true }, props: route => ({ url: route.query.url }) },
+  { path: '/pin-lock', name: 'pin-lock', component: PinLock, meta: { requiresAuth: true, skipPinLock: true } },
   { path: '/junior-cooperative', name: 'junior.cooperative', component: JuniorCooperative, meta: { requiresAuth: true } },
   { path: '/gold', name: 'gold', component: GoldSavings, meta: { requiresAuth: true } },
 
@@ -210,6 +212,13 @@ router.beforeEach(async (to) => {
   if (to.meta.guest && token) {
     return { name: 'dashboard' }
   }
+
+  // 1. PIN Lock gate
+  const appStatusStore = useAppStatusStore()
+  if (to.meta.requiresAuth && token && appStatusStore.appPinLoginEnabled && !appStatusStore.isPinVerified && !to.meta.skipPinLock) {
+    return { name: 'pin-lock', query: { redirect: to.fullPath } }
+  }
+
   // allow navigation
   return true
 })

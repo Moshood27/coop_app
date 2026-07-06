@@ -59,6 +59,8 @@ class AppStatusSettings extends Page
             'wellness_check_inactivity_months' => (int) Setting::get('wellness_check_inactivity_months', config('cooperative.legacy.inactivity_months', 6)),
             'wellness_check_period_days' => (int) Setting::get('wellness_check_period_days', config('cooperative.legacy.check_period_days', 30)),
             'transaction_pin_enabled' => (bool) Setting::get('transaction_pin_enabled', true),
+            'app_pin_login_enabled' => (bool) Setting::get('app_pin_login_enabled', false),
+            'set_transaction_pin_enabled' => (bool) Setting::get('set_transaction_pin_enabled', true),
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
@@ -179,6 +181,14 @@ class AppStatusSettings extends Page
                         Toggle::make('transaction_pin_enabled')
                             ->label('Enable Transaction PIN')
                             ->helperText('If disabled, members will not be prompted for their transaction PIN when making payments or transfers.')
+                            ->default(true),
+                        Toggle::make('app_pin_login_enabled')
+                            ->label('Enable Login PIN')
+                            ->helperText('If enabled, members will be required to enter their transaction PIN to access the app after login.')
+                            ->default(false),
+                        Toggle::make('set_transaction_pin_enabled')
+                            ->label('Enable Set Security PIN Prompt')
+                            ->helperText('If enabled, members who have not set their transaction PIN will be prompted to do so on the dashboard.')
                             ->default(true),
                         Toggle::make('attendance_pin_enabled')
                             ->label('Enable Attendance PIN')

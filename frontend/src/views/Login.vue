@@ -164,10 +164,12 @@ import { useRouter, useRoute } from 'vue-router'
 import SearchableSelect from '../components/SearchableSelect.vue'
 import SupportContacts from '../components/SupportContacts.vue'
 import brand from '../brand'
+import { useAppStatusStore } from '../stores/appStatus'
 import { getBiometricAvailabilityDetails, canQuickLogin as canQuickLoginSvc, quickLoginViaBiometric, storeBiometricCredentials } from '../services/biometric'
 
 const router = useRouter()
 const route = useRoute()
+const appStatusStore = useAppStatusStore()
 const branches = ref([])
 const loading = ref(false)
 const showPassword = ref(false)
@@ -239,6 +241,7 @@ onMounted(async () => {
 
 const afterLogin = async (token, user) => {
   localStorage.setItem('token', token)
+  appStatusStore.isPinVerified = false
   if (user) {
     localStorage.setItem('user_id', user.id)
     localStorage.setItem('is_admin', user.is_admin ? 'true' : 'false')
@@ -304,6 +307,7 @@ const handleQuickLogin = async () => {
   try {
     const { ok, error: err } = await quickLoginViaBiometric()
     if (!ok) throw new Error(err || 'Biometric login failed')
+    appStatusStore.isPinVerified = false
     const redirect = route.query.redirect || '/dashboard'
     router.push(redirect)
   } catch (e) {

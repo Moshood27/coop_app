@@ -22,13 +22,17 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import SupportContacts from '../components/SupportContacts.vue'
 
+import { useAppStatusStore } from '../stores/appStatus'
+
 const router = useRouter()
+const appStatusStore = useAppStatusStore()
 const logout = async () => {
   try {
     await axios.post('/api/logout')
   } catch (_) {}
   localStorage.removeItem('token')
   localStorage.removeItem('admin_token')
+  appStatusStore.isPinVerified = false
   router.push('/login')
 }
 </script>

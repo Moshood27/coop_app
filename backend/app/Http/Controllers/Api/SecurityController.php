@@ -39,6 +39,16 @@ class SecurityController extends Controller
     }
 
     /**
+     * Check if user has a transaction PIN set.
+     */
+    public function pinStatus(Request $request)
+    {
+        return response()->json([
+            'has_pin' => !empty($request->user()->transaction_pin_hash)
+        ]);
+    }
+
+    /**
      * Verify a submitted PIN; returns 200 if ok, 403 if invalid, 409 if not set.
      */
     public function verifyPin(Request $request)

@@ -50,7 +50,7 @@
       </div>
 
       <!-- PIN Warning -->
-      <div v-if="appStatusStore.transactionPinEnabled && dashboardData.kpis && !dashboardData.kpis.has_pin"
+      <div v-if="appStatusStore.setTransactionPinEnabled && dashboardData.kpis && !dashboardData.kpis.has_pin"
            class="mt-4 p-4 rounded-3xl bg-amber-50 border border-amber-200 flex items-center gap-3"
            @click="$router.push('/profile')">
         <div class="text-2xl">🔑</div>
@@ -895,7 +895,7 @@ const load = async () => {
     showEmailModal.value = true
     // If the email is clearly invalid (like a membership number or nonsense), clear it for them to type fresh
     emailForm.value.email = '' 
-  } else if (!data.kpis.has_pin) {
+  } else if (appStatusStore.setTransactionPinEnabled && !data.kpis.has_pin) {
     // Check PIN
     showPinModal.value = true
   }
