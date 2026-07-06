@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Scheme;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -631,6 +632,10 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
 
     public function verifyTransactionPin(?string $pin): bool
     {
+        if (!Setting::get('transaction_pin_enabled', true)) {
+            return true;
+        }
+
         if (! $pin || empty($this->transaction_pin_hash)) {
             return false;
         }

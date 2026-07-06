@@ -28,7 +28,10 @@ export async function checkAppStatus() {
       isUpdateAvailable,
       currentVersion: currentRecommendedVersion,
       playStoreUrl: data.play_store_url,
-      paymentGateways: data.payment_gateways
+      paymentGateways: data.payment_gateways,
+      transaction_pin_enabled: data.transaction_pin_enabled,
+      attendance_pin_enabled: data.attendance_pin_enabled,
+      attendance_qr_enabled: data.attendance_qr_enabled,
     }
   } catch (error) {
     console.error('Failed to check app status:', error)

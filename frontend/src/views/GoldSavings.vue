@@ -247,7 +247,7 @@
             </div>
 
             <!-- Transaction PIN -->
-            <div v-if="zakatForm.gateway === 'wallet'">
+            <div v-if="zakatForm.gateway === 'wallet' && appStatusStore.transactionPinEnabled">
               <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Transaction PIN</label>
               <input v-model="zakatForm.pin" type="password" maxlength="4" placeholder="••••" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-center text-2xl tracking-[1em] font-bold focus:ring-2 focus:ring-emerald-500" />
             </div>
@@ -305,12 +305,12 @@
           <p class="text-[10px] text-slate-400 mt-2 px-1">Includes 0.5% fee: ₦{{ (form.amount * 0.005).toFixed(2) }}</p>
         </div>
 
-        <div>
+        <div v-if="appStatusStore.transactionPinEnabled">
           <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Transaction PIN</label>
           <input v-model="form.pin" type="password" maxlength="4" placeholder="••••" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-center text-2xl tracking-[1em] font-bold focus:ring-2 focus:ring-emerald-500" />
         </div>
 
-        <button @click="handleBuy" :disabled="loading || !form.amount || !form.pin" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]">
+        <button @click="handleBuy" :disabled="loading || !form.amount || (appStatusStore.transactionPinEnabled && !form.pin)" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]">
           {{ loading ? 'Processing...' : `Confirm Purchase` }}
         </button>
       </div>
@@ -334,12 +334,12 @@
           <p class="text-[10px] text-slate-400 mt-2 px-1">Est. Credit: ₦{{ formatMoney(form.grams * goldData.sell_price * 0.995) }} (after 0.5% fee)</p>
         </div>
 
-        <div>
+        <div v-if="appStatusStore.transactionPinEnabled">
           <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Transaction PIN</label>
           <input v-model="form.pin" type="password" maxlength="4" placeholder="••••" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-center text-2xl tracking-[1em] font-bold focus:ring-2 focus:ring-amber-500" />
         </div>
 
-        <button @click="handleSell" :disabled="loading || !form.grams || !form.pin" class="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-amber-100 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]">
+        <button @click="handleSell" :disabled="loading || !form.grams || (appStatusStore.transactionPinEnabled && !form.pin)" class="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-amber-100 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]">
           {{ loading ? 'Processing...' : `Confirm Sale` }}
         </button>
       </div>
@@ -595,7 +595,7 @@ const getExportUrl = () => {
 }
 
 const handlePayZakat = async () => {
-  if (zakatForm.value.gateway === 'wallet' && !zakatForm.value.pin) {
+  if (appStatusStore.transactionPinEnabled && zakatForm.value.gateway === 'wallet' && !zakatForm.value.pin) {
     alert('Please enter your transaction PIN')
     return
   }
@@ -627,7 +627,7 @@ const handlePayZakat = async () => {
 }
 
 const handlePayFitr = async () => {
-  if (zakatForm.value.gateway === 'wallet' && !zakatForm.value.pin) {
+  if (appStatusStore.transactionPinEnabled && zakatForm.value.gateway === 'wallet' && !zakatForm.value.pin) {
     alert('Please enter your transaction PIN')
     return
   }

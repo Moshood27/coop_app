@@ -50,7 +50,7 @@
       </div>
 
       <!-- PIN Warning -->
-      <div v-if="dashboardData.kpis && !dashboardData.kpis.has_pin"
+      <div v-if="appStatusStore.transactionPinEnabled && dashboardData.kpis && !dashboardData.kpis.has_pin"
            class="mt-4 p-4 rounded-3xl bg-amber-50 border border-amber-200 flex items-center gap-3"
            @click="$router.push('/profile')">
         <div class="text-2xl">🔑</div>

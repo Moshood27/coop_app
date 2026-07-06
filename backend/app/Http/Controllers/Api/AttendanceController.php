@@ -8,6 +8,7 @@ use App\Models\Meeting;
 use App\Models\AttendanceRecord;
 use App\Models\WalletTransaction;
 use App\Models\User;
+use App\Models\Setting;
 use App\Services\GeoService;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
@@ -69,10 +70,20 @@ class AttendanceController extends Controller
 
         $record = $user->attendanceRecords()->where('meeting_id', $meeting->id)->first();
 
+        $timezone = config('cooperative.timezone', 'Africa/Lagos');
+        $now = now($timezone);
+        $startTime = \Carbon\Carbon::parse($meeting->date->format('Y-m-d') . ' ' . $meeting->start_time, $timezone);
+        $graceMinutes = $meeting->grace_period_minutes ?: config('cooperative.attendance.grace_period_minutes', 0);
+        $lateAt = $startTime->copy()->addMinutes($graceMinutes);
+
         return response()->json([
             'meeting' => $meeting,
             'attendance_record' => $record,
             'in_grace_period' => $user->isInNursingMotherGracePeriod(),
+            'server_time' => $now->toIso8601String(),
+            'late_at' => $lateAt->toIso8601String(),
+            'is_currently_late' => $now->greaterThan($lateAt),
+            'fine_amount' => $meeting->apology_fine_amount ?? config('cooperative.attendance.apology_fine', 100),
         ]);
     }
 
@@ -137,7 +148,7 @@ class AttendanceController extends Controller
         }
 
         // Validate either PIN or QR Token
-        if ($request->filled('qr_token')) {
+        if ($request->filled('qr_token') && Setting::get('attendance_qr_enabled', true)) {
             $cacheKey = "meeting_{$meeting->id}_qr_token";
             $storedToken = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
@@ -154,11 +165,13 @@ class AttendanceController extends Controller
             // Successfully used QR token, refresh it for the next person
             $this->attendanceService->refreshAttendanceQrToken($meeting);
         } else {
-            if (!$request->filled('pin')) {
-                return response()->json(['message' => 'Either PIN or QR code is required'], 400);
-            }
-            if ($meeting->pin !== $request->pin) {
-                return response()->json(['message' => 'Invalid PIN'], 400);
+            if (Setting::get('attendance_pin_enabled', true)) {
+                if (!$request->filled('pin')) {
+                    return response()->json(['message' => 'Either PIN or QR code is required'], 400);
+                }
+                if ($meeting->pin !== $request->pin) {
+                    return response()->json(['message' => 'Invalid PIN'], 400);
+                }
             }
         }
 
@@ -337,5 +350,190 @@ class AttendanceController extends Controller
         }
 
         return response()->json(['message' => $message, 'record' => $record]);
+    }
+
+    /**
+     * Mark attendance via BLE Beacon.
+     */
+    public function markAttendanceBeacon(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'beacon_uuid' => 'required|string',
+            'beacon_major' => 'nullable|integer',
+            'beacon_minor' => 'nullable|integer',
+            'device_uuid' => 'required|string',
+            'lat' => 'nullable|numeric',
+            'lng' => 'nullable|numeric',
+        ]);
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => 'Meeting is not ongoing'], 400);
+        }
+
+        // Verify beacon details match the meeting's configured beacon
+        if (strcasecmp($meeting->beacon_uuid, $request->beacon_uuid) !== 0) {
+            return response()->json(['message' => 'Invalid beacon for this meeting'], 400);
+        }
+
+        if ($meeting->beacon_major !== null && $meeting->beacon_major != $request->beacon_major) {
+            return response()->json(['message' => 'Invalid beacon major ID'], 400);
+        }
+
+        if ($meeting->beacon_minor !== null && $meeting->beacon_minor != $request->beacon_minor) {
+            return response()->json(['message' => 'Invalid beacon minor ID'], 400);
+        }
+
+        $user = $request->user();
+
+        // Check for existing record
+        $existingRecord = AttendanceRecord::where('user_id', $user->id)
+            ->where('meeting_id', $meeting->id)
+            ->first();
+
+        $isExempt = $user->isInNursingMotherGracePeriod() || ($existingRecord && in_array($existingRecord->status, ['excused', 'pending_excuse']));
+
+        // Device binding check
+        $alreadyUsed = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->where('device_uuid', $request->device_uuid)
+            ->where('user_id', '!=', $user->id)
+            ->exists();
+
+        if ($alreadyUsed) {
+            return response()->json(['message' => 'This device has already been used for another member.'], 403);
+        }
+
+        $record = AttendanceRecord::updateOrCreate(
+            ['user_id' => $user->id, 'meeting_id' => $meeting->id],
+            [
+                'status' => 'present',
+                'attended_at' => now(),
+                'lat' => $request->lat,
+                'lng' => $request->lng,
+                'device_uuid' => $request->device_uuid,
+                'verified_via_beacon' => true,
+            ]
+        );
+
+        broadcast(new AttendanceMarked($meeting, $record));
+
+        $message = 'Attendance marked successfully via Beacon';
+        if ($this->attendanceService->isLate($meeting, $record->attended_at)) {
+            if (!$isExempt) {
+                $this->attendanceService->chargeLatenessFine($user, $meeting);
+                $fineAmount = $meeting->apology_fine_amount ?? config('cooperative.attendance.apology_fine', 100);
+                $message .= '. You were late and charged a lateness fine of ' . number_format($fineAmount) . '.';
+            }
+        }
+
+        return response()->json(['message' => $message, 'record' => $record]);
+    }
+
+    /**
+     * Submit an excuse pre-emptively or for lateness.
+     */
+    public function submitExcuse(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+            'type' => 'required|string|in:medical,work,travel,other',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        $proofPath = null;
+        if ($request->hasFile('proof')) {
+            $proofPath = $request->file('proof')->store('excuses', 'public');
+        }
+
+        $record = AttendanceRecord::updateOrCreate(
+            ['user_id' => $user->id, 'meeting_id' => $meeting->id],
+            [
+                'status' => 'pending_excuse',
+                'excuse_reason' => $request->reason,
+                'excuse_type' => $request->type,
+                'excuse_proof_path' => $proofPath,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Excuse submitted successfully and is pending review.',
+            'record' => $record
+        ]);
+    }
+
+    /**
+     * Sync attendance records that were captured offline.
+     */
+    public function syncOfflineAttendance(Request $request)
+    {
+        $request->validate([
+            'records' => 'required|array',
+            'records.*.meeting_id' => 'required|exists:meetings,id',
+            'records.*.attended_at' => 'required|date',
+            'records.*.lat' => 'required|numeric',
+            'records.*.lng' => 'required|numeric',
+            'records.*.device_uuid' => 'required|string',
+            'records.*.verification_type' => 'required|string|in:pin,qr,biometric,beacon',
+        ]);
+
+        $user = $request->user();
+        $syncedCount = 0;
+        $errors = [];
+
+        foreach ($request->records as $index => $data) {
+            $meeting = Meeting::find($data['meeting_id']);
+
+            // Security check: Don't allow syncing for meetings too far in the past?
+            // Or just rely on device_uuid and user_id uniqueness.
+
+            // Check for existing record
+            $existing = AttendanceRecord::where('user_id', $user->id)
+                ->where('meeting_id', $meeting->id)
+                ->first();
+
+            if ($existing && $existing->status === 'present') {
+                continue; // Already present
+            }
+
+            // Check device binding
+            $alreadyUsed = AttendanceRecord::where('meeting_id', $meeting->id)
+                ->where('device_uuid', $data['device_uuid'])
+                ->where('user_id', '!=', $user->id)
+                ->exists();
+
+            if ($alreadyUsed) {
+                $errors[] = "Record #{$index}: Device already used by another member.";
+                continue;
+            }
+
+            $record = AttendanceRecord::updateOrCreate(
+                ['user_id' => $user->id, 'meeting_id' => $meeting->id],
+                [
+                    'status' => 'present',
+                    'attended_at' => $data['attended_at'],
+                    'lat' => $data['lat'],
+                    'lng' => $data['lng'],
+                    'device_uuid' => $data['device_uuid'],
+                    'is_offline_sync' => true,
+                    'verified_biometrically' => $data['verification_type'] === 'biometric',
+                    'verified_via_beacon' => $data['verification_type'] === 'beacon',
+                ]
+            );
+
+            // Trigger fine if late
+            if ($this->attendanceService->isLate($meeting, $record->attended_at)) {
+                if (!$user->isInNursingMotherGracePeriod() && $record->status !== 'excused') {
+                    $this->attendanceService->chargeLatenessFine($user, $meeting);
+                }
+            }
+
+            $syncedCount++;
+        }
+
+        return response()->json([
+            'message' => "Successfully synced {$syncedCount} records.",
+            'errors' => $errors
+        ]);
     }
 }

@@ -376,10 +376,13 @@ const payViaWallet = async () => {
     }
 
     // For simplicity in this UI, we might need to ask for PIN
-    const pin = prompt('Enter your 4-digit transaction PIN:')
-    if (!pin) {
-      paying.value = false
-      return
+    let pin = ''
+    if (appStatusStore.transactionPinEnabled) {
+      pin = prompt('Enter your 4-digit transaction PIN:')
+      if (!pin) {
+        paying.value = false
+        return
+      }
     }
     payload.pin = pin
     

@@ -369,6 +369,10 @@ const loadWallet = async () => {
 const initiatePayment = async () => {
   // If paying from wallet or special savings, show custom PIN prompt modal
   if (source.value === 'wallet' || source.value === 'special_savings') {
+    if (!appStatusStore.transactionPinEnabled) {
+      handlePinConfirm('')
+      return
+    }
     pinPrompt.value.visible = true
     return
   }
@@ -400,7 +404,7 @@ const initiatePayment = async () => {
 
 const handlePinConfirm = async (val) => {
   const pin = String(val || '').trim()
-  if (!/^\d{4}$/.test(pin)) {
+  if (appStatusStore.transactionPinEnabled && !/^\d{4}$/.test(pin)) {
     showNotice('Invalid PIN', 'Please enter a valid 4-digit PIN.', 'error')
     return
   }

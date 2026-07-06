@@ -10,6 +10,9 @@ export const useAppStatusStore = defineStore('appStatus', {
     isUpdateAvailable: false,
     currentVersion: '',
     playStoreUrl: '',
+    transactionPinEnabled: true,
+    attendancePinEnabled: true,
+    attendanceQrEnabled: true,
     paymentGateways: {
       paystack: true,
       flutterwave: true,
@@ -32,6 +35,9 @@ export const useAppStatusStore = defineStore('appStatus', {
       this.isUpdateAvailable = status.isUpdateAvailable
       this.currentVersion = status.currentVersion
       this.playStoreUrl = status.playStoreUrl
+      this.transactionPinEnabled = status.transaction_pin_enabled ?? true
+      this.attendancePinEnabled = status.attendance_pin_enabled ?? true
+      this.attendanceQrEnabled = status.attendance_qr_enabled ?? true
       if (status.paymentGateways) {
         this.paymentGateways = status.paymentGateways
       }

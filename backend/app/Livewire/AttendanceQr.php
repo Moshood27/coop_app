@@ -11,6 +11,7 @@ class AttendanceQr extends Component
 {
     public Meeting $meeting;
     public string $payload = '';
+    public bool $qrEnabled = true;
     public array $recentAttendees = [];
 
     public function mount(Meeting $meeting)
@@ -57,8 +58,17 @@ class AttendanceQr extends Component
 
     public function refreshPayload()
     {
-        $attendanceService = app(AttendanceService::class);
-        $this->payload = $attendanceService->getAttendanceQrPayload($this->meeting);
+        $this->qrEnabled = (bool) \App\Models\Setting::get('attendance_qr_enabled', true);
+        if ($this->qrEnabled) {
+            $attendanceService = app(AttendanceService::class);
+            $this->payload = $attendanceService->getAttendanceQrPayload($this->meeting);
+        }
+    }
+
+    public function toggleQr()
+    {
+        \App\Models\Setting::set('attendance_qr_enabled', !$this->qrEnabled);
+        $this->refreshPayload();
     }
 
     public function render()

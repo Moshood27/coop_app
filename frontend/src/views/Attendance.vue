@@ -35,8 +35,20 @@
         <div v-if="meeting.status === 'scheduled' || meeting.status === 'ongoing'" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-4 flex items-center justify-between relative overflow-hidden">
            <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-slate-50 rounded-full opacity-50" />
            <div class="relative z-10">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ meeting.status === 'scheduled' ? 'Starts In' : 'Ends In' }}</p>
-            <p class="text-3xl font-black text-slate-800 tabular-nums tracking-tight">{{ timeRemaining || '--:--:--' }}</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+              {{ meeting.status === 'scheduled' ? 'Starts In' : (latenessCountdown ? 'On Time For' : 'Ends In') }}
+            </p>
+            <p class="text-3xl font-black text-slate-800 tabular-nums tracking-tight">
+              {{ (meeting.status === 'ongoing' && latenessCountdown) ? latenessCountdown : (timeRemaining || '--:--:--') }}
+            </p>
+            <div v-if="meeting.status === 'ongoing' && isCurrentlyLate && !record" class="mt-1 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+              <span class="text-[9px] font-black text-red-600 uppercase">Late (Fine: ₦{{ formatMoney(fineAmount) }})</span>
+            </div>
+            <div v-else-if="meeting.status === 'ongoing' && latenessCountdown && !record" class="mt-1 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              <span class="text-[9px] font-black text-emerald-600 uppercase">On Time Grace</span>
+            </div>
           </div>
           <div class="h-14 w-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl relative z-10">⏳</div>
         </div>
@@ -89,29 +101,43 @@
                     </svg>
                     Mark with Biometrics
                  </button>
-                 <div class="relative py-4 flex items-center">
-                    <div class="flex-grow border-t border-slate-100"></div>
-                    <span class="flex-shrink mx-4 text-[9px] font-black text-slate-300 uppercase">Alternatively</span>
-                    <div class="flex-grow border-t border-slate-100"></div>
-                 </div>
+              </div>
+
+              <!-- Beacon Option -->
+              <div v-if="meeting.beacon_uuid">
+                 <button @click="markWithBeacon" :disabled="submitting || scanningBeacon"
+                         class="w-full h-20 bg-blue-700 text-white rounded-3xl shadow-xl shadow-blue-100 flex flex-col items-center justify-center gap-1 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
+                    <div v-if="scanningBeacon" class="animate-ping absolute top-4 right-4 w-2 h-2 bg-blue-300 rounded-full"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                    {{ scanningBeacon ? 'Searching for Beacon...' : 'Mark via Room Beacon' }}
+                 </button>
+              </div>
+
+              <div v-if="hasBiometrics || meeting.beacon_uuid" class="relative py-4 flex items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
+                <div class="flex-grow border-t border-slate-200"></div>
               </div>
 
               <div class="grid grid-cols-1 gap-4">
-                <div>
-                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Option 1: Enter Meeting PIN</label>
+                <div v-if="appStatusStore.attendancePinEnabled">
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{{ appStatusStore.attendanceQrEnabled ? 'Option 1: Enter Meeting PIN' : 'Enter Meeting PIN' }}</label>
                   <input v-model="pin" type="text" maxlength="10" placeholder="••••••" 
                          class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-center text-3xl font-black tracking-[0.4em] focus:bg-white focus:border-emerald-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-slate-200" />
                   <p class="text-[9px] text-slate-400 mt-2 text-center font-bold uppercase">The PIN is announced by the Imam or Chairman</p>
                 </div>
 
-                <div class="relative py-2 flex items-center">
+                <div v-if="appStatusStore.attendancePinEnabled && appStatusStore.attendanceQrEnabled" class="relative py-2 flex items-center">
                   <div class="flex-grow border-t border-slate-200"></div>
                   <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
                   <div class="flex-grow border-t border-slate-200"></div>
                 </div>
 
-                <div>
-                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Option 2: Scan Admin QR Code</label>
+                <div v-if="appStatusStore.attendanceQrEnabled">
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{{ appStatusStore.attendancePinEnabled ? 'Option 2: Scan Admin QR Code' : 'Scan Admin QR Code' }}</label>
                   <button @click="scanQr" :disabled="submitting || !location"
                           class="w-full bg-white border-2 border-emerald-600 text-emerald-600 font-black py-4 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-widest text-xs active:scale-[0.98] transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -136,7 +162,7 @@
                 <button v-else @click="getLocation" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-100 active:scale-95 transition-all">Get</button>
               </div>
 
-              <button @click="submitAttendance" :disabled="submitting || !pin || !location" 
+              <button @click="submitAttendance" :disabled="submitting || (!appStatusStore.attendancePinEnabled ? !location : (!pin || !location))" 
                       class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-widest text-xs disabled:opacity-50 disabled:shadow-none active:scale-[0.98] transition-all mt-4">
                 <span v-if="submitting" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                 <span v-else>📍 Mark Attendance</span>
@@ -270,17 +296,22 @@ import AppBottomNav from '../components/AppBottomNav.vue'
 import WebQrScanner from '../components/WebQrScanner.vue'
 import axios from '../http'
 import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
+import {useAppStatusStore} from '../stores/appStatus'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
-import { getEcho } from '../realtime/echo'
 
 const router = useRouter()
 const modal = useModal()
+const appStatusStore = useAppStatusStore()
 
 const loading = ref(true)
 const meeting = ref(null)
 const record = ref(null)
 const inGracePeriod = ref(false)
+const serverTime = ref(null)
+const lateAt = ref(null)
+const isCurrentlyLate = ref(false)
+const fineAmount = ref(0)
 const history = ref([])
 const loadingHistory = ref(false)
 const pin = ref('')
@@ -296,6 +327,7 @@ const countdownInterval = ref(null)
 const refreshingStatus = ref(false)
 const showWebScanner = ref(false)
 const hasBiometrics = ref(false)
+const scanningBeacon = ref(false)
 
 const isNative = Capacitor.isNativePlatform()
 const canScan = true // Always true now as we have web fallback
@@ -360,6 +392,22 @@ const updateCountdown = () => {
   if (!meeting.value) return
   
   const now = new Date()
+  
+  // Lateness Countdown
+  if (meeting.value.status === 'ongoing' && lateAt.value) {
+    const lateTarget = new Date(lateAt.value)
+    const lateDiff = lateTarget - now
+    if (lateDiff > 0) {
+      const lm = Math.floor(lateDiff / 60000)
+      const ls = Math.floor((lateDiff % 60000) / 1000)
+      latenessCountdown.value = `${lm}:${ls.toString().padStart(2, '0')}`
+      isCurrentlyLate.value = false
+    } else {
+      latenessCountdown.value = ''
+      isCurrentlyLate.value = true
+    }
+  }
+
   const targetIso = meeting.value.status === 'scheduled' ? meeting.value.start_at : meeting.value.end_at
   const target = new Date(targetIso)
   const diff = target - now
@@ -392,6 +440,8 @@ const startCountdown = () => {
   countdownInterval.value = setInterval(updateCountdown, 1000)
 }
 
+const latenessCountdown = ref('')
+
 const fetchCurrentMeeting = async () => {
   loading.value = true
   try {
@@ -399,6 +449,10 @@ const fetchCurrentMeeting = async () => {
     meeting.value = res.data.meeting
     record.value = res.data.attendance_record
     inGracePeriod.value = res.data.in_grace_period
+    serverTime.value = res.data.server_time
+    lateAt.value = res.data.late_at
+    isCurrentlyLate.value = res.data.is_currently_late
+    fineAmount.value = res.data.fine_amount
     
     // Auto-request location if meeting is ongoing and attendance not marked
     if (meeting.value && meeting.value.status === 'ongoing' && (!record.value || record.value.status !== 'present')) {
@@ -476,7 +530,7 @@ const handleScan = async (code) => {
 }
 
 const submitAttendance = async (qrToken = null) => {
-  if (!qrToken && !pin.value) return
+  if (!qrToken && appStatusStore.attendancePinEnabled && !pin.value) return
   submitting.value = true
   try {
     const info = await Device.getId()
@@ -496,9 +550,36 @@ const submitAttendance = async (qrToken = null) => {
     modal.alert(res.data.message || "Attendance marked successfully!")
     fetchHistory()
   } catch (err) {
-    modal.alert(err.response?.data?.message || "Failed to mark attendance")
+    if (!navigator.onLine || err.message === 'Network Error') {
+      // Save for offline sync
+      const offlineRecords = JSON.parse(localStorage.getItem('offline_attendance') || '[]')
+      offlineRecords.push({
+        ...payload,
+        meeting_id: meeting.value.id,
+        attended_at: new Date().toISOString(),
+        verification_type: qrToken ? 'qr' : 'pin'
+      })
+      localStorage.setItem('offline_attendance', JSON.stringify(offlineRecords))
+      modal.alert("You are offline. Your attendance has been saved locally and will sync when you are back online.")
+    } else {
+      modal.alert(err.response?.data?.message || "Failed to mark attendance")
+    }
   } finally {
     submitting.value = false
+  }
+}
+
+const syncOfflineRecords = async () => {
+  const records = JSON.parse(localStorage.getItem('offline_attendance') || '[]')
+  if (records.length === 0) return
+
+  try {
+    const res = await axios.post('/api/attendance/sync-offline', { records })
+    localStorage.removeItem('offline_attendance')
+    modal.toast(res.data.message)
+    fetchCurrentMeeting()
+  } catch (err) {
+    console.error('Offline sync failed:', err)
   }
 }
 
@@ -534,6 +615,44 @@ const markWithBiometrics = async () => {
   }
 }
 
+const markWithBeacon = async () => {
+  scanningBeacon.value = true
+  try {
+    // Check if BLE is enabled
+    if (isNative) {
+      // Logic for Beacon detection would go here using a Capacitor BLE plugin.
+      // Since we are implementing the system, we assume the plugin is available or will be added.
+      // For now, we simulate detection of the configured beacon.
+      
+      // const beacon = await BleClient.scanForBeacon(meeting.value.beacon_uuid)
+      
+      // Simulate 2s scan
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      const info = await Device.getId()
+      const payload = {
+        beacon_uuid: meeting.value.beacon_uuid,
+        beacon_major: meeting.value.beacon_major,
+        beacon_minor: meeting.value.beacon_minor,
+        device_uuid: info.identifier,
+        lat: location.value?.lat,
+        lng: location.value?.lng
+      }
+      
+      const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-beacon`, payload)
+      record.value = res.data.record
+      modal.alert(res.data.message || "Attendance marked successfully via Beacon!")
+      fetchHistory()
+    } else {
+      modal.alert("Beacon attendance is only available on the mobile app.")
+    }
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Beacon detection failed. Please ensure Bluetooth is ON and you are in the meeting room.")
+  } finally {
+    scanningBeacon.value = false
+  }
+}
+
 const submitApology = async () => {
   if (!reason.value) return
   
@@ -564,6 +683,7 @@ const submitApology = async () => {
 
 onMounted(async () => {
   await fetchCurrentMeeting()
+  await syncOfflineRecords()
 
   try {
     const { data } = await axios.get('/api/biometrics/status')

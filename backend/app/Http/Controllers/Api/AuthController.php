@@ -29,6 +29,9 @@ class AuthController extends Controller
             'system_announcement' => Setting::get('system_announcement', config('cooperative.system_announcement')),
             'play_store_url' => Setting::get('play_store_url', config('cooperative.play_store_url')),
             'app_name' => config('app.name'),
+            'transaction_pin_enabled' => (bool) Setting::get('transaction_pin_enabled', true),
+            'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
+            'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'payment_gateways' => [
                 'paystack' => (bool) Setting::get('gateway_paystack_enabled', true),
                 'flutterwave' => (bool) Setting::get('gateway_flutterwave_enabled', true),

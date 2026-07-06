@@ -980,6 +980,12 @@ const startTransfer = async () => {
   } catch (e) {
     // If biometric check throws, allow fallback to PIN only
   }
+
+  if (!appStatusStore.transactionPinEnabled) {
+    handlePinConfirm('')
+    return
+  }
+
   pinPrompt.value.mode = 'transfer'
   pinPrompt.value.title = 'Confirm Transfer'
   pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to authorize this transfer.'
@@ -1014,6 +1020,12 @@ const startWithdraw = async () => {
   } catch (e) {
     // allow fallback to PIN
   }
+
+  if (!appStatusStore.transactionPinEnabled) {
+    handlePinConfirm('')
+    return
+  }
+
   pinPrompt.value.mode = 'withdraw'
   pinPrompt.value.title = 'Confirm Withdrawal'
   pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to request this withdrawal.'
@@ -1023,7 +1035,7 @@ const startWithdraw = async () => {
 
 const handlePinConfirm = async (val) => {
   const pin = String(val || '').trim()
-  if (!/^\d{4}$/.test(pin)) {
+  if (appStatusStore.transactionPinEnabled && !/^\d{4}$/.test(pin)) {
     showNotice('Invalid PIN', 'Please enter a valid 4-digit Transaction PIN.', 'error')
     return
   }

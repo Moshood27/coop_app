@@ -74,12 +74,12 @@
             <label class="lbl">Note</label>
             <input v-model.trim="note" type="text" maxlength="120" placeholder="What's this for?" class="inp" />
           </div>
-          <div>
+          <div v-if="appStatusStore.transactionPinEnabled">
             <label class="lbl">Transaction PIN</label>
             <input v-model="pin" type="password" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="4-digit PIN" class="inp tracking-[1em] text-center font-black" />
           </div>
           <div class="flex gap-3 pt-2">
-            <button @click="pay" :disabled="loading || !amount || !pin || pin.length !== 4" class="btn-primary flex-1 py-4 text-lg">
+            <button @click="pay" :disabled="loading || !amount || (appStatusStore.transactionPinEnabled && (!pin || pin.length !== 4))" class="btn-primary flex-1 py-4 text-lg">
               {{ loading ? 'Paying…' : 'Pay Now' }}
             </button>
             <button @click="reset" class="btn-muted px-6 py-4">Clear</button>
@@ -123,10 +123,12 @@
 <script setup>
 import { ref } from 'vue'
 import axios from '../http.js'
+import { useAppStatusStore } from '../stores/appStatus'
 import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning'
 import { Capacitor } from '@capacitor/core'
 import WebQrScanner from '../components/WebQrScanner.vue'
 
+const appStatusStore = useAppStatusStore()
 const isNative = Capacitor.isNativePlatform()
 const canScan = true
 

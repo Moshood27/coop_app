@@ -228,8 +228,10 @@ import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
 import CustomNotice from '../components/CustomNotice.vue'
 import { useNotice } from '../composables/useNotice'
+import { useAppStatusStore } from '../stores/appStatus'
 
 // State
+const appStatusStore = useAppStatusStore()
 const balance = ref(0)
 const tab = ref('airtime')
 const bundles = ref([])
@@ -268,6 +270,9 @@ const pinModal = ref({
 })
 
 function promptForPin(message) {
+  if (!appStatusStore.transactionPinEnabled) {
+    return Promise.resolve('')
+  }
   return new Promise((resolve, reject) => {
     pinModal.value.title = 'Confirm Purchase'
     pinModal.value.message = message || 'Enter your 4-digit Transaction PIN to proceed.'

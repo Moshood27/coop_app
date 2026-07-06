@@ -58,6 +58,9 @@ class AppStatusSettings extends Page
             'wellness_check_enabled' => (bool) Setting::get('wellness_check_enabled', true),
             'wellness_check_inactivity_months' => (int) Setting::get('wellness_check_inactivity_months', config('cooperative.legacy.inactivity_months', 6)),
             'wellness_check_period_days' => (int) Setting::get('wellness_check_period_days', config('cooperative.legacy.check_period_days', 30)),
+            'transaction_pin_enabled' => (bool) Setting::get('transaction_pin_enabled', true),
+            'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
+            'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'loan_duration_rules' => json_decode(Setting::get('loan_duration_rules', '[]'), true) ?: [
                 ['max_amount' => 1000000, 'duration' => 12],
                 ['max_amount' => 2000000, 'duration' => 15],
@@ -169,6 +172,22 @@ class AppStatusSettings extends Page
                             ->minValue(1)
                             ->helperText('Number of days to wait after notification before alerting admins if the member remains inactive.'),
                     ])->columns(3),
+                Section::make('Security & Verification')
+                    ->description('Manage PIN requirements for transactions and attendance.')
+                    ->schema([
+                        Toggle::make('transaction_pin_enabled')
+                            ->label('Enable Transaction PIN')
+                            ->helperText('If disabled, members will not be prompted for their transaction PIN when making payments or transfers.')
+                            ->default(true),
+                        Toggle::make('attendance_pin_enabled')
+                            ->label('Enable Attendance PIN')
+                            ->helperText('If disabled, members will not be prompted for a meeting PIN when marking attendance (GPS and Device verification still apply).')
+                            ->default(true),
+                        Toggle::make('attendance_qr_enabled')
+                            ->label('Enable Attendance QR Scanning')
+                            ->helperText('If disabled, the option to scan a QR code for attendance will be hidden from members.')
+                            ->default(true),
+                    ])->columns(2),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')
                     ->schema([

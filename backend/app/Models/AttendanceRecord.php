@@ -26,6 +26,8 @@ class AttendanceRecord extends Model
         'excuse_proof_path',
         'excused_at',
         'verified_biometrically',
+        'verified_via_beacon',
+        'is_offline_sync',
     ];
 
     protected $casts = [
@@ -39,6 +41,8 @@ class AttendanceRecord extends Model
         'excuse_proof_path' => 'string',
         'excused_at' => 'datetime',
         'verified_biometrically' => 'boolean',
+        'verified_via_beacon' => 'boolean',
+        'is_offline_sync' => 'boolean',
     ];
 
     public function user(): BelongsTo

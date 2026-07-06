@@ -68,6 +68,15 @@ class MeetingResource extends Resource
                         Forms\Components\TextInput::make('pin')
                             ->required()
                             ->maxLength(10),
+                        Forms\Components\TextInput::make('beacon_uuid')
+                            ->label('Beacon UUID')
+                            ->helperText('UUID of the BLE beacon at the venue'),
+                        Forms\Components\TextInput::make('beacon_major')
+                            ->label('Beacon Major')
+                            ->numeric(),
+                        Forms\Components\TextInput::make('beacon_minor')
+                            ->label('Beacon Minor')
+                            ->numeric(),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'scheduled' => 'Scheduled',

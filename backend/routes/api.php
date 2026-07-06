@@ -221,9 +221,12 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     // Attendance
     Route::get('/attendance/current', [AttendanceController::class, 'current']);
     Route::get('/attendance/history', [AttendanceController::class, 'history']);
+    Route::post('/attendance/sync-offline', [AttendanceController::class, 'syncOfflineAttendance']);
     Route::post('/meetings/{meeting}/mark-attendance', [AttendanceController::class, 'markAttendance']);
     Route::get('/meetings/{meeting}/biometric-options', [AttendanceController::class, 'biometricOptions']);
     Route::post('/meetings/{meeting}/mark-biometric', [AttendanceController::class, 'markAttendanceBiometric']);
+    Route::post('/meetings/{meeting}/mark-beacon', [AttendanceController::class, 'markAttendanceBeacon']);
+    Route::post('/meetings/{meeting}/submit-excuse', [AttendanceController::class, 'submitExcuse']);
 
     // Biometrics Registration
     Route::get('/biometrics/status', [BiometricController::class, 'status']);
