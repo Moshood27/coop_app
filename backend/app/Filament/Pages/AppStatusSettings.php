@@ -61,6 +61,7 @@ class AppStatusSettings extends Page
             'transaction_pin_enabled' => (bool) Setting::get('transaction_pin_enabled', true),
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
+            'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
             'loan_duration_rules' => json_decode(Setting::get('loan_duration_rules', '[]'), true) ?: [
                 ['max_amount' => 1000000, 'duration' => 12],
                 ['max_amount' => 2000000, 'duration' => 15],
@@ -186,6 +187,10 @@ class AppStatusSettings extends Page
                         Toggle::make('attendance_qr_enabled')
                             ->label('Enable Attendance QR Scanning')
                             ->helperText('If disabled, the option to scan a QR code for attendance will be hidden from members.')
+                            ->default(true),
+                        Toggle::make('attendance_apology_enabled')
+                            ->label('Enable Submit Apology')
+                            ->helperText('If disabled, members will not be able to submit apologies for meetings.')
                             ->default(true),
                     ])->columns(2),
                 Section::make('Wallet Settings')
