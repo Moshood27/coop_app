@@ -70,13 +70,28 @@ class MeetingResource extends Resource
                             ->maxLength(10),
                         Forms\Components\TextInput::make('beacon_uuid')
                             ->label('Beacon UUID')
-                            ->helperText('UUID of the BLE beacon at the venue'),
+                            ->helperText('UUID of the BLE beacon at the venue')
+                            ->uuid()
+                            ->hintAction(
+                                Forms\Components\Actions\Action::make('how_to_get_beacon')
+                                    ->label('How to get this?')
+                                    ->icon('heroicon-m-question-mark-circle')
+                                    ->modalHeading('Retrieving Beacon Identifiers')
+                                    ->modalDescription('To use Beacon-based attendance, you need the UUID, Major, and Minor values from your physical BLE beacon.')
+                                    ->modalContent(view('filament.components.beacon-help'))
+                            ),
                         Forms\Components\TextInput::make('beacon_major')
                             ->label('Beacon Major')
-                            ->numeric(),
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(65535)
+                            ->hint('0-65535'),
                         Forms\Components\TextInput::make('beacon_minor')
                             ->label('Beacon Minor')
-                            ->numeric(),
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(65535)
+                            ->hint('0-65535'),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'scheduled' => 'Scheduled',
