@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Meeting;
 use App\Models\AttendanceRecord;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
