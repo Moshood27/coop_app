@@ -162,7 +162,7 @@
                 <button v-else @click="getLocation" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-100 active:scale-95 transition-all">Get</button>
               </div>
 
-              <button @click="submitAttendance" :disabled="submitting || (!appStatusStore.attendancePinEnabled ? !location : (!pin || !location))" 
+              <button @click="submitAttendance()" :disabled="submitting || (!appStatusStore.attendancePinEnabled ? !location : (!pin || !location))" 
                       class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-widest text-xs disabled:opacity-50 disabled:shadow-none active:scale-[0.98] transition-all mt-4">
                 <span v-if="submitting" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                 <span v-else>📍 Mark Attendance</span>
@@ -299,6 +299,7 @@ import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
 import {useAppStatusStore} from '../stores/appStatus'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
+import { getEcho } from '../realtime/echo.js'
 
 const router = useRouter()
 const modal = useModal()
@@ -530,6 +531,11 @@ const handleScan = async (code) => {
 }
 
 const submitAttendance = async (qrToken = null) => {
+  // If qrToken is an Event object (from @click="submitAttendance"), treat it as null
+  if (qrToken && typeof qrToken === 'object' && qrToken.constructor.name.includes('Event')) {
+    qrToken = null
+  }
+
   if (!qrToken && appStatusStore.attendancePinEnabled && !pin.value) return
   submitting.value = true
   try {
