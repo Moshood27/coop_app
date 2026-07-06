@@ -30,8 +30,11 @@ export async function checkAppStatus() {
       playStoreUrl: data.play_store_url,
       paymentGateways: data.payment_gateways,
       transaction_pin_enabled: data.transaction_pin_enabled,
+      app_pin_login_enabled: data.app_pin_login_enabled,
+      set_transaction_pin_enabled: data.set_transaction_pin_enabled,
       attendance_pin_enabled: data.attendance_pin_enabled,
       attendance_qr_enabled: data.attendance_qr_enabled,
+      attendance_apology_enabled: data.attendance_apology_enabled,
     }
   } catch (error) {
     console.error('Failed to check app status:', error)

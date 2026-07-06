@@ -390,6 +390,20 @@ const formatMoney = (val) => Number(val ?? 0).toLocaleString(undefined, { minimu
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 const formatTime = (val) => val ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 
+const formatDuration = (ms) => {
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
+  const h = Math.floor(m / 60)
+  const d = Math.floor(h / 24)
+
+  const ss = (s % 60).toString().padStart(2, '0')
+  const mm = (m % 60).toString().padStart(2, '0')
+  const hh = (h % 24).toString().padStart(2, '0')
+
+  if (d > 0) return `${d}d ${hh}:${mm}:${ss}`
+  return `${hh}:${mm}:${ss}`
+}
+
 const updateCountdown = () => {
   if (!meeting.value) return
   
@@ -400,9 +414,7 @@ const updateCountdown = () => {
     const lateTarget = new Date(lateAt.value)
     const lateDiff = lateTarget - now
     if (lateDiff > 0) {
-      const lm = Math.floor(lateDiff / 60000)
-      const ls = Math.floor((lateDiff % 60000) / 1000)
-      latenessCountdown.value = `${lm}:${ls.toString().padStart(2, '0')}`
+      latenessCountdown.value = formatDuration(lateDiff)
       isCurrentlyLate.value = false
     } else {
       latenessCountdown.value = ''
@@ -429,11 +441,7 @@ const updateCountdown = () => {
     return
   }
   
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  
-  timeRemaining.value = [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
+  timeRemaining.value = formatDuration(diff)
 }
 
 const startCountdown = () => {
