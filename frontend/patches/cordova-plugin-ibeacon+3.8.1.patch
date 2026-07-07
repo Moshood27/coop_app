@@ -1,0 +1,14 @@
+diff --git a/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle b/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
+index a88cc7b..598d025 100644
+--- a/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
++++ b/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
+@@ -1,7 +1,7 @@
+ repositories{
+-    jcenter()
++    mavenCentral()
+ }
+ 
+ dependencies {
+-    compile 'org.altbeacon:android-beacon-library:2.16.1'
++    implementation 'org.altbeacon:android-beacon-library:2.20'
+ }

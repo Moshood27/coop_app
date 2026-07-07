@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Scheme;
 use App\Models\WalletTransaction;
 use App\Models\Contribution;
+use App\Models\Setting;
 use App\Services\GoldSilverPriceService;
 use App\Services\ZakatService;
 use Illuminate\Http\Request;
@@ -141,11 +142,15 @@ class GoldController extends Controller
 
         $request->validate([
             'amount_naira' => "required|numeric|min:$minAmount",
-            'pin' => 'required|string',
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'string'],
             'otp' => 'nullable|string'
         ]);
 
         $user = auth()->user();
+
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
+            return response()->json(['message' => 'Transaction PIN not set'], 409);
+        }
 
         if (!$user->verifyTransactionPin($request->pin)) {
             return response()->json(['message' => 'Invalid transaction PIN.'], 403);
@@ -224,11 +229,15 @@ class GoldController extends Controller
 
         $request->validate([
             'grams' => 'required|numeric|min:0.000001',
-            'pin' => 'required|string',
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'string'],
             'otp' => 'nullable|string'
         ]);
 
         $user = auth()->user();
+
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
+            return response()->json(['message' => 'Transaction PIN not set'], 409);
+        }
 
         if (!$user->verifyTransactionPin($request->pin)) {
             return response()->json(['message' => 'Invalid transaction PIN.'], 403);

@@ -9,6 +9,7 @@ use App\Models\StoreOrder;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Models\StoreOrderItem;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -60,7 +61,7 @@ class StoreOrderController extends Controller
             'items.*.product_id' => 'required|integer|distinct',
             'items.*.quantity' => 'required|integer|min:1|max:1000',
             'note' => 'nullable|string|max:500',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
             'financing' => 'nullable|array',
             'financing.enabled' => 'nullable|boolean',
             'financing.months' => 'required_if:financing.enabled,true|integer|min:6|max:12',
@@ -71,10 +72,10 @@ class StoreOrderController extends Controller
         $user = $request->user();
 
         // Enforce Transaction PIN for wallet debit
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 
@@ -339,17 +340,17 @@ class StoreOrderController extends Controller
     public function payInstallment(Request $request, $id)
     {
         $validated = $request->validate([
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
             'amount' => 'nullable|numeric|min:0.01',
         ]);
 
         $user = $request->user();
 
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 

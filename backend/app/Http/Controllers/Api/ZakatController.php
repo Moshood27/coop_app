@@ -81,6 +81,9 @@ class ZakatController extends Controller
         }
 
         if ($gateway === 'wallet') {
+            if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
+                return response()->json(['message' => 'Transaction PIN not set'], 409);
+            }
             if (!$user->verifyTransactionPin($request->input('pin'))) {
                 return response()->json(['message' => 'Invalid transaction PIN'], 403);
             }
@@ -251,6 +254,9 @@ class ZakatController extends Controller
         }
 
         if ($gateway === 'wallet') {
+            if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
+                return response()->json(['message' => 'Transaction PIN not set'], 409);
+            }
             if (!$user->verifyTransactionPin($request->input('pin'))) {
                 return response()->json(['message' => 'Invalid transaction PIN'], 403);
             }

@@ -19,3 +19,19 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 -renamesourcefileattribute SourceFile
+
+# Cordova and Plugins
+-keep class org.apache.cordova.** { *; }
+-keep public class * extends org.apache.cordova.CordovaPlugin
+
+# iBeacon Plugin
+-keep class com.unarin.cordova.beacon.** { *; }
+
+# GSON rules to prevent "Abstract classes can't be instantiated" error
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+-keepclassmembers class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}

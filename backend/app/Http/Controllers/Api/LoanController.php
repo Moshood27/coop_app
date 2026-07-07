@@ -165,11 +165,15 @@ class LoanController extends Controller
             'guarantor_ids.*' => ['integer', 'distinct', 'exists:users,id'],
             'guarantor_memberships' => ['nullable', 'array', 'max:3'],
             'guarantor_memberships.*' => ['string', 'distinct'],
-            'pin' => ['nullable', 'string'],
+            'pin' => [\App\Models\Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'string'],
             'otp' => ['nullable', 'string'],
         ]);
 
-        if ($request->filled('pin') && !$user->verifyTransactionPin($data['pin'])) {
+        if (\App\Models\Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
+            return response()->json(['message' => 'Transaction PIN not set'], 409);
+        }
+
+        if (!$user->verifyTransactionPin($data['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid transaction PIN.'], 403);
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\UtilityTransaction;
 use App\Models\WalletTransaction;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -445,15 +446,15 @@ class UtilityController extends Controller
             'amount' => 'required|numeric|min:50',
             'reference' => 'nullable|string|max:100',
             'bonus_type' => 'nullable|string|max:5',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
         $amount = (float)$validated['amount'];
@@ -805,15 +806,15 @@ class UtilityController extends Controller
             'amount' => 'required|numeric|min:50',
             'vtu_provider' => 'nullable|string',
             'reference' => 'nullable|string|max:100',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
         $amount = (float)$validated['amount'];
@@ -1417,15 +1418,15 @@ class UtilityController extends Controller
             'amount' => 'required|numeric|min:100',
             'phone_number' => 'nullable|string|min:10|max:15',
             'reference' => 'nullable|string|max:100',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
         $amount = (float)$validated['amount'];
@@ -1750,15 +1751,15 @@ class UtilityController extends Controller
             'amount' => 'required|numeric|min:100',
             'phone_number' => 'nullable|string|min:10|max:15',
             'reference' => 'nullable|string|max:100',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
         $amount = (float)$validated['amount'];

@@ -385,16 +385,16 @@ class WalletController extends Controller
             'items.*.units' => 'nullable|integer|min:1',
             'items.*.amount' => 'required|numeric|min:1',
             'items.*.category' => 'nullable|string',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
 
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 
@@ -548,16 +548,16 @@ class WalletController extends Controller
             'items.*.amount' => 'required|numeric|min:0.01',
             'items.*.units' => 'nullable|numeric|min:0.01',
             'items.*.category' => 'nullable|string|in:deposit,loan_repayment',
-            'pin' => ['required','regex:/^\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
         ]);
 
         $user = $request->user();
 
         // Enforce Transaction PIN
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 
@@ -677,16 +677,16 @@ class WalletController extends Controller
             'to' => 'required|string',
             'branch_id' => 'nullable|integer|exists:branches,id',
             'amount' => 'required|numeric|min:1',
-            'pin' => ['required','regex:/^\\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
             'note' => 'nullable|string|max:120',
         ]);
 
         $sender = $request->user();
 
-        if (empty($sender->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($sender->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$sender->verifyTransactionPin($validated['pin'])) {
+        if (!$sender->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 
@@ -872,17 +872,17 @@ class WalletController extends Controller
 
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1',
-            'pin' => ['required','regex:/^\\d{4}$/'],
+            'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
             'otp' => ['nullable', 'string', 'max:10'], // optional if transition, but as per task, should use Push OTP
             'note' => 'nullable|string|max:200',
         ]);
 
         $user = $request->user();
 
-        if (empty($user->transaction_pin_hash)) {
+        if (Setting::get('transaction_pin_enabled', true) && empty($user->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);
         }
-        if (!$user->verifyTransactionPin($validated['pin'])) {
+        if (!$user->verifyTransactionPin($validated['pin'] ?? null)) {
             return response()->json(['message' => 'Invalid PIN'], 403);
         }
 

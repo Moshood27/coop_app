@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -54,8 +55,13 @@ class SecurityController extends Controller
     public function verifyPin(Request $request)
     {
         $user = $request->user();
+
+        if (!Setting::get('transaction_pin_enabled', true)) {
+            return response()->json(['message' => 'OK']);
+        }
+
         $validated = $request->validate([
-            'pin' => ['required','regex:/^\\d{4}$/'],
+            'pin' => ['required','regex:/^\d{4}$/'],
         ]);
 
         if (empty($user->transaction_pin_hash)) {
