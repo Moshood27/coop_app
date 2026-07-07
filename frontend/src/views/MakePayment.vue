@@ -250,7 +250,14 @@ const summaryEnd = ref(null)
 const totalAmount = computed(() => paymentList.value.reduce((sum, i) => sum + Number(i.amount || 0), 0))
 
 // Custom notice (shared)
-const { notice, showNotice, closeNotice } = useNotice()
+const { notice, showNotice, closeNotice: baseCloseNotice } = useNotice()
+const closeNotice = () => {
+  const isSuccess = notice.value.type === 'success' && notice.value.title === 'Success'
+  baseCloseNotice()
+  if (isSuccess) {
+    router.replace({ name: 'dashboard' })
+  }
+}
 
 // PIN prompt modal state
 const pinPrompt = ref({ visible: false })
@@ -391,11 +398,11 @@ const initiatePayment = async () => {
     const status = e?.response?.status
     const msg = e?.response?.data?.message || 'Payment failed'
     if (status === 409) {
-      alert('You need to set your Transaction PIN first. Go to Profile > Transaction PIN.')
+      showNotice('Set PIN', 'You need to set your Transaction PIN first. Go to Profile > Transaction PIN.', 'warning')
     } else if (status === 403) {
-      alert('Invalid Transaction PIN. Please try again.')
+      showNotice('Invalid PIN', 'Invalid Transaction PIN. Please try again.', 'error')
     } else {
-      alert(msg)
+      showNotice('Failed', msg, 'error')
     }
   } finally {
     loading.value = false
@@ -413,8 +420,7 @@ const handlePinConfirm = async (val) => {
     const endpoint = source.value === 'special_savings' ? '/api/wallet/allocate-special' : '/api/wallet/allocate'
     await axios.post(endpoint, { items: paymentList.value, pin })
     pinPrompt.value.visible = false
-    // Navigate on success (same behavior as before)
-    router.replace({ name: 'dashboard' })
+    showNotice('Success', 'Your funds have been successfully allocated to your passbook.', 'success')
   } catch (e) {
     pinPrompt.value.visible = false
     const status = e?.response?.status

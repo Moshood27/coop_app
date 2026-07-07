@@ -242,6 +242,30 @@
         </div>
       </div>
     </div>
+    <!-- Custom Notice Modal -->
+    <CustomNotice
+      v-model="notice.visible"
+      :type="notice.type"
+      :title="notice.title"
+      :message="notice.message"
+      @close="closeNotice"
+    />
+
+    <!-- PIN Prompt Modal -->
+    <CustomNotice
+      v-model="pinPrompt.visible"
+      :type="'info'"
+      :title="'Confirm Contribution'"
+      :message="'Enter your 4-digit Transaction PIN to confirm contribution.'"
+      :prompt="true"
+      inputLabel="Transaction PIN (4 digits)"
+      confirmText="Confirm"
+      cancelText="Cancel"
+      :busy="paying"
+      @confirm="handlePinConfirm"
+      @cancel="pinPrompt.visible = false"
+    />
+
     <AppBottomNav />
   </div>
 </template>
@@ -253,10 +277,15 @@ import AppBottomNav from '../components/AppBottomNav.vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '../http.js'
 import { useAppStatusStore } from '../stores/appStatus'
+import CustomNotice from '../components/CustomNotice.vue'
+import { useNotice } from '../composables/useNotice'
 
 const route = useRoute()
 const router = useRouter()
 const appStatusStore = useAppStatusStore()
+
+const { notice, showNotice, closeNotice } = useNotice()
+const pinPrompt = ref({ visible: false })
 const group = ref({})
 const stats = ref({})
 const recentContributions = ref([])
@@ -304,7 +333,7 @@ const joinGroup = async () => {
     await axios.post(`/api/savings-groups/${route.params.id}/join`)
     await fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to join group')
+    showNotice('Failed', e.response?.data?.message || 'Failed to join group', 'error')
   } finally {
     joining.value = false
   }
@@ -316,7 +345,7 @@ const leaveGroup = async () => {
     await axios.post(`/api/savings-groups/${route.params.id}/leave`)
     await fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to leave group')
+    showNotice('Failed', e.response?.data?.message || 'Failed to leave group', 'error')
   }
 }
 
@@ -324,9 +353,9 @@ const acceptInvitation = async () => {
   try {
     await axios.post(`/api/savings-groups/${route.params.id}/accept-invitation`)
     await fetchData()
-    alert('Invitation accepted!')
+    showNotice('Success', 'Invitation accepted!', 'success')
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to accept invitation')
+    showNotice('Failed', e.response?.data?.message || 'Failed to accept invitation', 'error')
   }
 }
 
@@ -339,9 +368,9 @@ const sendInvite = async () => {
     })
     inviteIdentifier.value = ''
     showInviteModal.value = false
-    alert('Invitation sent!')
+    showNotice('Success', 'Invitation sent!', 'success')
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to send invitation')
+    showNotice('Failed', e.response?.data?.message || 'Failed to send invitation', 'error')
   } finally {
     inviting.value = false
   }
@@ -353,11 +382,23 @@ const dissolveGroup = async () => {
     await axios.post(`/api/savings-groups/${route.params.id}/dissolve`)
     router.push('/savings-groups')
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to dissolve group')
+    showNotice('Failed', e.response?.data?.message || 'Failed to dissolve group', 'error')
   }
 }
 
 const payViaWallet = async () => {
+  if (appStatusStore.transactionPinEnabled) {
+    pinPrompt.value.visible = true
+    return
+  }
+  handlePinConfirm('')
+}
+
+const handlePinConfirm = async (pin) => {
+  if (appStatusStore.transactionPinEnabled && !/^\d{4}$/.test(pin)) {
+    showNotice('Invalid PIN', 'Please enter a valid 4-digit PIN.', 'error')
+    return
+  }
   paying.value = true
   try {
     const { data: contribData } = await axios.get(`/api/savings-groups/${route.params.id}/contribution-data`)
@@ -368,31 +409,21 @@ const payViaWallet = async () => {
         savings_group_id: group.value.id,
         amount: group.value.monthly_contribution_amount
       }],
-      pin: '' // Will need a PIN modal or prompt
+      pin
     }
 
     if (contribData.group.project?.is_unit_based) {
       payload.items[0].units = Math.floor(group.value.monthly_contribution_amount / contribData.group.project.unit_price)
     }
 
-    // For simplicity in this UI, we might need to ask for PIN
-    let pin = ''
-    if (appStatusStore.transactionPinEnabled) {
-      pin = prompt('Enter your 4-digit transaction PIN:')
-      if (!pin) {
-        paying.value = false
-        return
-      }
-    }
-    payload.pin = pin
-    
     await axios.post('/api/wallet/allocate', payload)
     
     showContributeModal.value = false
-    alert('Contribution successful!')
+    pinPrompt.value.visible = false
+    showNotice('Success', 'Contribution successful!', 'success')
     await fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Wallet payment failed')
+    showNotice('Failed', e.response?.data?.message || 'Wallet payment failed', 'error')
   } finally {
     paying.value = false
   }
@@ -422,10 +453,10 @@ const payViaGateway = async (gateway) => {
     if (data.authorization_url || data.checkout_url) {
       window.location.href = data.authorization_url || data.checkout_url
     } else {
-       alert('Failed to initiate payment')
+       showNotice('Failed', 'Failed to initiate payment', 'error')
     }
   } catch (e) {
-    alert(e.response?.data?.message || 'Payment initiation failed')
+    showNotice('Failed', e.response?.data?.message || 'Payment initiation failed', 'error')
   } finally {
     paying.value = false
   }

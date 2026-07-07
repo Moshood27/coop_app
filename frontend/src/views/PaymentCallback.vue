@@ -18,6 +18,15 @@
 
       <p class="text-[10px] text-slate-400 mt-8 italic">You will be redirected to your dashboard shortly.</p>
     </div>
+
+    <!-- Custom Notice Modal -->
+    <CustomNotice
+      v-model="notice.visible"
+      :type="notice.type"
+      :title="notice.title"
+      :message="notice.message"
+      @close="handleClose"
+    />
   </div>
 </template>
 
@@ -25,9 +34,18 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from '../http'
+import CustomNotice from '../components/CustomNotice.vue'
+import { useNotice } from '../composables/useNotice'
 
 const router = useRouter()
 const route = useRoute()
+
+const { notice, showNotice, closeNotice } = useNotice()
+
+const handleClose = () => {
+  closeNotice()
+  router.replace({ name: 'dashboard' })
+}
 
 const reference = route.query.reference || route.query.trxref || route.query.tx_ref || ''
 const gateway = route.query.gateway || 'paystack'
@@ -36,29 +54,31 @@ const status = (route.query.status || '').toString().toLowerCase()
 onMounted(async () => {
   try {
     if (!reference) {
-      alert('Returning from payment.')
+      showNotice('Returning', 'Returning from payment.', 'info')
       return
     }
 
     if (status === 'cancelled' || status === 'failed') {
-      alert('Payment was cancelled. You can try again.')
+      showNotice('Cancelled', 'Payment was cancelled. You can try again.', 'warning')
       return
     }
 
     // Server-side verification: prevents spoofing
     const { data } = await axios.post('/api/verify-payment', { reference, gateway })
     if (data?.status === 'success') {
-      alert('Payment verified! Your contributions have been allocated.')
+      showNotice('Success', 'Payment verified! Your contributions have been allocated.', 'success')
     } else if (data?.status === 'pending') {
-      alert('Payment is pending confirmation. It will reflect shortly if successful.')
+      showNotice('Pending', 'Payment is pending confirmation. It will reflect shortly if successful.', 'info')
     } else {
-      alert('Payment not successful yet. Please check your Passbook later or contact support with Ref: ' + reference)
+      showNotice('Failed', 'Payment not successful yet. Please check your Passbook later or contact support with Ref: ' + reference, 'error')
     }
   } catch (e) {
     // Even if verify fails (e.g., network), webhook will finalize; avoid exposing details
-    alert('We are verifying your payment in the background. If successful, it will reflect shortly. Ref: ' + reference)
+    showNotice('Processing', 'We are verifying your payment in the background. If successful, it will reflect shortly. Ref: ' + reference, 'info')
   } finally {
-    setTimeout(() => router.replace({ name: 'dashboard' }), 800)
+    if (!notice.value.visible) {
+      setTimeout(() => router.replace({ name: 'dashboard' }), 800)
+    }
   }
 })
 </script>
