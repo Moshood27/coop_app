@@ -10,6 +10,7 @@ import IslamicChat from './components/IslamicChat.vue'
 import router from './router/index.js'
 import axios from './http.js'
 import { getEcho } from './realtime/echo.js'
+import BeaconService from './services/BeaconService.js'
 
 const PENDING_PUSH_TOKEN_KEY = 'pending_push_token'
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -94,10 +95,22 @@ async function flushPendingPushToken() {
   } catch (_) {}
 }
 
+async function setupBeaconMonitoring() {
+  if (!isNative || !isLoggedIn.value) return
+  try {
+    const { data } = await axios.get('/api/attendance/current')
+    if (data.meeting && data.meeting.beacon_uuid) {
+      await BeaconService.startMonitoring(data.meeting)
+    }
+  } catch (e) {
+    console.error('Failed to setup beacon monitoring:', e)
+  }
+}
+
 const isNative = Capacitor.getPlatform() !== 'web'
 const isMobile = computed(() => isNative || window.innerWidth < 768)
 
-watch(isLoggedIn, (val) => {
+watch(isLoggedIn, async (val) => {
   if (val) {
     try {
       const echo = getEcho()
@@ -110,9 +123,12 @@ watch(isLoggedIn, (val) => {
           activity: router.currentRoute.value.meta?.title || router.currentRoute.value.name || 'Browsing'
         })
       }
+      
+      await setupBeaconMonitoring()
     } catch (_) {}
   } else {
     try { getEcho().leave('online-members') } catch (_) {}
+    BeaconService.stopMonitoring()
   }
 }, { immediate: true })
 
@@ -257,6 +273,9 @@ onMounted(async () => {
     await refreshUnreadCount()
     if (unreadTimer) clearInterval(unreadTimer)
     unreadTimer = setInterval(refreshUnreadCount, 30000)
+    
+    // Setup Beacon monitoring for meetings
+    await setupBeaconMonitoring()
   }
 
   // 6. Setup Geolocation permissions on native platforms
