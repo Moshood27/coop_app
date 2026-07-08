@@ -60,8 +60,23 @@ class AdministrativeChargeService
                 $stats['accrued']++;
 
                 // 2. Auto-deduct if enabled
+                $deducted = false;
                 if ($user->admin_charge_auto_deduct && $user->admin_charge_balance > 0) {
-                    $this->attemptDeduction($user, $stats);
+                    $deducted = $this->attemptDeduction($user, $stats);
+                }
+
+                // 3. Notify about accumulation if not fully settled
+                if ($user->admin_charge_balance > 0) {
+                    $user->notifyMember(
+                        "Administrative Charge Accumulated",
+                        "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($user->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
+                        [
+                            'type' => 'admin_charge_accumulation',
+                            'amount' => $amount,
+                            'total_pending' => $user->admin_charge_balance,
+                            'period' => $period
+                        ]
+                    );
                 }
             });
         }
@@ -74,57 +89,67 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
-        $due = $user->admin_charge_balance;
+        $due = (float) $user->admin_charge_balance;
         if ($due <= 0) return true;
 
-        // Check wallet balance
-        if ($user->balance >= $due) {
-            return DB::transaction(function () use ($user, $due, &$stats) {
-                // Deduct from wallet
-                $user->balance -= $due;
-                $user->admin_charge_balance = 0;
-                $user->save();
-
-                // Create transaction record
-                $description = $user->is_distant ? 'Monthly Meeting Fee' : 'Monthly Sitting Fee';
-                if ($due > ($user->is_distant ? Setting::get('meeting_fee_amount', 1000) : Setting::get('sitting_fee_amount', 300))) {
-                    $description .= ' (Accumulated)';
-                }
-
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'type' => 'debit',
-                    'amount' => $due,
-                    'reference' => 'ADMIN-CHG-' . $user->id . '-' . time(),
-                    'source' => 'admin_charge',
-                    'meta' => [
-                        'description' => $description,
-                        'period' => Carbon::now()->format('Y-m'),
-                        'full_settlement' => true
-                    ]
-                ]);
-
-                if (isset($stats['auto_deducted'])) $stats['auto_deducted']++;
-                if (isset($stats['total_deducted_amount'])) $stats['total_deducted_amount'] += $due;
-
-                return true;
-            });
-        } else {
-            // Partial deduction or skip?
-            // "implement the accumulation if member owns more than one month and deduct it from their wallet"
-            // If they don't have enough, we can try to deduct what they have or just leave it for next time.
-            // Usually it's better to deduct only if they have enough for the WHOLE due amount to keep it clean,
-            // or deduct whatever they have.
-
-            // Let's try to deduct at least some if possible?
-            // Actually, if we want to "accumulate", it's fine to wait until they have enough.
-            // But if they have 100 and owe 300, we could take 100.
-
-            // For now, let's only deduct if they have enough to cover at least one full charge (300)
-            // Or just the whole thing. Let's go with the whole thing for simplicity first.
+        $balance = (float) $user->balance;
+        if ($balance <= 0) {
             if (isset($stats['failed_auto_deduct'])) $stats['failed_auto_deduct']++;
             return false;
         }
+
+        $amountToDeduct = min($due, $balance);
+
+        return DB::transaction(function () use ($user, $amountToDeduct, $due, &$stats) {
+            // Deduct from wallet
+            $user->decrement('balance', $amountToDeduct);
+            $user->decrement('admin_charge_balance', $amountToDeduct);
+            $user->refresh();
+
+            // Create transaction record
+            $description = $user->is_distant ? 'Monthly Meeting Fee' : 'Monthly Sitting Fee';
+            $isAccumulated = $due > ($user->is_distant ? Setting::get('meeting_fee_amount', 1000) : Setting::get('sitting_fee_amount', 300));
+
+            if ($isAccumulated) {
+                $description .= ' (Accumulated)';
+            }
+
+            $isFullSettlement = $user->admin_charge_balance <= 0;
+
+            WalletTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'debit',
+                'amount' => $amountToDeduct,
+                'reference' => 'ADMIN-CHG-' . $user->id . '-' . time(),
+                'source' => 'admin_charge',
+                'meta' => [
+                    'description' => $description,
+                    'period' => Carbon::now()->format('Y-m'),
+                    'full_settlement' => $isFullSettlement,
+                    'remaining_due' => $user->admin_charge_balance
+                ]
+            ]);
+
+            if (isset($stats['auto_deducted'])) $stats['auto_deducted']++;
+            if (isset($stats['total_deducted_amount'])) $stats['total_deducted_amount'] += $amountToDeduct;
+
+            // Notification
+            $title = $isFullSettlement ? "Admin Charge Settled" : "Admin Charge Partial Payment";
+            $message = "₦" . number_format($amountToDeduct, 2) . " has been deducted from your wallet for administrative charges.";
+
+            if (!$isFullSettlement) {
+                $message .= " Remaining balance: ₦" . number_format($user->admin_charge_balance, 2);
+            }
+
+            $user->notifyMember($title, $message, [
+                'type' => 'admin_charge_deduction',
+                'amount' => $amountToDeduct,
+                'remaining' => $user->admin_charge_balance,
+                'full_settlement' => $isFullSettlement
+            ]);
+
+            return true;
+        });
     }
 
     /**

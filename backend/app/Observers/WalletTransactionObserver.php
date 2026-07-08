@@ -41,6 +41,11 @@ class WalletTransactionObserver
             ], $entries);
 
             $tx->updateQuietly(['ledger_journal_id' => $journal->id]);
+
+            // Auto-process pending administrative charges if it was a credit (wallet funding)
+            if ($isCredit && $tx->user) {
+                app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($tx->user);
+            }
         } catch (\Exception $e) {
             \Log::error("Failed to record wallet transaction in ledger: " . $e->getMessage());
         }
