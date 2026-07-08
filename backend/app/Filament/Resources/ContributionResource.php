@@ -27,127 +27,170 @@ class ContributionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('user_id')
-                    ->label('Member')
-                    ->relationship('user', 'name')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
-                    ->preload()
-                    ->required()
-                    ->reactive(),
-
-                // For create: allow multiple schemes with amounts
-                Forms\Components\Repeater::make('items')
-                    ->label('Schemes & Amounts')
-                    ->visibleOn('create')
-                    ->required()
-                    ->minItems(1)
-                    ->columns(3)
+                Forms\Components\Section::make('Member Selection')
+                    ->description('Select the member making the contribution.')
+                    ->icon('heroicon-o-user')
                     ->schema([
-                        Forms\Components\Select::make('scheme_id')
-                            ->label('Scheme')
-                            ->options(Scheme::query()->pluck('name', 'id'))
-                            ->searchable()
+                        Forms\Components\Select::make('user_id')
+                            ->label('Member')
+                            ->relationship('user', 'name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->full_name} ({$record->membership_number})")
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
+                            ->preload()
                             ->required()
                             ->reactive()
-                            ->rule('distinct'),
-                        Forms\Components\Select::make('qard_hasan_id')
-                            ->label('Link to Loan (Optional)')
-                            ->options(function (Forms\Get $get) {
-                                $userId = $get('../../user_id');
-                                if (!$userId) return [];
-                                return \App\Models\QardHasan::where('user_id', $userId)
-                                    ->whereIn('status', ['active', 'defaulted'])
-                                    ->get()
-                                    ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
-                            })
-                            ->searchable()
-                            ->visible(function (Forms\Get $get) {
-                                $userId = $get('../../user_id');
-                                if (!$userId) return false;
-                                return \App\Models\QardHasan::where('user_id', $userId)
-                                    ->whereIn('status', ['active', 'defaulted'])
-                                    ->exists();
-                            })
-                            ->helperText('Select a loan to deduct this payment from')
-                            ->nullable(),
-                        Forms\Components\Select::make('project_id')
-                            ->label('Project (optional)')
-                            ->options(Project::query()->where('active', true)->pluck('name', 'id'))
-                            ->searchable()
-                            ->native(false)
-                            ->helperText('Link this payment to a pooled project (Mudarabah)')
-                            ->columnSpan(1),
-                        Forms\Components\Select::make('savings_group_id')
-                            ->label('Savings Group (optional)')
-                            ->relationship('savingsGroup', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->columnSpan(1),
-                        Forms\Components\TextInput::make('amount')
-                            ->label('Amount')
-                            ->numeric()
-                            ->minValue(0.01)
-                            ->prefix('₦')
-                            ->required(),
+                            ->columnSpanFull(),
+                    ]),
+
+                Forms\Components\Section::make('Contribution Details')
+                    ->description('Specify the schemes and amounts.')
+                    ->icon('heroicon-o-currency-dollar')
+                    ->visibleOn('create')
+                    ->schema([
+                        Forms\Components\Repeater::make('items')
+                            ->label('Contribution Items')
+                            ->required()
+                            ->minItems(1)
+                            ->schema([
+                                Forms\Components\Grid::make(['default' => 1, 'md' => 2])
+                                    ->schema([
+                                        Forms\Components\Select::make('scheme_id')
+                                            ->label('Scheme')
+                                            ->options(Scheme::query()->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->required()
+                                            ->reactive()
+                                            ->rule('distinct')
+                                            ->extraInputAttributes(['style' => 'font-size: 1.1rem;']),
+                                        Forms\Components\TextInput::make('amount')
+                                            ->label('Amount')
+                                            ->numeric()
+                                            ->minValue(0.01)
+                                            ->prefix('₦')
+                                            ->required()
+                                            ->extraInputAttributes(['style' => 'font-size: 1.1rem; font-weight: bold;']),
+                                    ]),
+                                Forms\Components\Grid::make(['default' => 1, 'md' => 3])
+                                    ->schema([
+                                        Forms\Components\Select::make('qard_hasan_id')
+                                            ->label('Link to Loan (Optional)')
+                                            ->options(function (Forms\Get $get) {
+                                                $userId = $get('../../user_id');
+                                                if (!$userId) return [];
+                                                return \App\Models\QardHasan::where('user_id', $userId)
+                                                    ->whereIn('status', ['active', 'defaulted'])
+                                                    ->get()
+                                                    ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                                            })
+                                            ->searchable()
+                                            ->visible(function (Forms\Get $get) {
+                                                $userId = $get('../../user_id');
+                                                if (!$userId) return false;
+                                                return \App\Models\QardHasan::where('user_id', $userId)
+                                                    ->whereIn('status', ['active', 'defaulted'])
+                                                    ->exists();
+                                            })
+                                            ->helperText('Select a loan to deduct this payment from')
+                                            ->nullable(),
+                                        Forms\Components\Select::make('project_id')
+                                            ->label('Project (optional)')
+                                            ->options(Project::query()->where('active', true)->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->native(false)
+                                            ->helperText('Link to a pooled project'),
+                                        Forms\Components\Select::make('savings_group_id')
+                                            ->label('Savings Group (optional)')
+                                            ->relationship('savingsGroup', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->helperText('Link to a savings group'),
+                                    ]),
+                            ])
+                            ->itemLabel(fn (array $state): ?string => ($state['scheme_id'] ?? null)
+                                ? Scheme::find($state['scheme_id'])?->name . ' - ₦' . number_format($state['amount'] ?? 0, 2)
+                                : null)
+                            ->collapsible()
+                            ->cloneable()
+                            ->defaultItems(1)
+                            ->grid(1),
                     ]),
 
                 // For edit: keep single scheme and amount fields
-                Forms\Components\Select::make('scheme_id')
-                    ->label('Scheme')
-                    ->options(Scheme::withTrashed()->pluck('name', 'id'))
-                    ->searchable()
-                    ->required()
-                    ->hiddenOn('create'),
-                Forms\Components\Select::make('qard_hasan_id')
-                    ->label('Link to Loan (Optional)')
-                    ->options(function (Forms\Get $get, Contribution $record) {
-                        $userId = $record->user_id;
-                        if (!$userId) return [];
-                        return \App\Models\QardHasan::where('user_id', $userId)
-                            ->whereIn('status', ['active', 'defaulted'])
-                            ->get()
-                            ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
-                    })
-                    ->searchable()
-                    ->visible(function (Forms\Get $get, Contribution $record) {
-                        $userId = $record->user_id;
-                        if (!$userId) return false;
-                        return \App\Models\QardHasan::where('user_id', $userId)
-                            ->whereIn('status', ['active', 'defaulted'])
-                            ->exists();
-                    })
-                    ->helperText('Select a loan to deduct this payment from')
-                    ->nullable()
-                    ->hiddenOn('create'),
-                Forms\Components\Select::make('project_id')
-                    ->label('Project (optional)')
-                    ->options(Project::query()->where('active', true)->pluck('name', 'id'))
-                    ->searchable()
-                    ->native(false)
-                    ->hiddenOn('create'),
-                Forms\Components\Select::make('savings_group_id')
-                    ->label('Savings Group (optional)')
-                    ->relationship('savingsGroup', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->hiddenOn('create'),
-                Forms\Components\TextInput::make('amount')
-                    ->numeric()
-                    ->prefix('₦')
-                    ->required()
-                    ->hiddenOn('create'),
+                Forms\Components\Section::make('Contribution Details')
+                    ->description('Edit contribution record.')
+                    ->icon('heroicon-o-pencil-square')
+                    ->hiddenOn('create')
+                    ->schema([
+                        Forms\Components\Grid::make(['default' => 1, 'md' => 2])
+                            ->schema([
+                                Forms\Components\Select::make('scheme_id')
+                                    ->label('Scheme')
+                                    ->options(Scheme::withTrashed()->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->required()
+                                    ->extraInputAttributes(['style' => 'font-size: 1.1rem;']),
+                                Forms\Components\TextInput::make('amount')
+                                    ->numeric()
+                                    ->prefix('₦')
+                                    ->required()
+                                    ->extraInputAttributes(['style' => 'font-size: 1.1rem; font-weight: bold;']),
+                            ]),
+                        Forms\Components\Grid::make(['default' => 1, 'md' => 3])
+                            ->schema([
+                                Forms\Components\Select::make('qard_hasan_id')
+                                    ->label('Link to Loan (Optional)')
+                                    ->options(function (Forms\Get $get, Contribution $record) {
+                                        $userId = $record->user_id;
+                                        if (!$userId) return [];
+                                        return \App\Models\QardHasan::where('user_id', $userId)
+                                            ->whereIn('status', ['active', 'defaulted'])
+                                            ->get()
+                                            ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                                    })
+                                    ->searchable()
+                                    ->visible(function (Forms\Get $get, Contribution $record) {
+                                        $userId = $record->user_id;
+                                        if (!$userId) return false;
+                                        return \App\Models\QardHasan::where('user_id', $userId)
+                                            ->whereIn('status', ['active', 'defaulted'])
+                                            ->exists();
+                                    })
+                                    ->helperText('Select a loan to deduct this payment from')
+                                    ->nullable(),
+                                Forms\Components\Select::make('project_id')
+                                    ->label('Project (optional)')
+                                    ->options(Project::query()->where('active', true)->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->native(false),
+                                Forms\Components\Select::make('savings_group_id')
+                                    ->label('Savings Group (optional)')
+                                    ->relationship('savingsGroup', 'name')
+                                    ->searchable()
+                                    ->preload(),
+                            ]),
+                    ]),
 
-                Forms\Components\TextInput::make('reference')
-                    ->maxLength(255)
-                    ->hiddenOn('create'),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'success' => 'Success',
-                        'failed' => 'Failed',
-                    ])->required(),
-            ])->columns(2);
+                Forms\Components\Section::make('Status & Reference')
+                    ->description('Manage the status and reference of this contribution.')
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        Forms\Components\Grid::make(['default' => 1, 'md' => 2])
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->options([
+                                        'pending' => 'Pending',
+                                        'success' => 'Success',
+                                        'failed' => 'Failed',
+                                    ])
+                                    ->required()
+                                    ->native(false),
+                                Forms\Components\TextInput::make('reference')
+                                    ->maxLength(255)
+                                    ->helperText('Leave empty to auto-generate')
+                                    ->hiddenOn('create'),
+                            ]),
+                    ]),
+            ]);
     }
 
     public static function table(Table $table): Table
