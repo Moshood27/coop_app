@@ -669,7 +669,7 @@
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
 import AppBottomNav from '../components/AppBottomNav.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { isValidEmail } from '../utils/validation'
 import { getEcho } from '../realtime/echo'
 import { useAppStatusStore } from '../stores/appStatus'
