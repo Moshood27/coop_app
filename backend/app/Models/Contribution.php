@@ -77,6 +77,15 @@ class Contribution extends Model
                 } catch (\Throwable $e) {}
             }
 
+            // Special handling for SITTING scheme (Administrative Charges)
+            if ($model->status === 'success' && $model->scheme && strtoupper($model->scheme->name) === 'SITTING') {
+                try {
+                    $user = $model->user;
+                    $user->decrement('admin_charge_balance', min($user->admin_charge_balance, (float) $model->amount));
+                    $user->update(['last_admin_charge_at' => now()]);
+                } catch (\Throwable $e) {}
+            }
+
             // Special handling for Loan Repayment category
             if ($model->status === 'success' && $model->category === 'loan_repayment') {
                 try {
@@ -199,6 +208,15 @@ class Contribution extends Model
                         } catch (\Throwable $e) {}
                     }
 
+                    // Special handling for SITTING scheme (Administrative Charges)
+                    if ($model->scheme && strtoupper($model->scheme->name) === 'SITTING') {
+                        try {
+                            $user = $model->user;
+                            $user->decrement('admin_charge_balance', min($user->admin_charge_balance, (float) $model->amount));
+                            $user->update(['last_admin_charge_at' => now()]);
+                        } catch (\Throwable $e) {}
+                    }
+
                     // Special handling for Loan Repayment category
                     if ($model->category === 'loan_repayment') {
                         try {
@@ -277,13 +295,17 @@ class Contribution extends Model
                         );
 
                         // Notify relevant admins
-                        $user->getAuthorizedAdmins()->each(function ($admin) use ($user, $model, $schemeName) {
-                            $admin->notifyMember(
-                                "Payment Received: {$schemeName}",
-                                "Member {$user->name} successfully paid ₦" . number_format($model->amount, 2) . " for {$schemeName}.",
-                                ['type' => 'contribution_success', 'contribution_id' => $model->id]
-                            );
-                        });
+                        $user->getAuthorizedAdmins()
+                            ->filter(fn($admin) => $admin->id !== auth()->id())
+                            ->each(function ($admin) use ($user, $model, $schemeName) {
+                                $admin->notifyMember(
+                                    "Payment Received: {$schemeName}",
+                                    "Member {$user->name} successfully paid ₦" . number_format($model->amount, 2) . " for {$schemeName}.",
+                                    ['type' => 'contribution_success', 'contribution_id' => $model->id],
+                                    null, // default channels
+                                    false // broadcast=false to avoid double real-time notifications for admins
+                                );
+                            });
                     } catch (\Throwable $e) {}
 
                     if ($model->project_id) {

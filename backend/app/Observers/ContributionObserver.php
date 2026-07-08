@@ -35,8 +35,8 @@ class ContributionObserver
         try {
             $creditAccount = '2200'; // Default: Member Deposits (Liability)
 
-            if ($contribution->category === 'fine') {
-                $creditAccount = '4200'; // Fine Income
+            if ($contribution->category === 'fine' || ($contribution->scheme && strtoupper($contribution->scheme->name) === 'SITTING')) {
+                $creditAccount = '4200'; // Fine/Sitting Fee Income
             } elseif ($contribution->scheme && str_contains(strtolower($contribution->scheme->name), 'share')) {
                 $creditAccount = '3100'; // Member Equity
             }

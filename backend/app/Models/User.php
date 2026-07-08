@@ -398,12 +398,15 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
      * @param string $message
      * @param array $data Optional payload for push/database channels
      * @param array|null $channels Subset of ['database','mail','sms','push']; null = auto from preferences
+     * @param bool $broadcast Whether to trigger a real-time UserAccountUpdated event
      */
-    public function notifyMember(string $title, string $message, array $data = [], ?array $channels = null): void
+    public function notifyMember(string $title, string $message, array $data = [], ?array $channels = null, bool $broadcast = true): void
     {
         try {
-            // Trigger real-time dashboard update (message + payload)
-            event(new \App\Events\UserAccountUpdated($this, $message, $data));
+            if ($broadcast) {
+                // Trigger real-time dashboard update (message + payload)
+                event(new \App\Events\UserAccountUpdated($this, $message, $data));
+            }
 
             $resolved = $channels ?: array_values(array_filter([
                 ($this->notify_email ? 'mail' : null),
