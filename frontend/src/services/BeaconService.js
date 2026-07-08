@@ -1,4 +1,3 @@
-import { IBeacon } from '@awesome-cordova-plugins/ibeacon';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
@@ -7,15 +6,36 @@ class BeaconService {
     this.isNative = Capacitor.getPlatform() !== 'web';
     this.monitoring = false;
     this.currentRegion = null;
-    this.delegateSubscription = null;
+    this.initialized = false;
+  }
+
+  async waitForPlugin(timeout = 3000) {
+    if (!this.isNative) return false;
+    if (this.initialized) return true;
+
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      if (window.cordova?.plugins?.locationManager) {
+        this.initialized = true;
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return false;
+  }
+
+  get locationManager() {
+    return window.cordova?.plugins?.locationManager;
   }
 
   async requestPermissions() {
-    if (!this.isNative) return false;
+    if (!(await this.waitForPlugin())) return false;
     try {
       // iBeacon monitoring requires location permissions. 
       // Always authorization is required for background monitoring on iOS.
-      await IBeacon.requestAlwaysAuthorization();
+      if (this.locationManager.requestAlwaysAuthorization) {
+        await this.locationManager.requestAlwaysAuthorization();
+      }
       
       const notificationStatus = await LocalNotifications.requestPermissions();
       return notificationStatus.display === 'granted';
@@ -26,10 +46,14 @@ class BeaconService {
   }
 
   async startMonitoring(meeting) {
-    if (!this.isNative || !meeting || !meeting.beacon_uuid) return;
+    if (!(await this.waitForPlugin()) || !meeting || !meeting.beacon_uuid) return;
     try {
-      await this.requestPermissions();
-
+      const permitted = await this.requestPermissions();
+      if (!permitted) {
+        console.warn('Beacon permissions not granted');
+        return;
+      }
+      
       // Stop any existing monitoring
       await this.stopMonitoring();
 
@@ -38,22 +62,24 @@ class BeaconService {
       const major = meeting.beacon_major ? parseInt(meeting.beacon_major) : null;
       const minor = meeting.beacon_minor ? parseInt(meeting.beacon_minor) : null;
 
+      const locationManager = this.locationManager;
+      if (!locationManager) return;
+
+      // Create delegate to handle events
+      const delegate = new locationManager.Delegate();
+
+      delegate.didEnterRegion = (pluginResult) => {
+        console.log('Entered beacon region:', pluginResult);
+        this.showNotification(meeting);
+      };
+
+      locationManager.setDelegate(delegate);
+
       // Create the beacon region
-      this.currentRegion = IBeacon.BeaconRegion(identifier, uuid, major, minor);
-
-      // Set up the delegate to handle events
-      const delegate = IBeacon.getDelegate();
-
-      // Subscribe to region entry events
-      this.delegateSubscription = delegate.didEnterRegion().subscribe(
-        async (data) => {
-          console.log('Entered beacon region:', data);
-          await this.showNotification(meeting);
-        }
-      );
+      this.currentRegion = new locationManager.BeaconRegion(identifier, uuid, major, minor);
 
       // Start monitoring
-      await IBeacon.startMonitoringForRegion(this.currentRegion);
+      await locationManager.startMonitoringForRegion(this.currentRegion);
       
       this.monitoring = true;
       console.log('Started monitoring for beacon region:', identifier);
@@ -63,16 +89,14 @@ class BeaconService {
   }
 
   async stopMonitoring() {
-    if (!this.isNative) return;
+    if (!(await this.waitForPlugin())) return;
     try {
+      const locationManager = this.locationManager;
+      if (!locationManager) return;
+
       if (this.currentRegion) {
-        await IBeacon.stopMonitoringForRegion(this.currentRegion);
+        await locationManager.stopMonitoringForRegion(this.currentRegion);
         this.currentRegion = null;
-      }
-      
-      if (this.delegateSubscription) {
-        this.delegateSubscription.unsubscribe();
-        this.delegateSubscription = null;
       }
       
       this.monitoring = false;
@@ -86,7 +110,7 @@ class BeaconService {
       await LocalNotifications.schedule({
         notifications: [
           {
-            title: 'Nearby Meeting Venue 📍',
+            title: 'Nearby Meeting Venue \uD83D\uDCCD',
             body: `You are near "${meeting.name}". Don't forget to mark your attendance!`,
             id: meeting.id,
             schedule: { at: new Date(Date.now() + 1000) },

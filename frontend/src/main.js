@@ -56,6 +56,25 @@ try {
 } catch (_) {}
 
 import App from './App.vue'
+
+// Bridge Capacitor Device to window.device for legacy Cordova plugin compatibility (e.g. ibeacon)
+import { Device } from '@capacitor/device'
+if (typeof window !== 'undefined') {
+  window.device = window.device || {}
+  Device.getInfo().then(info => {
+    window.device.platform = info.platform === 'android' ? 'Android' : (info.platform === 'ios' ? 'iOS' : info.platform)
+    window.device.model = info.model
+    window.device.version = info.osVersion
+    window.device.manufacturer = info.manufacturer
+    window.device.isVirtual = info.isVirtual
+    window.device.uuid = 'manual-uuid' // Capacitor doesn't provide UUID directly in getInfo, but we can shim it if needed
+    Device.getId().then(id => { window.device.uuid = id.identifier })
+  }).catch(() => {
+    // Fallback if plugin fails
+    window.device.platform = window.device.platform || (navigator.userAgent.includes('Android') ? 'Android' : 'web')
+  })
+}
+
 import router from './router/index.js'
 import VueApexCharts from 'vue3-apexcharts'
 

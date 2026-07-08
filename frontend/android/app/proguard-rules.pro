@@ -24,8 +24,11 @@
 -keep class org.apache.cordova.** { *; }
 -keep public class * extends org.apache.cordova.CordovaPlugin
 
-# iBeacon Plugin
+# iBeacon Plugin and AltBeacon Library
 -keep class com.unarin.cordova.beacon.** { *; }
+-keep class org.altbeacon.** { *; }
+-keep interface org.altbeacon.** { *; }
+-dontwarn org.altbeacon.**
 
 # GSON rules to prevent "Abstract classes can't be instantiated" error
 -keep class com.google.gson.** { *; }

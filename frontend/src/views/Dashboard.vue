@@ -1113,6 +1113,8 @@ onMounted(async () => {
   // Real-time listener for balance updates and notifications
   try {
     const echo = getEcho()
+    if (!echo) return
+
     const userId = dashboardData.value.id
     if (userId) {
       echo.private(`user.${userId}`)
@@ -1164,5 +1166,15 @@ onMounted(async () => {
   setTimeout(() => {
     try { startDashboardTour() } catch (_) {}
   }, 500)
+})
+
+onUnmounted(() => {
+  try {
+    const echo = getEcho()
+    const userId = dashboardData.value.id
+    if (echo && userId) {
+      echo.leave(`user.${userId}`)
+    }
+  } catch(_) {}
 })
 </script>

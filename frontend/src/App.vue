@@ -114,6 +114,8 @@ watch(isLoggedIn, async (val) => {
   if (val) {
     try {
       const echo = getEcho()
+      if (!echo) return
+      
       const userId = localStorage.getItem('user_id')
       const channel = echo.join('online-members')
       
@@ -127,7 +129,12 @@ watch(isLoggedIn, async (val) => {
       await setupBeaconMonitoring()
     } catch (_) {}
   } else {
-    try { getEcho().leave('online-members') } catch (_) {}
+    try {
+      const echo = getEcho()
+      if (echo) {
+        echo.leave('online-members')
+      }
+    } catch (_) {}
     BeaconService.stopMonitoring()
   }
 }, { immediate: true })
@@ -143,12 +150,14 @@ router.afterEach((to) => {
     const userId = localStorage.getItem('user_id')
     try {
       const echo = getEcho()
-      const channel = echo.join('online-members')
-      if (userId) {
-        channel.whisper('activity', {
-          id: userId,
-          activity: to.meta?.title || to.name || 'Browsing'
-        })
+      if (echo) {
+        const channel = echo.join('online-members')
+        if (userId) {
+          channel.whisper('activity', {
+            id: userId,
+            activity: to.meta?.title || to.name || 'Browsing'
+          })
+        }
       }
     } catch (_) {}
   }

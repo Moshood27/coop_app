@@ -708,6 +708,11 @@ onMounted(async () => {
   // Real-time listener
   try {
     const echo = getEcho()
+    if (!echo) {
+      console.warn('Echo not initialized in Attendance')
+      return
+    }
+    
     const token = localStorage.getItem('token')
     if (token) {
       const { data: userData } = await axios.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
@@ -727,5 +732,14 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   if (countdownInterval.value) clearInterval(countdownInterval.value)
+  
+  // Cleanup Echo listener
+  try {
+    const echo = getEcho()
+    const userId = localStorage.getItem('user_id')
+    if (echo && userId) {
+      echo.leave(`user.${userId}`)
+    }
+  } catch (_) {}
 })
 </script>

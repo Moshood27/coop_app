@@ -219,6 +219,13 @@ class UserResource extends Resource
                                             ->options(Branch::query()->pluck('name', 'id'))
                                             ->searchable()
                                             ->required(),
+                                        Forms\Components\Toggle::make('is_distant')
+                                            ->label('Distant Member')
+                                            ->helperText('Distant members are charged Meeting Fees instead of Sitting Fees.'),
+                                        Forms\Components\Toggle::make('admin_charge_auto_deduct')
+                                            ->label('Auto-Deduct Monthly Fees')
+                                            ->helperText('If enabled, monthly fees will be automatically deducted from the member\'s wallet.')
+                                            ->default(true),
                                         Forms\Components\TextInput::make('membership_number')
                                             ->password()
                                             ->revealable(fn () => auth()->user()->hasRole('super_admin'))
@@ -481,6 +488,11 @@ class UserResource extends Resource
                 TextColumn::make('phone')->label('Phone')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('address')->label('Address')->limit(30)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->searchable(),
+                Tables\Columns\IconColumn::make('is_distant')
+                    ->label('Distant')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('membership_number')
                     ->label('Member #')
                     ->searchable()

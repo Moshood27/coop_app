@@ -16,7 +16,20 @@ class AdministrativeChargeService
      */
     public function processMonthlyCharges(): array
     {
-        $amount = config('cooperative.admin_charges.amount', 300);
+        if (!Setting::get('monthly_fees_enabled', true)) {
+            Log::info('Monthly administrative charges are disabled in settings.');
+            return [
+                'total_users' => 0,
+                'accrued' => 0,
+                'auto_deducted' => 0,
+                'failed_auto_deduct' => 0,
+                'total_deducted_amount' => 0,
+                'status' => 'disabled'
+            ];
+        }
+
+        $sittingFee = Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300));
+        $meetingFee = Setting::get('meeting_fee_amount', 1000);
         $period = Carbon::now()->format('Y-m');
 
         $stats = [
@@ -37,6 +50,7 @@ class AdministrativeChargeService
 
         foreach ($users as $user) {
             $stats['total_users']++;
+            $amount = $user->is_distant ? $meetingFee : $sittingFee;
 
             DB::transaction(function () use ($user, $amount, $period, &$stats) {
                 // 1. Accrue the charge
@@ -72,6 +86,11 @@ class AdministrativeChargeService
                 $user->save();
 
                 // Create transaction record
+                $description = $user->is_distant ? 'Monthly Meeting Fee' : 'Monthly Sitting Fee';
+                if ($due > ($user->is_distant ? Setting::get('meeting_fee_amount', 1000) : Setting::get('sitting_fee_amount', 300))) {
+                    $description .= ' (Accumulated)';
+                }
+
                 WalletTransaction::create([
                     'user_id' => $user->id,
                     'type' => 'debit',
@@ -79,7 +98,7 @@ class AdministrativeChargeService
                     'reference' => 'ADMIN-CHG-' . $user->id . '-' . time(),
                     'source' => 'admin_charge',
                     'meta' => [
-                        'description' => 'Monthly Administrative Charge',
+                        'description' => $description,
                         'period' => Carbon::now()->format('Y-m'),
                         'full_settlement' => true
                     ]

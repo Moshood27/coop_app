@@ -161,6 +161,8 @@ onMounted(async () => {
   // Real-time listener
   try {
     const echo = getEcho()
+    if (!echo) return
+
     const token = localStorage.getItem('token')
     if (token) {
       // Get profile to know user ID
@@ -181,7 +183,14 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // Echo cleanup if needed
+  // Echo cleanup
+  try {
+    const echo = getEcho()
+    const userId = localStorage.getItem('user_id')
+    if (echo && userId) {
+      echo.leave(`user.${userId}`)
+    }
+  } catch (_) {}
 })
 </script>
 

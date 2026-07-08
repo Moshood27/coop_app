@@ -8,8 +8,7 @@ import ee.forgr.biometric.NativeBiometric;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
-        registerPlugin(NativeBiometric.class);
         super.onCreate(savedInstanceState);
+        registerPlugin(NativeBiometric.class);
     }
 }

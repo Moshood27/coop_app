@@ -1,8 +1,43 @@
+diff --git a/node_modules/cordova-plugin-ibeacon/plugin.xml b/node_modules/cordova-plugin-ibeacon/plugin.xml
+index 92bbf0f..56e8fb0 100644
+--- a/node_modules/cordova-plugin-ibeacon/plugin.xml
++++ b/node_modules/cordova-plugin-ibeacon/plugin.xml
+@@ -7,10 +7,8 @@
+     <keywords>cordova,ibeacon,beacon,bluetooth,le</keywords>
+     <repo>https://github.com/petermetz/cordova-plugin-ibeacon.git</repo>
+ 
+-    <!-- Version is set to anything because the only feature we use is the device.platform property which was available
+-    since forever. The added benefit is that we don't force the consumers of this plugin to use a certain version of
+-    the device plugin. -->
+-    <dependency id="cordova-plugin-device" version="*" />
++    <!-- Removed dependency on cordova-plugin-device to avoid conflict with @capacitor/device -->
++    <!-- <dependency id="cordova-plugin-device" version="*" /> -->
+ 
+     <!-- Third party libraries -->
+     <js-module name="underscorejs" src="www/lib/underscore-min-1.6.js">
+@@ -90,6 +88,9 @@
+             <feature name="LocationManager" >
+                 <param name="android-package" value="com.unarin.cordova.beacon.LocationManager"/>
+             </feature>
++            <feature name="IBeacon" >
++                <param name="android-package" value="com.unarin.cordova.beacon.LocationManager"/>
++            </feature>
+         </config-file>
+ 
+         <config-file target="AndroidManifest.xml" parent="/manifest">
+@@ -102,7 +103,6 @@
+         <source-file src="src/android/PausableThreadPoolExecutor.java" target-dir="src/com/unarin/cordova/beacon" />
+ 
+         <framework src="src/android/cordova-plugin-ibeacon.gradle" custom="true" type="gradleReference" />
+-        <framework src="com.android.support:support-core-utils:26+" />
+     </platform>
+ 
+ </plugin>
 diff --git a/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle b/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
-index a88cc7b..598d025 100644
+index a88cc7b..17949d2 100644
 --- a/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
 +++ b/node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle
-@@ -1,7 +1,7 @@
+@@ -1,9 +1,9 @@
  repositories{
 -    jcenter()
 +    mavenCentral()
@@ -12,3 +47,5 @@ index a88cc7b..598d025 100644
 -    compile 'org.altbeacon:android-beacon-library:2.16.1'
 +    implementation 'org.altbeacon:android-beacon-library:2.20'
  }
+ 
+ android {

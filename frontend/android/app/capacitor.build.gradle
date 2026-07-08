@@ -19,7 +19,7 @@ dependencies {
     implementation project(':capacitor-push-notifications')
     implementation project(':capacitor-splash-screen')
     implementation project(':capgo-capacitor-native-biometric')
-    implementation "com.android.support:support-core-utils:26+"
+
 }
 apply from: "../../node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle"
 

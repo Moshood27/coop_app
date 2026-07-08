@@ -30,6 +30,11 @@ class ProcessAdministrativeCharges extends Command
 
         $stats = $service->processMonthlyCharges();
 
+        if (isset($stats['status']) && $stats['status'] === 'disabled') {
+            $this->warn('Processing skipped: Monthly fees are disabled in App Status settings.');
+            return 0;
+        }
+
         $this->line('Total Users Processed: ' . $stats['total_users']);
         $this->line('Charges Accrued: ' . $stats['accrued']);
         $this->line('Auto-Deductions Successful: ' . $stats['auto_deducted']);

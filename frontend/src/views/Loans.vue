@@ -993,6 +993,8 @@ onMounted(async () => {
   // Real-time listener for loan status updates
   try {
     const echo = getEcho()
+    if (!echo) return
+    
     const token = localStorage.getItem('token')
     if (token) {
       // We need user ID to listen on private channel. 
@@ -1047,11 +1049,10 @@ onMounted(async () => {
 onUnmounted(() => {
   try {
     const echo = getEcho()
-    const token = localStorage.getItem('token')
-    // We don't necessarily need to leave the channel if other components use it,
-    // but we should stop listening to this specific event if we want to be clean.
-    // However, Laravel Echo's .listen() doesn't easily un-listen without leaving the channel.
-    // Usually, we just leave it be or leave channel if it's page-specific.
+    const userId = localStorage.getItem('user_id')
+    if (echo && userId) {
+      echo.leave(`user.${userId}`)
+    }
   } catch(_) {}
 })
 </script>

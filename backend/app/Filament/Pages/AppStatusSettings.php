@@ -64,6 +64,9 @@ class AppStatusSettings extends Page
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
+            'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
+            'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
+            'monthly_fees_enabled' => (bool) Setting::get('monthly_fees_enabled', true),
             'loan_duration_rules' => json_decode(Setting::get('loan_duration_rules', '[]'), true) ?: [
                 ['max_amount' => 1000000, 'duration' => 12],
                 ['max_amount' => 2000000, 'duration' => 15],
@@ -76,6 +79,26 @@ class AppStatusSettings extends Page
     {
         return $form
             ->schema([
+                Section::make('Monthly Fees')
+                    ->description('Manage monthly sitting and meeting fees.')
+                    ->schema([
+                        TextInput::make('sitting_fee_amount')
+                            ->label('Sitting Fee (Regular)')
+                            ->numeric()
+                            ->prefix('₦')
+                            ->required()
+                            ->helperText('Monthly fee for regular members.'),
+                        TextInput::make('meeting_fee_amount')
+                            ->label('Meeting Fee (Distant)')
+                            ->numeric()
+                            ->prefix('₦')
+                            ->required()
+                            ->helperText('Monthly fee for distant members from branch.'),
+                        Toggle::make('monthly_fees_enabled')
+                            ->label('Enable Auto-Debits')
+                            ->helperText('Automatically debit these fees on the 1st of every month.')
+                            ->default(true),
+                    ])->columns(3),
                 Section::make('Forced Update')
                     ->description('Manage minimum version requirements for native mobile apps.')
                     ->schema([

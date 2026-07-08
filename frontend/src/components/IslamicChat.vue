@@ -288,8 +288,14 @@ async function respondToMessage(message, action) {
 
 onMounted(fetchInitialData)
 onBeforeUnmount(() => {
+  if (typingTimeout) clearTimeout(typingTimeout)
   if (channel) {
-    channel.unsubscribe()
+    try {
+      const echo = getEcho()
+      if (echo) {
+        echo.leave(`chat.room.${props.roomId}`)
+      }
+    } catch (_) {}
   }
 })
 
