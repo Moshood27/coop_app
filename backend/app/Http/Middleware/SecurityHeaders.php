@@ -33,7 +33,7 @@ class SecurityHeaders
             'Permissions-Policy' => "accelerometer=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
             // Helps isolate browsing context (good default for SPAs and APIs)
             'Cross-Origin-Opener-Policy' => 'same-origin',
-            'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://checkout.flutterwave.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com;",
+            'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://checkout.flutterwave.com https://embed.tawk.to https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net; font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com https://tawk.to;",
         ];
 
         foreach ($headers as $key => $value) {
