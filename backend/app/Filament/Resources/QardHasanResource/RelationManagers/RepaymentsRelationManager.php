@@ -79,6 +79,9 @@ class RepaymentsRelationManager extends RelationManager
                         if ($record->status === 'success') {
                             $loan = $record->qardHasan;
                             $loan->paid_amount = (float) $loan->paid_amount + (float) $record->amount;
+                            if ($loan->paid_amount >= $loan->principal_amount) {
+                                $loan->status = 'completed';
+                            }
                             $loan->save();
 
                             Notification::make()
@@ -96,6 +99,9 @@ class RepaymentsRelationManager extends RelationManager
                         if ($record->status === 'success' && $record->wasChanged('status')) {
                             $loan = $record->qardHasan;
                             $loan->paid_amount = (float) $loan->paid_amount + (float) $record->amount;
+                            if ($loan->paid_amount >= $loan->principal_amount) {
+                                $loan->status = 'completed';
+                            }
                             $loan->save();
 
                             Notification::make()
@@ -103,6 +109,38 @@ class RepaymentsRelationManager extends RelationManager
                                 ->success()
                                 ->send();
                         }
+                    }),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function ($record) {
+                        if ($record->status === 'success') {
+                            $loan = $record->qardHasan;
+
+                            // Revert paid amount
+                            $loan->paid_amount = (float) $loan->paid_amount - (float) $record->amount;
+
+                            // Revert status if it was completed
+                            if ($loan->status === 'completed' && $loan->paid_amount < $loan->principal_amount) {
+                                $loan->status = 'active';
+                            }
+
+                            $loan->save();
+
+                            // Reverse ledger if exists
+                            if ($record->ledger_journal_id) {
+                                \App\Models\LedgerJournal::find($record->ledger_journal_id)?->delete();
+                            }
+
+                            // Update Score
+                            if ($loan->user) {
+                                app(\App\Services\AttaqwaScoreService::class)->calculateAndUpdateScore($loan->user);
+                            }
+                        }
+                    })
+                    ->after(function() {
+                        Notification::make()
+                            ->title('Repayment deleted and loan balance updated')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([
