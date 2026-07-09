@@ -198,16 +198,55 @@ class QardHasan extends Model
             }
         });
 
-        static::deleting(function (QardHasan $loan) {
-            // Prevent deletion if any repayment exists or any amount has been paid
-            if ($loan->repayments()->exists() || (float) $loan->paid_amount > 0) {
-                return false;
+        static::deleting(function (QardHasan $qardHasan) {
+            // Delete repayments and their journals
+            $qardHasan->repayments()->each(function ($repayment) {
+                if ($repayment->ledger_journal_id) {
+                    \App\Models\LedgerJournal::find($repayment->ledger_journal_id)?->delete();
+                }
+                $repayment->delete();
+            });
+
+            // Delete the loan's own ledger journal (disbursement)
+            if ($qardHasan->ledger_journal_id) {
+                \App\Models\LedgerJournal::find($qardHasan->ledger_journal_id)?->delete();
             }
-            // Guarantor pivot will be cascaded by FK; no manual detach required
+
+            // Delete transaction approvals
+            $qardHasan->transactionApprovals()->each(fn($a) => $a->delete());
+
+            // Detach guarantors
+            $qardHasan->guarantors()->detach();
+
+            // Delete penalties
+            \App\Models\LoanPenalty::where('qard_hasan_id', $qardHasan->id)->delete();
         });
 
-        static::deleted(function (QardHasan $loan) {
-            $loan->syncUserDefaulterStatus();
+        static::deleted(function (QardHasan $qardHasan) {
+            // Sync user defaulter status
+            $qardHasan->syncUserDefaulterStatus();
+
+            // Update Score
+            if ($qardHasan->user) {
+                try {
+                    app(\App\Services\AttaqwaScoreService::class)->calculateAndUpdateScore($qardHasan->user);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to update score after loan deletion: " . $e->getMessage());
+                }
+            }
+
+            // Audit Log
+            try {
+                \App\Models\ShariahAuditLog::log(auth()->user(), 'delete_qard_hasan', [
+                    'qard_id' => $qardHasan->id,
+                    'qard_id_string' => $qardHasan->qard_id_string,
+                    'member_id' => $qardHasan->user_id,
+                    'principal' => $qardHasan->principal_amount,
+                    'paid_amount' => $qardHasan->paid_amount,
+                ]);
+            } catch (\Throwable $e) {
+                // Ignore audit logging errors in model events to prevent blocking deletion
+            }
         });
     }
 

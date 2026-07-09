@@ -325,20 +325,6 @@ class QardHasanResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn (QardHasan $record) => auth()->user()->hasRole('super_admin')
-                        && (float) $record->paid_amount <= 0
-                        && ! $record->repayments()->exists())
-                    ->before(function (QardHasan $record, Tables\Actions\DeleteAction $action) {
-                        if ($record->repayments()->exists() || (float) $record->paid_amount > 0) {
-                            Notification::make()
-                                ->danger()
-                                ->title('Cannot delete loan')
-                                ->body('Repayments have already started for this loan.')
-                                ->send();
-
-                            $action->halt();
-                        }
-                    })
                     ->requiresConfirmation()
                     ->successNotificationTitle('Loan deleted successfully'),
                 Action::make('download_review')
@@ -1078,6 +1064,10 @@ class QardHasanResource extends Resource
                     }),
             ])
             ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(fn (\Illuminate\Support\Collection $records) => $records->each->delete()),
+                ]),
             ]);
     }
 
