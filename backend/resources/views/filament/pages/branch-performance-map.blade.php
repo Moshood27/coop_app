@@ -45,116 +45,140 @@
         @endpush
 
         @push('scripts')
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=marker&v=weekly"></script>
+        <script>
+            window.initGoogleMap = function() {
+                window.dispatchEvent(new CustomEvent('google-maps-loaded'));
+            };
+            if (typeof google === 'undefined' && !document.getElementById('google-maps-js')) {
+                const script = document.createElement('script');
+                script.id = 'google-maps-js';
+                script.src = "https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=marker&v=weekly&loading=async&callback=initGoogleMap";
+                script.async = true;
+                document.head.appendChild(script);
+            }
+        </script>
         <script>
             document.addEventListener('livewire:initialized', function () {
                 const branches = @json($branches);
                 const mapContainer = document.getElementById('map');
 
-                if (!branches || branches.length === 0) {
-                    mapContainer.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No branches found.</div>';
-                    return;
-                }
-
-                const validBranches = branches.filter(b => b.latitude && b.longitude);
-                if (validBranches.length === 0) return;
-
-                // Aggregate
-                const totalSavings = validBranches.reduce((a, b) => a + (Number(b.savings_rate) || 0), 0);
-                const avgDefault = validBranches.reduce((a, b) => a + (Number(b.default_rate) || 0), 0) / validBranches.length;
-                const fmt = (n) => {
-                    try { return Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return n }
-                };
-                document.getElementById('agg-branches').textContent = String(validBranches.length);
-                document.getElementById('agg-savings').textContent = `₦ ${fmt(totalSavings)}`;
-                document.getElementById('agg-default').textContent = `${(avgDefault || 0).toFixed(2)}%`;
-
-                const mapId = '{{ config('services.google.maps_map_id') }}';
-                const mapOptions = {
-                    center: { lat: parseFloat(validBranches[0].latitude), lng: parseFloat(validBranches[0].longitude) },
-                    zoom: 6,
-                    mapTypeControl: true,
-                    streetViewControl: false,
-                };
-
-                if (mapId) {
-                    mapOptions.mapId = mapId;
-                }
-
-                const map = new google.maps.Map(mapContainer, mapOptions);
-
-                const bounds = new google.maps.LatLngBounds();
-                const infoWindow = new google.maps.InfoWindow();
-
-                validBranches.forEach(branch => {
-                    const color = branch.default_rate > 20 ? '#ef4444' : (branch.default_rate > 10 ? '#f97316' : '#22c55e');
-                    const maxSavings = Math.max(...validBranches.map(b => Number(b.savings_rate) || 0)) || 1;
-                    const scaled = 5 + ((Number(branch.savings_rate) || 0) / maxSavings) * 25;
-                    const radius = Math.min(28, Math.max(8, scaled));
-
-                    const position = { lat: parseFloat(branch.latitude), lng: parseFloat(branch.longitude) };
-
-                    let marker;
-                    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && mapId) {
-                        const pin = new google.maps.marker.PinElement({
-                            background: color,
-                            borderColor: '#000',
-                            scale: radius / 10,
-                        });
-                        marker = new google.maps.marker.AdvancedMarkerElement({
-                            position: position,
-                            map: map,
-                            content: pin.element,
-                            title: branch.name
-                        });
-                    } else {
-                        marker = new google.maps.Marker({
-                            position: position,
-                            map: map,
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                fillColor: color,
-                                fillOpacity: 0.7,
-                                scale: radius,
-                                strokeColor: '#000',
-                                strokeWeight: 1,
-                            },
-                            title: branch.name
-                        });
+                const init = () => {
+                    if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
+                        window.addEventListener('google-maps-loaded', init, { once: true });
+                        // Fallback if event was already fired
+                        setTimeout(() => { if (typeof google !== 'undefined' && google.maps && google.maps.Map) init(); }, 1000);
+                        return;
                     }
 
-                    const savingsFmt = (() => { try { return Number(branch.savings_rate || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return branch.savings_rate; } })();
+                    if (!branches || branches.length === 0) {
+                        mapContainer.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No branches found.</div>';
+                        return;
+                    }
 
-                    // Safe popup content
-                    const popupContent = document.createElement('div');
-                    popupContent.className = 'text-sm';
-                    popupContent.style.minWidth = '200px';
+                    const validBranches = branches.filter(b => b.latitude && b.longitude);
+                    if (validBranches.length === 0) return;
 
-                    const h3 = document.createElement('h3');
-                    h3.className = 'font-bold text-base border-b border-gray-200 mb-2 pb-1';
-                    h3.textContent = branch.name;
-                    popupContent.appendChild(h3);
+                    // Aggregate
+                    const totalSavings = validBranches.reduce((a, b) => a + (Number(b.savings_rate) || 0), 0);
+                    const avgDefault = validBranches.reduce((a, b) => a + (Number(b.default_rate) || 0), 0) / validBranches.length;
+                    const fmt = (n) => {
+                        try { return Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return n }
+                    };
+                    document.getElementById('agg-branches').textContent = String(validBranches.length);
+                    document.getElementById('agg-savings').textContent = `₦ ${fmt(totalSavings)}`;
+                    document.getElementById('agg-default').textContent = `${(avgDefault || 0).toFixed(2)}%`;
 
-                    const p1 = document.createElement('p');
-                    p1.className = 'mb-1';
-                    p1.innerHTML = `<strong>Total Savings:</strong> ₦${savingsFmt}`;
-                    popupContent.appendChild(p1);
+                    const mapId = '{{ config('services.google.maps_map_id') }}';
+                    const mapOptions = {
+                        center: { lat: parseFloat(validBranches[0].latitude), lng: parseFloat(validBranches[0].longitude) },
+                        zoom: 6,
+                        mapTypeControl: true,
+                        streetViewControl: false,
+                    };
 
-                    const p2 = document.createElement('p');
-                    p2.innerHTML = `<strong>Default Rate:</strong> <span style="color: ${color}; font-weight: bold;">${(Number(branch.default_rate) || 0).toFixed(2)}%</span>`;
-                    popupContent.appendChild(p2);
+                    if (mapId) {
+                        mapOptions.mapId = mapId;
+                    } else {
+                        console.warn('Google Maps Map ID is missing. AdvancedMarkerElement (modern markers) requires a Map ID. Falling back to legacy google.maps.Marker.');
+                    }
 
-                    marker.addListener('click', () => {
-                        infoWindow.setContent(popupContent);
-                        infoWindow.open(map, marker);
+                    const map = new google.maps.Map(mapContainer, mapOptions);
+
+                    const bounds = new google.maps.LatLngBounds();
+                    const infoWindow = new google.maps.InfoWindow();
+
+                    validBranches.forEach(branch => {
+                        const color = branch.default_rate > 20 ? '#ef4444' : (branch.default_rate > 10 ? '#f97316' : '#22c55e');
+                        const maxSavings = Math.max(...validBranches.map(b => Number(b.savings_rate) || 0)) || 1;
+                        const scaled = 5 + ((Number(branch.savings_rate) || 0) / maxSavings) * 25;
+                        const radius = Math.min(28, Math.max(8, scaled));
+
+                        const position = { lat: parseFloat(branch.latitude), lng: parseFloat(branch.longitude) };
+
+                        let marker;
+                        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && mapId) {
+                            const pin = new google.maps.marker.PinElement({
+                                background: color,
+                                borderColor: '#000',
+                                scale: radius / 10,
+                            });
+                            marker = new google.maps.marker.AdvancedMarkerElement({
+                                position: position,
+                                map: map,
+                                content: pin.element,
+                                title: branch.name
+                            });
+                        } else {
+                            marker = new google.maps.Marker({
+                                position: position,
+                                map: map,
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    fillColor: color,
+                                    fillOpacity: 0.7,
+                                    scale: radius,
+                                    strokeColor: '#000',
+                                    strokeWeight: 1,
+                                },
+                                title: branch.name
+                            });
+                        }
+
+                        const savingsFmt = (() => { try { return Number(branch.savings_rate || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return branch.savings_rate; } })();
+
+                        // Safe popup content
+                        const popupContent = document.createElement('div');
+                        popupContent.className = 'text-sm';
+                        popupContent.style.minWidth = '200px';
+
+                        const h3 = document.createElement('h3');
+                        h3.className = 'font-bold text-base border-b border-gray-200 mb-2 pb-1';
+                        h3.textContent = branch.name;
+                        popupContent.appendChild(h3);
+
+                        const p1 = document.createElement('p');
+                        p1.className = 'mb-1';
+                        p1.innerHTML = `<strong>Total Savings:</strong> ₦${savingsFmt}`;
+                        popupContent.appendChild(p1);
+
+                        const p2 = document.createElement('p');
+                        p2.innerHTML = `<strong>Default Rate:</strong> <span style="color: ${color}; font-weight: bold;">${(Number(branch.default_rate) || 0).toFixed(2)}%</span>`;
+                        popupContent.appendChild(p2);
+
+                        marker.addListener('click', () => {
+                            infoWindow.setContent(popupContent);
+                            infoWindow.open(map, marker);
+                        });
+
+                        bounds.extend(position);
                     });
 
-                    bounds.extend(position);
-                });
+                    if (validBranches.length > 0) {
+                        map.fitBounds(bounds);
+                    }
+                };
 
-                if (validBranches.length > 0) {
-                    map.fitBounds(bounds);
-                }
+                init();
             });
         </script>
         @endpush

@@ -18,7 +18,8 @@
                 if (!document.getElementById('google-maps-js')) {
                     const script = document.createElement('script');
                     script.id = 'google-maps-js';
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,marker&v=weekly`;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,marker&v=weekly&loading=async`;
+                    script.async = true;
                     script.onload = () => this.initMap();
                     document.head.appendChild(script);
                 }
@@ -40,6 +41,8 @@
 
             if (this.mapId) {
                 mapOptions.mapId = this.mapId;
+            } else {
+                console.warn('Google Maps Map ID is missing. AdvancedMarkerElement (modern markers) requires a Map ID. Falling back to legacy google.maps.Marker.');
             }
 
             this.map = new google.maps.Map($refs.map, mapOptions);
