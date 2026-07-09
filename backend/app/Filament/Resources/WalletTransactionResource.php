@@ -44,7 +44,18 @@ class WalletTransactionResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable(['surname', 'name', 'other_names'])
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->reactive()
+                            ->helperText(function (Forms\Get $get) {
+                                $userId = $get('user_id');
+                                if (!$userId) return null;
+                                $user = \App\Models\User::find($userId);
+                                if ($user && !$user->hasActiveLoan()) {
+                                    $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
+                                    return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Note: This member has no active loan record.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Check Loans</a>");
+                                }
+                                return null;
+                            }),
                         Forms\Components\Select::make('type')
                             ->options([
                                 'credit' => 'Credit',

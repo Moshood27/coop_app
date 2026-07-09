@@ -39,7 +39,17 @@ class ContributionResource extends Resource
                             ->preload()
                             ->required()
                             ->reactive()
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->helperText(function (Forms\Get $get) {
+                                $userId = $get('user_id');
+                                if (!$userId) return null;
+                                $user = \App\Models\User::find($userId);
+                                if ($user && !$user->hasActiveLoan()) {
+                                    $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
+                                    return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ This member has no active or defaulted loan record. If you are entering a loan repayment, please ensure a loan record exists for this user.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Check/Create Loan Record</a>");
+                                }
+                                return null;
+                            }),
                     ]),
 
                 Forms\Components\Section::make('Contribution Details')
@@ -61,7 +71,22 @@ class ContributionResource extends Resource
                                             ->required()
                                             ->reactive()
                                             ->rule('distinct')
-                                            ->extraInputAttributes(['style' => 'font-size: 1.1rem;']),
+                                            ->extraInputAttributes(['style' => 'font-size: 1.1rem;'])
+                                            ->helperText(function (Forms\Get $get) {
+                                                $schemeId = $get('scheme_id');
+                                                $userId = $get('../../user_id');
+                                                if (!$schemeId || !$userId) return null;
+
+                                                $scheme = \App\Models\Scheme::find($schemeId);
+                                                if ($scheme && $scheme->name === 'Loan Repayment') {
+                                                    $user = \App\Models\User::find($userId);
+                                                    if ($user && !$user->hasActiveLoan()) {
+                                                        $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
+                                                        return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
+                                                    }
+                                                }
+                                                return null;
+                                            }),
                                         Forms\Components\TextInput::make('amount')
                                             ->label('Amount')
                                             ->numeric()
@@ -128,7 +153,23 @@ class ContributionResource extends Resource
                                     ->options(Scheme::withTrashed()->pluck('name', 'id'))
                                     ->searchable()
                                     ->required()
-                                    ->extraInputAttributes(['style' => 'font-size: 1.1rem;']),
+                                    ->reactive()
+                                    ->extraInputAttributes(['style' => 'font-size: 1.1rem;'])
+                                    ->helperText(function (Forms\Get $get) {
+                                        $schemeId = $get('scheme_id');
+                                        $userId = $get('user_id');
+                                        if (!$schemeId || !$userId) return null;
+
+                                        $scheme = \App\Models\Scheme::find($schemeId);
+                                        if ($scheme && $scheme->name === 'Loan Repayment') {
+                                            $user = \App\Models\User::find($userId);
+                                            if ($user && !$user->hasActiveLoan()) {
+                                                $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
+                                                return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
+                                            }
+                                        }
+                                        return null;
+                                    }),
                                 Forms\Components\TextInput::make('amount')
                                     ->numeric()
                                     ->prefix('₦')

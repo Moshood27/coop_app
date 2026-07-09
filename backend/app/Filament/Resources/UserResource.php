@@ -62,6 +62,14 @@ class UserResource extends Resource
                     })
                     ->columnSpanFull(),
 
+                Forms\Components\Placeholder::make('no_loan_alert')
+                    ->hidden(fn (User $record = null) => $record === null || $record->hasActiveLoan())
+                    ->content(function (User $record) {
+                        $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $record->id]);
+                        return new \Illuminate\Support\HtmlString("<div class=\"p-4 bg-warning-500/10 text-warning-700 rounded-lg border border-warning-500/20\"><strong>NOTICE:</strong> This member currently has no active or defaulted loan record. Any contributions marked as \"Loan Repayment\" for this member will not be automatically deducted from a loan. <a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline font-bold\">Manage/Create Loans</a></div>");
+                    })
+                    ->columnSpanFull(),
+
                 Forms\Components\Tabs::make('User Details')
                     ->tabs([
                         Forms\Components\Tabs\Tab::make('Personal & Contact')

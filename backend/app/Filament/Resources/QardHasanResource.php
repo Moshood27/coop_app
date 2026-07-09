@@ -297,6 +297,12 @@ class QardHasanResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('Member')
+                    ->relationship('user', 'name')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                    ->searchable(['surname', 'name', 'other_names'])
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',
