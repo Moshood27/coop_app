@@ -107,16 +107,17 @@ class BeaconService {
 
   async showNotification(meeting) {
     try {
+      // Capacitor LocalNotifications ID must be a number. 
+      // meeting.id might be a string from API.
+      const notificationId = Math.abs(parseInt(meeting.id)) || Math.floor(Math.random() * 1000000);
+
       await LocalNotifications.schedule({
         notifications: [
           {
             title: 'Nearby Meeting Venue \uD83D\uDCCD',
             body: `You are near "${meeting.name}". Don't forget to mark your attendance!`,
-            id: meeting.id,
+            id: notificationId,
             schedule: { at: new Date(Date.now() + 1000) },
-            sound: null,
-            attachments: null,
-            actionTypeId: '',
             extra: {
               meetingId: meeting.id,
               type: 'attendance_reminder'

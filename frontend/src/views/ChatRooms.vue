@@ -137,7 +137,10 @@ function formatTime(dateStr) {
 
 onMounted(fetchRooms)
 onBeforeUnmount(() => {
-  if (userChannel) userChannel.unsubscribe()
+  const echo = getEcho()
+  if (echo && user.value) {
+    echo.leave(`App.Models.User.${user.value.id}`)
+  }
 })
 </script>
 

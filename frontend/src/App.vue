@@ -2,6 +2,7 @@
 import { onMounted, ref, computed, onBeforeUnmount, watch } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import { Geolocation } from '@capacitor/geolocation'
 import { SplashScreen } from '@capacitor/splash-screen'
 import BaseModal from './components/BaseModal.vue'
@@ -97,6 +98,17 @@ async function flushPendingPushToken() {
 
 async function setupBeaconMonitoring() {
   if (!isNative || !isLoggedIn.value) return
+  
+  // Ensure location permissions for beacons
+  try {
+    const perm = await Geolocation.checkPermissions()
+    if (perm.location !== 'granted') {
+      await Geolocation.requestPermissions()
+    }
+  } catch (e) {
+    console.warn('Location permission check failed for beacons', e)
+  }
+
   try {
     const { data } = await axios.get('/api/attendance/current')
     if (data.meeting && data.meeting.beacon_uuid) {
@@ -179,6 +191,57 @@ function handleFocusOut() {
 }
 
 onMounted(async () => {
+  // Setup listeners as early as possible to avoid "null listener" issues on interaction
+  if (isNative) {
+    if (Capacitor.isPluginAvailable('PushNotifications')) {
+      PushNotifications.addListener('registration', (token) => {
+        try {
+          console.log('FCM Token received:', token.value)
+          saveTokenToBackend(token.value)
+        } catch (_) {}
+      })
+
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        try {
+          const title = notification?.title || notification?.notification?.title || 'Notification'
+          const body = notification?.body || notification?.notification?.body || ''
+          console.log('[push] received (fg):', { title, body })
+        } catch (_) {}
+      })
+
+      PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+        try {
+          const data = event?.notification?.data || {}
+          const route = (data?.route || data?.screen || '').toString()
+          if (route) { router.push(route); return }
+          const type = (data?.type || '').toString()
+          if (type === 'voting_open' && data?.session_id) {
+            router.push(`/agm/sessions/${data.session_id}`); return
+          }
+          if (type === 'wallet_topup') { router.push('/wallet'); return }
+          if (type === 'scheme_payment') { router.push('/passbook'); return }
+          router.push('/dashboard')
+        } catch (e) {
+          console.warn('Error handling push action', e)
+        }
+      })
+    }
+
+    if (Capacitor.isPluginAvailable('LocalNotifications')) {
+      LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+        try {
+          console.log('[local notification] action performed:', event)
+          const data = event?.notification?.extra || {}
+          if (data.type === 'attendance_reminder') {
+            router.push('/attendance')
+          }
+        } catch (e) {
+          console.warn('Error handling local notification action', e)
+        }
+      })
+    }
+  }
+
   // 0. Ensure user_id is in localStorage if logged in (for real-time tracking)
   if (isLoggedIn.value && !localStorage.getItem('user_id')) {
     try {
@@ -214,56 +277,6 @@ onMounted(async () => {
       }
 
       if (permStatus.receive === 'granted') {
-        // SET UP LISTENERS FIRST
-        PushNotifications.addListener('registration', (token) => {
-          try {
-            console.log('FCM Token received:', token.value)
-            saveTokenToBackend(token.value)
-          } catch (_) {}
-        })
-
-        // Foreground receive handler (optional UI hook)
-        PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          try {
-            const data = notification?.data || {}
-            const title = notification?.title || notification?.notification?.title || 'Notification'
-            const body = notification?.body || notification?.notification?.body || ''
-            console.log('[push] received (fg):', { title, body, data })
-          } catch (e) {
-            console.warn('Error handling received notification', e)
-          }
-        })
-
-        // Tap action handler to route user
-        PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
-          try {
-            const data = event?.notification?.data || {}
-            const route = (data?.route || data?.screen || '').toString()
-            if (route) {
-              router.push(route)
-              return
-            }
-            // Fallbacks for known types
-            const type = (data?.type || '').toString()
-            if (type === 'voting_open' && data?.session_id) {
-              const sid = String(data.session_id)
-              router.push(`/agm/sessions/${sid}`)
-              return
-            }
-            if (type === 'wallet_topup') {
-              router.push('/wallet')
-              return
-            }
-            if (type === 'scheme_payment') {
-              router.push('/passbook')
-              return
-            }
-            router.push('/dashboard')
-          } catch (e) {
-            console.warn('Error handling notification action', e)
-          }
-        })
-
         // THEN REGISTER
         await PushNotifications.register()
       }
