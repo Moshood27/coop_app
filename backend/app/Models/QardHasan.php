@@ -297,6 +297,7 @@ class QardHasan extends Model
         'next_installment_amount',
         'overdue_amount',
         'expected_amount_to_pay',
+        'period_of_default',
     ];
 
     public function user()

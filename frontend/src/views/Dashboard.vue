@@ -188,9 +188,14 @@
         
         <div v-if="kpis.is_defaulted" class="mt-6 flex items-center gap-3 bg-rose-50 p-4 rounded-3xl border border-rose-100">
           <div class="text-lg">🛑</div>
-          <p class="text-[10px] text-rose-700 leading-tight font-medium">
-            Your account is currently <span class="font-bold">in default</span> due to an unpaid Qard Hasan repayment. You must clear your outstanding balance before you can access further credit.
-          </p>
+          <div>
+            <p class="text-[10px] text-rose-700 leading-tight font-medium">
+              Your account is currently <span class="font-bold">in default</span> due to an unpaid Qard Hasan repayment. You must clear your outstanding balance before you can access further credit.
+            </p>
+            <p v-if="kpis.default_duration" class="text-[10px] text-rose-600 mt-1 font-bold">
+              Duration of Default: {{ kpis.default_duration }}
+            </p>
+          </div>
         </div>
       </div>
 

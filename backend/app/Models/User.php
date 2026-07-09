@@ -837,6 +837,18 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             ->sum(fn($loan) => $loan->getOverdueAmount());
     }
 
+    public function getDefaultDuration(): ?string
+    {
+        $oldestLoan = $this->qardHasans()
+            ->whereIn('status', ['active', 'defaulted', 'pending'])
+            ->get()
+            ->filter(fn($loan) => $loan->getDefaultStartDate() !== null)
+            ->sortBy(fn($loan) => $loan->getDefaultStartDate()->timestamp)
+            ->first();
+
+        return $oldestLoan ? $oldestLoan->period_of_default : null;
+    }
+
     public function totalExpectedAmountToPay(): float
     {
         return (float) $this->qardHasans()
