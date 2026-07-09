@@ -416,16 +416,14 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
         Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\ChatController::class, 'ban']);
         Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\ChatController::class, 'unban']);
     });
+
+    // Existing Qard Hasan prototype endpoints (kept)
+    Route::prefix('qard-hasan')->group(function () {
+        Route::get('/', [QardHasanController::class, 'index']);
+        Route::post('/', [QardHasanController::class, 'store']);
+        Route::post('/{id}/repay', [QardHasanController::class, 'repay']);
+    });
 });
-
-// Existing Qard Hasan prototype endpoints (kept)
-Route::prefix('qard-hasan')->group(function () {
-    Route::get('/', [QardHasanController::class, 'index']);
-    Route::post('/', [QardHasanController::class, 'store']);
-    Route::post('/{id}/repay', [QardHasanController::class, 'repay']);
-});
-
-
 
 // Admin reports endpoints
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/reports')->group(function () {

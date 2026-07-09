@@ -55,7 +55,7 @@
           <div class="flex-1 text-center sm:text-left">
             <h3 class="font-black text-slate-800 text-lg leading-tight">{{ m.name }}</h3>
             <p class="text-emerald-600 text-xs font-black uppercase tracking-wider mb-3">{{ m.title || 'Member' }}</p>
-            <div v-if="m.bio" class="text-sm text-slate-500 leading-relaxed" v-html="m.bio"></div>
+            <div v-if="m.bio" class="text-sm text-slate-500 leading-relaxed">{{ m.bio }}</div>
           </div>
         </div>
       </div>

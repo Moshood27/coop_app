@@ -151,21 +151,21 @@ class MemberRegistrationController extends Controller
         $updated = [];
 
         if ($file = $request->file('passport')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $ext = strtolower($file->guessExtension() ?: 'jpg');
             $name = 'passport-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->passport_path = 'upload/apps/'.$app->token.'/'.$name;
             $updated['passport_path'] = $app->passport_path;
         }
         if ($file = $request->file('id_card')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+            $ext = strtolower($file->guessExtension() ?: 'pdf');
             $name = 'idcard-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->id_card_path = 'upload/apps/'.$app->token.'/'.$name;
             $updated['id_card_path'] = $app->id_card_path;
         }
         if ($file = $request->file('proof_of_address')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+            $ext = strtolower($file->guessExtension() ?: 'pdf');
             $name = 'poa-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->proof_of_address_path = 'upload/apps/'.$app->token.'/'.$name;
@@ -181,7 +181,7 @@ class MemberRegistrationController extends Controller
                 $updated['guarantor_signature_path'] = $app->guarantor_signature_path;
             }
         } elseif ($file = $request->file('guarantor_signature')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $ext = strtolower($file->guessExtension() ?: 'png');
             $name = 'guarantor-sig-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->guarantor_signature_path = 'upload/apps/'.$app->token.'/'.$name;
@@ -198,7 +198,7 @@ class MemberRegistrationController extends Controller
                 $updated['imam_signature_path'] = $app->imam_signature_path;
             }
         } elseif ($file = $request->file('imam_signature')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $ext = strtolower($file->guessExtension() ?: 'png');
             $name = 'imam-sig-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->imam_signature_path = 'upload/apps/'.$app->token.'/'.$name;
@@ -215,7 +215,7 @@ class MemberRegistrationController extends Controller
                 $updated['spouse_father_consent_signature_path'] = $app->spouse_father_consent_signature_path;
             }
         } elseif ($file = $request->file('spouse_father_consent_signature')) {
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $ext = strtolower($file->guessExtension() ?: 'png');
             $name = 'spouse-father-sig-'.time().'.'.$ext;
             $file->move($baseDir, $name);
             $app->spouse_father_consent_signature_path = 'upload/apps/'.$app->token.'/'.$name;

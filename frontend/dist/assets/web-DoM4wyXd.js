@@ -1,0 +1,1 @@
+import{S as e}from"./index-CanOUEjG.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};
