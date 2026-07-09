@@ -148,7 +148,7 @@ export async function storeBiometricCredentials({ membership_number, branch_id, 
   }
 }
 
-export async function clearBiometricCredentials() {
+export async function removeBiometricCredentials() {
   const plugin = await loadPlugin()
   if (!plugin?.deleteCredentials) return false
   try {
