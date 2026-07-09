@@ -45,7 +45,7 @@
         @endpush
 
         @push('scripts')
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=marker&v=weekly"></script>
         <script>
             document.addEventListener('livewire:initialized', function () {
                 const branches = @json($branches);
@@ -69,12 +69,19 @@
                 document.getElementById('agg-savings').textContent = `₦ ${fmt(totalSavings)}`;
                 document.getElementById('agg-default').textContent = `${(avgDefault || 0).toFixed(2)}%`;
 
-                const map = new google.maps.Map(mapContainer, {
+                const mapId = '{{ config('services.google.maps_map_id') }}';
+                const mapOptions = {
                     center: { lat: parseFloat(validBranches[0].latitude), lng: parseFloat(validBranches[0].longitude) },
                     zoom: 6,
                     mapTypeControl: true,
                     streetViewControl: false,
-                });
+                };
+
+                if (mapId) {
+                    mapOptions.mapId = mapId;
+                }
+
+                const map = new google.maps.Map(mapContainer, mapOptions);
 
                 const bounds = new google.maps.LatLngBounds();
                 const infoWindow = new google.maps.InfoWindow();
@@ -87,20 +94,34 @@
 
                     const position = { lat: parseFloat(branch.latitude), lng: parseFloat(branch.longitude) };
 
-                    // Use a Marker with a custom SVG icon instead of Circle to match the "pixel-based" radius of Leaflet's circleMarker
-                    const marker = new google.maps.Marker({
-                        position: position,
-                        map: map,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            fillColor: color,
-                            fillOpacity: 0.7,
-                            scale: radius,
-                            strokeColor: '#000',
-                            strokeWeight: 1,
-                        },
-                        title: branch.name
-                    });
+                    let marker;
+                    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && mapId) {
+                        const pin = new google.maps.marker.PinElement({
+                            background: color,
+                            borderColor: '#000',
+                            scale: radius / 10,
+                        });
+                        marker = new google.maps.marker.AdvancedMarkerElement({
+                            position: position,
+                            map: map,
+                            content: pin.element,
+                            title: branch.name
+                        });
+                    } else {
+                        marker = new google.maps.Marker({
+                            position: position,
+                            map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                fillColor: color,
+                                fillOpacity: 0.7,
+                                scale: radius,
+                                strokeColor: '#000',
+                                strokeWeight: 1,
+                            },
+                            title: branch.name
+                        });
+                    }
 
                     const savingsFmt = (() => { try { return Number(branch.savings_rate || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch { return branch.savings_rate; } })();
 
