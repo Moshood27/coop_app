@@ -7,7 +7,6 @@
         searchQuery: '',
         isSearching: false,
         apiKey: '{{ config('services.google.maps_api_key') }}',
-        mapId: '{{ config('services.google.maps_map_id') }}',
         init() {
             if (!this.apiKey) {
                 console.error('Google Maps API Key is missing. Please set GOOGLE_MAPS_API_KEY in your .env file.');
@@ -18,8 +17,7 @@
                 if (!document.getElementById('google-maps-js')) {
                     const script = document.createElement('script');
                     script.id = 'google-maps-js';
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,marker&v=weekly&loading=async`;
-                    script.async = true;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
                     script.onload = () => this.initMap();
                     document.head.appendChild(script);
                 }
@@ -31,29 +29,31 @@
             if (this.map) return;
 
             const center = { lat: parseFloat(this.lat) || 9.0820, lng: parseFloat(this.lng) || 8.6753 };
-            const mapOptions = {
+            this.map = new google.maps.Map($refs.map, {
                 center: center,
                 zoom: this.lat ? 15 : 6,
                 mapTypeControl: true,
                 streetViewControl: false,
                 fullscreenControl: true
-            };
-
-            if (this.mapId) {
-                mapOptions.mapId = this.mapId;
-            } else {
-                console.warn('Google Maps Map ID is missing. AdvancedMarkerElement (modern markers) requires a Map ID. Falling back to legacy google.maps.Marker.');
-            }
-
-            this.map = new google.maps.Map($refs.map, mapOptions);
+            });
 
             if (this.lat && this.lng) {
-                this.createMarker(center);
+                this.marker = new google.maps.Marker({
+                    position: center,
+                    map: this.map,
+                    draggable: true
+                });
             }
 
             this.map.addListener('click', (e) => {
                 this.updateLocation(e.latLng.lat(), e.latLng.lng());
             });
+
+            if (this.marker) {
+                this.marker.addListener('dragend', (e) => {
+                    this.updateLocation(e.latLng.lat(), e.latLng.lng());
+                });
+            }
 
             // Initialize Autocomplete
             const input = $refs.searchInput;
@@ -74,19 +74,15 @@
                 this.searchQuery = place.formatted_address || place.name;
             });
         },
-        createMarker(position) {
-            if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && this.mapId) {
-                this.marker = new google.maps.marker.AdvancedMarkerElement({
-                    position: position,
-                    map: this.map,
-                    gmpDraggable: true
-                });
-                this.marker.addListener('dragend', (e) => {
-                    this.updateLocation(e.latLng.lat(), e.latLng.lng());
-                });
+        updateLocation(lat, lng) {
+            this.lat = lat;
+            this.lng = lng;
+
+            if (this.marker) {
+                this.marker.setPosition({ lat, lng });
             } else {
                 this.marker = new google.maps.Marker({
-                    position: position,
+                    position: { lat, lng },
                     map: this.map,
                     draggable: true
                 });
@@ -95,31 +91,17 @@
                 });
             }
         },
-        updateLocation(lat, lng) {
-            this.lat = lat;
-            this.lng = lng;
-
-            if (this.marker) {
-                if (this.marker.setPosition) {
-                    this.marker.setPosition({ lat, lng });
-                } else {
-                    this.marker.position = { lat, lng };
-                }
-            } else {
-                this.createMarker({ lat, lng });
-            }
-        },
         updateFromInputs() {
             if (this.map && this.lat && this.lng) {
                 const latlng = { lat: parseFloat(this.lat), lng: parseFloat(this.lng) };
                 if (this.marker) {
-                    if (this.marker.setPosition) {
-                        this.marker.setPosition(latlng);
-                    } else {
-                        this.marker.position = latlng;
-                    }
+                    this.marker.setPosition(latlng);
                 } else {
-                    this.createMarker(latlng);
+                    this.marker = new google.maps.Marker({
+                        position: latlng,
+                        map: this.map,
+                        draggable: true
+                    });
                 }
                 this.map.panTo(latlng);
             }
