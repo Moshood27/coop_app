@@ -63,6 +63,41 @@ export async function isBiometricAvailable() {
   }
 }
 
+export async function isWebAuthnSupported() {
+  return !!(window.PublicKeyCredential && window.isSecureContext)
+}
+
+// Return detailed availability info for both native and web
+export async function getBiometricAvailability() {
+  const hasPKC = !!window.PublicKeyCredential
+  const isSecure = !!window.isSecureContext
+  
+  if (hasPKC && isSecure) {
+    return { isAvailable: true, platform: 'webauthn' }
+  }
+
+  const native = await isNative()
+  if (native) {
+    const plugin = await loadPlugin()
+    if (!plugin?.isAvailable) {
+      return { isAvailable: false, reason: 'plugin_missing', platform: 'native' }
+    }
+    try {
+      const result = await plugin.isAvailable()
+      const isAvailable = typeof result === 'boolean' ? result : !!result?.isAvailable
+      return { isAvailable, platform: 'native', errorCode: result?.errorCode }
+    } catch (e) {
+      return { isAvailable: false, reason: e?.message || 'unknown', platform: 'native' }
+    }
+  }
+
+  return {
+    isAvailable: false,
+    reason: !hasPKC ? 'not_supported' : (!isSecure ? 'insecure_context' : null),
+    platform: 'web'
+  }
+}
+
 // Return detailed availability info from the native plugin
 // Useful to diagnose why Samsung devices may report unavailable
 export async function getBiometricAvailabilityDetails() {

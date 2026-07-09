@@ -296,6 +296,7 @@ import AppBottomNav from '../components/AppBottomNav.vue'
 import WebQrScanner from '../components/WebQrScanner.vue'
 import axios from '../http'
 import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
+import { getBiometricAvailability } from '../services/biometric'
 import {useAppStatusStore} from '../stores/appStatus'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
@@ -599,6 +600,16 @@ const syncOfflineRecords = async () => {
 }
 
 const markWithBiometrics = async () => {
+  const bio = await getBiometricAvailability()
+  if (!bio.isAvailable || bio.platform !== 'webauthn') {
+    let msg = "Biometrics (WebAuthn) not supported on this device/browser."
+    if (bio.reason === 'insecure_context') {
+      msg = "Biometrics require a secure HTTPS connection. Please access the site via HTTPS."
+    }
+    modal.alert(msg)
+    return
+  }
+
   if (!location.value) {
     modal.alert('Please capture your location first.')
     return

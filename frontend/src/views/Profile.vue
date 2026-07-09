@@ -529,8 +529,8 @@
         
         <div class="flex items-center justify-between mb-4 relative z-10">
           <div>
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Biometric Security</p>
-            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">Fingerprint & FaceID</h3>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Identity Verification</p>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">Biometric Access</h3>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -543,7 +543,7 @@
           <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 rounded-full" :class="hasBiometrics ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'"></div>
-              <span class="text-xs font-bold text-slate-700">{{ hasBiometrics ? 'Biometrics Active' : 'Not Registered' }}</span>
+              <span class="text-xs font-bold text-slate-700">{{ hasBiometrics ? 'Registered on Server' : 'Not Registered' }}</span>
             </div>
             <button v-if="hasBiometrics" @click="deleteBiometrics" :disabled="biometricBusy" class="text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-3 py-2 rounded-xl active:scale-95 transition-all">
               Remove
@@ -551,7 +551,7 @@
           </div>
 
           <p class="text-[11px] text-slate-500 leading-relaxed px-1">
-            Secure your account and mark attendance instantly using your device's biometric sensors. This is faster and more secure than manual PIN entry.
+            Standard WebAuthn biometrics used for identity verification and marking attendance. Registered credentials can be used across supported devices.
           </p>
 
           <button v-if="!hasBiometrics" @click="registerBiometrics" :disabled="biometricBusy" 
@@ -562,6 +562,45 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
               </svg>
               Enable Biometric Access
+            </template>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Biometric Login (App Only) -->
+      <div v-if="isSectionVisible('quick_login') && isNativePlatform" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-5 overflow-hidden relative">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-full -mr-12 -mt-12 opacity-40 transition-transform duration-700" />
+        
+        <div class="flex items-center justify-between mb-4 relative z-10">
+          <div>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Mobile App Only</p>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">Quick Biometric Login</h3>
+          </div>
+          <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+             </svg>
+          </div>
+        </div>
+
+        <div class="space-y-4 relative z-10">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 rounded-full" :class="hasQuickLogin ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-slate-300'"></div>
+              <span class="text-xs font-bold text-slate-700">{{ hasQuickLogin ? 'Active on this device' : 'Disabled' }}</span>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-relaxed px-1">
+            Store your credentials securely on this device to log in instantly using your fingerprint or FaceID. 
+          </p>
+
+          <button @click="toggleQuickLogin" :disabled="quickLoginBusy" 
+                  class="w-full h-14 rounded-2xl font-black uppercase tracking-wider text-[11px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                  :class="hasQuickLogin ? 'bg-rose-50 text-rose-600 shadow-rose-100' : 'bg-blue-600 text-white shadow-blue-200'">
+            <span v-if="quickLoginBusy" class="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></span>
+            <template v-else>
+              {{ hasQuickLogin ? 'Disable Quick Login' : 'Enable Quick Login' }}
             </template>
           </button>
         </div>
@@ -619,6 +658,11 @@ import { useAppStatusStore } from '../stores/appStatus'
 import axios from '../http'
 import getImageUrl from '../utils/image'
 import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
+import { getBiometricAvailability, isNative, canQuickLogin, storeBiometricCredentials, removeBiometricCredentials } from '../services/biometric'
+
+const isNativePlatform = ref(false)
+const hasQuickLogin = ref(false)
+const quickLoginBusy = ref(false)
 
 const router = useRouter()
 const appStatusStore = useAppStatusStore()
@@ -639,6 +683,7 @@ const sectionDefinitions = [
   { id: 'password_update', tab: 'security', keywords: ['password', 'update password', 'change password'] },
   { id: 'pin', tab: 'security', keywords: ['pin', 'transaction pin', 'reset pin', 'forgot pin'] },
   { id: 'biometrics', tab: 'security', keywords: ['biometrics', 'fingerprint', 'faceid', 'touchid', 'login'] },
+  { id: 'quick_login', tab: 'security', keywords: ['quick login', 'biometric login', 'fingerprint login', 'app login'] },
 ]
 
 const visibleSections = computed(() => {
@@ -746,8 +791,14 @@ const checkBiometricStatus = async () => {
 }
 
 const registerBiometrics = async () => {
-  if (!window.PublicKeyCredential) {
-    alert('Biometrics not supported on this device/browser.')
+  const bio = await getBiometricAvailability()
+  
+  if (!bio.isAvailable || bio.platform !== 'webauthn') {
+    if (bio.reason === 'insecure_context') {
+      alert('Biometrics require a secure HTTPS connection. Please ensure you are accessing the site via https://')
+    } else {
+      alert('Biometrics (WebAuthn) is not supported on this browser/device. Please try a modern browser like Chrome or Safari.')
+    }
     return
   }
 
@@ -778,6 +829,33 @@ const deleteBiometrics = async () => {
     alert('Failed to remove biometrics.')
   } finally {
     biometricBusy.value = false
+  }
+}
+
+const toggleQuickLogin = async () => {
+  if (hasQuickLogin.value) {
+    if (!confirm('Disable Quick Biometric Login on this device?')) return
+    await removeBiometricCredentials()
+    hasQuickLogin.value = false
+    alert('Quick Biometric Login disabled.')
+  } else {
+    const password = prompt('Please enter your password to enable Quick Biometric Login on this device:')
+    if (!password) return
+    
+    quickLoginBusy.value = true
+    try {
+      await storeBiometricCredentials({
+        membership_number: profile.value.membership_id, // Note: profile uses membership_id
+        branch_id: profile.value.branch_id,
+        password: password
+      })
+      hasQuickLogin.value = true
+      alert('Quick Biometric Login enabled!')
+    } catch (e) {
+      alert('Failed to enable Quick Login: ' + (e.message || 'Unknown error'))
+    } finally {
+      quickLoginBusy.value = false
+    }
   }
 }
 
@@ -1146,6 +1224,12 @@ const bandLabel = (band) => {
 }
 
 onMounted(async () => {
+  // Load platform and quick login status
+  isNativePlatform.value = await isNative()
+  if (isNativePlatform.value) {
+    hasQuickLogin.value = await canQuickLogin()
+  }
+
   // Load profile
   try {
     checkBiometricStatus()
