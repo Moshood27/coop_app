@@ -76,6 +76,8 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         'investment_balance',
         'group_savings_balance',
         'created_at',
+        'is_admin',
+        'is_defaulter',
         'loan_penalty_until',
         'passport_path',
         'bvn',
