@@ -219,7 +219,7 @@ class QardHasan extends Model
             $qardHasan->guarantors()->detach();
 
             // Delete penalties
-            \App\Models\LoanPenalty::where('qard_hasan_id', $qardHasan->id)->delete();
+            \App\Models\LoanPenalty::where('qard_hasan_id', $qardHasan->id)->get()->each(fn($p) => $p->delete());
         });
 
         static::deleted(function (QardHasan $qardHasan) {
