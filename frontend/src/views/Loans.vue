@@ -320,6 +320,7 @@
                 </div>
                 <div class="text-right">
                   <p v-if="loan.overdue_amount > 0" class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Expected to Pay: ₦ {{ n(loan.overdue_amount) }}</p>
+                  <p v-if="loan.overdue_amount > 0 && loan.period_of_default !== 'None'" class="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Default Duration: {{ loan.period_of_default }}</p>
                   <p class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">₦ {{ n(loan.paid_amount) }} / ₦ {{ n(loan.principal_amount) }}</p>
                 </div>
               </div>
