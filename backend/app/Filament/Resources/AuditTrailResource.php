@@ -181,9 +181,14 @@ class AuditTrailResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('causer_id')
                     ->label('Admin/User')
-                    ->options(fn () => User::query()->orderBy('surname')->get()->pluck('full_name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->getSearchResultsUsing(fn (string $search): array => User::where('surname', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->limit(50)
+                        ->get()
+                        ->pluck('full_name', 'id')
+                        ->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => User::find($value)?->full_name),
                 Tables\Filters\SelectFilter::make('subject_type')
                     ->label('Model')
                     ->options([
@@ -345,6 +350,7 @@ class AuditTrailResource extends Resource
         ];
 
         return parent::getEloquentQuery()
+            ->with(['causer', 'subject'])
             ->where(function (Builder $query) use ($auditedModels) {
                 $query->whereIn('subject_type', $auditedModels)
                     ->orWhereIn('log_name', ['auth', 'security', 'chat', 'finance']);

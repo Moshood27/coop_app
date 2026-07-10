@@ -109,8 +109,7 @@ class FineResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
-                    ->preload(),
+                    ->searchable(['surname', 'name', 'other_names']),
             ])
             ->actions([
                 Tables\Actions\Action::make('markAsPaid')

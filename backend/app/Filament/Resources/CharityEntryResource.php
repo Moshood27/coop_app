@@ -133,7 +133,6 @@ class CharityEntryResource extends Resource
                             })
                             ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name . ($record->badges()->where('badge_type', 'zakat_needy')->exists() ? ' ⭐ (Zakat Eligible)' : ''))
                             ->searchable(['surname', 'name', 'other_names'])
-                            ->preload()
                             ->helperText('Select the member receiving this disbursement. Starred members are verified Zakat eligible.'),
                         Select::make('source')
                             ->options([
