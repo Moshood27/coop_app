@@ -10,6 +10,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class RecentPayouts extends BaseWidget
 {
+    protected static ?int $sort = 4;
+
+    protected int|string|array $columnSpan = 'full';
+
     public function getHeading(): ?string
     {
         return 'Recent Payouts';
@@ -20,8 +24,9 @@ class RecentPayouts extends BaseWidget
         return $table
             ->query(
                 QardHasan::query()
-                    ->whereIn('status', ['active', 'defaulted'])
+                    ->whereIn('status', ['active', 'defaulted', 'completed'])
                     ->latest('updated_at')
+                    ->limit(10)
             )
             ->columns([
                 TextColumn::make('updated_at')
@@ -38,14 +43,25 @@ class RecentPayouts extends BaseWidget
                     ->label('Principal')
                     ->money('ngn', true)
                     ->sortable(),
+                TextColumn::make('paid_amount')
+                    ->label('Paid')
+                    ->money('ngn', true)
+                    ->sortable(),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'active' => 'success',
+                        'completed' => 'info',
                         'defaulted' => 'danger',
                         default => 'gray',
+                    })
+                    ->icon(fn ($state) => match ($state) {
+                        'active' => 'heroicon-m-check-circle',
+                        'completed' => 'heroicon-m-check-badge',
+                        'defaulted' => 'heroicon-m-exclamation-triangle',
+                        default => 'heroicon-m-clock',
                     }),
             ])
-            ->paginated([10]);
+            ->paginated(false);
     }
 }
