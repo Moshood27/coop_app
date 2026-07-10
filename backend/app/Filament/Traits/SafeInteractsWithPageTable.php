@@ -79,13 +79,13 @@ trait SafeInteractsWithPageTable
         trigger('mount', $page, $this->getTablePageMountParameters(), null, null);
 
         $page->activeTab = $this->activeTab;
-        $page->paginators = $this->paginators;
-        $page->tableColumnSearches = $this->tableColumnSearches;
+        $page->paginators = $this->paginators ?? [];
+        $page->tableColumnSearches = $this->tableColumnSearches ?? [];
         $page->tableFilters = $this->tableFilters;
         $page->tableGrouping = $this->tableGrouping;
         $page->tableGroupingDirection = $this->tableGroupingDirection;
         $page->tableRecordsPerPage = $this->tableRecordsPerPage;
-        $page->tableSearch = $this->tableSearch;
+        $page->tableSearch = $this->tableSearch ?? '';
         $page->tableSortColumn = $this->tableSortColumn;
         $page->tableSortDirection = $this->tableSortDirection;
 
