@@ -11,7 +11,7 @@ class TotalCollectionsToday extends BaseWidget
 {
     protected static ?int $sort = -11;
 
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 'full';
 
     public function getHeading(): ?string
     {
