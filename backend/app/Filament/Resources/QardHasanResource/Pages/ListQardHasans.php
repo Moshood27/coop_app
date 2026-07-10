@@ -29,16 +29,18 @@ class ListQardHasans extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            $this->getWipeHeaderAction(),
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Apply for Loan')
+                ->icon('heroicon-m-plus'),
             Actions\Action::make('branchReport')
-                ->label('Branch Outstanding Report')
-                ->icon('heroicon-o-document-chart-bar')
-                ->color('info')
+                ->label('Outstanding Report')
+                ->icon('heroicon-m-document-chart-bar')
+                ->color('success')
                 ->url(fn () => QardHasanBranchReport::getUrl()),
             Actions\Action::make('importCsv')
                 ->label('Import CSV')
-                ->icon('heroicon-o-arrow-up-tray')
+                ->icon('heroicon-m-arrow-up-tray')
+                ->color('info')
                 ->form([
                     Forms\Components\FileUpload::make('file')
                         ->label('Loans CSV file')
@@ -72,9 +74,12 @@ class ListQardHasans extends ListRecords
                     }
                 }),
             Actions\Action::make('downloadTemplate')
-                ->label('Download Template (Excel)')
-                ->icon('heroicon-o-document-arrow-down')
+                ->label('Template')
+                ->icon('heroicon-m-document-arrow-down')
+                ->color('gray')
                 ->action(fn () => Excel::download(new LoanImportTemplate, 'loans_import_template.xlsx')),
+            $this->getWipeHeaderAction()
+                ->icon('heroicon-m-trash'),
         ];
     }
 
@@ -82,8 +87,9 @@ class ListQardHasans extends ListRecords
     {
         return [
             Tables\Actions\Action::make('print')
-                ->label('Print')
-                ->icon('heroicon-o-printer')
+                ->label('Print List')
+                ->icon('heroicon-m-printer')
+                ->color('gray')
                 ->extraAttributes(['onclick' => 'window.print()']),
         ];
     }

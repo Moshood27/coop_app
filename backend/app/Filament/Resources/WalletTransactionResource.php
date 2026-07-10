@@ -257,9 +257,9 @@ class WalletTransactionResource extends Resource
             ->headerActions([
                 Tables\Actions\Action::make('branchReport')
                     ->label('Branch Report')
-                    ->icon('heroicon-o-document-chart-bar')
+                    ->icon('heroicon-m-document-chart-bar')
                     ->url(fn () => \App\Filament\Pages\WalletTransactionsBranchReport::getUrl())
-                    ->color('info'),
+                    ->color('success'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

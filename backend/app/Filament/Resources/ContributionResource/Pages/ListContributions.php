@@ -25,18 +25,21 @@ class ListContributions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('branchSchemeReport')
-                ->label('Branch Schemes Report')
-                ->icon('heroicon-o-document-chart-bar')
-                ->color('info')
-                ->url(fn (): string => SchemeBranchReport::getUrl()),
+            Actions\CreateAction::make()
+                ->label('New Contribution')
+                ->icon('heroicon-m-plus'),
             Actions\Action::make('branchReport')
-                ->label('Branch Contribution Report')
-                ->icon('heroicon-o-document-chart-bar')
+                ->label('Contribution Report')
+                ->icon('heroicon-m-document-chart-bar')
                 ->color('success')
                 ->url(fn () => ContributionBranchReport::getUrl()),
-            $this->getWipeHeaderAction(),
-            Actions\CreateAction::make(),
+            Actions\Action::make('branchSchemeReport')
+                ->label('Scheme Report')
+                ->icon('heroicon-m-chart-pie')
+                ->color('info')
+                ->url(fn (): string => SchemeBranchReport::getUrl()),
+            $this->getWipeHeaderAction()
+                ->icon('heroicon-m-trash'),
         ];
     }
 
@@ -44,8 +47,9 @@ class ListContributions extends ListRecords
     {
         return [
             Tables\Actions\Action::make('print')
-                ->label('Print')
-                ->icon('heroicon-o-printer')
+                ->label('Print List')
+                ->icon('heroicon-m-printer')
+                ->color('gray')
                 ->extraAttributes(['onclick' => 'window.print()']),
         ];
     }

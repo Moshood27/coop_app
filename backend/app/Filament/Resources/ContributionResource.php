@@ -295,8 +295,9 @@ class ContributionResource extends Resource
             ])
             ->headerActions([
                 Tables\Actions\Action::make('print')
-                    ->label('Print')
-                    ->icon('heroicon-o-printer')
+                    ->label('Print List')
+                    ->icon('heroicon-m-printer')
+                    ->color('gray')
                     ->extraAttributes(['onclick' => 'window.print()']),
             ])
             ->actions([
