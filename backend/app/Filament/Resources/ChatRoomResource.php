@@ -198,7 +198,7 @@ class ChatRoomResource extends Resource
                     ->label('Filter by Staff')
                     ->options(fn () => User::whereHas('roles', fn($q) => $q->whereIn('name', ['Staff', 'Admin']))->pluck('name', 'id'))
                     ->searchable()
-                    ->query(fn (Builder $query, array $data) => $query->when($data['value'], fn ($q, $v) => $q->where('metadata->assigned_staff_id', $v))),
+                    ->query(fn (Builder $query, array $data) => $query->when($data['value'] ?? null, fn ($q, $v) => $q->where('metadata->assigned_staff_id', $v))),
             ])
             ->actions([
                 Tables\Actions\Action::make('chat')

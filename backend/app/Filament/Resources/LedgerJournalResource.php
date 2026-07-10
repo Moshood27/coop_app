@@ -84,8 +84,8 @@ class LedgerJournalResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['from'], fn($q) => $q->whereDate('date', '>=', $data['from']))
-                            ->when($data['until'], fn($q) => $q->whereDate('date', '<=', $data['until']));
+                            ->when($data['from'] ?? null, fn($q, $date) => $q->whereDate('date', '>=', $date))
+                            ->when($data['until'] ?? null, fn($q, $date) => $q->whereDate('date', '<=', $date));
                     }),
             ])
             ->actions([
