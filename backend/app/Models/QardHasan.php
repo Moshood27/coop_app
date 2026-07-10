@@ -70,15 +70,22 @@ class QardHasan extends Model
         return $next instanceof Carbon ? $next->toISOString() : (is_string($next) ? $next : null);
     }
 
+    protected array $installmentSchedule = [];
+
     /**
      * Generate a simple installment schedule as an array of [index, due_at (Carbon), amount].
      * Start date: approved_at when present, otherwise created_at; first installment is one interval after start.
      */
     public function generateInstallmentSchedule(?Carbon $startAt = null): array
     {
+        $cacheKey = $startAt ? $startAt->timestamp : 'default';
+        if (isset($this->installmentSchedule[$cacheKey])) {
+            return $this->installmentSchedule[$cacheKey];
+        }
+
         $total = (int) $this->total_installments;
         if ($total <= 0) {
-            return [];
+            return $this->installmentSchedule[$cacheKey] = [];
         }
 
         $per = (float) $this->per_installment;
@@ -110,7 +117,7 @@ class QardHasan extends Model
             $item['index'] = $idx + 1;
         }
 
-        return $items;
+        return $this->installmentSchedule[$cacheKey] = $items;
     }
 
     /**

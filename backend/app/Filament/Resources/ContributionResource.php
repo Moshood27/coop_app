@@ -38,7 +38,6 @@ class ContributionResource extends Resource
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->full_name} ({$record->membership_number})")
                             ->searchable(['surname', 'name', 'other_names', 'membership_number'])
-                            ->preload()
                             ->required()
                             ->reactive()
                             ->columnSpanFull()

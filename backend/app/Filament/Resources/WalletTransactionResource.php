@@ -43,7 +43,6 @@ class WalletTransactionResource extends Resource
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                             ->searchable(['surname', 'name', 'other_names'])
-                            ->preload()
                             ->required()
                             ->reactive()
                             ->helperText(function (Forms\Get $get) {
@@ -190,8 +189,7 @@ class WalletTransactionResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
-                    ->preload(),
+                    ->searchable(['surname', 'name', 'other_names']),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
                     ->relationship('user.branch', 'name')

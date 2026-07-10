@@ -532,10 +532,9 @@ class UserResource extends Resource
                     ->sortable()
                     ->numeric(6),
                 TextColumn::make('created_at')->label('Date Joined')->date(),
-                TextColumn::make('meeting_attendance_count')
+                TextColumn::make('audited_attendance_count')
                     ->label('Attendance')
-                    ->getStateUsing(fn (User $record) => $record->meetingAttendanceCount())
-                    ->sortable(false),
+                    ->sortable(),
                 TextColumn::make('account_number')
                     ->label('Bank Acct #')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -1478,13 +1477,22 @@ class UserResource extends Resource
     {
         $user = auth()->user();
 
+        $query = parent::getEloquentQuery()
+            ->with(['branch'])
+            ->withCount(['attendanceRecords as audited_attendance_count' => function ($query) {
+                $query->where('status', 'present')
+                    ->whereHas('meeting', function ($q) {
+                        $q->where('status', 'audited');
+                    });
+            }]);
+
         // If the user is a Super Admin, let them see everything
         if ($user->hasRole('super_admin')) {
-            return parent::getEloquentQuery();
+            return $query;
         }
 
         // Otherwise, only show records belonging to the user's branch
-        return parent::getEloquentQuery()->where('branch_id', $user->branch_id);
+        return $query->where('branch_id', $user->branch_id);
     }
 
     public static function getRelations(): array

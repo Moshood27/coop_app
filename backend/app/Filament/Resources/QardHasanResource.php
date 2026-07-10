@@ -64,7 +64,6 @@ class QardHasanResource extends Resource
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                     ->searchable(['surname', 'name', 'other_names'])
-                    ->preload()
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
@@ -208,7 +207,16 @@ class QardHasanResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'guarantors', 'approvedBy']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'user' => fn($q) => $q->withCount(['attendanceRecords as audited_attendance_count' => function ($sq) {
+                    $sq->where('status', 'present')
+                        ->whereHas('meeting', function ($ssq) {
+                            $ssq->where('status', 'audited');
+                        });
+                }]),
+                'guarantors',
+                'approvedBy'
+            ]))
             ->columns([
                 TextColumn::make('created_at')->label('Created')->since()->sortable(),
                 TextColumn::make('user.full_name')
@@ -230,10 +238,10 @@ class QardHasanResource extends Resource
                 TextColumn::make('meeting_attendance_count')
                     ->label('Attendance (S/C)')
                     ->badge()
-                    ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . $record->user->meetingAttendanceCount())
+                    ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . ($record->user->audited_attendance_count ?? 0))
                     ->color(function ($record) {
                         $required = (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8));
-                        $current = $record->user->meetingAttendanceCount();
+                        $current = $record->user->audited_attendance_count ?? 0;
                         return $current >= $required ? 'success' : 'danger';
                     })
                     ->description(fn (QardHasan $record) => "Req: " . (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8)))
@@ -301,8 +309,7 @@ class QardHasanResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
-                    ->preload(),
+                    ->searchable(['surname', 'name', 'other_names']),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',
@@ -1089,10 +1096,10 @@ class QardHasanResource extends Resource
                         TextEntry::make('meeting_attendance_count')
                             ->label('Meeting Attendance (Snapshot / Current Audited)')
                             ->badge()
-                            ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . $record->user->meetingAttendanceCount())
+                            ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . ($record->user->audited_attendance_count ?? 0))
                             ->color(function ($record) {
                                 $required = (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8));
-                                $current = $record->user->meetingAttendanceCount();
+                                $current = $record->user->audited_attendance_count ?? 0;
                                 return $current >= $required ? 'success' : 'danger';
                             })
                             ->hint(fn() => "Required: " . (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8))),
