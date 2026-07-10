@@ -1,0 +1,205 @@
+
+backend\app\Filament\Resources\LedgerJournalResource.php:73:
+ ->money('ngn', true)
+backend\app\Filament\Resources\UtilityTransactionResource.php:109:
+   TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UtilityTransactionResource.php:110:
+   TextColumn::make('profit')->money('ngn',
+true)->sortable()->toggleable(isToggledHiddenByDefault: true),
+backend\app\Filament\Resources\ExpenseEntryResource.php:184:
+     TextEntry::make('amount')->money('ngn'),
+backend\app\Filament\Resources\ExpenseEntryResource.php:256:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\CharityEntryResource.php:70:
+    TextEntry::make('amount')->money('ngn'),
+backend\app\Filament\Resources\CharityEntryResource.php:101:
+ ->money('ngn', true)
+backend\app\Filament\Resources\CharityEntryResource.php:103:
+ ->summarize(Sum::make()->money('ngn', true)->label('Net Balance')),
+backend\app\Filament\Resources\ProjectProposalResource.php:109:
+TextColumn::make('target_amount')->money('NGN')->sortable(),
+backend\app\Filament\Resources\ZakatResource.php:56:
+->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:87:
+->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:91:
+->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:165:
+  ->money('ngn'),
+backend\app\Filament\Resources\ZakatResource.php:168:
+  ->money('ngn'),
+backend\app\Filament\Resources\ZakatResource.php:171:
+  ->money('ngn'),
+backend\app\Filament\Resources\ZakatResource.php:174:
+  ->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:178:
+  ->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:188:
+  ->money('ngn')
+backend\app\Filament\Resources\ZakatResource.php:211:
+  ->money('ngn')
+backend\app\Filament\Resources\SchemeResource.php:55:
+->money('ngn', true)
+backend\app\Filament\Resources\ProjectResource.php:118:
+TextColumn::make('target_amount')->label('Target')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\UserResource.php:523:
+TextColumn::make('balance')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource.php:526:
+->money('ngn', true)
+backend\app\Filament\Resources\ProjectInvestmentResource.php:45:
+ TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\TakafulPoolEntryResource.php:50:
+    ->money('ngn', true)
+backend\app\Filament\Resources\SavingsGroupResource.php:74:
+->money('ngn')
+backend\app\Filament\Resources\SavingsGroupResource.php:95:
+->money('ngn')
+backend\app\Filament\Resources\ProductResource.php:117:
+TextColumn::make('cost_price')->label('Cost')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\ProductResource.php:119:
+TextColumn::make('selling_price')->label('Selling')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\WalletTransactionResource.php:145:
+      ->money('ngn', true)
+backend\app\Filament\Resources\WalletTransactionResource.php:149:
+      ->money('ngn', true)
+backend\app\Filament\Resources\WalletTransactionResource.php:153:
+      ->money('ngn', true)
+backend\app\Filament\Resources\GoalBookingResource.php:62:
+TextColumn::make('booking_amount')->label('Amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\GoalBookingResource.php:64:
+TextColumn::make('commission_amount')->label('Commission')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\TakafulContributionResource.php:58:
+       ->money('ngn', true)
+backend\app\Filament\Resources\SavingsGoalResource.php:89:
+TextColumn::make('target_amount')->label('Target')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\SavingsGoalResource.php:90:
+TextColumn::make('saved_amount')->label('Saved')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\FineResource.php:97:
+->money('NGN'),
+backend\app\Filament\Resources\FineResource.php:100:
+->money('NGN')
+backend\app\Filament\Resources\WithdrawalRequestResource.php:58:
+         TextEntry::make('amount')->money('ngn'),
+backend\app\Filament\Resources\WithdrawalRequestResource.php:101:
+  TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\SadaqahProjectResource.php:114:
+   ->money('NGN')
+backend\app\Filament\Resources\SadaqahProjectResource.php:117:
+   ->money('NGN')
+backend\app\Filament\Resources\QardHasanResource.php:242:
+TextColumn::make('principal_amount')->money('ngn',
+true)->label('Principal')->sortable(),
+backend\app\Filament\Resources\QardHasanResource.php:244:
+->money('ngn', true)
+backend\app\Filament\Resources\QardHasanResource.php:257:
+TextColumn::make('paid_amount')->money('ngn', true)->label('Paid')->sortable(),
+backend\app\Filament\Resources\QardHasanResource.php:273:
+->money('ngn', true)
+backend\app\Filament\Resources\QardHasanResource.php:1088:
+   TextEntry::make('principal_amount')->money('ngn'),
+backend\app\Filament\Resources\QardHasanResource.php:1112:
+       ->money('ngn')
+backend\app\Filament\Resources\ProjectProfitResource.php:105:
+TextColumn::make('gross_profit')->label('Gross')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\ProjectProfitResource.php:107:
+TextColumn::make('management_fee_amount')->label('Mgmt Fee')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\ProjectProfitResource.php:108:
+TextColumn::make('net_distributable')->label('Net')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\StoreOrderResource.php:172:
+TextColumn::make('total_amount')->label('Total')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\ContributionResource.php:266:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\IncomeEntryResource.php:56:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\LedgerAccountResource.php:64:
+ ->money('ngn', true)
+backend\app\Filament\Resources\ProjectProfitResource\RelationManagers\PayoutsRe
+lationManager.php:45:                TextColumn::make('amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\QardHasansRelation
+Manager.php:35:
+TextColumn::make('principal_amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\QardHasansRelation
+Manager.php:36:                TextColumn::make('paid_amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\TakafulContributio
+nsRelationManager.php:65:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\WalletTransactions
+RelationManager.php:71:                    ->money('ngn', true)
+backend\app\Filament\Resources\UserResource\RelationManagers\WalletTransactions
+RelationManager.php:75:                    ->money('ngn', true)
+backend\app\Filament\Resources\UserResource\RelationManagers\WalletTransactions
+RelationManager.php:79:                    ->money('ngn', true)
+backend\app\Filament\Resources\UserResource\RelationManagers\WithdrawalRequests
+RelationManager.php:74:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\ContributionsRelat
+ionManager.php:67:                TextColumn::make('amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\QardHasanRepayment
+sRelationManager.php:43:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\ProjectInvestments
+RelationManager.php:42:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\TakafulPoolEntries
+RelationManager.php:68:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\StoreOrdersRelatio
+nManager.php:35:                TextColumn::make('total_amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\JuniorAccountsRela
+tionManager.php:48:                    ->money('ngn', true),
+backend\app\Filament\Resources\UserResource\RelationManagers\SavingsGoalsRelati
+onManager.php:47:
+TextColumn::make('target_amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\SavingsGoalsRelati
+onManager.php:48:
+TextColumn::make('saved_amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\UserResource\RelationManagers\ProjectProfitPayou
+tsRelationManager.php:44:
+TextColumn::make('amount')->money('ngn', true)->sortable(),
+backend\app\Filament\Resources\ProjectResource\RelationManagers\InvestmentsRela
+tionManager.php:24:                TextColumn::make('amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\ProjectResource\RelationManagers\ProfitsRelation
+Manager.php:21:                TextColumn::make('gross_profit')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\ProjectResource\RelationManagers\ProfitsRelation
+Manager.php:22:
+TextColumn::make('management_fee_amount')->label('Mgmt Fee')->money('ngn',
+true),
+backend\app\Filament\Resources\ProjectResource\RelationManagers\ProfitsRelation
+Manager.php:23:
+TextColumn::make('net_distributable')->label('Net
+Distributable')->money('ngn', true),
+backend\app\Filament\Resources\MeetingResource\RelationManagers\AttendanceRecor
+dsRelationManager.php:128:                    ->money('NGN')
+backend\app\Filament\Resources\SavingsGoalResource\RelationManagers\BookingsRel
+ationManager.php:55:
+TextColumn::make('booking_amount')->label('Amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\SavingsGoalResource\RelationManagers\BookingsRel
+ationManager.php:57:
+TextColumn::make('commission_amount')->label('Commission')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Resources\QardHasanResource\RelationManagers\RepaymentsRel
+ationManager.php:60:                TextColumn::make('amount')->money('ngn',
+true)->sortable(),
+backend\app\Filament\Widgets\RecentPayouts.php:44:
+->money('ngn', true)
+backend\app\Filament\Widgets\RecentPayouts.php:48:
+->money('ngn', true)
+backend\app\Filament\Widgets\RecentWalletActivity.php:48:
+->money('ngn', true),

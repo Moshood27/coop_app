@@ -41,7 +41,7 @@ class WithdrawalRequestResource extends Resource
                 Forms\Components\Section::make('Withdrawal Request')
                     ->schema([
                         Forms\Components\TextInput::make('user_id')->disabled()->dehydrated(false),
-                        Forms\Components\TextInput::make('amount')->money('ngn')->disabled(),
+                        Forms\Components\TextInput::make('amount')->numeric()->prefix('₦')->disabled(),
                         Forms\Components\TextInput::make('reference')->disabled(),
                         Forms\Components\TextInput::make('status')->disabled(),
                     ])->columns(2),
