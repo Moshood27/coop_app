@@ -54,6 +54,7 @@ use App\Filament\Widgets\TotalCollectionsToday;
 use App\Filament\Widgets\TransactionVolumeChart;
 use App\Filament\Widgets\UserGrowthChart;
 use App\Filament\Widgets\OnlineMembersWidget;
+use App\Filament\Widgets\WelcomeWidget;
 use App\Http\Middleware\IpWhitelistMiddleware;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -167,7 +168,7 @@ class AdminPanelProvider extends PanelProvider
                 MemberGrowthChart::class,
                 RecentWalletActivity::class,
                 ChatStatsWidget::class,
-                Widgets\AccountWidget::class,
+                WelcomeWidget::class,
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),

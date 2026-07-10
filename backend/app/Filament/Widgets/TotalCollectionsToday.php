@@ -9,7 +9,9 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TotalCollectionsToday extends BaseWidget
 {
-    protected static ?int $sort = -3;
+    protected static ?int $sort = -11;
+
+    protected int | string | array $columnSpan = 1;
 
     public function getHeading(): ?string
     {

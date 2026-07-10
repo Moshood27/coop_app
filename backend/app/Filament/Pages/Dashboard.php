@@ -10,4 +10,9 @@ class Dashboard extends BaseDashboard
     {
         return 'Real-time financial overview, transaction analytics, and cooperative performance.';
     }
+
+    public function getColumns(): int | string | array
+    {
+        return 2;
+    }
 }
