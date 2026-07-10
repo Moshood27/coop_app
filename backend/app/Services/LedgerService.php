@@ -80,17 +80,25 @@ class LedgerService
 
     /**
      * Record a member contribution.
-     * Debit Bank, Credit Member Deposits.
+     * Debit Bank, Credit Member Deposits (or Equity for shares).
      */
     public function recordContribution(\App\Models\Contribution $contribution): LedgerJournal
     {
+        $creditAccount = '2200'; // Default: Member Deposits (Liability)
+
+        if ($contribution->scheme && str_contains(strtolower($contribution->scheme->name), 'share')) {
+            $creditAccount = '3100'; // Member Equity
+        } elseif ($contribution->scheme && strtoupper($contribution->scheme->name) === 'SITTING') {
+            $creditAccount = '4200'; // Fine/Sitting Fee Income
+        }
+
         return $this->recordByCode([
             'date' => $contribution->created_at ?? now(),
             'reference' => $contribution->reference,
-            'description' => "Contribution from {$contribution->user->name} for {$contribution->scheme->name}",
+            'description' => "Contribution from " . ($contribution->user->name ?? 'User') . " for " . ($contribution->scheme->name ?? 'Unknown Scheme'),
         ], [
             ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
-            ['code' => '2200', 'credit' => $contribution->amount, 'description' => "Member Deposit ({$contribution->user->membership_number})"],
+            ['code' => $creditAccount, 'credit' => $contribution->amount, 'description' => "Contribution Receipt"],
         ]);
     }
 
@@ -234,6 +242,87 @@ class LedgerService
             ['code' => '1100', 'debit' => $order->total_amount, 'description' => 'Bank/Wallet Receipt'],
             ['code' => '4100', 'credit' => $order->total_profit, 'description' => 'Murabahah Profit'],
             ['code' => '1200', 'credit' => $order->total_cost, 'description' => 'Inventory Cost'],
+        ]);
+    }
+    /**
+     * Record Murabahah Financing (Receivable).
+     * Dr Murabahah Receivables (1310), Cr Bank (1100), Cr Murabahah Profit (4400)
+     */
+    public function recordMurabahahFinancing(\App\Models\StoreOrder $order): LedgerJournal
+    {
+        return $this->recordByCode([
+            'date' => now(),
+            'reference' => 'MURABAHA-' . $order->id,
+            'description' => "Murabahah Financing for order: {$order->reference}",
+        ], [
+            ['code' => '1310', 'debit' => $order->total_amount, 'description' => 'Receivable (Cost + Profit)'],
+            ['code' => '1100', 'credit' => $order->total_cost, 'description' => 'Payment to Vendor/Inventory'],
+            ['code' => '4400', 'credit' => $order->total_profit, 'description' => 'Murabahah Profit'],
+        ]);
+    }
+
+    /**
+     * Record Charity Receipt.
+     * Dr Bank (1100), Cr Charity Fund (2220)
+     */
+    public function recordCharityReceipt(\App\Models\CharityEntry $charity): LedgerJournal
+    {
+        return $this->recordByCode([
+            'date' => $charity->processed_at ?? now(),
+            'reference' => 'CHARITY-' . $charity->id,
+            'description' => "Charity Receipt: {$charity->source}",
+        ], [
+            ['code' => '1100', 'debit' => $charity->amount, 'description' => 'Bank Deposit'],
+            ['code' => '2220', 'credit' => $charity->amount, 'description' => 'Charity Fund Credit'],
+        ]);
+    }
+
+    /**
+     * Record Project Profit Declaration.
+     * Dr Bank (1100), Cr Management Fee (4500), Cr Profits Payable (2300)
+     */
+    public function recordProjectProfit(\App\Models\ProjectProfit $profit): LedgerJournal
+    {
+        return $this->recordByCode([
+            'date' => $profit->created_at ?? now(),
+            'reference' => 'PROFIT-DECL-' . $profit->id,
+            'description' => "Profit Declaration for project: " . ($profit->project->name ?? 'Project #' . $profit->project_id),
+        ], [
+            ['code' => '1100', 'debit' => $profit->gross_profit, 'description' => 'Realized Profit (Bank)'],
+            ['code' => '4500', 'credit' => $profit->management_fee_amount, 'description' => 'Management Fee Income'],
+            ['code' => '2300', 'credit' => $profit->net_distributable, 'description' => 'Profits Distributable'],
+        ]);
+    }
+
+    /**
+     * Record Project Profit Payout.
+     * Dr Profits Payable (2300), Cr Member Deposits (2200)
+     */
+    public function recordProjectProfitPayout(\App\Models\ProjectProfitPayout $payout): LedgerJournal
+    {
+        return $this->recordByCode([
+            'date' => $payout->updated_at ?? now(),
+            'reference' => 'PROFIT-PAY-' . $payout->id,
+            'description' => "Profit Payout to Member: " . ($payout->user->name ?? 'User #' . $payout->user_id),
+        ], [
+            ['code' => '2300', 'debit' => $payout->amount, 'description' => 'Profits Payable Debit'],
+            ['code' => '2200', 'credit' => $payout->amount, 'description' => 'Member Wallet Credit'],
+        ]);
+    }
+
+    /**
+     * Record Sadaqah Contribution.
+     * Dr Bank (1100), Cr Charity Fund (2220)
+     */
+    public function recordSadaqahContribution(\App\Models\SadaqahContribution $contribution): LedgerJournal
+    {
+        return $this->recordByCode([
+            'date' => $contribution->created_at ?? now(),
+            'reference' => $contribution->reference ?? 'SAD-' . $contribution->id,
+            'description' => "Sadaqah Contribution for project: " . ($contribution->project->name ?? 'Project #' . $contribution->sadaqah_project_id),
+        ], [
+            ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
+            ['code' => '2220', 'credit' => $contribution->amount, 'description' => 'Charity Fund Credit'],
         ]);
     }
 }

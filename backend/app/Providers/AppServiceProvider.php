@@ -118,6 +118,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Contribution::observe(\App\Observers\ContributionObserver::class);
         \App\Models\QardHasan::observe(\App\Observers\QardHasanObserver::class);
         \App\Models\QardHasanRepayment::observe(\App\Observers\QardHasanRepaymentObserver::class);
+        \App\Models\TakafulContribution::observe(\App\Observers\TakafulContributionObserver::class);
+        \App\Models\SadaqahContribution::observe(\App\Observers\SadaqahContributionObserver::class);
 
         // Global API rate limiter
         RateLimiter::for('api', function (Request $request) {

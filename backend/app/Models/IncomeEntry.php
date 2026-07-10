@@ -38,16 +38,7 @@ class IncomeEntry extends Model
 
     protected static function booted(): void
     {
-        static::created(function (IncomeEntry $income) {
-            try {
-                if (!$income->ledger_journal_id) {
-                    $journal = app(\App\Services\LedgerService::class)->recordIncome($income);
-                    $income->updateQuietly(['ledger_journal_id' => $journal->id]);
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("Failed to record income in ledger: " . $e->getMessage());
-            }
-        });
+        // Handled by IncomeEntryObserver
     }
 
     public function creator()

@@ -33,16 +33,7 @@ class QardHasanRepaymentObserver
     protected function recordToLedger(QardHasanRepayment $repayment): void
     {
         try {
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $repayment->paid_at ?? now(),
-                'reference' => 'LOAN-REPAY-' . $repayment->id,
-                'description' => "Loan Repayment: Qard Hasan #{$repayment->qard_hasan_id} (Ref: {$repayment->reference})",
-                'created_by' => $repayment->qardHasan->user_id,
-            ], [
-                ['code' => '1100', 'debit' => $repayment->amount], // Bank
-                ['code' => '1300', 'credit' => $repayment->amount], // Loans Receivable
-            ]);
-
+            $journal = $this->ledgerService->recordLoanRepayment($repayment);
             $repayment->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record loan repayment in ledger: " . $e->getMessage());

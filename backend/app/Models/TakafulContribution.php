@@ -36,27 +36,7 @@ class TakafulContribution extends Model
 
     protected static function booted(): void
     {
-        static::created(function (TakafulContribution $model) {
-            if ($model->status === 'success' && !$model->ledger_journal_id) {
-                try {
-                    $journal = app(\App\Services\LedgerService::class)->recordTakafulContribution($model);
-                    $model->updateQuietly(['ledger_journal_id' => $journal->id]);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to record takaful contribution in ledger: " . $e->getMessage());
-                }
-            }
-        });
-
-        static::updated(function (TakafulContribution $model) {
-            if ($model->status === 'success' && $model->wasChanged('status') && !$model->ledger_journal_id) {
-                try {
-                    $journal = app(\App\Services\LedgerService::class)->recordTakafulContribution($model);
-                    $model->updateQuietly(['ledger_journal_id' => $journal->id]);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to record takaful contribution in ledger: " . $e->getMessage());
-                }
-            }
-        });
+        // Handled by TakafulContributionObserver
     }
 
     public function user()

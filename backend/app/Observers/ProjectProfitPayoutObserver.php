@@ -33,20 +33,7 @@ class ProjectProfitPayoutObserver
     protected function recordToLedger(ProjectProfitPayout $payout): void
     {
         try {
-            // When profit is paid out to member wallet:
-            // Dr Project Profits Payable (2300)
-            // Cr Member Deposits (2200)
-
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $payout->updated_at ?? now(),
-                'reference' => 'PROFIT-PAY-' . $payout->id,
-                'description' => "Profit Payout to Member: " . ($payout->user->name ?? 'User #' . $payout->user_id),
-                'created_by' => auth()->id(),
-            ], [
-                ['code' => '2300', 'debit' => $payout->amount], // Profits Payable
-                ['code' => '2200', 'credit' => $payout->amount], // Member Deposits (Wallet)
-            ]);
-
+            $journal = $this->ledgerService->recordProjectProfitPayout($payout);
             $payout->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record project profit payout in ledger: " . $e->getMessage());

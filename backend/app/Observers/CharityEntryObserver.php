@@ -33,20 +33,7 @@ class CharityEntryObserver
     protected function recordToLedger(CharityEntry $charityEntry): void
     {
         try {
-            // Charity Entry is typically money received for the charity fund
-            // Dr Bank (1100)
-            // Cr Charity Fund (2220)
-
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $charityEntry->processed_at ?? now(),
-                'reference' => 'CHARITY-' . $charityEntry->id,
-                'description' => "Charity Receipt: {$charityEntry->source} ({$charityEntry->note})",
-                'created_by' => $charityEntry->user_id,
-            ], [
-                ['code' => '1100', 'debit' => $charityEntry->amount], // Bank
-                ['code' => '2220', 'credit' => $charityEntry->amount], // Charity Fund (Liability/Restricted)
-            ]);
-
+            $journal = $this->ledgerService->recordCharityReceipt($charityEntry);
             $charityEntry->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record charity in ledger: " . $e->getMessage());

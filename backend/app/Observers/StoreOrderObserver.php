@@ -18,6 +18,14 @@ class StoreOrderObserver
     public function created(StoreOrder $order): void
     {
         $this->handlePushNotification($order);
+
+        if ($order->status === 'murabaha_active' && !$order->ledger_journal_id) {
+            $this->recordMurabahahToLedger($order);
+        }
+
+        if ($order->status === 'completed' && !$order->ledger_journal_id) {
+            $this->recordDirectSaleToLedger($order);
+        }
     }
 
     /**
@@ -31,31 +39,30 @@ class StoreOrderObserver
             if ($order->status === 'murabaha_active' && !$order->ledger_journal_id) {
                 $this->recordMurabahahToLedger($order);
             }
+
+            if ($order->status === 'completed' && !$order->ledger_journal_id) {
+                $this->recordDirectSaleToLedger($order);
+            }
         }
     }
 
     protected function recordMurabahahToLedger(StoreOrder $order): void
     {
         try {
-            // Murabahah Active:
-            // Dr Murabahah Receivables (1310) - Total Amount (Cost + Profit)
-            // Cr Bank/Cash (1100) - Total Cost
-            // Cr Murabahah Profit (4400) - Total Profit
-
-            $journal = $this->ledgerService->recordByCode([
-                'date' => now(),
-                'reference' => 'MURABAHA-' . $order->id,
-                'description' => "Murabahah Financing for order: {$order->reference}",
-                'created_by' => auth()->id(),
-            ], [
-                ['code' => '1310', 'debit' => $order->total_amount], // Receivable
-                ['code' => '1100', 'credit' => $order->total_cost], // Cost paid to vendor/inventory
-                ['code' => '4400', 'credit' => $order->total_profit], // Profit
-            ]);
-
+            $journal = $this->ledgerService->recordMurabahahFinancing($order);
             $order->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record murabahah in ledger: " . $e->getMessage());
+        }
+    }
+
+    protected function recordDirectSaleToLedger(StoreOrder $order): void
+    {
+        try {
+            $journal = $this->ledgerService->recordStoreOrder($order);
+            $order->updateQuietly(['ledger_journal_id' => $journal->id]);
+        } catch (\Exception $e) {
+            \Log::error("Failed to record store order in ledger: " . $e->getMessage());
         }
     }
 

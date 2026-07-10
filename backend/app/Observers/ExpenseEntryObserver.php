@@ -15,7 +15,7 @@ class ExpenseEntryObserver
      */
     public function updated(ExpenseEntry $expenseEntry): void
     {
-        if ($expenseEntry->wasChanged('status') && $expenseEntry->status === 'approved' && !$expenseEntry->ledger_journal_id) {
+        if ($expenseEntry->wasChanged('status') && $expenseEntry->status === 'processed' && !$expenseEntry->ledger_journal_id) {
             $this->recordToLedger($expenseEntry);
         }
     }
@@ -25,7 +25,7 @@ class ExpenseEntryObserver
      */
     public function created(ExpenseEntry $expenseEntry): void
     {
-        if ($expenseEntry->status === 'approved' && !$expenseEntry->ledger_journal_id) {
+        if ($expenseEntry->status === 'processed' && !$expenseEntry->ledger_journal_id) {
             $this->recordToLedger($expenseEntry);
         }
     }
@@ -33,24 +33,7 @@ class ExpenseEntryObserver
     protected function recordToLedger(ExpenseEntry $expenseEntry): void
     {
         try {
-            $debitAccount = '5000'; // Default: Operating Expenses
-
-            if (strtolower((string)$expenseEntry->category) === 'charity') {
-                $debitAccount = '2220'; // Charity Fund (Liability/Restricted)
-            } elseif (strtolower((string)$expenseEntry->category) === 'administrative') {
-                $debitAccount = '5100'; // Administrative Fees (Expense)
-            }
-
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $expenseEntry->date ?? now(),
-                'reference' => 'EXPENSE-' . $expenseEntry->id,
-                'description' => "Expense: {$expenseEntry->title} ({$expenseEntry->category})",
-                'created_by' => $expenseEntry->approved_by ?? $expenseEntry->created_by,
-            ], [
-                ['code' => $debitAccount, 'debit' => $expenseEntry->amount],
-                ['code' => '1100', 'credit' => $expenseEntry->amount], // Bank
-            ]);
-
+            $journal = $this->ledgerService->recordExpense($expenseEntry);
             $expenseEntry->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record expense in ledger: " . $e->getMessage());

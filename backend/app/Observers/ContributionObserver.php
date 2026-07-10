@@ -33,23 +33,13 @@ class ContributionObserver
     protected function recordToLedger(Contribution $contribution): void
     {
         try {
-            $creditAccount = '2200'; // Default: Member Deposits (Liability)
-
-            if ($contribution->category === 'fine' || ($contribution->scheme && strtoupper($contribution->scheme->name) === 'SITTING')) {
-                $creditAccount = '4200'; // Fine/Sitting Fee Income
-            } elseif ($contribution->scheme && str_contains(strtolower($contribution->scheme->name), 'share')) {
-                $creditAccount = '3100'; // Member Equity
+            if ($contribution->category === 'loan_repayment') {
+                return; // QardHasanRepayment records its own ledger entry
             }
 
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $contribution->created_at ?? now(),
-                'reference' => 'CONTRIB-' . $contribution->id,
-                'description' => "Contribution: {$contribution->category} (Ref: {$contribution->reference})",
-                'created_by' => $contribution->user_id,
-            ], [
-                ['code' => '1100', 'debit' => $contribution->amount], // Bank
-                ['code' => $creditAccount, 'credit' => $contribution->amount],
-            ]);
+            $journal = $contribution->category === 'fine'
+                ? $this->ledgerService->recordFine($contribution)
+                : $this->ledgerService->recordContribution($contribution);
 
             $contribution->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {

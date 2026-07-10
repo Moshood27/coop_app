@@ -15,7 +15,7 @@ class QardHasanObserver
      */
     public function updated(QardHasan $loan): void
     {
-        if ($loan->wasChanged('status') && $loan->status === 'approved' && !$loan->ledger_journal_id) {
+        if ($loan->wasChanged('status') && $loan->status === 'active' && !$loan->ledger_journal_id) {
             $this->recordToLedger($loan);
         }
     }
@@ -25,7 +25,7 @@ class QardHasanObserver
      */
     public function created(QardHasan $loan): void
     {
-        if ($loan->status === 'approved' && !$loan->ledger_journal_id) {
+        if ($loan->status === 'active' && !$loan->ledger_journal_id) {
             $this->recordToLedger($loan);
         }
     }
@@ -33,16 +33,7 @@ class QardHasanObserver
     protected function recordToLedger(QardHasan $loan): void
     {
         try {
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $loan->created_at ?? now(),
-                'reference' => 'LOAN-DISBURSE-' . $loan->id,
-                'description' => "Loan Disbursement: Qard Hasan #{$loan->id} for member #{$loan->user_id}",
-                'created_by' => $loan->approved_by,
-            ], [
-                ['code' => '1300', 'debit' => $loan->principal_amount], // Loans Receivable
-                ['code' => '1100', 'credit' => $loan->principal_amount], // Bank
-            ]);
-
+            $journal = $this->ledgerService->recordLoanDisbursement($loan);
             $loan->updateQuietly(['ledger_journal_id' => $journal->id]);
         } catch (\Exception $e) {
             \Log::error("Failed to record loan disbursement in ledger: " . $e->getMessage());

@@ -18,29 +18,13 @@ class WalletTransactionObserver
         try {
             $isCredit = strtolower((string) $tx->type) === 'credit';
 
-            $entries = [];
-            if ($isCredit) {
-                // Money in: Debit Asset (Bank), Credit Liability (Member Deposits)
-                $entries = [
-                    ['code' => '1100', 'debit' => $tx->amount], // Bank
-                    ['code' => '2200', 'credit' => $tx->amount], // Member Deposits
-                ];
-            } else {
-                // Money out: Debit Liability (Member Deposits), Credit Asset (Bank)
-                $entries = [
-                    ['code' => '2200', 'debit' => $tx->amount], // Member Deposits
-                    ['code' => '1100', 'credit' => $tx->amount], // Bank
-                ];
+            if (!$tx->ledger_journal_id) {
+                $journal = $isCredit
+                    ? $this->ledgerService->recordWalletCredit($tx)
+                    : $this->ledgerService->recordWalletDebit($tx);
+
+                $tx->updateQuietly(['ledger_journal_id' => $journal->id]);
             }
-
-            $journal = $this->ledgerService->recordByCode([
-                'date' => $tx->created_at ?? now(),
-                'reference' => 'WALLET-' . $tx->id,
-                'description' => "Wallet {$tx->type}: {$tx->source} (Ref: {$tx->reference})",
-                'created_by' => $tx->user_id,
-            ], $entries);
-
-            $tx->updateQuietly(['ledger_journal_id' => $journal->id]);
 
             // Auto-process pending administrative charges if it was a credit (wallet funding)
             if ($isCredit && $tx->user) {
