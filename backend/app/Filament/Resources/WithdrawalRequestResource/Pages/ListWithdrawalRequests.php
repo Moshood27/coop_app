@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\WithdrawalRequestResource\Pages;
 
 use App\Filament\Traits\HasWipeAction;
-
+use Filament\Actions;
+use Filament\Tables;
 use App\Filament\Resources\WithdrawalRequestResource;
 use Filament\Resources\Pages\ListRecords;
 
