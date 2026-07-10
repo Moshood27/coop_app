@@ -16,7 +16,7 @@ class StoreOverview extends BaseWidget
         $outOfStock = Product::where('track_stock', true)->where('stock_quantity', '<=', 0)->count();
 
         return [
-            Stat::make('Total Store Sales', '₦ ' . number_format($totalSales, 2))
+            Stat::make('Total Store Sales', $this->formatCurrency($totalSales))
                 ->description('Combined cash and active financing')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
@@ -29,5 +29,21 @@ class StoreOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($outOfStock > 0 ? 'danger' : 'gray'),
         ];
+    }
+
+    protected function formatCurrency($value): string
+    {
+        return '₦' . $this->formatNumber($value);
+    }
+
+    protected function formatNumber($value): string
+    {
+        if ($value >= 1000000) {
+            return number_format($value / 1000000, 2) . 'M';
+        }
+        if ($value >= 1000) {
+            return number_format($value / 1000, 1) . 'K';
+        }
+        return number_format($value, 0);
     }
 }

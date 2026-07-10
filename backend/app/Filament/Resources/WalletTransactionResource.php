@@ -28,7 +28,7 @@ class WalletTransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static ?string $navigationGroup = 'Finance';
+    protected static ?string $navigationGroup = 'Finance & Treasury';
 
     protected static ?int $navigationSort = 1;
 

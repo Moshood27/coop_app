@@ -28,6 +28,8 @@ class WithdrawalRequestResource extends Resource
 {
     protected static ?string $model = WithdrawalRequest::class;
 
+    protected static ?string $navigationGroup = 'Finance & Treasury';
+
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $navigationLabel = 'Withdrawals';

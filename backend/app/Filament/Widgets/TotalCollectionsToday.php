@@ -5,16 +5,18 @@ namespace App\Filament\Widgets;
 use App\Models\Contribution;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Card;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TotalCollectionsToday extends BaseWidget
 {
+    protected static ?int $sort = -3;
+
     public function getHeading(): ?string
     {
-        return 'Total Collections Today';
+        return 'Daily Collections';
     }
 
-    protected function getCards(): array
+    protected function getStats(): array
     {
         $today = Carbon::today();
 
@@ -24,9 +26,26 @@ class TotalCollectionsToday extends BaseWidget
             ->sum('amount');
 
         return [
-            Card::make('Total Collections Today', '₦' . number_format((float) $sum, 2))
+            Stat::make('Total Collections Today', $this->formatCurrency($sum))
                 ->description('Successful contributions today')
+                ->descriptionIcon('heroicon-m-calendar')
                 ->color('success'),
         ];
+    }
+
+    protected function formatCurrency($value): string
+    {
+        return '₦' . $this->formatNumber($value);
+    }
+
+    protected function formatNumber($value): string
+    {
+        if ($value >= 1000000) {
+            return number_format($value / 1000000, 2) . 'M';
+        }
+        if ($value >= 1000) {
+            return number_format($value / 1000, 1) . 'K';
+        }
+        return number_format($value, 0);
     }
 }

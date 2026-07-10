@@ -21,6 +21,8 @@ class ContributionResource extends Resource
 {
     protected static ?string $model = Contribution::class;
 
+    protected static ?string $navigationGroup = 'Finance & Treasury';
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form

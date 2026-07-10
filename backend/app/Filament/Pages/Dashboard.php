@@ -8,6 +8,6 @@ class Dashboard extends BaseDashboard
 {
     public function getSubheading(): ?string
     {
-        return 'Overview of cooperative activities, financial metrics, and system performance.';
+        return 'Real-time financial overview, transaction analytics, and cooperative performance.';
     }
 }

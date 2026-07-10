@@ -30,13 +30,20 @@ class RecentWalletActivity extends BaseWidget
                     ->since(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
+                    ->description(fn ($record) => $record->user?->membership_number)
                     ->searchable(['surname', 'name', 'other_names']),
                 TextColumn::make('type')
                     ->badge()
-                    ->colors([
-                        'success' => 'credit',
-                        'danger' => 'debit',
-                    ]),
+                    ->color(fn (string $state): string => match ($state) {
+                        'credit' => 'success',
+                        'debit' => 'danger',
+                        default => 'gray',
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'credit' => 'heroicon-m-arrow-down-left',
+                        'debit' => 'heroicon-m-arrow-up-right',
+                        default => 'heroicon-m-minus',
+                    }),
                 TextColumn::make('amount')
                     ->money('ngn', true),
                 TextColumn::make('source')

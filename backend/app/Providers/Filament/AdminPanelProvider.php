@@ -51,6 +51,7 @@ use App\Filament\Widgets\RecentWalletActivity;
 use App\Filament\Widgets\StoreOverview;
 use App\Filament\Widgets\SystemHealthChart;
 use App\Filament\Widgets\TotalCollectionsToday;
+use App\Filament\Widgets\TransactionVolumeChart;
 use App\Filament\Widgets\UserGrowthChart;
 use App\Filament\Widgets\OnlineMembersWidget;
 use App\Http\Middleware\IpWhitelistMiddleware;
@@ -88,7 +89,26 @@ class AdminPanelProvider extends PanelProvider
             ->darkModeBrandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo-dark.svg'))
             ->favicon(asset('images/'.config('brand.slug', 'attaqwa').'-favicon.svg'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Sky,
+                'gray' => Color::Slate,
+                'info' => Color::Blue,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'danger' => Color::Rose,
+            ])
+            ->font('Inter')
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
+            ->navigationGroups([
+                'Finance & Treasury',
+                'Financing (Loans)',
+                'Investments & Projects',
+                'Takaful',
+                'Commerce',
+                'Core Cooperative',
+                'Shariah & Compliance',
+                'Governance',
+                'System & Support',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             // Explicitly register key resources to ensure they appear in navigation
@@ -142,6 +162,7 @@ class AdminPanelProvider extends PanelProvider
                 RecentPayouts::class,
                 TotalCollectionsToday::class,
                 SystemHealthChart::class,
+                TransactionVolumeChart::class,
                 UserGrowthChart::class,
                 MemberGrowthChart::class,
                 RecentWalletActivity::class,
