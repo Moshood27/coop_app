@@ -11,7 +11,10 @@ class WalletStatsOverview extends BaseWidget
 {
     use InteractsWithPageTable;
 
-    protected static string $tablePage = ListWalletTransactions::class;
+    protected function getTablePage(): string
+    {
+        return ListWalletTransactions::class;
+    }
 
     protected function getStats(): array
     {
