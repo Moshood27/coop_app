@@ -112,6 +112,7 @@ class ShariahAuditLogResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with(['user'])
             ->when(
                 auth()->user()->hasRole('Branch Manager'),
                 fn (Builder $query) => $query->whereHas('user', fn (Builder $q) => $q->where('branch_id', auth()->user()->branch_id))
