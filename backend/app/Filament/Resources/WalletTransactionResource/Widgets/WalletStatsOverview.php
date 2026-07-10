@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\WalletTransactionResource\Widgets;
 
 use App\Filament\Resources\WalletTransactionResource\Pages\ListWalletTransactions;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
+use App\Filament\Traits\SafeInteractsWithPageTable;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class WalletStatsOverview extends BaseWidget
 {
-    use InteractsWithPageTable;
+    use SafeInteractsWithPageTable;
 
     protected function getTablePage(): string
     {
