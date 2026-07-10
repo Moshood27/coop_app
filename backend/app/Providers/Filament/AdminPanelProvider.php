@@ -108,6 +108,8 @@ class AdminPanelProvider extends PanelProvider
                 'Core Cooperative',
                 'Shariah & Compliance',
                 'Governance',
+                'Financial Management',
+                'Security & Logs',
                 'System & Support',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

@@ -20,7 +20,7 @@ class ShariahAuditLogResource extends Resource
 
     protected static ?string $navigationGroup = 'Security & Logs';
 
-    protected static ?string $navigationLabel = 'Shariah Audit Trail';
+    protected static ?string $navigationLabel = 'Shariah Audit Log';
 
     public static function form(Form $form): Form
     {

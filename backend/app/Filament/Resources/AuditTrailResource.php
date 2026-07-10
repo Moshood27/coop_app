@@ -53,11 +53,11 @@ class AuditTrailResource extends Resource
 
     protected static ?string $navigationGroup = 'Security & Logs';
 
-    protected static ?string $navigationLabel = 'Audit Trail';
+    protected static ?string $navigationLabel = 'Activity Log';
 
-    protected static ?string $modelLabel = 'Audit Log';
+    protected static ?string $modelLabel = 'Activity Log';
 
-    protected static ?string $pluralModelLabel = 'Audit Trail';
+    protected static ?string $pluralModelLabel = 'Activity Log';
 
     protected static ?string $slug = 'audit-trail';
 

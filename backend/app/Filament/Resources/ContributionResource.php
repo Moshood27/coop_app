@@ -225,6 +225,7 @@ class ContributionResource extends Resource
                                         'success' => 'Success',
                                         'failed' => 'Failed',
                                     ])
+                                    ->default('success')
                                     ->required()
                                     ->native(false),
                                 Forms\Components\TextInput::make('reference')
