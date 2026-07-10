@@ -10,6 +10,7 @@ use App\Models\Branch;
 use App\Models\WalletTransaction;
 use App\Exports\WalletTransactionReportExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Filament\Resources\WalletTransactionResource\Widgets\WalletStatsOverview;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -27,48 +28,75 @@ class ListWalletTransactions extends ListRecords
         return 'Detailed ledger of all digital wallet transactions and movements.';
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            WalletStatsOverview::class,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            $this->getWipeHeaderAction(),
+            Actions\CreateAction::make()
+                ->label('New Transaction')
+                ->icon('heroicon-m-plus'),
+
+            Actions\Action::make('branchReport')
+                ->label('Ledger Report')
+                ->icon('heroicon-m-document-chart-bar')
+                ->url(fn () => \App\Filament\Pages\WalletTransactionsBranchReport::getUrl())
+                ->color('success'),
+
             Actions\ActionGroup::make([
                 Actions\Action::make('downloadDetailedReport')
                     ->label('Custom Detailed Report')
-                    ->icon('heroicon-o-document-magnifying-glass')
+                    ->icon('heroicon-m-document-magnifying-glass')
                     ->form($this->getReportForm())
                     ->action(fn(array $data) => $this->downloadReport($data)),
 
                 Actions\Action::make('paystackCreditsReport')
                     ->label('Paystack Credits Only')
-                    ->icon('heroicon-o-credit-card')
+                    ->icon('heroicon-m-credit-card')
                     ->form($this->getReportForm(['source' => 'paystack']))
                     ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['source' => 'paystack']))),
 
                 Actions\Action::make('passbookAllocationsReport')
                     ->label('Passbook Allocations')
-                    ->icon('heroicon-o-book-open')
+                    ->icon('heroicon-m-book-open')
                     ->form($this->getReportForm(['purpose' => 'deposit']))
                     ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'deposit']))),
 
                 Actions\Action::make('loanRepaymentsReport')
                     ->label('Loan Repayment Allocations')
-                    ->icon('heroicon-o-banknotes')
+                    ->icon('heroicon-m-banknotes')
                     ->form($this->getReportForm(['purpose' => 'loan_repayment']))
                     ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'loan_repayment']))),
+
+                Actions\Action::make('printReport')
+                    ->label('PDF Summary Report')
+                    ->icon('heroicon-m-printer')
+                    ->form($this->getReportForm(['format' => 'pdf']))
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf']))),
             ])
-            ->label('Download Reports')
-            ->icon('heroicon-o-arrow-down-tray')
+            ->label('Reports & Exports')
+            ->icon('heroicon-m-arrow-down-tray')
             ->button()
-            ->color('success'),
+            ->color('info'),
 
-            Actions\Action::make('printReport')
-                ->label('Print PDF Report')
-                ->icon('heroicon-o-printer')
-                ->color('info')
-                ->form($this->getReportForm(['format' => 'pdf']))
-                ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf']))),
+            $this->getWipeHeaderAction()
+                ->icon('heroicon-m-trash'),
+        ];
+    }
 
-            Actions\CreateAction::make(),
+    protected function getTableHeaderActions(): array
+    {
+        return [
+            \Filament\Tables\Actions\Action::make('print')
+                ->label('Print List')
+                ->icon('heroicon-m-printer')
+                ->color('gray')
+                ->extraAttributes(['onclick' => 'window.print()']),
         ];
     }
 

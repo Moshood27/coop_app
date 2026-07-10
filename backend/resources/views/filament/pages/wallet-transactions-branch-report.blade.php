@@ -1,5 +1,30 @@
 @php($report = $this->report)
 <x-filament::page>
+    <div class="hidden print:block mb-8 border-b-2 border-gray-900 pb-4">
+        <div class="flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-black uppercase tracking-tight text-gray-900">Wallet Transactions Ledger</h1>
+                <p class="text-sm font-medium text-gray-600">Branch Analysis & Member Activity Report</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-gray-500 uppercase">Generated</p>
+                <p class="text-sm font-bold text-gray-900">{{ now()->format('d M Y, h:i A') }}</p>
+            </div>
+        </div>
+        @if($from || $to)
+            <div class="mt-4 flex gap-8">
+                <div>
+                    <span class="text-xs font-bold text-gray-500 uppercase">Period From:</span>
+                    <span class="text-sm font-bold text-gray-900">{{ $from ? \Carbon\Carbon::parse($from)->format('d M Y') : 'Start' }}</span>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-gray-500 uppercase">Period To:</span>
+                    <span class="text-sm font-bold text-gray-900">{{ $to ? \Carbon\Carbon::parse($to)->format('d M Y') : 'Today' }}</span>
+                </div>
+            </div>
+        @endif
+    </div>
+
     <div class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
             <div class="flex flex-wrap items-center gap-4 w-full sm:w-auto">
@@ -83,24 +108,27 @@
         @endforelse
 
         @if(count($report['branches']) > 1)
-            <div class="rounded-xl border-2 border-primary-500 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/20 p-6 break-inside-avoid">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Organization Grand Totals</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Active Members</div>
-                        <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $report['grand_total_members_count'] }}</div>
+            <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 break-inside-avoid shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                    <x-filament::icon icon="heroicon-m-chart-bar" class="w-5 h-5 text-primary-500" />
+                    Organization Grand Totals
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="flex flex-col gap-1 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active Members</span>
+                        <span class="text-2xl font-black text-gray-900 dark:text-gray-100">{{ number_format($report['grand_total_members_count']) }}</span>
                     </div>
-                    <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-success-200 dark:border-success-800">
-                        <div class="text-xs text-success-600 dark:text-success-400 uppercase font-bold">Total Credits</div>
-                        <div class="text-2xl font-black text-success-700 dark:text-success-300">₦{{ number_format($report['grand_total_credits'], 2) }}</div>
+                    <div class="flex flex-col gap-1 p-4 rounded-xl bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-800/50">
+                        <span class="text-xs font-bold text-success-600 dark:text-success-400 uppercase tracking-wider">Total Credits</span>
+                        <span class="text-2xl font-black text-success-700 dark:text-success-400">₦{{ number_format($report['grand_total_credits'], 2) }}</span>
                     </div>
-                    <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-danger-200 dark:border-danger-800">
-                        <div class="text-xs text-danger-600 dark:text-danger-400 uppercase font-bold">Total Debits</div>
-                        <div class="text-2xl font-black text-danger-700 dark:text-danger-300">₦{{ number_format($report['grand_total_debits'], 2) }}</div>
+                    <div class="flex flex-col gap-1 p-4 rounded-xl bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-800/50">
+                        <span class="text-xs font-bold text-danger-600 dark:text-danger-400 uppercase tracking-wider">Total Debits</span>
+                        <span class="text-2xl font-black text-danger-700 dark:text-danger-400">₦{{ number_format($report['grand_total_debits'], 2) }}</span>
                     </div>
-                    <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-primary-200 dark:border-primary-800 ring-2 ring-primary-500/20">
-                        <div class="text-xs text-primary-600 dark:text-primary-400 uppercase font-bold">Grand Net Amount</div>
-                        <div class="text-2xl font-black text-primary-700 dark:text-primary-300">₦{{ number_format($report['grand_total_net'], 2) }}</div>
+                    <div class="flex flex-col gap-1 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800/50 ring-2 ring-primary-500/20">
+                        <span class="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider">Grand Net Amount</span>
+                        <span class="text-2xl font-black text-primary-700 dark:text-primary-400">₦{{ number_format($report['grand_total_net'], 2) }}</span>
                     </div>
                 </div>
             </div>

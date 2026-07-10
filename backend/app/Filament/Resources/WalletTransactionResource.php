@@ -132,6 +132,10 @@ class WalletTransactionResource extends Resource
                     ->toggleable(),
                 TextColumn::make('type')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'credit' => 'heroicon-m-arrow-trending-up',
+                        'debit' => 'heroicon-m-arrow-trending-down',
+                    })
                     ->colors([
                         'success' => 'credit',
                         'danger' => 'debit',
@@ -246,20 +250,20 @@ class WalletTransactionResource extends Resource
                     })
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('printReceipt')
-                    ->label('Print Receipt')
-                    ->icon('heroicon-o-printer')
-                    ->color('info')
-                    ->url(fn (WalletTransaction $record) => route('admin.print.wallet-receipt', $record))
-                    ->openUrlInNewTab(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('printReceipt')
+                        ->label('Print Receipt')
+                        ->icon('heroicon-m-printer')
+                        ->color('info')
+                        ->url(fn (WalletTransaction $record) => route('admin.print.wallet-receipt', $record))
+                        ->openUrlInNewTab(),
+                ])
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->tooltip('Actions'),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('branchReport')
-                    ->label('Branch Report')
-                    ->icon('heroicon-m-document-chart-bar')
-                    ->url(fn () => \App\Filament\Pages\WalletTransactionsBranchReport::getUrl())
-                    ->color('success'),
+                //
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

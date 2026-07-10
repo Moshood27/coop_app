@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WalletTransactionsBranchReport extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static ?string $navigationIcon = 'heroicon-m-arrows-right-left';
     protected static ?string $navigationGroup = 'Financial Reports';
     protected static ?string $navigationLabel = 'Wallet Transactions Branch Report';
     protected static ?int $navigationSort = 18;
