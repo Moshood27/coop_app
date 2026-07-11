@@ -35,6 +35,8 @@ class AuthController extends Controller
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
+            'attendance_ble_beacon_enabled' => (bool) Setting::get('attendance_ble_beacon_enabled', true),
+            'attendance_fingerprint_enabled' => (bool) Setting::get('attendance_fingerprint_enabled', true),
             'payment_gateways' => [
                 'paystack' => (bool) Setting::get('gateway_paystack_enabled', true),
                 'flutterwave' => (bool) Setting::get('gateway_flutterwave_enabled', true),

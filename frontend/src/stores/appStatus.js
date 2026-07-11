@@ -16,6 +16,8 @@ export const useAppStatusStore = defineStore('appStatus', {
     attendancePinEnabled: true,
     attendanceQrEnabled: true,
     attendanceApologyEnabled: true,
+    attendanceBleBeaconEnabled: true,
+    attendanceFingerprintEnabled: true,
     isPinVerified: false,
     paymentGateways: {
       paystack: true,
@@ -45,6 +47,8 @@ export const useAppStatusStore = defineStore('appStatus', {
       this.attendancePinEnabled = status.attendance_pin_enabled ?? true
       this.attendanceQrEnabled = status.attendance_qr_enabled ?? true
       this.attendanceApologyEnabled = status.attendance_apology_enabled ?? true
+      this.attendanceBleBeaconEnabled = status.attendance_ble_beacon_enabled ?? true
+      this.attendanceFingerprintEnabled = status.attendance_fingerprint_enabled ?? true
       if (status.paymentGateways) {
         this.paymentGateways = status.paymentGateways
       }

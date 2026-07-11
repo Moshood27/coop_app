@@ -137,14 +137,14 @@
                 <span v-else>📍 Mark Attendance</span>
               </button>
 
-              <div v-if="hasBiometrics || meeting.beacon_uuid" class="relative py-4 flex items-center">
+              <div v-if="(hasBiometrics && appStatusStore.attendanceFingerprintEnabled) || (meeting.beacon_uuid && appStatusStore.attendanceBleBeaconEnabled)" class="relative py-4 flex items-center">
                 <div class="flex-grow border-t border-slate-200"></div>
                 <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
                 <div class="flex-grow border-t border-slate-200"></div>
               </div>
 
               <!-- Biometric Option (Fintech Style) -->
-              <div v-if="hasBiometrics">
+              <div v-if="hasBiometrics && appStatusStore.attendanceFingerprintEnabled">
                  <button @click="markWithBiometrics" :disabled="submitting || !location"
                          class="w-full h-24 bg-emerald-700 text-white rounded-3xl shadow-xl shadow-emerald-100 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
                     <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
@@ -156,7 +156,7 @@
               </div>
 
               <!-- Beacon Option -->
-              <div v-if="meeting.beacon_uuid">
+              <div v-if="meeting.beacon_uuid && appStatusStore.attendanceBleBeaconEnabled">
                  <button @click="markWithBeacon" :disabled="submitting || scanningBeacon"
                          class="w-full h-20 bg-blue-700 text-white rounded-3xl shadow-xl shadow-blue-100 flex flex-col items-center justify-center gap-1 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
                     <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>

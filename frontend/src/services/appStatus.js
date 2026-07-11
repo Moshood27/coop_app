@@ -35,6 +35,8 @@ export async function checkAppStatus() {
       attendance_pin_enabled: data.attendance_pin_enabled,
       attendance_qr_enabled: data.attendance_qr_enabled,
       attendance_apology_enabled: data.attendance_apology_enabled,
+      attendance_ble_beacon_enabled: data.attendance_ble_beacon_enabled,
+      attendance_fingerprint_enabled: data.attendance_fingerprint_enabled,
     }
   } catch (error) {
     console.error('Failed to check app status:', error)

@@ -54,6 +54,13 @@ class AppStatusSettings extends Page
             'junior_coop_enabled' => Feature::for('global')->active('junior-coop-enabled'),
             'projects_enabled' => Feature::for('global')->active('projects-enabled'),
             'chat_help_enabled' => Feature::for('global')->active('chat-help-enabled'),
+            'store_enabled' => Feature::for('global')->active('store-enabled'),
+            'hajj_umrah_enabled' => Feature::for('global')->active('hajj-umrah-enabled'),
+            'sadaq_enabled' => Feature::for('global')->active('sadaq-enabled'),
+            'wassiyah_enabled' => Feature::for('global')->active('wassiyah-enabled'),
+            'vendor_enabled' => Feature::for('global')->active('vendor-enabled'),
+            'agm_voting_enabled' => Feature::for('global')->active('agm-voting-enabled'),
+            'airtime_data_enabled' => Feature::for('global')->active('airtime-data-enabled'),
             'withdrawals_enabled' => Feature::for('global')->active('withdrawals-enabled'),
             'wellness_check_enabled' => (bool) Setting::get('wellness_check_enabled', true),
             'wellness_check_inactivity_months' => (int) Setting::get('wellness_check_inactivity_months', config('cooperative.legacy.inactivity_months', 6)),
@@ -64,6 +71,8 @@ class AppStatusSettings extends Page
             'attendance_pin_enabled' => (bool) Setting::get('attendance_pin_enabled', true),
             'attendance_qr_enabled' => (bool) Setting::get('attendance_qr_enabled', true),
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
+            'attendance_ble_beacon_enabled' => (bool) Setting::get('attendance_ble_beacon_enabled', true),
+            'attendance_fingerprint_enabled' => (bool) Setting::get('attendance_fingerprint_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
             'monthly_fees_enabled' => (bool) Setting::get('monthly_fees_enabled', true),
@@ -225,6 +234,14 @@ class AppStatusSettings extends Page
                             ->label('Enable Submit Apology')
                             ->helperText('If disabled, members will not be able to submit apologies for meetings.')
                             ->default(true),
+                        Toggle::make('attendance_ble_beacon_enabled')
+                            ->label('Enable BLE Beacon')
+                            ->helperText('If disabled, members will not be able to use BLE Beacons for attendance.')
+                            ->default(true),
+                        Toggle::make('attendance_fingerprint_enabled')
+                            ->label('Enable Fingerprint')
+                            ->helperText('If disabled, members will not be able to use Fingerprint for attendance.')
+                            ->default(true),
                     ])->columns(2),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')
@@ -280,6 +297,13 @@ class AppStatusSettings extends Page
                         Toggle::make('projects_enabled')->label('Projects'),
                         Toggle::make('project_payment_enabled')->label('Project Payments'),
                         Toggle::make('chat_help_enabled')->label('Chat & Help'),
+                        Toggle::make('store_enabled')->label('Store'),
+                        Toggle::make('hajj_umrah_enabled')->label('Hajj & Umrah'),
+                        Toggle::make('sadaq_enabled')->label('Sadaq'),
+                        Toggle::make('wassiyah_enabled')->label('Wassiyah'),
+                        Toggle::make('vendor_enabled')->label('Vendor'),
+                        Toggle::make('agm_voting_enabled')->label('AGM & Voting'),
+                        Toggle::make('airtime_data_enabled')->label('Airtime/Data'),
                         Toggle::make('withdrawals_enabled')->label('Withdrawals Enabled')
                             ->helperText('Global kill switch for all withdrawals.'),
                     ])->columns(3),
@@ -302,6 +326,13 @@ class AppStatusSettings extends Page
             'projects_enabled' => 'projects-enabled',
             'project_payment_enabled' => 'project-payment-enabled',
             'chat_help_enabled' => 'chat-help-enabled',
+            'store_enabled' => 'store-enabled',
+            'hajj_umrah_enabled' => 'hajj-umrah-enabled',
+            'sadaq_enabled' => 'sadaq-enabled',
+            'wassiyah_enabled' => 'wassiyah-enabled',
+            'vendor_enabled' => 'vendor-enabled',
+            'agm_voting_enabled' => 'agm-voting-enabled',
+            'airtime_data_enabled' => 'airtime-data-enabled',
             'withdrawals_enabled' => 'withdrawals-enabled',
         ];
 
