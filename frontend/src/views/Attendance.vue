@@ -297,6 +297,7 @@ import WebQrScanner from '../components/WebQrScanner.vue'
 import axios from '../http'
 import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
 import { getBiometricAvailability } from '../services/biometric'
+import BeaconService from '../services/BeaconService.js'
 import {useAppStatusStore} from '../stores/appStatus'
 import { useRouter } from 'vue-router'
 import { useModal } from '../composables/useModal'
@@ -642,38 +643,41 @@ const markWithBiometrics = async () => {
 }
 
 const markWithBeacon = async () => {
+  if (!isNative) {
+    modal.alert("Beacon attendance is only available on the mobile app.")
+    return
+  }
+
   scanningBeacon.value = true
   try {
-    // Check if BLE is enabled
-    if (isNative) {
-      // Logic for Beacon detection would go here using a Capacitor BLE plugin.
-      // Since we are implementing the system, we assume the plugin is available or will be added.
-      // For now, we simulate detection of the configured beacon.
-      
-      // const beacon = await BleClient.scanForBeacon(meeting.value.beacon_uuid)
-      
-      // Simulate 2s scan
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      const info = await Device.getId()
-      const payload = {
-        beacon_uuid: meeting.value.beacon_uuid,
-        beacon_major: meeting.value.beacon_major,
-        beacon_minor: meeting.value.beacon_minor,
-        device_uuid: info.identifier,
-        lat: location.value?.lat,
-        lng: location.value?.lng
-      }
-      
-      const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-beacon`, payload)
-      record.value = res.data.record
-      modal.alert(res.data.message || "Attendance marked successfully via Beacon!")
-      fetchHistory()
-    } else {
-      modal.alert("Beacon attendance is only available on the mobile app.")
+    const isNearby = await BeaconService.checkProximity(meeting.value)
+    
+    if (!isNearby) {
+      modal.alert(`Could not detect meeting beacon. Please ensure you are inside the venue and Bluetooth is enabled.`)
+      return
     }
+
+    const info = await Device.getId()
+    if (!location.value) {
+      await getLocation()
+    }
+
+    const payload = {
+      beacon_uuid: meeting.value.beacon_uuid,
+      beacon_major: meeting.value.beacon_major,
+      beacon_minor: meeting.value.beacon_minor,
+      device_uuid: info.identifier,
+      lat: location.value?.lat,
+      lng: location.value?.lng
+    }
+    
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-beacon`, payload)
+    record.value = res.data.record
+    modal.alert(res.data.message || "Attendance marked successfully via Beacon!")
+    fetchHistory()
   } catch (err) {
-    modal.alert(err.response?.data?.message || "Beacon detection failed. Please ensure Bluetooth is ON and you are in the meeting room.")
+    console.error('Beacon Error:', err)
+    modal.alert(err.response?.data?.message || err.message || "Beacon verification failed.")
   } finally {
     scanningBeacon.value = false
   }

@@ -7,8 +7,9 @@ The Beacon-Based Attendance system provides a seamless, "touchless" experience f
 1. **Background Alerts:** Even if the app is closed, the phone monitors for the meeting beacon. When the member arrives at the venue, they receive a push notification: *"Nearby Meeting Venue 📍: You are near [Meeting Name]. Don't forget to mark your attendance!"*
 2. **Detection:** Upon tapping the notification or opening the app, it automatically detects the BLE Beacon signal.
 3. **Verification:** The app verifies the Beacon's **UUID**, **Major**, and **Minor** values against the ones configured for the meeting.
-4. **One-Touch Marking:** A "Mark via Room Beacon" button becomes active.
-5. **Security:** Combining Beacon detection with GPS geofencing and device binding ensures that the member is physically present at the venue.
+4. **Automatic Marking:** When a member enters the beacon region, the app can automatically mark their attendance and send a confirmation notification.
+5. **One-Touch Marking:** If automatic marking is disabled or fails, a "Mark via Room Beacon" button remains available for manual verification.
+6. **Security:** Combining Beacon detection with GPS geofencing and device binding ensures that the member is physically present at the venue.
 
 ## Technical Implementation Details
 The system uses the `cordova-plugin-ibeacon` plugin for background region monitoring. 
