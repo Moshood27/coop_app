@@ -114,7 +114,7 @@ class ContributionResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('scheme_id')
                                             ->label('Scheme')
-                                            ->options(Scheme::query()->pluck('name', 'id'))
+                                            ->options(Scheme::where('active', true)->pluck('name', 'id'))
                                             ->searchable()
                                             ->required()
                                             ->reactive()

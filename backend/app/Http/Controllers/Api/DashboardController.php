@@ -96,7 +96,12 @@ class DashboardController extends Controller
         // Aggregates for KPIs
         $totalContributions = 0;
         if (Schema::hasTable('contributions')) {
-            $totalContributions = (float) $user->contributions()->where('status', 'success')->sum('amount');
+            $totalContributions = (float) $user->contributions()
+                ->where('status', 'success')
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
+                ->sum('amount');
         }
 
         $outstandingLoans = 0;

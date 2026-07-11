@@ -407,6 +407,9 @@ class ExportController extends Controller
                 ->where('user_id', $user->id)
                 ->where('status', 'success')
                 ->whereYear('created_at', $year)
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
                 ->sum('amount');
 
             $dividend = round($totalSavings * $rate, 2);

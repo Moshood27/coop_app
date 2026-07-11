@@ -121,6 +121,12 @@
                 </thead>
                 <tbody>
                     @foreach($m['distribution'] as $item)
+                        @php
+                            $scheme = !empty($item['scheme_id']) ? \App\Models\Scheme::find($item['scheme_id']) : null;
+                        @endphp
+                        @if($scheme && !$scheme->active)
+                            @continue
+                        @endif
                         <tr>
                             <td>
                                 @php($cat = $item['category'] ?? 'deposit')
@@ -131,9 +137,8 @@
                                 @else {{ ucwords(str_replace('_', ' ', $cat)) }}
                                 @endif
 
-                                @if(!empty($item['scheme_id']))
-                                    @php($scheme = \App\Models\Scheme::find($item['scheme_id']))
-                                    ({{ $scheme?->name ?? 'Scheme #'.$item['scheme_id'] }})
+                                @if($scheme)
+                                    ({{ $scheme->name }})
                                 @endif
                             </td>
                             <td class="right">₦ {{ number_format((float)($item['amount'] ?? 0), 2) }}</td>
