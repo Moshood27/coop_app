@@ -126,62 +126,14 @@ class ContributionResource extends Resource
                                                 if (!$schemeId || !$userId) return null;
 
                                                 $scheme = \App\Models\Scheme::find($schemeId);
-                                                $user = \App\Models\User::find($userId);
-                                                if (!$scheme || !$user) return null;
-
-                                                $columnMap = [
-                                                    'Savings' => 'ordinary_savings',
-                                                    'Ordinary Savings' => 'ordinary_savings',
-                                                    'Shares' => 'shares_capital',
-                                                    'Share Capital' => 'shares_capital',
-                                                    'Development' => 'development_fund_balance',
-                                                    'Building' => 'building_balance',
-                                                    'AGM' => 'agm_balance',
-                                                    'Loan Repayment' => 'loan_repayment_balance',
-                                                    'Fine' => 'fine_balance',
-                                                    'Welfare' => 'welfare_balance',
-                                                    'Lateness' => 'lateness_balance',
-                                                    'Stationery' => 'stationery_balance',
-                                                    'Loan Form' => 'loan_form_balance',
-                                                    'Others' => 'others_balance',
-                                                    'ID Card' => 'id_card_balance',
-                                                    'Emergency' => 'emergency_balance',
-                                                    'Entrance' => 'entrance_balance',
-                                                    'H Savings' => 'h_savings_balance',
-                                                    'Investment' => 'investment_balance',
-                                                    'Group Savings' => 'group_savings_balance',
-                                                    'Special Savings' => 'special_savings_balance',
-                                                    'Takaful' => 'takaful_balance',
-                                                    'Digital Gold' => 'gold_balance',
-                                                    'SITTING' => 'admin_charge_balance',
-                                                    'Administrative Charges' => 'admin_charge_balance',
-                                                ];
-
-                                                $balanceText = '';
-                                                $sName = $scheme->name;
-                                                if (isset($columnMap[$sName])) {
-                                                    $column = $columnMap[$sName];
-                                                    $balance = $user->$column ?? 0;
-                                                    if ($sName === 'Digital Gold') {
-                                                        $balanceText = number_format($balance, 6) . ' Grams';
-                                                    } else {
-                                                        $balanceText = '₦' . number_format($balance, 2);
-                                                    }
-                                                }
-
-                                                $helper = '';
-                                                if ($balanceText) {
-                                                    $helper .= "<span class=\"text-primary-600 font-bold\">Current Balance: {$balanceText}</span><br/>";
-                                                }
-
-                                                if ($sName === 'Loan Repayment') {
-                                                    if (!$user->hasActiveLoan()) {
+                                                if ($scheme && $scheme->name === 'Loan Repayment') {
+                                                    $user = \App\Models\User::find($userId);
+                                                    if ($user && !$user->hasActiveLoan()) {
                                                         $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
-                                                        $helper .= "<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>";
+                                                        return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
                                                     }
                                                 }
-
-                                                return $helper ? new \Illuminate\Support\HtmlString($helper) : null;
+                                                return null;
                                             }),
                                         Forms\Components\TextInput::make('amount')
                                             ->label('Amount')
@@ -260,62 +212,14 @@ class ContributionResource extends Resource
                                         if (!$schemeId || !$userId) return null;
 
                                         $scheme = \App\Models\Scheme::find($schemeId);
-                                        $user = \App\Models\User::find($userId);
-                                        if (!$scheme || !$user) return null;
-
-                                        $columnMap = [
-                                            'Savings' => 'ordinary_savings',
-                                            'Ordinary Savings' => 'ordinary_savings',
-                                            'Shares' => 'shares_capital',
-                                            'Share Capital' => 'shares_capital',
-                                            'Development' => 'development_fund_balance',
-                                            'Building' => 'building_balance',
-                                            'AGM' => 'agm_balance',
-                                            'Loan Repayment' => 'loan_repayment_balance',
-                                            'Fine' => 'fine_balance',
-                                            'Welfare' => 'welfare_balance',
-                                            'Lateness' => 'lateness_balance',
-                                            'Stationery' => 'stationery_balance',
-                                            'Loan Form' => 'loan_form_balance',
-                                            'Others' => 'others_balance',
-                                            'ID Card' => 'id_card_balance',
-                                            'Emergency' => 'emergency_balance',
-                                            'Entrance' => 'entrance_balance',
-                                            'H Savings' => 'h_savings_balance',
-                                            'Investment' => 'investment_balance',
-                                            'Group Savings' => 'group_savings_balance',
-                                            'Special Savings' => 'special_savings_balance',
-                                            'Takaful' => 'takaful_balance',
-                                            'Digital Gold' => 'gold_balance',
-                                            'SITTING' => 'admin_charge_balance',
-                                            'Administrative Charges' => 'admin_charge_balance',
-                                        ];
-
-                                        $balanceText = '';
-                                        $sName = $scheme->name;
-                                        if (isset($columnMap[$sName])) {
-                                            $column = $columnMap[$sName];
-                                            $balance = $user->$column ?? 0;
-                                            if ($sName === 'Digital Gold') {
-                                                $balanceText = number_format($balance, 6) . ' grams';
-                                            } else {
-                                                $balanceText = '₦' . number_format($balance, 2);
-                                            }
-                                        }
-
-                                        $helper = '';
-                                        if ($balanceText) {
-                                            $helper .= "<span class=\"text-primary-600 font-bold\">Current Balance: {$balanceText}</span><br/>";
-                                        }
-
-                                        if ($sName === 'Loan Repayment') {
-                                            if (!$user->hasActiveLoan()) {
+                                        if ($scheme && $scheme->name === 'Loan Repayment') {
+                                            $user = \App\Models\User::find($userId);
+                                            if ($user && !$user->hasActiveLoan()) {
                                                 $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
-                                                $helper .= "<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>";
+                                                return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
                                             }
                                         }
-
-                                        return $helper ? new \Illuminate\Support\HtmlString($helper) : null;
+                                        return null;
                                     }),
                                 Forms\Components\TextInput::make('amount')
                                     ->numeric()
