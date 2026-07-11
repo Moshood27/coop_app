@@ -37,7 +37,7 @@ class ContributionResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->full_name} ({$record->membership_number})")
-                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number', 'phone', 'email'])
                             ->required()
                             ->reactive()
                             ->columnSpanFull()
@@ -50,6 +50,53 @@ class ContributionResource extends Resource
                                     return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ This member has no active or defaulted loan record. If you are entering a loan repayment, please ensure a loan record exists for this user.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Check/Create Loan Record</a>");
                                 }
                                 return null;
+                            }),
+                        Forms\Components\Placeholder::make('member_profile')
+                            ->label('')
+                            ->visible(fn (Forms\Get $get) => $get('user_id') !== null)
+                            ->content(function (Forms\Get $get) {
+                                $userId = $get('user_id');
+                                if (!$userId) return null;
+                                $user = \App\Models\User::find($userId);
+                                if (!$user) return null;
+
+                                $passportUrl = $user->passport_path ? \Illuminate\Support\Facades\Storage::url($user->passport_path) : 'https://ui-avatars.com/api/?name=' . urlencode($user->full_name) . '&color=7F9CF5&background=EBF4FF';
+
+                                $loans = $user->qardHasans()->whereIn('status', ['active', 'defaulted'])->get();
+                                $loanHtml = '';
+                                if ($loans->count() > 0) {
+                                    $loanHtml = "<div class='mt-2 pt-2 border-t border-gray-200 dark:border-gray-700'><p class='text-xs font-bold text-danger-600 uppercase mb-1'>Active Loans Summary</p><div class='grid grid-cols-2 gap-2'>";
+                                    foreach ($loans as $loan) {
+                                        $remaining = $loan->principal_amount - $loan->paid_amount;
+                                        $loanHtml .= "<div class='text-[10px] bg-white dark:bg-gray-900 p-1 rounded border border-gray-100 dark:border-gray-800'>
+                                            <span class='block text-gray-400'>Loan #{$loan->id}</span>
+                                            <span class='font-bold text-gray-700 dark:text-gray-300'>₦" . number_format($remaining, 2) . "</span>
+                                        </div>";
+                                    }
+                                    $loanHtml .= "</div></div>";
+                                }
+
+                                return new \Illuminate\Support\HtmlString("
+                                    <div class='flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm'>
+                                        <div class='flex items-center space-x-4'>
+                                            <img src='{$passportUrl}' class='w-20 h-20 rounded-2xl object-cover border-2 border-white dark:border-gray-800 shadow-md' />
+                                            <div>
+                                                <h3 class='text-xl font-extrabold text-gray-900 dark:text-white leading-tight'>{$user->full_name}</h3>
+                                                <div class='flex flex-wrap gap-2 mt-1'>
+                                                    <span class='px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-md text-[10px] font-bold uppercase tracking-wider'>{$user->membership_number}</span>
+                                                    <span class='px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md text-[10px] font-bold uppercase tracking-wider'>{$user->branch?->name}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class='flex-1 border-l border-gray-200 dark:border-gray-700 pl-6'>
+                                            <div class='flex flex-col'>
+                                                <span class='text-[10px] uppercase tracking-widest text-gray-400 font-bold'>Total Wallet Balance</span>
+                                                <span class='text-2xl font-black text-success-600 tracking-tight'>₦" . number_format($user->balance, 2) . "</span>
+                                            </div>
+                                            {$loanHtml}
+                                        </div>
+                                    </div>
+                                ");
                             }),
                     ]),
 
@@ -94,6 +141,7 @@ class ContributionResource extends Resource
                                             ->minValue(0.01)
                                             ->prefix('₦')
                                             ->required()
+                                            ->live()
                                             ->extraInputAttributes(['style' => 'font-size: 1.1rem; font-weight: bold;']),
                                     ]),
                                 Forms\Components\Grid::make(['default' => 1, 'md' => 3])
@@ -137,6 +185,8 @@ class ContributionResource extends Resource
                                 : null)
                             ->collapsible()
                             ->cloneable()
+                            ->reorderableWithButtons()
+                            ->addActionLabel('Add Another Item')
                             ->defaultItems(1)
                             ->grid(1),
                     ]),
@@ -216,8 +266,21 @@ class ContributionResource extends Resource
                     ->description('Manage the status and reference of this contribution.')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
-                        Forms\Components\Grid::make(['default' => 1, 'md' => 2])
+                        Forms\Components\Grid::make(['default' => 1, 'md' => 3])
                             ->schema([
+                                Forms\Components\Placeholder::make('total_summary')
+                                    ->label('Total Contribution')
+                                    ->visibleOn('create')
+                                    ->content(function (Forms\Get $get) {
+                                        $items = $get('items') ?? [];
+                                        $total = collect($items)->sum(fn($item) => (float)($item['amount'] ?? 0));
+                                        return new \Illuminate\Support\HtmlString("
+                                            <div class='flex flex-col'>
+                                                <span class='text-3xl font-black text-primary-600'>₦" . number_format($total, 2) . "</span>
+                                                <span class='text-[10px] text-gray-400 uppercase font-bold tracking-widest'>Total to be credited</span>
+                                            </div>
+                                        ");
+                                    }),
                                 Forms\Components\Select::make('status')
                                     ->options([
                                         'pending' => 'Pending',
