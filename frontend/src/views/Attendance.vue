@@ -91,37 +91,6 @@
             </div>
             
             <div class="space-y-6">
-              <!-- Biometric Option (Fintech Style) -->
-              <div v-if="hasBiometrics">
-                 <button @click="markWithBiometrics" :disabled="submitting || !location"
-                         class="w-full h-24 bg-emerald-700 text-white rounded-3xl shadow-xl shadow-emerald-100 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
-                    </svg>
-                    Mark with Biometrics
-                 </button>
-              </div>
-
-              <!-- Beacon Option -->
-              <div v-if="meeting.beacon_uuid">
-                 <button @click="markWithBeacon" :disabled="submitting || scanningBeacon"
-                         class="w-full h-20 bg-blue-700 text-white rounded-3xl shadow-xl shadow-blue-100 flex flex-col items-center justify-center gap-1 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
-                    <div v-if="scanningBeacon" class="animate-ping absolute top-4 right-4 w-2 h-2 bg-blue-300 rounded-full"></div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                    </svg>
-                    {{ scanningBeacon ? 'Searching for Beacon...' : 'Mark via Room Beacon' }}
-                 </button>
-              </div>
-
-              <div v-if="hasBiometrics || meeting.beacon_uuid" class="relative py-4 flex items-center">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
-                <div class="flex-grow border-t border-slate-200"></div>
-              </div>
-
               <div class="grid grid-cols-1 gap-4">
                 <div v-if="appStatusStore.attendancePinEnabled">
                   <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{{ appStatusStore.attendanceQrEnabled ? 'Option 1: Enter Meeting PIN' : 'Enter Meeting PIN' }}</label>
@@ -167,6 +136,37 @@
                 <span v-if="submitting" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                 <span v-else>📍 Mark Attendance</span>
               </button>
+
+              <div v-if="hasBiometrics || meeting.beacon_uuid" class="relative py-4 flex items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-4 text-[10px] font-black text-slate-400 uppercase">OR</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+              </div>
+
+              <!-- Biometric Option (Fintech Style) -->
+              <div v-if="hasBiometrics">
+                 <button @click="markWithBiometrics" :disabled="submitting || !location"
+                         class="w-full h-24 bg-emerald-700 text-white rounded-3xl shadow-xl shadow-emerald-100 flex flex-col items-center justify-center gap-2 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                    </svg>
+                    Mark with Biometrics
+                 </button>
+              </div>
+
+              <!-- Beacon Option -->
+              <div v-if="meeting.beacon_uuid">
+                 <button @click="markWithBeacon" :disabled="submitting || scanningBeacon"
+                         class="w-full h-20 bg-blue-700 text-white rounded-3xl shadow-xl shadow-blue-100 flex flex-col items-center justify-center gap-1 uppercase tracking-[0.2em] text-[10px] font-black active:scale-[0.98] transition-all relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-300"></div>
+                    <div v-if="scanningBeacon" class="animate-ping absolute top-4 right-4 w-2 h-2 bg-blue-300 rounded-full"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                    {{ scanningBeacon ? 'Searching for Beacon...' : 'Mark via Room Beacon' }}
+                 </button>
+              </div>
             </div>
           </div>
 
