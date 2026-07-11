@@ -24,15 +24,21 @@ class PrintController extends Controller
             ->with('scheme')
             ->whereYear('created_at', $year)
             ->where('status', 'success')
+            ->whereHas('scheme', function($query) {
+                $query->where('active', true);
+            })
             ->orderBy('created_at', 'asc')
             ->get();
 
         $bfContributions = $user->contributions()
             ->where('created_at', '<', $startOfYear)
             ->where('status', 'success')
+            ->whereHas('scheme', function($query) {
+                $query->where('active', true);
+            })
             ->get();
 
-        $schemes = Scheme::orderBy('name')->get();
+        $schemes = Scheme::where('active', true)->orderBy('name')->get();
 
         $matrix = $schemes->map(function ($scheme) use ($contributions, $bfContributions) {
             $row = [

@@ -18,14 +18,20 @@ class PassbookController extends Controller
         $yearContributions = $user->contributions()
             ->whereYear('created_at', $year)
             ->where('status', 'success')
+            ->whereHas('scheme', function($query) {
+                $query->where('active', true);
+            })
             ->get();
 
         $bfContributions = $user->contributions()
             ->where('created_at', '<', $startOfYear)
             ->where('status', 'success')
+            ->whereHas('scheme', function($query) {
+                $query->where('active', true);
+            })
             ->get();
 
-        $schemes = Scheme::orderBy('name')->get();
+        $schemes = Scheme::where('active', true)->orderBy('name')->get();
 
         $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
             $row = [

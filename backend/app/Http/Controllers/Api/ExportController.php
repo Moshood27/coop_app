@@ -39,6 +39,9 @@ class ExportController extends Controller
             $contributions = $user->contributions()
                 ->with('scheme')
                 ->where('status', 'success')
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
                 ->when($year > 0, function ($q) use ($year) {
                     $q->whereYear('created_at', $year);
                 })
@@ -50,13 +53,19 @@ class ExportController extends Controller
             $yearContributions = $user->contributions()
                 ->whereYear('created_at', $year)
                 ->where('status', 'success')
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
                 ->get();
             $bfContributions = $user->contributions()
                 ->where('created_at', '<', $startOfYear)
                 ->where('status', 'success')
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
                 ->get();
 
-            $schemes = Scheme::orderBy('name')->get();
+            $schemes = Scheme::where('active', true)->orderBy('name')->get();
             $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
                 $row = [
                     'scheme_name' => $scheme->name,
@@ -110,6 +119,9 @@ class ExportController extends Controller
                 ->with('scheme')
                 ->where('status', 'success')
                 ->whereYear('created_at', $year)
+                ->whereHas('scheme', function($query) {
+                    $query->where('active', true);
+                })
                 ->orderBy('created_at')
                 ->get();
 
