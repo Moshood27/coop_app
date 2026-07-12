@@ -73,6 +73,7 @@ class AppStatusSettings extends Page
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
             'attendance_ble_beacon_enabled' => (bool) Setting::get('attendance_ble_beacon_enabled', true),
             'attendance_fingerprint_enabled' => (bool) Setting::get('attendance_fingerprint_enabled', true),
+            'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
             'monthly_fees_enabled' => (bool) Setting::get('monthly_fees_enabled', true),
@@ -263,6 +264,10 @@ class AppStatusSettings extends Page
                         Toggle::make('set_transaction_pin_enabled')
                             ->label('Enable Set Security PIN Prompt')
                             ->helperText('If enabled, members who have not set their transaction PIN will be prompted to do so on the dashboard.')
+                            ->default(true),
+                        Toggle::make('opening_balance_verification_enabled')
+                            ->label('Enable Opening Balance Verification')
+                            ->helperText('If enabled, members will be prompted to verify their opening balance after system migration.')
                             ->default(true),
                         Toggle::make('attendance_pin_enabled')
                             ->label('Enable Attendance PIN')

@@ -867,6 +867,7 @@ const utilLabel = (ux) => {
 }
 
 const checkMigration = async () => {
+  if (!appStatusStore.openingBalanceVerificationEnabled) return
   const m = dashboardData.value.migration
   if (!m || !m.migrated_at) return
   if (m.discrepancy_reported_at || m.verified_at) return
