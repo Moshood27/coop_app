@@ -190,6 +190,7 @@ router.beforeEach(async (to) => {
   const token = localStorage.getItem('token')
   const adminToken = localStorage.getItem('admin_token')
   const isAdmin = localStorage.getItem('is_admin') === 'true'
+  const appStatusStore = useAppStatusStore()
 
   // 0. Onboarding gate for first-time users (skip for admin and explicit skips)
   try {
@@ -198,7 +199,7 @@ router.beforeEach(async (to) => {
     const isOnboarding = to.name === 'onboarding'
     const skip = !!to.meta?.skipOnboarding
     const isAuthed = !!localStorage.getItem('token')
-    if (!hasSeen && !isAdminRoute && !isOnboarding && !skip && !isAuthed) {
+    if (!hasSeen && !isAdminRoute && !isOnboarding && !skip && !isAuthed && appStatusStore.onboardingSwiperEnabled) {
       return { name: 'onboarding', query: { redirect: to.fullPath } }
     }
   } catch (_) {}
@@ -214,7 +215,6 @@ router.beforeEach(async (to) => {
   }
 
   // 1. PIN Lock gate
-  const appStatusStore = useAppStatusStore()
   if (to.meta.requiresAuth && token && appStatusStore.appPinLoginEnabled && !appStatusStore.isPinVerified && !to.meta.skipPinLock) {
     return { name: 'pin-lock', query: { redirect: to.fullPath } }
   }

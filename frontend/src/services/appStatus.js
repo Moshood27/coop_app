@@ -37,6 +37,9 @@ export async function checkAppStatus() {
       attendance_apology_enabled: data.attendance_apology_enabled,
       attendance_ble_beacon_enabled: data.attendance_ble_beacon_enabled,
       attendance_fingerprint_enabled: data.attendance_fingerprint_enabled,
+      onboarding_swiper_enabled: data.onboarding_swiper_enabled,
+      onboarding_swiper_slides: data.onboarding_swiper_slides,
+      opening_balance_verification_enabled: data.opening_balance_verification_enabled,
     }
   } catch (error) {
     console.error('Failed to check app status:', error)
