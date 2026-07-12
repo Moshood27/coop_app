@@ -27,6 +27,7 @@ class ContributionStats extends BaseWidget
 
         $totals = (clone $query)
             ->where('status', 'success')
+            ->reorder()
             ->select('scheme_id', DB::raw('SUM(amount) as total_amount'))
             ->groupBy('scheme_id')
             ->pluck('total_amount', 'scheme_id');
