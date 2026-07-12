@@ -268,7 +268,7 @@ watch(selectedSchemeId, async (newVal) => {
     return
   }
   const s = schemes.value.find(x => String(x.id) == String(newVal))
-  if (s && s.name.toLowerCase().includes('loan')) {
+  if (s && s.name.toLowerCase().includes('loan') && !s.name.toLowerCase().includes('form')) {
     try {
       loading.value = true
       const { data } = await axios.get('/api/loans/outstanding')
@@ -300,7 +300,7 @@ const addToList = () => {
     const p = pid ? projects.value.find(x => String(x.id) == pid) : null
     
     let category = isFine.value ? 'fine' : 'deposit'
-    if (s.name.toLowerCase().includes('loan')) {
+    if (s.name.toLowerCase().includes('loan') && !s.name.toLowerCase().includes('form')) {
       category = 'loan_repayment'
     }
 
