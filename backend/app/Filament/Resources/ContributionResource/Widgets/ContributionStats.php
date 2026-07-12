@@ -59,6 +59,23 @@ class ContributionStats extends BaseWidget
 
     protected function formatCurrency($value): string
     {
-        return '₦' . number_format($value, 2);
+        return '₦' . $this->formatNumber($value);
+    }
+
+    protected function formatNumber($value): string
+    {
+        if ($value >= 1000000000000) {
+            return number_format($value / 1000000000000, 2) . 'T';
+        }
+        if ($value >= 1000000000) {
+            return number_format($value / 1000000000, 2) . 'B';
+        }
+        if ($value >= 1000000) {
+            return number_format($value / 1000000, 2) . 'M';
+        }
+        if ($value >= 1000) {
+            return number_format($value / 1000, 1) . 'K';
+        }
+        return number_format($value, 0);
     }
 }
