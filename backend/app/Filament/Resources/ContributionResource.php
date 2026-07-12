@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\RelationManagers\ActivitiesRelationManager;
 use App\Filament\Resources\ContributionResource\Pages;
+use App\Filament\Resources\ContributionResource\Widgets\ContributionStats;
 use App\Models\Contribution;
 use App\Models\Project;
 use App\Models\Scheme;
@@ -422,6 +423,13 @@ class ContributionResource extends Resource
     {
         return [
             ActivitiesRelationManager::class,
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            ContributionStats::class,
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ContributionResource\Pages;
 use App\Filament\Traits\HasWipeAction;
 
 use App\Filament\Resources\ContributionResource;
+use App\Filament\Resources\ContributionResource\Widgets\ContributionStats;
 use App\Filament\Pages\ContributionBranchReport;
 use App\Filament\Pages\SchemeBranchReport;
 use Filament\Actions;
@@ -20,6 +21,13 @@ class ListContributions extends ListRecords
     public function getSubheading(): ?string
     {
         return 'Monitor and track periodic contributions and member subscriptions.';
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            ContributionStats::class,
+        ];
     }
 
     protected function getHeaderActions(): array
