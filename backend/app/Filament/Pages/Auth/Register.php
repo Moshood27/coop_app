@@ -10,6 +10,8 @@ use Filament\Facades\Filament;
 
 class Register extends BaseRegister
 {
+    protected static string $view = 'filament.pages.auth.register';
+
     public function register(): ?RegistrationResponse
     {
         try {
