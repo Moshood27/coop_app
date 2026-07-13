@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\HtmlSanitizer;
+use App\Support\SecurityUtils;
 use App\Models\Setting;
 use App\Models\Scheme;
 use App\Models\Project;
@@ -35,8 +37,7 @@ class PaymentController extends Controller
         ]);
 
         $user = $request->user();
-
-        // Server-side sanitize/validate each item amount against Scheme rules (never trust frontend amount)
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
         $schemeIds = collect($validated['items'])->pluck('scheme_id')->unique()->values();
         $schemes = Scheme::whereIn('id', $schemeIds)->get()->keyBy('id');
         // Optional project validation: ensure provided project_id exists and is active
@@ -163,7 +164,7 @@ class PaymentController extends Controller
                     'customerEmail' => $user->email,
                     'paymentReference' => $reference,
                     'paymentDescription' => 'Cooperative payment',
-                    'redirectUrl' => $validated['callback_url'] ?? config('app.url'),
+                    'redirectUrl' => $callbackUrl,
                 ]);
 
                 if (!$monnifyData) {
@@ -186,7 +187,7 @@ class PaymentController extends Controller
                     'customerEmail' => $user->email,
                     'reference' => $reference,
                     'paymentDescription' => 'Cooperative payment',
-                    'callbackUrl' => $validated['callback_url'] ?? config('app.url'),
+                    'callbackUrl' => $callbackUrl,
                 ]);
 
                 if (!$opayData) {
@@ -212,7 +213,7 @@ class PaymentController extends Controller
                     'tx_ref' => $reference,
                     'amount' => round($totalAmount, 2),
                     'currency' => 'NGN',
-                    'redirect_url' => $validated['callback_url'] ?? null,
+                    'redirect_url' => $callbackUrl,
                     'customer' => [
                         'email' => $user->email,
                         'name' => $user->name,
@@ -272,8 +273,8 @@ class PaymentController extends Controller
                     'distribution' => $sanitized,
                 ],
             ];
-            if (!empty($validated['callback_url'])) {
-                $payload['callback_url'] = $validated['callback_url'];
+            if ($callbackUrl) {
+                $payload['callback_url'] = $callbackUrl;
             }
 
             $response = Http::withToken($secret)

@@ -14,6 +14,7 @@ use App\Models\Branch;
 use App\Services\MonnifyService;
 use App\Services\OpayService;
 use App\Traits\VerifiesOtp;
+use App\Support\SecurityUtils;
 use Laravel\Pennant\Feature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -218,6 +219,7 @@ class WalletController extends Controller
         ]);
 
         $user = $request->user();
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
 
         if (Feature::for('global')->active('maintenance-mode-wallets')) {
             return response()->json(['message' => 'Wallet transactions are currently disabled for nightly reconciliation. Please try again later.'], 503);
@@ -244,7 +246,7 @@ class WalletController extends Controller
                 'customerEmail' => $user->email,
                 'paymentReference' => $reference,
                 'paymentDescription' => 'Wallet Top-up',
-                'redirectUrl' => $validated['callback_url'] ?? config('app.url'),
+                'redirectUrl' => $callbackUrl,
             ]);
 
             if (!$monnifyData) {
@@ -267,7 +269,7 @@ class WalletController extends Controller
                 'customerEmail' => $user->email,
                 'reference' => $reference,
                 'paymentDescription' => 'Wallet Top-up',
-                'callbackUrl' => $validated['callback_url'] ?? config('app.url'),
+                'callbackUrl' => $callbackUrl,
             ]);
 
             if (!$opayData) {
@@ -293,7 +295,7 @@ class WalletController extends Controller
                 'tx_ref' => $reference,
                 'amount' => round((float)$validated['amount'], 2),
                 'currency' => 'NGN',
-                'redirect_url' => $validated['callback_url'] ?? null,
+                'redirect_url' => $callbackUrl,
                 'customer' => [
                     'email' => $user->email,
                     'name' => $user->full_name,
@@ -304,7 +306,7 @@ class WalletController extends Controller
                     'wallet_topup' => true,
                 ],
             ];
-            if (empty($validated['callback_url'])) {
+            if (empty($callbackUrl)) {
                 unset($payloadFlw['redirect_url']);
             }
 
@@ -345,8 +347,8 @@ class WalletController extends Controller
                 'wallet_topup' => true,
             ],
         ];
-        if (!empty($validated['callback_url'])) {
-            $payload['callback_url'] = $validated['callback_url'];
+        if ($callbackUrl) {
+            $payload['callback_url'] = $callbackUrl;
         }
 
         $response = Http::withToken($secret)

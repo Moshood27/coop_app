@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\SadaqahProject;
 use App\Models\SadaqahContribution;
-use App\Models\WalletTransaction;
+use App\Support\SecurityUtils;
 use App\Models\Setting;
 use App\Services\MonnifyService;
 use App\Services\OpayService;
@@ -49,6 +49,7 @@ class SadaqahController extends Controller
 
         $user = $request->user();
         $amount = round($validated['amount'], 2);
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
 
         $gateway = strtolower($request->input('gateway', 'paystack'));
 
@@ -70,7 +71,7 @@ class SadaqahController extends Controller
                 'is_anonymous' => $validated['is_anonymous'] ?? false,
                 'status' => 'pending',
             ]);
-            return $this->initiateMonnify($user, $amount, $reference, $request->input('callback_url'));
+            return $this->initiateMonnify($user, $amount, $reference, $callbackUrl);
         }
 
         if ($gateway === 'opay') {
@@ -83,7 +84,7 @@ class SadaqahController extends Controller
                 'is_anonymous' => $validated['is_anonymous'] ?? false,
                 'status' => 'pending',
             ]);
-            return $this->initiateOpay($user, $amount, $reference, $request->input('callback_url'));
+            return $this->initiateOpay($user, $amount, $reference, $callbackUrl);
         }
 
         $reference = 'SADAQAH_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
@@ -98,10 +99,10 @@ class SadaqahController extends Controller
         ]);
 
         if ($gateway === 'flutterwave') {
-            return $this->initiateFlutterwave($user, $amount, $reference, $validated['callback_url'] ?? null);
+            return $this->initiateFlutterwave($user, $amount, $reference, $callbackUrl);
         }
 
-        return $this->initiatePaystack($user, $amount, $reference, $validated['callback_url'] ?? null);
+        return $this->initiatePaystack($user, $amount, $reference, $callbackUrl);
     }
 
     public function myContributions(Request $request)

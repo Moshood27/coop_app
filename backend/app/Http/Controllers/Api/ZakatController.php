@@ -8,6 +8,7 @@ use App\Models\Scheme;
 use App\Models\SadaqahProject;
 use App\Models\SadaqahContribution;
 use App\Models\WalletTransaction;
+use App\Support\SecurityUtils;
 use App\Models\Setting;
 use App\Services\MonnifyService;
 use App\Services\OpayService;
@@ -57,6 +58,7 @@ class ZakatController extends Controller
     public function pay(Request $request)
     {
         $user = $request->user();
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
 
         // Compute current base and zakat due using estimate logic
         $estimate = $this->estimate($request)->getData(true);
@@ -115,7 +117,7 @@ class ZakatController extends Controller
                 'customerEmail' => $user->email,
                 'paymentReference' => $reference,
                 'paymentDescription' => 'Zakat payment',
-                'redirectUrl' => $request->input('callback_url') ?? config('app.url'),
+                'redirectUrl' => $callbackUrl,
             ]);
 
             if (!$monnifyData) {
@@ -138,7 +140,7 @@ class ZakatController extends Controller
                 'customerEmail' => $user->email,
                 'reference' => $reference,
                 'paymentDescription' => 'Zakat payment',
-                'callbackUrl' => $request->input('callback_url') ?? config('app.url'),
+                'callbackUrl' => $callbackUrl,
             ]);
 
             if (!$opayData) {
@@ -240,6 +242,7 @@ class ZakatController extends Controller
     public function payFitr(Request $request)
     {
         $user = $request->user();
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
         $amount = (float) config('zakat.fitr_amount');
 
         if ($amount <= 0) {
@@ -286,7 +289,7 @@ class ZakatController extends Controller
                 'customerEmail' => $user->email,
                 'paymentReference' => $reference,
                 'paymentDescription' => 'Zakat Fitr payment',
-                'redirectUrl' => $request->input('callback_url') ?? config('app.url'),
+                'redirectUrl' => $callbackUrl,
             ]);
 
             if (!$monnifyData) {
@@ -309,7 +312,7 @@ class ZakatController extends Controller
                 'customerEmail' => $user->email,
                 'reference' => $reference,
                 'paymentDescription' => 'Zakat Fitr payment',
-                'callbackUrl' => $request->input('callback_url') ?? config('app.url'),
+                'callbackUrl' => $callbackUrl,
             ]);
 
             if (!$opayData) {

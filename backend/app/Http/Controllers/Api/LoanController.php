@@ -10,6 +10,7 @@ use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Support\SecurityUtils;
 use App\Services\MonnifyService;
 use App\Services\OpayService;
 use Illuminate\Support\Facades\Http;
@@ -488,8 +489,9 @@ class LoanController extends Controller
         ]);
 
         $user = $request->user();
+        $callbackUrl = SecurityUtils::safeCallbackUrl($request->input('callback_url'));
 
-        return DB::transaction(function () use ($id, $data, $user, $request) {
+        return DB::transaction(function () use ($id, $data, $user, $request, $callbackUrl) {
             $q = QardHasan::lockForUpdate()
                 ->where('user_id', $user->id)
                 ->findOrFail($id);
@@ -716,7 +718,7 @@ class LoanController extends Controller
                     'customerEmail' => $user->email,
                     'paymentReference' => $reference,
                     'paymentDescription' => 'Loan Repayment: ' . $q->qard_id_string,
-                    'redirectUrl' => $data['callback_url'] ?? config('app.url'),
+                    'redirectUrl' => $callbackUrl,
                 ]);
 
                 if (!$monnifyData) {
@@ -753,7 +755,7 @@ class LoanController extends Controller
                     'customerEmail' => $user->email,
                     'reference' => $reference,
                     'paymentDescription' => 'Loan Repayment: ' . $q->qard_id_string,
-                    'callbackUrl' => $data['callback_url'] ?? config('app.url'),
+                    'callbackUrl' => $callbackUrl,
                 ]);
 
                 if (!$opayData) {
@@ -787,7 +789,7 @@ class LoanController extends Controller
                     'tx_ref' => $reference,
                     'amount' => round($appliedAmount, 2),
                     'currency' => 'NGN',
-                    'redirect_url' => $data['callback_url'] ?? null,
+                    'redirect_url' => $callbackUrl,
                     'customer' => [
                         'email' => $user->email,
                         'name' => $user->name,
@@ -875,8 +877,8 @@ class LoanController extends Controller
                     'expected_amount' => $appliedAmount,
                 ],
             ];
-            if (!empty($data['callback_url'])) {
-                $payload['callback_url'] = $data['callback_url'];
+            if ($callbackUrl) {
+                $payload['callback_url'] = $callbackUrl;
             }
 
             $response = Http::withToken($secret)
