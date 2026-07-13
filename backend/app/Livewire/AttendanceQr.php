@@ -50,8 +50,8 @@ class AttendanceQr extends Component
             ->limit(5)
             ->get()
             ->map(fn($r) => [
-                'member_name' => $r->user->name,
-                'attended_at' => $r->attended_at->format('H:i:s'),
+                'member_name' => $r->user?->name ?? 'Unknown',
+                'attended_at' => $r->attended_at ? $r->attended_at->format('H:i:s') : '--:--:--',
             ])
             ->toArray();
     }

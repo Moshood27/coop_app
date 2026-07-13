@@ -34,8 +34,8 @@ class AttendanceMarked implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'member_name' => $this->record->user->name,
-            'attended_at' => $this->record->attended_at->format('H:i:s'),
+            'member_name' => $this->record->user?->name ?? 'Member',
+            'attended_at' => $this->record->attended_at ? $this->record->attended_at->format('H:i:s') : now()->format('H:i:s'),
         ];
     }
 }

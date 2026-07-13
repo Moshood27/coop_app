@@ -227,7 +227,12 @@ class AttendanceController extends Controller
             ]
         );
 
-        broadcast(new AttendanceMarked($meeting, $record));
+        // Silent failure for broadcasting
+        try {
+            broadcast(new AttendanceMarked($meeting, $record));
+        } catch (\Throwable $e) {
+            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+        }
 
         $message = 'Attendance marked successfully';
         if ($this->attendanceService->isLate($meeting, $record->attended_at)) {
@@ -283,6 +288,8 @@ class AttendanceController extends Controller
             })
             ->limit(20)
             ->get(['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id']);
+
+        $users->makeHidden(['permission_names']);
 
         return response()->json($users);
     }
@@ -360,7 +367,7 @@ class AttendanceController extends Controller
             // Silent failure for broadcasting
             try {
                 broadcast(new AttendanceMarked($meeting, $record));
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
             }
 
@@ -372,7 +379,7 @@ class AttendanceController extends Controller
                     ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
                     ['push', 'database']
                 );
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \Log::warning('Notifying member attendance marked failed: ' . $e->getMessage());
             }
 
@@ -380,7 +387,7 @@ class AttendanceController extends Controller
                 'message' => 'Attendance successfully marked for ' . $targetUser->full_name,
                 'record' => $record
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => 'Failed to mark attendance: ' . $e->getMessage()], 500);
         }
     }
@@ -477,7 +484,12 @@ class AttendanceController extends Controller
             ]
         );
 
-        broadcast(new AttendanceMarked($meeting, $record));
+        // Silent failure for broadcasting
+        try {
+            broadcast(new AttendanceMarked($meeting, $record));
+        } catch (\Throwable $e) {
+            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+        }
 
         $message = 'Attendance marked successfully via Biometrics';
         if ($this->attendanceService->isLate($meeting, $record->attended_at)) {
@@ -555,7 +567,12 @@ class AttendanceController extends Controller
             ]
         );
 
-        broadcast(new AttendanceMarked($meeting, $record));
+        // Silent failure for broadcasting
+        try {
+            broadcast(new AttendanceMarked($meeting, $record));
+        } catch (\Throwable $e) {
+            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+        }
 
         $message = 'Attendance marked successfully via Beacon';
         if ($this->attendanceService->isLate($meeting, $record->attended_at)) {

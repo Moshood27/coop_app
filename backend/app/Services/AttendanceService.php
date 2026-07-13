@@ -42,7 +42,11 @@ class AttendanceService
         $payload = $this->formatPayload($meeting, $token);
 
         // Broadcast to any admins watching the QR screen
-        broadcast(new AttendanceQrRefreshed($meeting, $payload));
+        try {
+            broadcast(new AttendanceQrRefreshed($meeting, $payload));
+        } catch (\Throwable $e) {
+            \Log::warning("Broadcasting AttendanceQrRefreshed failed: " . $e->getMessage());
+        }
 
         return $payload;
     }
