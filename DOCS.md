@@ -29,6 +29,7 @@ Feature guides
 - BRANCH_PERFORMANCE_ANALYTICS.md – Branch network visual map and key performance indicators (savings, delinquency).
 - BRANCH_MANAGEMENT_OPERATIONS.md – Branch administration, member assignment, and bulk communication.
 - ADMIN_SECURITY_AUDIT.md – Admin panel bank-grade security and full auditing.
+- ADMIN_USE_CASE.md – **NEW:** Key administrative workflows (Decentralized Attendance, Biometric Enrollment, Bulk Communication).
 - VIRTUAL_ACCOUNT.md – Dedicated virtual accounts (Paystack DVA) for wallet top‑ups.
 - WEBHOOKS.md – General webhook handling patterns.
 - VTPASS_WEBHOOK.md – VTU provider webhook specifics.
