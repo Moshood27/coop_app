@@ -388,7 +388,12 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
 
     public function getPermissionNamesAttribute()
     {
-        return $this->getAllPermissions()->pluck('name');
+        try {
+            return $this->getAllPermissions()->pluck('name');
+        } catch (\Throwable $e) {
+            \Log::warning("Failed to get permissions for user {$this->id}: " . $e->getMessage());
+            return collect([]);
+        }
     }
 
     public function badges()

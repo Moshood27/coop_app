@@ -246,7 +246,11 @@ class AttendanceController extends Controller
             }
         }
 
-        return response()->json(['message' => $message, 'record' => $record]);
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'record' => $record
+        ]);
     }
 
     public function searchMembers(Request $request)
@@ -325,6 +329,7 @@ class AttendanceController extends Controller
 
             if ($existing) {
                 return response()->json([
+                    'success' => true,
                     'message' => 'Attendance is already marked as present for ' . $targetUser->full_name,
                     'record' => $existing
                 ]);
@@ -348,15 +353,15 @@ class AttendanceController extends Controller
                 ]
             );
 
-            // Silent failure for broadcasting
-            try {
-                broadcast(new AttendanceMarked($meeting, $record));
-            } catch (\Throwable $e) {
-                \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
-            }
+            // Hide problematic attributes before response to avoid serialization issues
+            $targetUser->makeHidden(['permission_names', 'roles', 'permissions']);
 
-            // Silent failure for notification
+            // Attempt side-effects safely
             try {
+                // Broadcast on specific meeting channel for real-time dashboard
+                broadcast(new AttendanceMarked($meeting, $record));
+
+                // Notify member via push/db
                 $targetUser->notifyMember(
                     "Attendance Marked",
                     "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
@@ -364,10 +369,14 @@ class AttendanceController extends Controller
                     ['push', 'database']
                 );
             } catch (\Throwable $e) {
-                \Log::warning('Notifying member attendance marked failed: ' . $e->getMessage());
+                \Log::warning('Attendance side-effects failed: ' . $e->getMessage(), [
+                    'meeting_id' => $meeting->id,
+                    'user_id' => $targetUser->id
+                ]);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Attendance successfully marked for ' . $targetUser->full_name,
                 'record' => $record
             ]);
@@ -492,7 +501,11 @@ class AttendanceController extends Controller
             }
         }
 
-        return response()->json(['message' => $message, 'record' => $record]);
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'record' => $record
+        ]);
     }
 
     /**
@@ -573,7 +586,11 @@ class AttendanceController extends Controller
             }
         }
 
-        return response()->json(['message' => $message, 'record' => $record]);
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'record' => $record
+        ]);
     }
 
     /**

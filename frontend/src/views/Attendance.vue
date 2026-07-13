@@ -415,11 +415,14 @@ const markForMemberAction = async (member) => {
     const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-member-attendance`, {
       user_id: member.id
     })
-    modal.toast(res.data.message)
-    // Update local state to reflect change immediately
-    member.is_present = true
-    // Optional: Refresh search to be sure
-    // await searchMembers()
+    
+    if (res.data.success || res.data.record) {
+      modal.alert(res.data.message || "Attendance marked successfully")
+      // Update local state to reflect change immediately
+      member.is_present = true
+    } else {
+      modal.alert(res.data.message || "Failed to mark attendance", "Attendance Error")
+    }
   } catch (err) {
     const errorMsg = err.response?.data?.message || "Failed to mark attendance for member"
     modal.alert(errorMsg, "Attendance Error")
@@ -689,7 +692,7 @@ const syncOfflineRecords = async () => {
   try {
     const res = await axios.post('/api/attendance/sync-offline', { records })
     localStorage.removeItem('offline_attendance')
-    modal.toast(res.data.message)
+    modal.alert(res.data.message || "Offline records synced successfully")
     fetchCurrentMeeting()
   } catch (err) {
     console.error('Offline sync failed:', err)
