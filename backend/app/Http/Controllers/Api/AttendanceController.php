@@ -298,8 +298,6 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
         ]);
 
         if (!$request->user()->hasPermissionTo('mark_attendance')) {
@@ -308,26 +306,6 @@ class AttendanceController extends Controller
 
         if ($meeting->status !== 'ongoing') {
             return response()->json(['message' => 'Meeting is not ongoing'], 400);
-        }
-
-        // Geofencing check for the Admin/Officer
-        if (is_null($meeting->venue_lat) || is_null($meeting->venue_lng)) {
-             return response()->json(['message' => 'Meeting venue location not set by admin'], 400);
-        }
-
-        $distance = $this->geoService->calculateDistance(
-            (float) $meeting->venue_lat,
-            (float) $meeting->venue_lng,
-            (float) $request->lat,
-            (float) $request->lng
-        );
-
-        $radius = (int) ($meeting->radius_meters ?: config('cooperative.attendance.radius_meters', 100));
-        if ($distance > $radius) {
-            return response()->json([
-                'message' => 'You (Admin) are too far from the venue. You must be within ' . $radius . ' meters to mark attendance for others. Current distance: ' . round($distance, 2) . 'm.',
-                'distance' => round($distance, 2) . 'm'
-            ], 400);
         }
 
         $targetUser = User::findOrFail($request->user_id);

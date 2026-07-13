@@ -407,23 +407,13 @@ const searchMembers = async () => {
 }
 
 const markForMemberAction = async (member) => {
-  if (!location.value) {
-    await getLocation()
-    if (!location.value) {
-      modal.alert('Location is required to mark attendance for others. Please enable GPS.')
-      return
-    }
-  }
-
   const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
   if (!confirm) return
 
   markingForMember.value = member.id
   try {
     const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-member-attendance`, {
-      user_id: member.id,
-      lat: location.value.lat,
-      lng: location.value.lng
+      user_id: member.id
     })
     modal.toast(res.data.message)
     // Update local state to reflect change immediately
