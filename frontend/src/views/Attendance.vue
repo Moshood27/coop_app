@@ -250,10 +250,17 @@
                   </div>
                   <button 
                     @click="markForMemberAction(member)" 
-                    :disabled="markingForMember === member.id"
-                    class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50"
+                    :disabled="markingForMember === member.id || member.is_present"
+                    class="px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50 transition-colors"
+                    :class="member.is_present ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-emerald-600 text-white'"
                   >
                     <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block"></span>
+                    <span v-else-if="member.is_present" class="flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      Present
+                    </span>
                     <span v-else>Mark Present</span>
                   </button>
                </div>
@@ -400,19 +407,32 @@ const searchMembers = async () => {
 }
 
 const markForMemberAction = async (member) => {
+  if (!location.value) {
+    await getLocation()
+    if (!location.value) {
+      modal.alert('Location is required to mark attendance for others. Please enable GPS.')
+      return
+    }
+  }
+
   const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
   if (!confirm) return
 
   markingForMember.value = member.id
   try {
     const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-member-attendance`, {
-      user_id: member.id
+      user_id: member.id,
+      lat: location.value.lat,
+      lng: location.value.lng
     })
     modal.toast(res.data.message)
-    memberSearchQuery.value = ''
-    memberSearchResults.value = []
+    // Update local state to reflect change immediately
+    member.is_present = true
+    // Optional: Refresh search to be sure
+    // await searchMembers()
   } catch (err) {
-    modal.alert(err.response?.data?.message || "Failed to mark attendance for member")
+    const errorMsg = err.response?.data?.message || "Failed to mark attendance for member"
+    modal.alert(errorMsg, "Attendance Error")
   } finally {
     markingForMember.value = null
   }

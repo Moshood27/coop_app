@@ -276,6 +276,11 @@ class AttendanceController extends Controller
                     ->orWhere('membership_number', 'like', "%{$query}%")
                     ->orWhere('phone', 'like', "%{$query}%");
             })
+            ->when($meetingId, function($q) use ($meetingId) {
+                $q->withExists(['attendanceRecords as is_present' => function($q) use ($meetingId) {
+                    $q->where('meeting_id', $meetingId)->where('status', 'present');
+                }]);
+            })
             ->limit(20)
             ->get(['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id']);
 
@@ -286,6 +291,8 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
         ]);
 
         if (!$request->user()->hasPermissionTo('mark_attendance')) {
@@ -296,7 +303,40 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Meeting is not ongoing'], 400);
         }
 
+        // Geofencing check for the Admin/Officer
+        if (is_null($meeting->venue_lat) || is_null($meeting->venue_lng)) {
+             return response()->json(['message' => 'Meeting venue location not set by admin'], 400);
+        }
+
+        $distance = $this->geoService->calculateDistance(
+            (float) $meeting->venue_lat,
+            (float) $meeting->venue_lng,
+            (float) $request->lat,
+            (float) $request->lng
+        );
+
+        $radius = (int) ($meeting->radius_meters ?: config('cooperative.attendance.radius_meters', 100));
+        if ($distance > $radius) {
+            return response()->json([
+                'message' => 'You (Admin) are too far from the venue. You must be within ' . $radius . ' meters to mark attendance for others. Current distance: ' . round($distance, 2) . 'm.',
+                'distance' => round($distance, 2) . 'm'
+            ], 400);
+        }
+
         $targetUser = User::findOrFail($request->user_id);
+
+        // Check if already marked to avoid confusion and double marking
+        $existing = AttendanceRecord::where('user_id', $targetUser->id)
+            ->where('meeting_id', $meeting->id)
+            ->where('status', 'present')
+            ->first();
+
+        if ($existing) {
+             return response()->json([
+                'message' => 'Attendance is already marked as present for ' . $targetUser->full_name,
+                'record' => $existing
+            ]);
+        }
 
         // Optional: Check branch eligibility
         if ($meeting->branches()->exists()) {
@@ -306,32 +346,43 @@ class AttendanceController extends Controller
             }
         }
 
-        $record = AttendanceRecord::updateOrCreate(
-            ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
-            [
-                'status' => 'present',
-                'attended_at' => now(),
-                'verified_biometrically' => false,
-                'device_uuid' => 'marked_by_admin_' . $request->user()->id,
-            ]
-        );
-
-        broadcast(new AttendanceMarked($meeting, $record));
-
-        // Notify member
         try {
-            $targetUser->notifyMember(
-                "Attendance Marked",
-                "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
-                ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
-                ['push', 'database']
+            $record = AttendanceRecord::updateOrCreate(
+                ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
+                [
+                    'status' => 'present',
+                    'attended_at' => now(),
+                    'verified_biometrically' => false,
+                    'device_uuid' => 'marked_by_admin_' . $request->user()->id,
+                ]
             );
-        } catch (\Exception $e) {}
 
-        return response()->json([
-            'message' => 'Attendance marked for ' . $targetUser->full_name,
-            'record' => $record
-        ]);
+            // Silent failure for broadcasting
+            try {
+                broadcast(new AttendanceMarked($meeting, $record));
+            } catch (\Exception $e) {
+                \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+            }
+
+            // Silent failure for notification
+            try {
+                $targetUser->notifyMember(
+                    "Attendance Marked",
+                    "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
+                    ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
+                    ['push', 'database']
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Notifying member attendance marked failed: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'Attendance successfully marked for ' . $targetUser->full_name,
+                'record' => $record
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to mark attendance: ' . $e->getMessage()], 500);
+        }
     }
 
     public function getAttendanceQrPayload(Meeting $meeting)
