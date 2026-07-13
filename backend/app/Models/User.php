@@ -378,7 +378,7 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
 
     protected $appends = [
         'full_name',
-        'permissions',
+        'permission_names',
     ];
 
     public function getFullNameAttribute(): string
@@ -386,14 +386,8 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         return trim("{$this->surname} {$this->name} {$this->other_names}");
     }
 
-    public function getPermissionsAttribute()
+    public function getPermissionNamesAttribute()
     {
-        if ($this->relationLoaded('permissions') || $this->relationLoaded('roles')) {
-            return $this->getAllPermissions()->pluck('name');
-        }
-        // Fallback to avoid heavy loading every time if not needed,
-        // but for mobile app we usually want it.
-        // To be safe and efficient, we can check if we are in API context or just load it.
         return $this->getAllPermissions()->pluck('name');
     }
 

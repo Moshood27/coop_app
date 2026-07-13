@@ -380,7 +380,7 @@ const currentUser = ref(null)
 
 const canMarkForOthers = computed(() => {
   if (!currentUser.value) return false
-  return currentUser.value.permissions?.includes('mark_attendance') || currentUser.value.is_admin
+  return currentUser.value.permission_names?.includes('mark_attendance') || currentUser.value.is_admin
 })
 
 const searchMembers = async () => {
