@@ -221,7 +221,7 @@
         </div>
         
         <!-- Mark for Member (Delegated Admin) -->
-        <div v-if="canMarkForOthers && meeting.status === 'ongoing'" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mt-4">
+        <div v-if="canMarkForOthers && meeting && (meeting.status === 'ongoing' || meeting.status === 'scheduled')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mt-4">
              <div class="flex items-center gap-2 mb-4">
                <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-lg">👥</div>
                <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Mark for Member</h3>

@@ -274,6 +274,11 @@ class AttendanceController extends Controller
             }
         }
 
+        $columns = ['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id'];
+        if ($meetingId) {
+            $columns[] = 'is_present';
+        }
+
         $users = $userQuery->where(function($q) use ($query) {
                 $q->where('surname', 'like', "%{$query}%")
                     ->orWhere('name', 'like', "%{$query}%")
@@ -287,7 +292,7 @@ class AttendanceController extends Controller
                 }]);
             })
             ->limit(20)
-            ->get(['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id']);
+            ->get($columns);
 
         $users->makeHidden(['permission_names']);
 
@@ -301,37 +306,38 @@ class AttendanceController extends Controller
         ]);
 
         if (!$request->user()->hasPermissionTo('mark_attendance')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized: You do not have permission to mark attendance for others.'], 403);
         }
 
-        if ($meeting->status !== 'ongoing') {
-            return response()->json(['message' => 'Meeting is not ongoing'], 400);
-        }
-
-        $targetUser = User::findOrFail($request->user_id);
-
-        // Check if already marked to avoid confusion and double marking
-        $existing = AttendanceRecord::where('user_id', $targetUser->id)
-            ->where('meeting_id', $meeting->id)
-            ->where('status', 'present')
-            ->first();
-
-        if ($existing) {
-             return response()->json([
-                'message' => 'Attendance is already marked as present for ' . $targetUser->full_name,
-                'record' => $existing
-            ]);
-        }
-
-        // Optional: Check branch eligibility
-        if ($meeting->branches()->exists()) {
-            $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
-            if (!$isEligible) {
-                return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
-            }
+        // Allow marking for ongoing or scheduled meetings (admins/officers might mark early arrivals)
+        if (!in_array($meeting->status, ['ongoing', 'scheduled'])) {
+            return response()->json(['message' => "Meeting is currently in '{$meeting->status}' status and cannot accept attendance."], 400);
         }
 
         try {
+            $targetUser = User::findOrFail($request->user_id);
+
+            // Check if already marked to avoid confusion and double marking
+            $existing = AttendanceRecord::where('user_id', $targetUser->id)
+                ->where('meeting_id', $meeting->id)
+                ->where('status', 'present')
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'message' => 'Attendance is already marked as present for ' . $targetUser->full_name,
+                    'record' => $existing
+                ]);
+            }
+
+            // Optional: Check branch eligibility
+            if ($meeting->branches()->exists()) {
+                $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
+                if (!$isEligible) {
+                    return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
+                }
+            }
+
             $record = AttendanceRecord::updateOrCreate(
                 ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
                 [
@@ -366,7 +372,13 @@ class AttendanceController extends Controller
                 'record' => $record
             ]);
         } catch (\Throwable $e) {
-            return response()->json(['message' => 'Failed to mark attendance: ' . $e->getMessage()], 500);
+            \Log::error('Failed to mark member attendance: ' . $e->getMessage(), [
+                'exception' => $e,
+                'meeting_id' => $meeting->id,
+                'user_id' => $request->user_id,
+                'admin_id' => $request->user()?->id
+            ]);
+            return response()->json(['message' => 'Failed to mark attendance: ' . ($e->getMessage() ?: 'Unknown system error')], 500);
         }
     }
 
