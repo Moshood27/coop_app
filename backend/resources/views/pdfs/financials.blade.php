@@ -37,7 +37,9 @@
     </div>
 
     <div class="section-title">Income and Expenditure</div>
-    @php($ie = $income_expenditure ?? [])
+    @php
+        $ie = $income_expenditure ?? [];
+    @endphp
     <table>
         <thead>
             <tr>
@@ -82,7 +84,9 @@
     </table>
 
     <div class="section-title">Balance Sheet</div>
-    @php($bs = $balance_sheet ?? [])
+    @php
+        $bs = $balance_sheet ?? [];
+    @endphp
     <table>
         <thead>
             <tr>
@@ -130,7 +134,9 @@
     </table>
 
     <div class="section-title">Statement of Cash Flows</div>
-    @php($cf = $cash_flow ?? [])
+    @php
+        $cf = $cash_flow ?? [];
+    @endphp
     <table>
         <thead>
             <tr>

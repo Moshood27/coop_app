@@ -41,13 +41,17 @@
     </div>
 
     <div class="section">
-        @php($isCredit = strtolower((string)($tx->type ?? '')) === 'credit')
+        @php
+            $isCredit = strtolower((string)($tx->type ?? '')) === 'credit';
+        @endphp
         <div>
             <span class="badge {{ $isCredit ? 'badge-credit' : 'badge-debit' }}">{{ strtoupper($tx->type ?? '-') }}</span>
         </div>
         <table>
             <tbody>
-                @php($m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true))
+                @php
+                    $m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true);
+                @endphp
                 @if(is_array($m) && isset($m['maintenance_charge']))
                 <tr>
                     <td style="width: 40%">Gross Amount</td>
@@ -78,7 +82,9 @@
                 <tr>
                     <td>Channel / Source</td>
                     <td>
-                        @php($src = (string)($tx->source ?? ''))
+                        @php
+                            $src = (string)($tx->source ?? '');
+                        @endphp
                         @if($src === 'paystack_dva') Bank Transfer (DVA)
                         @elseif($src === 'paystack_charge') Card Payment
                         @elseif($src === 'paystack_autosave') Smart Savings (Autosave)
@@ -93,7 +99,9 @@
                     <tr>
                         <td>Notes</td>
                         <td>
-                            @php($m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true))
+                            @php
+                                $m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true);
+                            @endphp
                             @if(is_array($m))
                                 @if(isset($m['note'])) {{ $m['note'] }} @endif
                                 @if(isset($m['to_name'])) To: {{ $m['to_name'] }} @endif
@@ -108,7 +116,9 @@
         </table>
     </div>
 
-    @php($m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true))
+    @php
+        $m = is_array($tx->meta) ? $tx->meta : json_decode((string)$tx->meta, true);
+    @endphp
     @if($src === 'wallet_allocation' && !empty($m['distribution']))
         <div class="section">
             <strong>Allocation Details:</strong>
@@ -129,7 +139,9 @@
                         @endif
                         <tr>
                             <td>
-                                @php($cat = $item['category'] ?? 'deposit')
+                                @php
+                                    $cat = $item['category'] ?? 'deposit';
+                                @endphp
                                 @if($cat === 'deposit') Contribution
                                 @elseif($cat === 'loan_repayment') Loan Repayment
                                 @elseif($cat === 'fine') Fine Payment

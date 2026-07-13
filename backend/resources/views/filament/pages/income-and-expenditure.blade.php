@@ -1,4 +1,6 @@
-@php($r = $this->report)
+@php
+    $r = $this->report;
+@endphp
 <x-filament::page>
     <div class="space-y-6">
         <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -65,7 +67,9 @@
             </div>
         </div>
 
-        @php($isPositive = ($r['surplus'] ?? 0) >= 0)
+        @php
+            $isPositive = ($r['surplus'] ?? 0) >= 0;
+        @endphp
         <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full">

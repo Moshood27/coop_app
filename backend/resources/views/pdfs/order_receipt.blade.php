@@ -71,8 +71,10 @@
         </table>
     </div>
 
-    @php($meta = is_array($order->meta) ? $order->meta : json_decode((string)($order->meta ?? '[]'), true))
-    @php($financing = $meta['financing'] ?? null)
+    @php
+        $meta = is_array($order->meta) ? $order->meta : json_decode((string)($order->meta ?? '[]'), true);
+        $financing = $meta['financing'] ?? null;
+    @endphp
 
     @if($financing)
     <div class="section financing-box">
