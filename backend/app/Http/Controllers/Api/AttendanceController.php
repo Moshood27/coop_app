@@ -251,18 +251,31 @@ class AttendanceController extends Controller
         }
 
         $query = $request->get('q');
+        $meetingId = $request->get('meeting_id');
+
         if (strlen($query) < 2) {
              return response()->json([]);
         }
 
-        $users = User::where(function($q) use ($query) {
+        $userQuery = User::where('is_admin', false)
+            ->where('is_defaulter', false);
+
+        // Filter by meeting branches if meeting_id is provided
+        if ($meetingId) {
+            $meeting = Meeting::find($meetingId);
+            if ($meeting && $meeting->branches()->exists()) {
+                $branchIds = $meeting->branches()->pluck('branches.id');
+                $userQuery->whereIn('branch_id', $branchIds);
+            }
+        }
+
+        $users = $userQuery->where(function($q) use ($query) {
                 $q->where('surname', 'like', "%{$query}%")
                     ->orWhere('name', 'like', "%{$query}%")
                     ->orWhere('other_names', 'like', "%{$query}%")
                     ->orWhere('membership_number', 'like', "%{$query}%")
                     ->orWhere('phone', 'like', "%{$query}%");
             })
-            ->where('is_admin', false)
             ->limit(20)
             ->get(['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id']);
 

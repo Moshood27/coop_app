@@ -390,7 +390,7 @@ const searchMembers = async () => {
   }
   searchingMembers.value = true
   try {
-    const { data } = await axios.get(`/api/attendance/search-members?q=${memberSearchQuery.value}`)
+    const { data } = await axios.get(`/api/attendance/search-members?q=${memberSearchQuery.value}&meeting_id=${meeting.value?.id}`)
     memberSearchResults.value = data
   } catch (err) {
     console.error('Member search failed:', err)
