@@ -25,10 +25,24 @@ class SecurityHeaders
         }
 
         // Do not override headers if already set upstream (e.g., reverse proxy)
+        $csp = [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
+            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
+            "img-src 'self' data: https: blob:",
+            "connect-src 'self' https: wss:",
+            "frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+        ];
+
         $headers = [
             'X-Frame-Options' => 'DENY',
             'X-Content-Type-Options' => 'nosniff',
-            'Referrer-Policy' => 'no-referrer',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'X-XSS-Protection' => '1; mode=block',
+            'Content-Security-Policy' => implode('; ', $csp),
             // A conservative Permissions-Policy to reduce surface area; extend as needed for your app
             'Permissions-Policy' => "accelerometer=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
             // Helps isolate browsing context (good default for SPAs and APIs)

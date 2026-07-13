@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -49,22 +50,6 @@ class ShariaBoardMember extends Model
      */
     public function setBioAttribute($value)
     {
-        if (empty($value)) {
-            $this->attributes['bio'] = $value;
-            return;
-        }
-
-        // Allow only safe tags
-        $allowedTags = '<p><br><b><i><u><ul><ol><li><a><h1><h2><h3><h4><h5><h6>';
-        $cleaned = strip_tags($value, $allowedTags);
-
-        // Remove dangerous attributes like on* and javascript:
-        $cleaned = preg_replace('/\s+on\w+="[^"]*"/i', '', $cleaned);
-        $cleaned = preg_replace('/\s+on\w+=\'[^\']*\'/i', '', $cleaned);
-        $cleaned = preg_replace('/\s+on\w+=[^\s>]+/i', '', $cleaned);
-        $cleaned = preg_replace('/href="javascript:[^"]*"/i', 'href="#"', $cleaned);
-        $cleaned = preg_replace('/href=\'javascript:[^\']*\'/i', 'href="#"', $cleaned);
-
-        $this->attributes['bio'] = $cleaned;
+        $this->attributes['bio'] = HtmlSanitizer::clean($value);
     }
 }

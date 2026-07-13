@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Support\HtmlSanitizer;
 use App\Models\Setting;
 use Laravel\Pennant\Feature;
 use Filament\Forms\Components\Select;
@@ -391,6 +392,15 @@ class AppStatusSettings extends Page
                     Feature::for('global')->deactivate($features[$key]);
                 }
             } else {
+                // Sanitize specific settings that are rendered as HTML in the frontend
+                if ($key === 'onboarding_swiper_slides' && is_array($value)) {
+                    foreach ($value as &$slide) {
+                        if (isset($slide['icon'])) {
+                            $slide['icon'] = HtmlSanitizer::cleanSvg($slide['icon']);
+                        }
+                    }
+                }
+
                 Setting::set($key, is_array($value) ? json_encode($value) : $value);
             }
         }

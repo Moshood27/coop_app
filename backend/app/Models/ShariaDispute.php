@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
@@ -35,20 +36,7 @@ class ShariaDispute extends Model
      */
     public function setMediationNotesAttribute($value)
     {
-        if (empty($value)) {
-            $this->attributes['mediation_notes'] = $value;
-            return;
-        }
-
-        $allowedTags = '<p><br><b><i><u><ul><ol><li><a><h1><h2><h3><h4><h5><h6>';
-        $cleaned = strip_tags($value, $allowedTags);
-        $cleaned = preg_replace('/\s+on\w+="[^"]*"/i', '', $cleaned);
-        $cleaned = preg_replace('/\s+on\w+=\'[^\']*\'/i', '', $cleaned);
-        $cleaned = preg_replace('/\s+on\w+=[^\s>]+/i', '', $cleaned);
-        $cleaned = preg_replace('/href="javascript:[^"]*"/i', 'href="#"', $cleaned);
-        $cleaned = preg_replace('/href=\'javascript:[^\']*\'/i', 'href="#"', $cleaned);
-
-        $this->attributes['mediation_notes'] = $cleaned;
+        $this->attributes['mediation_notes'] = HtmlSanitizer::clean($value);
     }
 
     /**
