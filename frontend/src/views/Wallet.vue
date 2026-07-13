@@ -282,40 +282,69 @@
           <div v-if="appStatusStore.paymentGateways['monnify']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt 2)</h3>
-                <button v-if="!wallet.monnify_virtual_account?.account_number" @click="assignMonnifyDva" :disabled="assigningMonnify"
-                        class="text-[10px] font-black uppercase bg-sky-600 text-white px-3 py-2 rounded-xl disabled:opacity-50">
-                  {{ assigningMonnify ? 'Creating…' : 'Generate' }}
-                </button>
               </div>
 
               <div v-if="wallet.monnify_virtual_account?.account_number" class="space-y-4">
-                <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Bank Name</span>
-                    <span class="font-bold text-slate-800 text-sm">{{ wallet.monnify_virtual_account.bank_name }}</span>
-                  </div>
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Name</span>
-                    <span class="font-bold text-slate-800 text-sm">{{ wallet.monnify_virtual_account.account_name }}</span>
-                  </div>
-                  <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                    <div>
-                      <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Number</p>
-                      <p class="font-black text-sky-700 text-xl tracking-wider">{{ wallet.monnify_virtual_account.account_number }}</p>
-                    </div>
-                    <button @click="copy(wallet.monnify_virtual_account.account_number)" class="bg-sky-50 text-sky-700 p-2 rounded-lg hover:bg-sky-100 transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                    </button>
-                  </div>
+                <div class="relative overflow-hidden bg-gradient-to-br from-sky-500 to-sky-700 p-6 rounded-3xl text-white shadow-lg shadow-sky-200">
+                   <!-- Subtle pattern overlay -->
+                   <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+                   <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-sky-300 opacity-20 rounded-full blur-3xl"></div>
+
+                   <div class="relative">
+                      <div class="flex justify-between items-start mb-6">
+                        <div>
+                          <p class="text-sky-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Bank Name</p>
+                          <p class="font-black text-lg leading-none">{{ wallet.monnify_virtual_account.bank_name }}</p>
+                        </div>
+                        <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                           </svg>
+                        </div>
+                      </div>
+
+                      <div class="mb-6">
+                        <p class="text-sky-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Number</p>
+                        <div class="flex items-center gap-3">
+                           <p class="font-black text-2xl tracking-[0.2em]">{{ wallet.monnify_virtual_account.account_number }}</p>
+                           <button @click="copy(wallet.monnify_virtual_account.account_number)" class="hover:scale-110 transition-transform active:scale-95">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                             </svg>
+                           </button>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-end">
+                        <div>
+                          <p class="text-sky-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Name</p>
+                          <p class="font-bold text-sm">{{ wallet.monnify_virtual_account.account_name }}</p>
+                        </div>
+                        <div class="text-[8px] font-black uppercase tracking-tighter bg-white/10 px-2 py-1 rounded backdrop-blur-md border border-white/10">
+                          Monnify Account
+                        </div>
+                      </div>
+                   </div>
                 </div>
-                <p class="text-[11px] text-slate-500 text-center px-4">Monnify account — transfer funds here to top up your wallet.</p>
-                <p class="text-[10px] text-rose-500 font-bold text-center mt-2">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+                <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Monnify account — transfer funds here to top up your wallet.</p>
+                <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+                  <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+                </div>
               </div>
 
-              <div v-else class="space-y-3">
-                <p class="text-sm text-slate-500">Generate a Monnify virtual account to fund via bank transfer.</p>
+              <div v-else class="space-y-4">
+                <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                  <p class="text-sm text-slate-600 leading-relaxed mb-4">Generate a Monnify virtual account to fund via bank transfer.</p>
+                  
+                  <button @click="assignMonnifyDva" :disabled="assigningMonnify"
+                          class="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-sky-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2">
+                    <span v-if="!assigningMonnify">Generate Monnify Account</span>
+                    <span v-else>Creating Account...</span>
+                    <svg v-if="!assigningMonnify" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -323,40 +352,69 @@
           <div v-if="appStatusStore.paymentGateways['opay']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt 3)</h3>
-              <button v-if="!wallet.opay_virtual_account?.account_number" @click="assignOpayDva" :disabled="assigningOpay"
-                      class="text-[10px] font-black uppercase bg-teal-600 text-white px-3 py-2 rounded-xl disabled:opacity-50">
-                {{ assigningOpay ? 'Creating…' : 'Generate' }}
-              </button>
             </div>
 
             <div v-if="wallet.opay_virtual_account?.account_number" class="space-y-4">
-              <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Bank Name</span>
-                  <span class="font-bold text-slate-800 text-sm">{{ wallet.opay_virtual_account.bank_name }}</span>
-                </div>
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Name</span>
-                  <span class="font-bold text-slate-800 text-sm">{{ wallet.opay_virtual_account.account_name }}</span>
-                </div>
-                <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <div>
-                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Number</p>
-                    <p class="font-black text-teal-700 text-xl tracking-wider">{{ wallet.opay_virtual_account.account_number }}</p>
-                  </div>
-                  <button @click="copy(wallet.opay_virtual_account.account_number)" class="bg-teal-50 text-teal-700 p-2 rounded-lg hover:bg-teal-100 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                  </button>
-                </div>
+              <div class="relative overflow-hidden bg-gradient-to-br from-teal-500 to-teal-700 p-6 rounded-3xl text-white shadow-lg shadow-teal-200">
+                 <!-- Subtle pattern overlay -->
+                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+                 <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-teal-300 opacity-20 rounded-full blur-3xl"></div>
+
+                 <div class="relative">
+                    <div class="flex justify-between items-start mb-6">
+                      <div>
+                        <p class="text-teal-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Bank Name</p>
+                        <p class="font-black text-lg leading-none">{{ wallet.opay_virtual_account.bank_name }}</p>
+                      </div>
+                      <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                         </svg>
+                      </div>
+                    </div>
+
+                    <div class="mb-6">
+                      <p class="text-teal-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Number</p>
+                      <div class="flex items-center gap-3">
+                         <p class="font-black text-2xl tracking-[0.2em]">{{ wallet.opay_virtual_account.account_number }}</p>
+                         <button @click="copy(wallet.opay_virtual_account.account_number)" class="hover:scale-110 transition-transform active:scale-95">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                           </svg>
+                         </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-end">
+                      <div>
+                        <p class="text-teal-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Name</p>
+                        <p class="font-bold text-sm">{{ wallet.opay_virtual_account.account_name }}</p>
+                      </div>
+                      <div class="text-[8px] font-black uppercase tracking-tighter bg-white/10 px-2 py-1 rounded backdrop-blur-md border border-white/10">
+                        Opay Account
+                      </div>
+                    </div>
+                 </div>
               </div>
-              <p class="text-[11px] text-slate-500 text-center px-4">Opay account — transfer funds here to top up your wallet.</p>
-              <p class="text-[10px] text-rose-500 font-bold text-center mt-2">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+              <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Opay account — transfer funds here to top up your wallet.</p>
+              <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+                <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+              </div>
             </div>
 
-            <div v-else class="space-y-3">
-              <p class="text-sm text-slate-500">Generate an Opay virtual account to fund via bank transfer.</p>
+            <div v-else class="space-y-4">
+              <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">Generate an Opay virtual account to fund via bank transfer.</p>
+                
+                <button @click="assignOpayDva" :disabled="assigningOpay"
+                        class="w-full bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2">
+                    <span v-if="!assigningOpay">Generate Opay Account</span>
+                    <span v-else>Creating Account...</span>
+                    <svg v-if="!assigningOpay" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+              </div>
             </div>
           </div>
 
