@@ -109,6 +109,7 @@ Route::middleware(['auth'])->prefix('admin/takaful/export')->group(function () {
     Route::get('/summary.pdf', [AdminTakafulController::class, 'exportSummaryPdf'])->name('takaful.web.export.summary.pdf');
 
     // Printing (Passbooks & Receipts)
+    Route::get('/view/passbook/{user}', [PrintController::class, 'viewPassbook'])->name('admin.view.passbook');
     Route::get('/print/passbook/{user}', [PrintController::class, 'passbook'])->name('admin.print.passbook');
     Route::get('/print/users-list', [PrintController::class, 'usersList'])->name('admin.print.users-list');
     Route::get('/print/wallet-receipt/{transaction}', [PrintController::class, 'walletReceipt'])->name('admin.print.wallet-receipt');

@@ -18,6 +18,23 @@ class PrintController extends Controller
     public function passbook(Request $request, User $user)
     {
         $year = (int) $request->get('year', now()->year);
+        $data = $this->getPassbookData($user, $year);
+
+        $pdf = Pdf::loadView('pdfs.passbook', $data);
+
+        return $pdf->stream($this->sanitizeFilename("passbook-{$user->membership_number}-{$year}.pdf"));
+    }
+
+    public function viewPassbook(Request $request, User $user)
+    {
+        $year = (int) $request->get('year', now()->year);
+        $data = $this->getPassbookData($user, $year);
+
+        return view('admin.passbook-view', $data);
+    }
+
+    private function getPassbookData(User $user, int $year): array
+    {
         $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
 
         $contributions = $user->contributions()
@@ -65,19 +82,15 @@ class PrintController extends Controller
             return $row;
         });
 
-        $branchName = $user->branch?->name;
-
-        $pdf = Pdf::loadView('pdfs.passbook', [
+        return [
             'user' => $user,
             'year' => $year,
             'contributions' => $contributions,
-            'branch' => $branchName,
+            'branch' => $user->branch?->name,
             'matrix' => $matrix,
             'grand_total' => $matrix->sum('total'),
             'bf_total' => $matrix->sum('bf'),
-        ]);
-
-        return $pdf->stream($this->sanitizeFilename("passbook-{$user->membership_number}-{$year}.pdf"));
+        ];
     }
 
     public function usersList(Request $request)

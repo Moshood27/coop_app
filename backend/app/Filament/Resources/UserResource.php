@@ -1123,6 +1123,18 @@ class UserResource extends Resource
                             ->danger()
                             ->send();
                     }),
+                Action::make('viewPassbook')
+                    ->label('View Passbook')
+                    ->icon('heroicon-o-eye')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\Select::make('year')
+                            ->options(array_combine(range(now()->year, now()->year - 5), range(now()->year, now()->year - 5)))
+                            ->default(now()->year)
+                            ->required(),
+                    ])
+                    ->url(fn (User $record, array $data) => route('admin.view.passbook', ['user' => $record->id, 'year' => $data['year'] ?? now()->year]))
+                    ->openUrlInNewTab(),
                 Action::make('printPassbook')
                     ->label('Print Passbook')
                     ->icon('heroicon-o-printer')
