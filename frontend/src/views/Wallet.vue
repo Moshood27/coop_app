@@ -108,108 +108,172 @@
         <div v-if="appStatusStore.paymentGateways['paystack']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-slate-800">Bank Transfer Account</h3>
-            <button v-if="!wallet.virtual_account?.account_number" @click="assignVirtualAccount" :disabled="assigning || (!!bvn && !bvnValid)"
-                    class="text-[10px] font-black uppercase bg-emerald-700 text-white px-3 py-2 rounded-xl disabled:opacity-50">
-              {{ assigning ? 'Creating…' : 'Generate' }}
-            </button>
           </div>
           
           <div v-if="wallet.virtual_account?.account_number" class="space-y-4">
-            <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Bank Name</span>
-                <span class="font-bold text-slate-800 text-sm">{{ wallet.virtual_account.bank_name }}</span>
-              </div>
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Name</span>
-                <span class="font-bold text-slate-800 text-sm">{{ wallet.virtual_account.account_name }}</span>
-              </div>
-              <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                <div>
-                  <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Number</p>
-                  <p class="font-black text-emerald-700 text-xl tracking-wider">{{ wallet.virtual_account.account_number }}</p>
-                </div>
-                <button @click="copy(wallet.virtual_account.account_number)" class="bg-emerald-50 text-emerald-700 p-2 rounded-lg hover:bg-emerald-100 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p class="text-[11px] text-slate-500 text-center px-4">Transfer funds to this account to top up your wallet instantly.</p>
-              <p class="text-[10px] text-rose-500 font-bold text-center mt-2">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-            </div>
+            <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 rounded-3xl text-white shadow-lg shadow-emerald-200">
+               <!-- Subtle pattern overlay -->
+               <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+               <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-emerald-400 opacity-20 rounded-full blur-3xl"></div>
 
-            <div v-else class="space-y-3">
-              <p class="text-sm text-slate-500">No virtual account yet. Generate one to fund via bank transfer.</p>
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">BVN (optional)</label>
-                <div class="relative group">
-                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-emerald-600 text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm5 3h-3a2 2 0 01-2-2V5" />
-                    </svg>
+               <div class="relative">
+                  <div class="flex justify-between items-start mb-6">
+                    <div>
+                      <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Bank Name</p>
+                      <p class="font-black text-lg leading-none">{{ wallet.virtual_account.bank_name }}</p>
+                    </div>
+                    <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                       </svg>
+                    </div>
                   </div>
-                  <input v-model="bvn" type="tel" inputmode="numeric" maxlength="11" placeholder="11-digit BVN"
-                         class="w-full bg-slate-50 pl-11 p-4 rounded-2xl border border-slate-100 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
-                </div>
-                <p v-if="bvn && !bvnValid" class="text-rose-600 text-[10px] font-bold">Please enter a valid 11-digit BVN.</p>
-                <p class="text-[10px] text-slate-400 leading-tight">Providing your BVN helps us verify your dedicated account faster.</p>
-              </div>
+
+                  <div class="mb-6">
+                    <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Number</p>
+                    <div class="flex items-center gap-3">
+                       <p class="font-black text-2xl tracking-[0.2em]">{{ wallet.virtual_account.account_number }}</p>
+                       <button @click="copy(wallet.virtual_account.account_number)" class="hover:scale-110 transition-transform active:scale-95">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                         </svg>
+                       </button>
+                    </div>
+                  </div>
+
+                  <div class="flex justify-between items-end">
+                    <div>
+                      <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Name</p>
+                      <p class="font-bold text-sm">{{ wallet.virtual_account.account_name }}</p>
+                    </div>
+                    <div class="text-[8px] font-black uppercase tracking-tighter bg-white/10 px-2 py-1 rounded backdrop-blur-md border border-white/10">
+                      Virtual Account
+                    </div>
+                  </div>
+               </div>
+            </div>
+            <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Transfer funds to this account to top up your wallet instantly.</p>
+            <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+              <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
             </div>
           </div>
+
+            <div v-else class="space-y-4">
+              <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">No virtual account yet. Generate one to fund via bank transfer.</p>
+                
+                <div class="space-y-3">
+                  <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">BVN (optional)</label>
+                    <div class="relative group">
+                      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-emerald-600 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm5 3h-3a2 2 0 01-2-2V5" />
+                        </svg>
+                      </div>
+                      <input v-model="bvn" type="tel" inputmode="numeric" maxlength="11" placeholder="11-digit BVN"
+                             class="w-full bg-white pl-11 p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" />
+                    </div>
+                    <p v-if="bvn && !bvnValid" class="text-rose-600 text-[10px] font-bold">Please enter a valid 11-digit BVN.</p>
+                    <p class="text-[10px] text-slate-400 leading-tight">Providing your BVN helps us verify your dedicated account faster.</p>
+                  </div>
+
+                  <button @click="assignVirtualAccount" :disabled="assigning || (!!bvn && !bvnValid)"
+                          class="w-full bg-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2">
+                    <span v-if="!assigning">Generate Virtual Account</span>
+                    <span v-else>Creating Account...</span>
+                    <svg v-if="!assigning" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+        </div>
 
           <!-- Flutterwave Virtual Account Info -->
           <div v-if="appStatusStore.paymentGateways['flutterwave']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt)</h3>
-              <button v-if="!wallet.flw_virtual_account?.account_number" @click="assignFlutterwaveDva" :disabled="assigningFlw || !flwBvnValid"
-                      class="text-[10px] font-black uppercase bg-orange-600 text-white px-3 py-2 rounded-xl disabled:opacity-50">
-                {{ assigningFlw ? 'Creating…' : 'Generate' }}
-              </button>
             </div>
 
             <div v-if="wallet.flw_virtual_account?.account_number" class="space-y-4">
-              <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Bank Name</span>
-                  <span class="font-bold text-slate-800 text-sm">{{ wallet.flw_virtual_account.bank_name }}</span>
-                </div>
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Name</span>
-                  <span class="font-bold text-slate-800 text-sm">{{ wallet.flw_virtual_account.account_name }}</span>
-                </div>
-                <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <div>
-                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Account Number</p>
-                    <p class="font-black text-orange-700 text-xl tracking-wider">{{ wallet.flw_virtual_account.account_number }}</p>
+              <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-700 p-6 rounded-3xl text-white shadow-lg shadow-orange-200">
+                 <!-- Subtle pattern overlay -->
+                 <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+                 <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-orange-300 opacity-20 rounded-full blur-3xl"></div>
+
+                 <div class="relative">
+                    <div class="flex justify-between items-start mb-6">
+                      <div>
+                        <p class="text-orange-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Bank Name</p>
+                        <p class="font-black text-lg leading-none">{{ wallet.flw_virtual_account.bank_name }}</p>
+                      </div>
+                      <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                         </svg>
+                      </div>
+                    </div>
+
+                    <div class="mb-6">
+                      <p class="text-orange-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Number</p>
+                      <div class="flex items-center gap-3">
+                         <p class="font-black text-2xl tracking-[0.2em]">{{ wallet.flw_virtual_account.account_number }}</p>
+                         <button @click="copy(wallet.flw_virtual_account.account_number)" class="hover:scale-110 transition-transform active:scale-95">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                           </svg>
+                         </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-end">
+                      <div>
+                        <p class="text-orange-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Account Name</p>
+                        <p class="font-bold text-sm">{{ wallet.flw_virtual_account.account_name }}</p>
+                      </div>
+                      <div class="text-[8px] font-black uppercase tracking-tighter bg-white/10 px-2 py-1 rounded backdrop-blur-md border border-white/10">
+                        Alternative Account
+                      </div>
+                    </div>
+                 </div>
+              </div>
+              <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Alternative account — transfer funds here to top up your wallet.</p>
+              <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+                <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+              </div>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">Generate an alternative virtual account (Flutterwave) to fund via bank transfer.</p>
+
+                <div class="space-y-3">
+                  <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">BVN (required)</label>
+                    <div class="relative group">
+                      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-orange-600 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm5 3h-3a2 2 0 01-2-2V5" />
+                        </svg>
+                      </div>
+                      <input v-model="flwBvn" type="tel" inputmode="numeric" maxlength="11" placeholder="11-digit BVN"
+                             class="w-full bg-white pl-11 p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all" />
+                    </div>
+                    <p v-if="flwBvn && !flwBvnValid" class="text-rose-600 text-[10px] font-bold">Please enter a valid 11-digit BVN.</p>
+                    <p class="text-[10px] text-slate-400 leading-tight">BVN is required by Flutterwave to create your dedicated account.</p>
                   </div>
-                  <button @click="copy(wallet.flw_virtual_account.account_number)" class="bg-orange-50 text-orange-700 p-2 rounded-lg hover:bg-orange-100 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+
+                  <button @click="assignFlutterwaveDva" :disabled="assigningFlw || !flwBvnValid"
+                          class="w-full bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2">
+                    <span v-if="!assigningFlw">Generate Alternative Account</span>
+                    <span v-else>Creating Account...</span>
+                    <svg v-if="!assigningFlw" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </button>
                 </div>
-              </div>
-              <p class="text-[11px] text-slate-500 text-center px-4">Alternative account — transfer funds here to top up your wallet.</p>
-              <p class="text-[10px] text-rose-500 font-bold text-center mt-2">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-            </div>
-
-            <div v-else class="space-y-3">
-              <p class="text-sm text-slate-500">Generate an alternative virtual account (Flutterwave) to fund via bank transfer.</p>
-              <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">BVN (required)</label>
-                <div class="relative group">
-                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-orange-600 text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm5 3h-3a2 2 0 01-2-2V5" />
-                    </svg>
-                  </div>
-                  <input v-model="flwBvn" type="tel" inputmode="numeric" maxlength="11" placeholder="11-digit BVN"
-                         class="w-full bg-slate-50 pl-11 p-4 rounded-2xl border border-slate-100 text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all" />
-                </div>
-                <p v-if="flwBvn && !flwBvnValid" class="text-rose-600 text-[10px] font-bold">Please enter a valid 11-digit BVN.</p>
-                <p class="text-[10px] text-slate-400 leading-tight">BVN is required by Flutterwave to create your dedicated account.</p>
               </div>
             </div>
           </div>
