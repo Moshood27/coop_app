@@ -31,11 +31,7 @@
       </div>
 
       <div class="grid grid-cols-2 gap-3">
-<!--        <button @click="activeTab = 'transfer'"-->
-<!--                class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">-->
-<!--          <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">💸</div>-->
-<!--          <span class="text-xs font-bold text-slate-700">Transfer</span>-->
-<!--        </button>-->
+
         <button v-if="appStatusStore.features['withdrawals-enabled']" @click="activeTab = 'withdraw'" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
           <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-xl">🏦</div>
           <span class="text-xs font-bold text-slate-700">Withdraw</span>

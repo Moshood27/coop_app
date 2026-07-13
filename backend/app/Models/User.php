@@ -376,9 +376,25 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         return $this->virtualAccount?->opay_dva_data['bankName'] ?? null;
     }
 
+    protected $appends = [
+        'full_name',
+        'permissions',
+    ];
+
     public function getFullNameAttribute(): string
     {
         return trim("{$this->surname} {$this->name} {$this->other_names}");
+    }
+
+    public function getPermissionsAttribute()
+    {
+        if ($this->relationLoaded('permissions') || $this->relationLoaded('roles')) {
+            return $this->getAllPermissions()->pluck('name');
+        }
+        // Fallback to avoid heavy loading every time if not needed,
+        // but for mobile app we usually want it.
+        // To be safe and efficient, we can check if we are in API context or just load it.
+        return $this->getAllPermissions()->pluck('name');
     }
 
     public function badges()

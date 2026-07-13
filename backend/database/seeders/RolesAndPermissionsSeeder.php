@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_all_members',
             'view_own_branch_members',
             'record_contributions',
+            'mark_attendance',
         ];
 
         // Resource permissions (Shield style)
@@ -126,6 +127,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'approve_loans', // Specific custom permission
             'view_own_branch_members', // Legacy/custom
             'record_contributions', // Legacy/custom
+            'mark_attendance',
         ]);
 
         // Sharia Board
@@ -153,6 +155,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_any_category', 'view_category',
             'view_any_product', 'view_product',
             'record_contributions', // Legacy/custom
+            'mark_attendance',
         ]);
 
         // Assign Super Admin role to existing admins if any

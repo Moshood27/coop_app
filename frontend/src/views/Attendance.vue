@@ -219,6 +219,46 @@
             </div>
           </div>
         </div>
+        
+        <!-- Mark for Member (Delegated Admin) -->
+        <div v-if="canMarkForOthers && meeting.status === 'ongoing'" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mt-4">
+             <div class="flex items-center gap-2 mb-4">
+               <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-lg">👥</div>
+               <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Mark for Member</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-4">You have privilege to mark attendance for other members who may not have their devices or are unable to mark.</p>
+            
+            <div class="relative">
+              <input 
+                v-model="memberSearchQuery" 
+                @input="searchMembers"
+                type="text" 
+                placeholder="Search name, phone or membership #"
+                class="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-bold focus:ring-1 focus:ring-amber-500"
+              />
+              <div v-if="searchingMembers" class="absolute right-4 top-4">
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-amber-600 border-t-transparent"></div>
+              </div>
+            </div>
+
+            <div v-if="memberSearchResults.length > 0" class="mt-4 space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+               <div v-for="member in memberSearchResults" :key="member.id" 
+                    class="p-3 bg-slate-50 rounded-2xl flex items-center justify-between gap-3 border border-slate-100">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">{{ member.membership_number }} • {{ member.phone }}</p>
+                  </div>
+                  <button 
+                    @click="markForMemberAction(member)" 
+                    :disabled="markingForMember === member.id"
+                    class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50"
+                  >
+                    <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block"></span>
+                    <span v-else>Mark Present</span>
+                  </button>
+               </div>
+            </div>
+        </div>
 
         <!-- History -->
         <div class="mt-10 mb-6">
@@ -331,6 +371,52 @@ const refreshingStatus = ref(false)
 const showWebScanner = ref(false)
 const hasBiometrics = ref(false)
 const scanningBeacon = ref(false)
+
+const memberSearchQuery = ref('')
+const memberSearchResults = ref([])
+const searchingMembers = ref(false)
+const markingForMember = ref(null)
+const currentUser = ref(null)
+
+const canMarkForOthers = computed(() => {
+  if (!currentUser.value) return false
+  return currentUser.value.permissions?.includes('mark_attendance') || currentUser.value.is_admin
+})
+
+const searchMembers = async () => {
+  if (memberSearchQuery.value.length < 2) {
+    memberSearchResults.value = []
+    return
+  }
+  searchingMembers.value = true
+  try {
+    const { data } = await axios.get(`/api/attendance/search-members?q=${memberSearchQuery.value}`)
+    memberSearchResults.value = data
+  } catch (err) {
+    console.error('Member search failed:', err)
+  } finally {
+    searchingMembers.value = false
+  }
+}
+
+const markForMemberAction = async (member) => {
+  const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
+  if (!confirm) return
+
+  markingForMember.value = member.id
+  try {
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/mark-member-attendance`, {
+      user_id: member.id
+    })
+    modal.toast(res.data.message)
+    memberSearchQuery.value = ''
+    memberSearchResults.value = []
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Failed to mark attendance for member")
+  } finally {
+    markingForMember.value = null
+  }
+}
 
 const isNative = Capacitor.isNativePlatform()
 const canScan = true // Always true now as we have web fallback
@@ -712,6 +798,16 @@ const submitApology = async () => {
 }
 
 onMounted(async () => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const { data: userData } = await axios.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
+      currentUser.value = userData
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err)
+    }
+  }
+
   await fetchCurrentMeeting()
   await syncOfflineRecords()
 
@@ -729,9 +825,8 @@ onMounted(async () => {
     }
     
     const token = localStorage.getItem('token')
-    if (token) {
-      const { data: userData } = await axios.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
-      const userId = userData.id
+    if (token && currentUser.value) {
+      const userId = currentUser.value.id
 
       if (userId) {
         echo.private(`user.${userId}`)

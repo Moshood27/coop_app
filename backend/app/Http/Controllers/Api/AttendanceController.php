@@ -244,6 +244,83 @@ class AttendanceController extends Controller
         return response()->json(['message' => $message, 'record' => $record]);
     }
 
+    public function searchMembers(Request $request)
+    {
+        if (!$request->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = $request->get('q');
+        if (strlen($query) < 2) {
+             return response()->json([]);
+        }
+
+        $users = User::where(function($q) use ($query) {
+                $q->where('surname', 'like', "%{$query}%")
+                    ->orWhere('name', 'like', "%{$query}%")
+                    ->orWhere('other_names', 'like', "%{$query}%")
+                    ->orWhere('membership_number', 'like', "%{$query}%")
+                    ->orWhere('phone', 'like', "%{$query}%");
+            })
+            ->where('is_admin', false)
+            ->limit(20)
+            ->get(['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id']);
+
+        return response()->json($users);
+    }
+
+    public function markMemberAttendance(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if (!$request->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => 'Meeting is not ongoing'], 400);
+        }
+
+        $targetUser = User::findOrFail($request->user_id);
+
+        // Optional: Check branch eligibility
+        if ($meeting->branches()->exists()) {
+            $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
+            if (!$isEligible) {
+                return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
+            }
+        }
+
+        $record = AttendanceRecord::updateOrCreate(
+            ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
+            [
+                'status' => 'present',
+                'attended_at' => now(),
+                'verified_biometrically' => false,
+                'device_uuid' => 'marked_by_admin_' . $request->user()->id,
+            ]
+        );
+
+        broadcast(new AttendanceMarked($meeting, $record));
+
+        // Notify member
+        try {
+            $targetUser->notifyMember(
+                "Attendance Marked",
+                "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
+                ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
+                ['push', 'database']
+            );
+        } catch (\Exception $e) {}
+
+        return response()->json([
+            'message' => 'Attendance marked for ' . $targetUser->full_name,
+            'record' => $record
+        ]);
+    }
+
     public function getAttendanceQrPayload(Meeting $meeting)
     {
         // Only admins can see this
