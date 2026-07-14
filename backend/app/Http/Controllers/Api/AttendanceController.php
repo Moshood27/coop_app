@@ -427,7 +427,7 @@ class AttendanceController extends Controller
                     'membership_number' => $record->user->membership_number,
                     'branch' => $record->user->branch?->name,
                     'status' => $record->status,
-                    'attended_at' => $record->attended_at?->format('H:i:s'),
+                    'attended_at' => $record->attended_at?->format('H:i'),
                     'verified_biometrically' => $record->verified_biometrically,
                 ];
             });
