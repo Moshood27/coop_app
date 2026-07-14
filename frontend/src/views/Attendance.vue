@@ -12,10 +12,10 @@
         <div class="text-5xl mb-4">🗓️</div>
         <h2 class="text-xl font-bold text-slate-800">No active or upcoming meeting</h2>
         <p class="text-slate-500 mt-2 text-sm">There is no meeting currently active or scheduled for your branch.</p>
-        <button @click="fetchCurrentMeeting" class="mt-8 w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 uppercase tracking-widest text-xs active:scale-95 transition-all">Refresh</button>
+        <button @click="fetchCurrentMeeting" class="mt-8 w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 uppercase tracking-widest text-xs active:scale-[0.98] transition-all">Refresh</button>
       </div>
 
-      <div v-else>
+      <div v-if="!loading && meeting">
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-4 overflow-hidden relative">
            <div class="absolute -right-6 -top-6 w-20 h-20 bg-emerald-50 rounded-full opacity-50" />
           <div class="flex items-center justify-between mb-4 relative z-10">
@@ -286,68 +286,69 @@
                </div>
             </div>
         </div>
+      </div>
 
-        <!-- History -->
-        <div class="mt-10 mb-6">
-          <h3 class="px-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Recent History</h3>
-          
-          <div v-if="loadingHistory && history.length === 0" class="space-y-3">
-             <div v-for="i in 3" :key="i" class="h-20 bg-slate-100 rounded-3xl animate-pulse"></div>
-          </div>
-          
-          <div v-else-if="history.length === 0" class="bg-white p-8 rounded-3xl border border-dashed border-slate-200 text-center">
-             <p class="text-xs text-slate-400 font-bold uppercase">No history records yet</p>
-          </div>
+      <!-- History (Always visible) -->
+      <div v-if="!loading" class="mt-10 mb-6">
+        <h3 class="px-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Recent History</h3>
+        
+        <div v-if="loadingHistory && history.length === 0" class="space-y-3">
+           <div v-for="i in 3" :key="i" class="h-20 bg-slate-100 rounded-3xl animate-pulse"></div>
+        </div>
+        
+        <div v-else-if="history.length === 0" class="bg-white p-8 rounded-3xl border border-dashed border-slate-200 text-center">
+           <p class="text-xs text-slate-400 font-bold uppercase">No history records yet</p>
+        </div>
 
-          <div v-else class="space-y-3">
-            <div v-for="item in history" :key="item.id" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
-               <div :class="[
-                 'w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm',
-                 item.status === 'present' ? 'bg-emerald-50 text-emerald-600' : 
-                 item.status === 'fine_paid' ? 'bg-orange-50 text-orange-600' :
-                 item.status === 'excused' ? 'bg-blue-50 text-blue-600' :
-                 item.status === 'pending_excuse' ? 'bg-slate-50 text-slate-600' :
-                 item.status === 'fine_pending' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400'
-               ]">
-                 {{ item.status === 'present' ? '✅' : item.status === 'fine_paid' ? '💰' : 
-                    item.status === 'excused' ? '🙏' : item.status === 'pending_excuse' ? '⏳' : '❌' }}
+        <div v-else class="space-y-3">
+          <div v-for="item in history" :key="item.id" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+             <div :class="[
+               'w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm',
+               item.status === 'present' ? 'bg-emerald-50 text-emerald-600' : 
+               item.status === 'fine_paid' ? 'bg-orange-50 text-orange-600' :
+               item.status === 'excused' ? 'bg-blue-50 text-blue-600' :
+               item.status === 'pending_excuse' ? 'bg-slate-50 text-slate-600' :
+               item.status === 'fine_pending' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400'
+             ]">
+               {{ item.status === 'present' ? '✅' : item.status === 'fine_paid' ? '💰' : 
+                  item.status === 'excused' ? '🙏' : item.status === 'pending_excuse' ? '⏳' : '❌' }}
+             </div>
+             
+             <div class="flex-1 min-w-0">
+               <h4 class="text-sm font-black text-slate-800 truncate">{{ item.meeting?.name || 'Unknown Meeting' }}</h4>
+               <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(item.created_at) }}</span>
+                  <span v-if="item.status === 'fine_pending'" class="text-[8px] font-black bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full uppercase">Fine Pending</span>
+                  <span v-if="item.status === 'fine_paid'" class="text-[8px] font-black bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full uppercase">Fine Paid</span>
                </div>
-               
-               <div class="flex-1 min-w-0">
-                 <h4 class="text-sm font-black text-slate-800 truncate">{{ item.meeting?.name || 'Unknown Meeting' }}</h4>
-                 <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(item.created_at) }}</span>
-                    <span v-if="item.status === 'fine_pending'" class="text-[8px] font-black bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full uppercase">Fine Pending</span>
-                    <span v-if="item.status === 'fine_paid'" class="text-[8px] font-black bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full uppercase">Fine Paid</span>
-                 </div>
-               </div>
-               
-               <div class="text-right">
-                  <p :class="[
-                    'text-[10px] font-black uppercase tracking-tight',
-                    item.status === 'present' ? 'text-emerald-600' : 
-                    item.status === 'fine_paid' ? 'text-orange-600' : 
-                    item.status === 'excused' ? 'text-blue-600' :
-                    item.status === 'pending_excuse' ? 'text-slate-600' : 'text-red-600'
-                  ]">
-                    {{ item.status.replace('_', ' ') }}
-                  </p>
-                  <p v-if="item.status === 'fine_pending' || item.status === 'fine_paid'" class="text-[9px] text-slate-400 font-bold mt-0.5">
-                    ₦{{ formatMoney(item.meeting?.fine_amount) }}
-                  </p>
-                  
-                  <!-- View Report Button for Audited Meetings -->
-                  <button v-if="item.meeting?.status === 'audited'" 
-                          @click="openMeetingReport(item.meeting)"
-                          class="mt-2 px-2 py-1 bg-slate-800 text-white text-[8px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-all">
-                    View Report
-                  </button>
-               </div>
-            </div>
+             </div>
+             
+             <div class="text-right">
+                <p :class="[
+                  'text-[10px] font-black uppercase tracking-tight',
+                  item.status === 'present' ? 'text-emerald-600' : 
+                  item.status === 'fine_paid' ? 'text-orange-600' : 
+                  item.status === 'excused' ? 'text-blue-600' :
+                  item.status === 'pending_excuse' ? 'text-slate-600' : 'text-red-600'
+                ]">
+                  {{ item.status.replace('_', ' ') }}
+                </p>
+                <p v-if="item.status === 'fine_pending' || item.status === 'fine_paid'" class="text-[9px] text-slate-400 font-bold mt-0.5">
+                  ₦{{ formatMoney(item.meeting?.fine_amount) }}
+                </p>
+                
+                <!-- View Report Button for Audited Meetings or Admins -->
+                <button v-if="item.meeting?.status === 'audited' || canMarkForOthers" 
+                        @click="openMeetingReport(item.meeting)"
+                        class="mt-2 px-2 py-1 bg-slate-800 text-white text-[8px] font-black uppercase tracking-widest rounded-lg active:scale-[0.98] transition-all">
+                  View Report
+                </button>
+             </div>
           </div>
         </div>
       </div>
     </div>
+
     <AppBottomNav />
     
     <WebQrScanner 

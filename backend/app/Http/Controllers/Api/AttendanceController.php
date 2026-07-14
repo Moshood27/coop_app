@@ -269,8 +269,10 @@ class AttendanceController extends Controller
         $userQuery = User::where('is_admin', false)
             ->where('is_defaulter', false);
 
+        $isSuperAdmin = $request->user()->hasRole('super_admin');
+
         // Filter by meeting branches if meeting_id is provided
-        if ($meetingId) {
+        if ($meetingId && !$isSuperAdmin) {
             $meeting = Meeting::find($meetingId);
             if ($meeting && $meeting->branches()->exists()) {
                 $branchIds = $meeting->branches()->pluck('branches.id');
@@ -336,7 +338,8 @@ class AttendanceController extends Controller
             }
 
             // Optional: Check branch eligibility
-            if ($meeting->branches()->exists()) {
+            $isSuperAdmin = $request->user()->hasRole('super_admin');
+            if ($meeting->branches()->exists() && !$isSuperAdmin) {
                 $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
                 if (!$isEligible) {
                     return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
