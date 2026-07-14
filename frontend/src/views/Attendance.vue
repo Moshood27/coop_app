@@ -265,6 +265,26 @@
                   </button>
                </div>
             </div>
+            
+            <!-- Members I've Marked -->
+            <div v-if="markedByMeList.length > 0" class="mt-6 border-t border-slate-100 pt-6">
+               <div class="flex items-center justify-between mb-3">
+                 <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Marked by me ({{ markedByMeList.length }})</h4>
+                 <button @click="fetchMarkedByMe" :disabled="loadingMarkedByMe" class="text-[9px] font-bold text-emerald-600 uppercase">Refresh</button>
+               </div>
+               <div class="space-y-2">
+                 <div v-for="rec in markedByMeList" :key="rec.id" class="flex items-center justify-between p-2 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[10px] shadow-sm">👤</div>
+                      <div>
+                        <p class="text-[10px] font-black text-slate-800">{{ rec.user?.name }} {{ rec.user?.surname }}</p>
+                        <p class="text-[8px] text-slate-400 font-bold">{{ rec.user?.membership_number }}</p>
+                      </div>
+                    </div>
+                    <span class="text-[8px] font-black text-emerald-600 uppercase">{{ formatTime(rec.attended_at) }}</span>
+                 </div>
+               </div>
+            </div>
         </div>
 
         <!-- History -->
@@ -315,6 +335,13 @@
                   <p v-if="item.status === 'fine_pending' || item.status === 'fine_paid'" class="text-[9px] text-slate-400 font-bold mt-0.5">
                     ₦{{ formatMoney(item.meeting?.fine_amount) }}
                   </p>
+                  
+                  <!-- View Report Button for Audited Meetings -->
+                  <button v-if="item.meeting?.status === 'audited'" 
+                          @click="openMeetingReport(item.meeting)"
+                          class="mt-2 px-2 py-1 bg-slate-800 text-white text-[8px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-all">
+                    View Report
+                  </button>
                </div>
             </div>
           </div>
@@ -329,6 +356,60 @@
       @close="showWebScanner = false"
       @error="(e) => modal.alert(e?.message || 'Camera error')" 
     />
+
+    <!-- Meeting Report Modal -->
+    <div v-if="showReportModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
+       <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showReportModal = false"></div>
+       <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+             <div>
+               <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Attendance Report</h3>
+               <p v-if="meetingReportData" class="text-[10px] text-slate-500 font-bold uppercase">{{ meetingReportData.meeting.name }} • {{ formatDate(meetingReportData.meeting.date) }}</p>
+             </div>
+             <button @click="showReportModal = false" class="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400">✕</button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-4 no-scrollbar">
+             <div v-if="loadingReport" class="flex flex-col items-center justify-center py-20">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+             </div>
+             <div v-else-if="meetingReportData">
+                <div class="grid grid-cols-4 px-2 py-3 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                   <div class="col-span-2">Member</div>
+                   <div>Status</div>
+                   <div class="text-right">Time</div>
+                </div>
+                <div class="divide-y divide-slate-50">
+                   <div v-for="rec in meetingReportData.records" :key="rec.id" class="grid grid-cols-4 px-2 py-4 items-center gap-2">
+                      <div class="col-span-2 flex items-center gap-2">
+                         <div class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-[10px]">👤</div>
+                         <div class="min-w-0">
+                            <p class="text-[10px] font-black text-slate-800 truncate">{{ rec.user_name }}</p>
+                            <p class="text-[8px] text-slate-400 font-bold uppercase truncate">{{ rec.membership_number }} • {{ rec.branch }}</p>
+                         </div>
+                      </div>
+                      <div>
+                         <span :class="[
+                           'text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase',
+                           rec.status === 'present' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                         ]">{{ rec.status }}</span>
+                      </div>
+                      <div class="text-right text-[9px] font-black text-slate-500">
+                         {{ rec.attended_at || '--:--' }}
+                      </div>
+                   </div>
+                </div>
+                <div v-if="meetingReportData.records.length === 0" class="py-20 text-center">
+                   <p class="text-xs text-slate-400 font-bold uppercase">No records found</p>
+                </div>
+             </div>
+          </div>
+          
+          <div class="p-6 bg-slate-50 border-t border-slate-100">
+             <button @click="showReportModal = false" class="w-full bg-slate-800 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-[10px]">Close</button>
+          </div>
+       </div>
+    </div>
   </div>
 </template>
 
@@ -384,11 +465,45 @@ const memberSearchResults = ref([])
 const searchingMembers = ref(false)
 const markingForMember = ref(null)
 const currentUser = ref(null)
+const markedByMeList = ref([])
+const loadingMarkedByMe = ref(false)
+const showReportModal = ref(false)
+const meetingReportData = ref(null)
+const loadingReport = ref(false)
 
 const canMarkForOthers = computed(() => {
   if (!currentUser.value) return false
   return currentUser.value.permission_names?.includes('mark_attendance') || currentUser.value.is_admin
 })
+
+const fetchMarkedByMe = async () => {
+  if (!meeting.value || !canMarkForOthers.value) return
+  loadingMarkedByMe.value = true
+  try {
+    const { data } = await axios.get(`/api/meetings/${meeting.value.id}/marked-by-me`)
+    markedByMeList.value = data
+  } catch (err) {
+    console.error('Failed to fetch marked members:', err)
+  } finally {
+    loadingMarkedByMe.value = false
+  }
+}
+
+const openMeetingReport = async (m = null) => {
+  const targetMeeting = m || meeting.value
+  if (!targetMeeting) return
+  showReportModal.value = true
+  loadingReport.value = true
+  try {
+    const { data } = await axios.get(`/api/meetings/${targetMeeting.id}/report`)
+    meetingReportData.value = data
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Failed to load report")
+    showReportModal.value = false
+  } finally {
+    loadingReport.value = false
+  }
+}
 
 const searchMembers = async () => {
   if (memberSearchQuery.value.length < 2) {
@@ -420,6 +535,7 @@ const markForMemberAction = async (member) => {
       modal.alert(res.data.message || "Attendance marked successfully")
       // Update local state to reflect change immediately
       member.is_present = true
+      fetchMarkedByMe()
     } else {
       modal.alert(res.data.message || "Failed to mark attendance", "Attendance Error")
     }
@@ -487,9 +603,30 @@ const canSubmitApology = computed(() => {
   return now < start
 })
 
-const formatMoney = (val) => Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
-const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-const formatTime = (val) => val ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+const formatMoney = (val) => {
+  return new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2 }).format(val || 0)
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return new Date(dateStr).toLocaleDateString('en-GB', { 
+    day: 'numeric', 
+    month: 'short', 
+    year: 'numeric' 
+  })
+}
+
+const formatTime = (dateStr) => {
+  if (!dateStr || dateStr === 'N/A') return '--:--'
+  try {
+     return new Date(dateStr).toLocaleTimeString('en-GB', {
+       hour: '2-digit',
+       minute: '2-digit'
+     })
+  } catch (e) {
+     return dateStr
+  }
+}
 
 const formatDuration = (ms) => {
   const s = Math.floor(ms / 1000)
@@ -572,6 +709,9 @@ const fetchCurrentMeeting = async () => {
 
     if (meeting.value) {
       startCountdown()
+      if (canMarkForOthers.value) {
+        fetchMarkedByMe()
+      }
     }
   } catch (err) {
     console.error('Attendance Check:', err)
@@ -816,6 +956,9 @@ onMounted(async () => {
     try {
       const { data: userData } = await axios.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
       currentUser.value = userData
+      if (meeting.value && canMarkForOthers.value) {
+        fetchMarkedByMe()
+      }
     } catch (err) {
       console.error('Failed to fetch user profile:', err)
     }

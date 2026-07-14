@@ -348,6 +348,7 @@ class AttendanceController extends Controller
                 [
                     'status' => 'present',
                     'attended_at' => now(),
+                    'marked_by_id' => $request->user()->id,
                     'verified_biometrically' => false,
                     'device_uuid' => 'marked_by_admin_' . $request->user()->id,
                 ]
@@ -389,6 +390,56 @@ class AttendanceController extends Controller
             ]);
             return response()->json(['message' => 'Failed to mark attendance: ' . ($e->getMessage() ?: 'Unknown system error')], 500);
         }
+    }
+
+    public function markedByMe(Meeting $meeting)
+    {
+        if (!auth()->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $records = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->where('marked_by_id', auth()->id())
+            ->with(['user:id,name,surname,membership_number,phone'])
+            ->orderBy('attended_at', 'desc')
+            ->get();
+
+        return response()->json($records);
+    }
+
+    public function meetingReport(Meeting $meeting)
+    {
+        // Allow if audited OR if user has permission to mark attendance (officers)
+        $isAudited = $meeting->status === 'audited';
+        $hasPermission = auth()->user()->hasPermissionTo('mark_attendance');
+
+        if (!$isAudited && !$hasPermission) {
+            return response()->json(['message' => 'Report not available yet.'], 403);
+        }
+
+        $records = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->with(['user:id,name,surname,membership_number,phone,branch_id', 'user.branch:id,name'])
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'id' => $record->id,
+                    'user_name' => $record->user->full_name,
+                    'membership_number' => $record->user->membership_number,
+                    'branch' => $record->user->branch?->name,
+                    'status' => $record->status,
+                    'attended_at' => $record->attended_at?->format('H:i:s'),
+                    'verified_biometrically' => $record->verified_biometrically,
+                ];
+            });
+
+        return response()->json([
+            'meeting' => [
+                'name' => $meeting->name,
+                'date' => $meeting->date->format('Y-m-d'),
+                'status' => $meeting->status
+            ],
+            'records' => $records
+        ]);
     }
 
     public function getAttendanceQrPayload(Meeting $meeting)

@@ -13,6 +13,7 @@ class AttendanceRecord extends Model
     protected $fillable = [
         'user_id',
         'meeting_id',
+        'marked_by_id',
         'status',
         'attended_at',
         'lat',
@@ -53,5 +54,10 @@ class AttendanceRecord extends Model
     public function meeting(): BelongsTo
     {
         return $this->belongsTo(Meeting::class);
+    }
+
+    public function markedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'marked_by_id');
     }
 }
