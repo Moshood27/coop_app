@@ -285,7 +285,8 @@ class AttendanceController extends Controller
         $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
 
         // Filter by meeting branches if meeting_id is provided
-        if ($meetingId && !$canMarkAttendance) {
+        // Restriction: Only members scheduled for the meeting's branches should be searchable
+        if ($meetingId) {
             $meeting = Meeting::find($meetingId);
             if ($meeting && $meeting->branches()->exists()) {
                 $branchIds = $meeting->branches()->pluck('branches.id');
@@ -405,6 +406,37 @@ class AttendanceController extends Controller
                 'admin_id' => $request->user()?->id
             ]);
             return response()->json(['message' => 'Failed to mark attendance: ' . ($e->getMessage() ?: 'Unknown system error')], 500);
+        }
+    }
+
+    public function unmarkMemberAttendance(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if (!$request->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $record = AttendanceRecord::where('user_id', $request->user_id)
+                ->where('meeting_id', $meeting->id)
+                ->first();
+
+            if ($record) {
+                // Remove the record to correct mistake
+                $record->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Attendance unmarked successfully.'
+                ]);
+            }
+
+            return response()->json(['message' => 'No attendance record found for this member.'], 404);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Failed to unmark attendance: ' . $e->getMessage()], 500);
         }
     }
 

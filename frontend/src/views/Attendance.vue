@@ -248,21 +248,32 @@
                     <p class="text-xs font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
                     <p class="text-[9px] text-slate-400 font-bold uppercase">{{ member.membership_number }} • {{ member.phone }}</p>
                   </div>
-                  <button 
-                    @click="markForMemberAction(member)" 
-                    :disabled="markingForMember === member.id || member.is_present"
-                    class="px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50 transition-colors"
-                    :class="member.is_present ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-emerald-600 text-white'"
-                  >
-                    <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block"></span>
-                    <span v-else-if="member.is_present" class="flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                      </svg>
-                      Present
-                    </span>
-                    <span v-else>Mark Present</span>
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      v-if="member.is_present"
+                      @click="unmarkForMemberAction(member)"
+                      :disabled="unmarkingForMember === member.id"
+                      class="px-2 py-2 bg-red-50 text-red-600 rounded-xl text-[8px] font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      <span v-if="unmarkingForMember === member.id" class="animate-spin rounded-full h-2 w-2 border-2 border-red-600 border-t-transparent inline-block"></span>
+                      <span v-else>Unmark</span>
+                    </button>
+                    <button 
+                      @click="markForMemberAction(member)" 
+                      :disabled="markingForMember === member.id || member.is_present"
+                      class="px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50 transition-colors"
+                      :class="member.is_present ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-emerald-600 text-white'"
+                    >
+                      <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block"></span>
+                      <span v-else-if="member.is_present" class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        Present
+                      </span>
+                      <span v-else>Mark Present</span>
+                    </button>
+                  </div>
                </div>
             </div>
             
@@ -281,7 +292,14 @@
                         <p class="text-[8px] text-slate-400 font-bold">{{ rec.user?.membership_number }}</p>
                       </div>
                     </div>
-                    <span class="text-[8px] font-black text-emerald-600 uppercase">{{ formatTime(rec.attended_at) }}</span>
+                    <div class="flex items-center gap-3">
+                      <span class="text-[8px] font-black text-emerald-600 uppercase">{{ formatTime(rec.attended_at) }}</span>
+                      <button @click="unmarkForMemberAction(rec)" :disabled="unmarkingForMember === rec.user_id" 
+                              class="w-5 h-5 bg-red-50 text-red-500 rounded-lg flex items-center justify-center text-[10px] active:scale-90 transition-all">
+                        <span v-if="unmarkingForMember === rec.user_id" class="animate-spin h-2 w-2 border border-red-500 border-t-transparent rounded-full"></span>
+                        <span v-else>✕</span>
+                      </button>
+                    </div>
                  </div>
                </div>
             </div>
@@ -465,6 +483,7 @@ const memberSearchQuery = ref('')
 const memberSearchResults = ref([])
 const searchingMembers = ref(false)
 const markingForMember = ref(null)
+const unmarkingForMember = ref(null)
 const currentUser = ref(null)
 const markedByMeList = ref([])
 const loadingMarkedByMe = ref(false)
@@ -545,6 +564,36 @@ const markForMemberAction = async (member) => {
     modal.alert(errorMsg, "Attendance Error")
   } finally {
     markingForMember.value = null
+  }
+}
+
+const unmarkForMemberAction = async (memberOrRecord) => {
+  const memberId = memberOrRecord.user_id || memberOrRecord.id
+  const name = memberOrRecord.user ? `${memberOrRecord.user.name} ${memberOrRecord.user.surname}` : `${memberOrRecord.name} ${memberOrRecord.surname}`
+  
+  const confirm = await modal.confirm(`Are you sure you want to UNMARK attendance for ${name}? This will remove their presence record.`)
+  if (!confirm) return
+
+  unmarkingForMember.value = memberId
+  try {
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/unmark-member-attendance`, {
+      user_id: memberId
+    })
+    
+    if (res.data.success) {
+      modal.alert("Attendance unmarked successfully")
+      // Update search results if visible
+      const foundInSearch = memberSearchResults.value.find(m => m.id === memberId)
+      if (foundInSearch) foundInSearch.is_present = false
+      
+      fetchMarkedByMe()
+    } else {
+      modal.alert(res.data.message || "Failed to unmark attendance")
+    }
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Error unmarking attendance")
+  } finally {
+    unmarkingForMember.value = null
   }
 }
 
