@@ -32,24 +32,37 @@ class AttendanceController extends Controller
     public function current(Request $request)
     {
         $user = $request->user();
+        $canMarkAttendance = $user->hasPermissionTo('mark_attendance');
 
         // Ensure meetings statuses are up-to-date for accurate "auto-start/stop"
         $this->syncStatuses();
 
         // Find ongoing meeting
         $meeting = Meeting::where('status', 'ongoing')
-            ->where(function ($query) use ($user) {
+            ->where(function ($query) use ($user, $canMarkAttendance) {
+                if ($canMarkAttendance) {
+                    // Admins/Officers can see ANY ongoing meeting to mark for others
+                    return;
+                }
                 $query->whereDoesntHave('branches')
                     ->orWhereHas('branches', function ($q) use ($user) {
                         $q->where('branches.id', $user->branch_id);
                     });
+            })
+            ->when($canMarkAttendance, function($q) use ($user) {
+                // If admin, prioritize meeting that includes their own branch if multiple ongoing
+                $q->orderByRaw("CASE WHEN EXISTS (SELECT 1 FROM meeting_branch WHERE meeting_id = meetings.id AND branch_id = ?) THEN 0 ELSE 1 END", [$user->branch_id]);
             })
             ->first();
 
         // If no ongoing, find the next scheduled one
         if (!$meeting) {
             $meeting = Meeting::where('status', 'scheduled')
-                ->where(function ($query) use ($user) {
+                ->where(function ($query) use ($user, $canMarkAttendance) {
+                    if ($canMarkAttendance) {
+                        // Admins can see any upcoming meeting
+                        return;
+                    }
                     $query->whereDoesntHave('branches')
                         ->orWhereHas('branches', function ($q) use ($user) {
                             $q->where('branches.id', $user->branch_id);
@@ -269,10 +282,10 @@ class AttendanceController extends Controller
         $userQuery = User::where('is_admin', false)
             ->where('is_defaulter', false);
 
-        $isSuperAdmin = $request->user()->hasRole('super_admin');
+        $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
 
         // Filter by meeting branches if meeting_id is provided
-        if ($meetingId && !$isSuperAdmin) {
+        if ($meetingId && !$canMarkAttendance) {
             $meeting = Meeting::find($meetingId);
             if ($meeting && $meeting->branches()->exists()) {
                 $branchIds = $meeting->branches()->pluck('branches.id');
@@ -338,8 +351,8 @@ class AttendanceController extends Controller
             }
 
             // Optional: Check branch eligibility
-            $isSuperAdmin = $request->user()->hasRole('super_admin');
-            if ($meeting->branches()->exists() && !$isSuperAdmin) {
+            $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
+            if ($meeting->branches()->exists() && !$canMarkAttendance) {
                 $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
                 if (!$isEligible) {
                     return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
