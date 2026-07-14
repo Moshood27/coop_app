@@ -51,7 +51,7 @@ class AttendanceController extends Controller
             })
             ->when($canMarkAttendance, function($q) use ($user) {
                 // If admin, prioritize meeting that includes their own branch if multiple ongoing
-                $q->orderByRaw("CASE WHEN EXISTS (SELECT 1 FROM meeting_branch WHERE meeting_id = meetings.id AND branch_id = ?) THEN 0 ELSE 1 END", [$user->branch_id]);
+                $q->orderByRaw("CASE WHEN EXISTS (SELECT 1 FROM branch_meeting WHERE meeting_id = meetings.id AND branch_id = ?) THEN 0 ELSE 1 END", [$user->branch_id]);
             })
             ->first();
 
