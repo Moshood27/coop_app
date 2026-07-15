@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <header class="header-fintech">
       <div class="navbar-inner">
         <div class="flex items-center gap-3">
@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <div v-if="vendor.id" class="p-4 space-y-6">
+    <div v-if="vendor.id" class="p-4 pb-32 space-y-6">
       <!-- Pending Approval Banner -->
       <div v-if="!vendor.is_approved" class="bg-amber-50 border border-amber-100 p-6 rounded-[2rem] text-center space-y-4">
         <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center text-3xl mx-auto">⏳</div>

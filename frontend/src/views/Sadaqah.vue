@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Sadaqah Jariyah" :showBack="true">
       <template #right>
         <button @click="$router.push('/sadaqah/history')" class="p-2 -mr-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500" aria-label="History">
@@ -8,7 +8,7 @@
       </template>
     </AppHeader>
 
-    <div class="p-4 space-y-4">
+    <div class="p-4 pb-32 space-y-4">
       <div class="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 rounded-[2rem] text-white shadow-lg mb-6">
         <h2 class="text-xl font-bold mb-2">Crowdfunding</h2>
         <p class="text-emerald-50 text-xs opacity-90 leading-relaxed">

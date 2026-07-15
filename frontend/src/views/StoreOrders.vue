@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-24">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="My Orders" :showBack="true">
       <template #right>
         <button class="p-2 hover:bg-slate-100 rounded-xl transition-colors" @click="$router.push('/store')" title="Store">
@@ -8,7 +8,7 @@
       </template>
     </AppHeader>
 
-    <div class="max-w-3xl mx-auto p-4 space-y-6">
+    <div class="max-w-3xl mx-auto p-4 pb-32 space-y-6">
       <section class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <div class="flex items-center justify-between mb-8">
           <div>

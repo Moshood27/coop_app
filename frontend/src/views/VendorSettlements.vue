@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <header class="header-fintech">
       <div class="navbar-inner">
         <div class="flex items-center gap-3">
@@ -13,7 +13,7 @@
       </div>
     </header>
 
-    <div class="p-4 space-y-6">
+    <div class="p-4 pb-32 space-y-6">
       <!-- Bank Info Missing Warning -->
       <div v-if="!vendor.settlement_account_number || !vendor.settlement_bank_code || !vendor.settlement_account_name" class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3">
         <div class="text-xl">⚠️</div>

@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-24">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="Member Welfare Pool (Takaful)" :showBack="true" />
 
-    <div class="p-4 space-y-4">
+    <div class="p-4 pb-32 space-y-4">
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
         <div class="flex items-center justify-between">
           <div>

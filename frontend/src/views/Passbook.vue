@@ -9,7 +9,7 @@
       </template>
     </AppHeader>
 
-    <div class="max-w-5xl mx-auto p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 pb-32 space-y-6">
       <div v-if="loadError" class="card p-4 border border-rose-200 bg-rose-50 text-rose-700 text-sm">
         {{ loadError }}
       </div>

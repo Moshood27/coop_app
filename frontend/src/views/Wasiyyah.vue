@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-24">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="Wasiyyah (Next of Kin)" :showBack="true">
       <template #right>
         <button @click="openAdd" class="text-emerald-700 text-xs font-bold mr-2">Add New</button>
       </template>
     </AppHeader>
 
-    <div class="p-4 max-w-2xl mx-auto space-y-4">
+    <div class="p-4 pb-32 max-w-2xl mx-auto space-y-4">
       <div class="bg-indigo-50 border border-indigo-100 text-indigo-900 rounded-2xl p-4 flex gap-3">
         <div class="text-indigo-500 mt-0.5">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>

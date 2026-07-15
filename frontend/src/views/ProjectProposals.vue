@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Project Proposals" :showBack="true" />
 
-    <div class="p-4 space-y-4 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-4 max-w-md mx-auto">
       <!-- Action: Submit New Proposal -->
       <section v-if="!showForm" class="card card-elevated p-5 bg-emerald-600 text-white border-0 shadow-lg shadow-emerald-200">
         <h2 class="font-black tracking-tight text-lg mb-1">Submit Investment Idea</h2>

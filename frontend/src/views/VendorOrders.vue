@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <header class="header-fintech">
       <div class="navbar-inner">
         <div class="flex items-center gap-3">
@@ -13,7 +13,7 @@
       </div>
     </header>
 
-    <div class="p-4 space-y-4">
+    <div class="p-4 pb-32 space-y-4">
       <div v-if="loading" class="text-center py-12">
         <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading orders...</p>
       </div>

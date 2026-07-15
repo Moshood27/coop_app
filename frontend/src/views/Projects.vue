@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Projects" :showBack="true" />
 
-    <div class="p-4 space-y-3">
+    <div class="p-4 pb-32 space-y-3">
       <div v-if="loading" class="text-center text-slate-500 py-10">Loading projects...</div>
       <div v-else-if="projects.length === 0" class="text-center text-slate-500 py-10">No active projects at the moment.</div>
 

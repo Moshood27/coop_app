@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Group Savings" :showBack="true">
       <template #right>
         <button @click="$router.push('/savings-groups/create')" class="p-2 -mr-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors" title="Create Group">
@@ -8,7 +8,7 @@
       </template>
     </AppHeader>
 
-    <div class="p-4">
+    <div class="p-4 pb-32">
       <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-[2rem] text-white shadow-lg mb-6 relative overflow-hidden">
         <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
         <h2 class="text-xl font-bold mb-1">Jama'ah Savings</h2>

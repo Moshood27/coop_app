@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen pb-20 bg-slate-50">
+  <div class="min-h-screen bg-slate-50">
     <header class="bg-white border-b border-slate-100 p-4 sticky top-0 z-10 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button @click="$router.back()" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -16,7 +16,7 @@
       </a>
     </header>
 
-    <div class="p-4 max-w-lg mx-auto space-y-4">
+    <div class="p-4 pb-32 max-w-lg mx-auto space-y-4">
       <!-- Feature Disabled Alert -->
       <div v-if="!appStatusStore.features['gold-savings-beta']" class="bg-amber-50 border border-amber-200 p-8 rounded-[2rem] text-center space-y-4 shadow-sm">
         <div class="w-20 h-20 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner">

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="AGM & Voting" :showBack="true" />
 
-    <div class="p-4 space-y-4 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-4 max-w-md mx-auto">
       <section class="card card-elevated p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-black text-slate-800 tracking-tight text-lg">Active Sessions</h2>

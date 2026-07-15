@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader :title="project?.name || 'Project'" :showBack="true" />
 
-    <div class="p-4 space-y-4">
+    <div class="p-4 pb-32 space-y-4">
       <div v-if="loading" class="text-center text-slate-500 py-10">Loading...</div>
 
       <div v-else>

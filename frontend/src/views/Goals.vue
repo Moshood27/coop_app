@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-24">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="Hajj & Umrah" :showBack="true">
       <template #right>
         <button @click="openCreate" class="text-emerald-700 text-xs font-bold mr-2">New Goal</button>
       </template>
     </AppHeader>
 
-    <div class="p-4 max-w-2xl mx-auto space-y-4">
+    <div class="p-4 pb-32 max-w-2xl mx-auto space-y-4">
       <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-lg relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full"></div>
         <p class="text-emerald-100 text-sm font-medium mb-1 relative z-10">Available Wallet Balance</p>

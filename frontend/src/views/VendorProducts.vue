@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <header class="header-fintech">
       <div class="navbar-inner">
         <div class="flex items-center gap-3">
@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <div class="p-4 space-y-6">
+    <div class="p-4 pb-32 space-y-6">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-4">
         <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin"></div>
         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading catalog...</p>

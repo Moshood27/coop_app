@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Reports" :showBack="true" />
 
-    <div class="p-4 space-y-6 max-w-2xl mx-auto">
+    <div class="p-4 pb-32 space-y-6 max-w-2xl mx-auto">
       <!-- Contribution Mix -->
       <section class="card card-elevated p-5">
         <div class="flex items-center justify-between mb-3">

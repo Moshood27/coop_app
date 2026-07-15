@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-20 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Member Terms" :showBack="true" />
 
-    <main class="p-4 space-y-6 max-w-3xl mx-auto">
+    <main class="p-4 pb-32 space-y-6 max-w-3xl mx-auto">
       <div class="flex items-center justify-between px-2">
         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Effective: 2026-03-21</p>
         <span class="badge bg-emerald-100 text-emerald-700">v1.2</span>

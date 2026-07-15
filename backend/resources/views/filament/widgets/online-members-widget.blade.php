@@ -2,14 +2,27 @@
     <x-filament::section>
         <div
             x-data="{
-                members: [],
+                members: {{ \Illuminate\Support\Js::from($recentUsers) }},
                 init() {
+                    this.connect();
+                },
+                connect() {
+                    if (typeof window.Echo === 'undefined') {
+                        // Retry after a short delay if Echo is not yet loaded
+                        setTimeout(() => this.connect(), 500);
+                        return;
+                    }
+
                     window.Echo.join('online-members')
                         .here((users) => {
+                            // When Echo connects, we get the definitive real-time list
                             this.members = users;
                         })
                         .joining((user) => {
-                            this.members.push(user);
+                            // Avoid duplicates
+                            if (!this.members.find(m => m.id === user.id)) {
+                                this.members.push(user);
+                            }
                         })
                         .leaving((user) => {
                             this.members = this.members.filter(m => m.id != user.id);

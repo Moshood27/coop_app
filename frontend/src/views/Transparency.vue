@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Transparency Dashboard" :showBack="true" />
 
-    <div class="p-4 max-w-3xl mx-auto space-y-6">
+    <div class="p-4 pb-32 max-w-3xl mx-auto space-y-6">
       <section class="card card-elevated p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-black text-slate-800 tracking-tight text-lg">Total Assets</h2>

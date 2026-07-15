@@ -189,6 +189,14 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook('panels::body.end', fn () => \Livewire\Livewire::mount('admin-notification-listener'))
             ->renderHook('panels::body.end', fn () => view('tawk-widget'))
             ->renderHook('panels::head.end', fn () => new \Illuminate\Support\HtmlString('
+                <script>
+                    window.reverbConfig = {
+                        key: "' . env('REVERB_APP_KEY') . '",
+                        host: "' . env('REVERB_HOST') . '",
+                        port: ' . env('REVERB_PORT', 443) . ',
+                        scheme: "' . env('REVERB_SCHEME', 'https') . '"
+                    };
+                </script>
                 <script>window.biometricDefaultUrl = "' . config('cooperative.biometric.scanner_url') . '";</script>
                 <script src="' . asset('js/biometric.js') . '"></script>
             '))

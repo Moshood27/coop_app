@@ -75,7 +75,7 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 md:flex md:gap-8">
+    <main class="max-w-7xl mx-auto px-4 py-6 pb-32 md:flex md:gap-8">
       <!-- Sidebar Filters (Desktop) -->
       <aside class="hidden md:block w-64 shrink-0 space-y-8">
         <div>

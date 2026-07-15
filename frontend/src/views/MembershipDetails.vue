@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Membership Details" :showBack="true" />
 
-    <div class="p-4 space-y-6">
+    <div class="p-4 pb-32 space-y-6">
       <!-- Actions Section -->
       <div class="grid grid-cols-2 gap-4">
         <a :href="getDownloadUrl('/api/download-membership-enrolment')" target="_blank" class="bg-emerald-700 text-white p-4 rounded-3xl shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-transform text-center">

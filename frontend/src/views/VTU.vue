@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <!-- Header -->
     <AppHeader title="Airtime, Data & Bills" :showBack="true">
       <template #right>
@@ -7,7 +7,7 @@
       </template>
     </AppHeader>
 
-    <div class="p-4 space-y-6 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-6 max-w-md mx-auto">
       <!-- Balance Card -->
       <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl transform transition-all active:scale-95">
         <p class="text-emerald-100 text-sm font-medium">Available Wallet Balance</p>

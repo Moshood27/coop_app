@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-60 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Allocate Fund" :showBack="true" />
 
-    <div class="p-4 space-y-6 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-6 max-w-md mx-auto">
       <!-- Wallet Balance -->
       <div class="bg-gradient-to-br from-blue-700 to-blue-900 rounded-[2rem] p-6 text-white shadow-xl">
         <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Wallet Balance</p>

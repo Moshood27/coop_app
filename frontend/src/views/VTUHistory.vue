@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="VTU History" :showBack="true">
       <template #right>
         <router-link to="/vtu" class="text-emerald-700 text-xs font-bold mr-2">Buy</router-link>
       </template>
     </AppHeader>
 
-    <div class="p-4 space-y-4 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-4 max-w-md mx-auto">
       <div class="card card-elevated p-4 grid grid-cols-3 gap-3 items-end">
         <div>
           <label class="lbl">Type</label>

@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-24">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="Junior Cooperative" :showBack="true">
       <template #right>
         <button @click="openCreate" class="text-emerald-700 text-xs font-bold mr-2">New Account</button>
       </template>
     </AppHeader>
 
-    <div class="p-4 max-w-2xl mx-auto space-y-4">
+    <div class="p-4 pb-32 max-w-2xl mx-auto space-y-4">
       <div class="bg-gradient-to-br from-blue-700 to-blue-900 rounded-[2rem] p-7 text-white shadow-lg relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full" />
         <p class="text-blue-100 text-sm font-medium mb-1 relative z-10">Total Junior Savings</p>

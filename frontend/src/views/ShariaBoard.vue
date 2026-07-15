@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
+  <div class="min-h-screen bg-slate-50 font-sans text-slate-900">
     <AppHeader title="Sharia Board" :showBack="true" />
 
-    <div class="p-4 max-w-2xl mx-auto space-y-6">
+    <div class="p-4 pb-32 max-w-2xl mx-auto space-y-6">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
         <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Loading Board...</p>

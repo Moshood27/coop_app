@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Attendance" :showBack="true" />
 
-    <div class="p-4">
+    <div class="p-4 pb-32">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
         <p class="mt-4 text-slate-500 font-medium">Checking for meetings...</p>

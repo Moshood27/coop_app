@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="New Savings Group" :showBack="true" />
 
-    <div class="p-4">
+    <div class="p-4 pb-32">
       <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
         <form @submit.prevent="createGroup" class="space-y-6">
           <div class="space-y-1">

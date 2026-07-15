@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <header class="header-fintech">
       <div class="navbar-inner">
         <button @click="$router.push('/store')" class="text-2xl hover:opacity-70 transition">
@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="p-4 max-w-2xl mx-auto">
+    <div class="p-4 pb-32 max-w-2xl mx-auto">
       <div v-if="loading" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
       </div>

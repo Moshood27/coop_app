@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader :title="group.name || 'Group Detail'" :showBack="true" />
 
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -7,7 +7,7 @@
       <p class="text-sm font-medium">Loading group details...</p>
     </div>
 
-    <div v-else class="p-4 space-y-6">
+    <div v-else class="p-4 pb-32 space-y-6">
       <!-- Group Header Card -->
       <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden text-center">
         <div class="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-4">

@@ -16,8 +16,8 @@ class TrackUserActivity
     public function handle(Request $request, Closure $next): Response
     {
         if ($user = $request->user()) {
-            // Only update once per hour to avoid too many DB writes
-            if (!$user->last_activity_at || $user->last_activity_at->diffInHours(now()) >= 1) {
+            // Update every 5 minutes to keep "online" status accurate without overwhelming the DB
+            if (!$user->last_activity_at || $user->last_activity_at->diffInMinutes(now()) >= 5) {
                 $user->updateQuietly(['last_activity_at' => now()]);
             }
         }

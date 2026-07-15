@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-slate-50">
     <AppHeader title="Qard Hasan (Loan) Records" :showBack="true" />
 
-    <div class="max-w-5xl mx-auto py-4 px-4">
+    <div class="max-w-5xl mx-auto py-4 px-4 pb-32">
       <div v-if="loading" class="text-center text-slate-500 py-10">Loading…</div>
       <div v-else-if="error" class="card p-4 text-rose-700 bg-rose-50 border-rose-200">{{ error }}</div>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <header class="header-fintech">
       <div class="navbar-inner">
         <button @click="$router.back()" class="text-2xl hover:opacity-70 transition">
@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="p-4 space-y-6 max-w-md mx-auto">
+    <div class="p-4 pb-32 space-y-6 max-w-md mx-auto">
       <div class="card card-elevated p-6">
         <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-emerald-600">

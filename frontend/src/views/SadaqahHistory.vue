@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="My Contributions" :showBack="true" />
 
-    <div class="p-4">
+    <div class="p-4 pb-32">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-slate-400">
         <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-sm font-medium">Loading history...</p>

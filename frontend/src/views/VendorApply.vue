@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <header class="header-fintech">
       <div class="navbar-inner">
         <div class="flex items-center gap-3">
@@ -13,7 +13,7 @@
       </div>
     </header>
 
-    <div class="max-w-2xl mx-auto p-4 space-y-6">
+    <div class="max-w-2xl mx-auto p-4 pb-32 space-y-6">
       <!-- Steps Indicator -->
       <div class="flex items-center justify-between px-4 mb-2">
         <div v-for="s in 3" :key="s" class="flex items-center gap-2">

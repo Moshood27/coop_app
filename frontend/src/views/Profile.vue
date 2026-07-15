@@ -6,7 +6,7 @@
       </template>
     </AppHeader>
 
-    <div class="max-w-5xl mx-auto p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 pb-32 space-y-6">
       <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 relative overflow-hidden">
         <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-40" />
 

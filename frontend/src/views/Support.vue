@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <header class="p-4 bg-white border-b flex items-center justify-between sticky top-0 z-10">
       <h1 class="text-xl font-bold">Support Center</h1>
       <button @click="$router.back()" class="text-slate-600 font-medium hover:text-slate-900 transition-colors">Close</button>
     </header>
 
-    <div class="p-4 space-y-4 max-w-3xl mx-auto">
+    <div class="p-4 pb-32 space-y-4 max-w-3xl mx-auto">
       <div v-if="!isLoggedIn" class="bg-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-500/20 mb-6">
         <h2 class="text-xl font-black mb-2 leading-tight">Need assistance with your account?</h2>
         <p class="text-emerald-50/80 text-sm leading-relaxed mb-4">

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
+  <div class="min-h-screen bg-slate-50 font-sans text-slate-900">
     <header class="header-fintech">
       <div class="navbar-inner">
         <button @click="$router.back()" class="text-2xl hover:opacity-70 transition">
@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <div class="p-4 max-w-2xl mx-auto space-y-4">
+    <div class="p-4 pb-32 max-w-2xl mx-auto space-y-4">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
         <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Loading Disputes...</p>

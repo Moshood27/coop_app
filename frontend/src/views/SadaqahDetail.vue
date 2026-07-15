@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Project Details" :showBack="true" />
 
     <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -11,7 +11,7 @@
       <p class="text-slate-500">Project not found.</p>
     </div>
 
-    <div v-else class="pb-20">
+    <div v-else class="pb-32">
       <div class="h-64 bg-slate-200 relative overflow-hidden">
         <template v-if="project.media_urls && project.media_urls.length">
           <video 
