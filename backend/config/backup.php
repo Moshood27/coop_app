@@ -238,7 +238,7 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => 'your@example.com',
+            'to' => env('HEALTH_TO_ADDRESS', 'your@example.com'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
@@ -247,7 +247,7 @@ return [
         ],
 
         'slack' => [
-            'webhook_url' => env('BACKUP_SLACK_WEBHOOK_URL', env('HEALTH_SLACK_WEBHOOK_URL')),
+            'webhook_url' => env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL') ?: '',
 
             /*
              * If this is set to null the default channel of the webhook will be used.
@@ -299,7 +299,7 @@ return [
     'monitor_backups' => [
         [
             'name' => 'ATTAQWA',
-            'disks' => ['local', 'google'],
+            'disks' => ['local', 'google', 'dropbox'],
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,
