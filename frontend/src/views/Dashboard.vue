@@ -2,7 +2,7 @@
   <div class="min-h-screen overflow-x-hidden bg-slate-50">
     <AppHeader :user="dashboardData" :showSettings="true" />
 
-    <div class="max-w-5xl mx-auto px-4 pb-10">
+    <div class="max-w-5xl mx-auto px-4 pb-32">
       <!-- Global System Announcement -->
       <div v-if="appStatusStore.systemAnnouncement" 
            class="mt-4 bg-emerald-600 text-white px-4 py-3 rounded-2xl text-center text-xs font-bold flex items-center justify-center gap-3 shadow-md animate-in fade-in slide-in-from-top duration-500 mb-6">
@@ -202,6 +202,21 @@
           </template>
         </div>
 
+        <!-- Progress Bar for Loan -->
+        <div v-if="kpis.has_active_loan && kpis.total_loan_principal > 0" class="mb-6">
+          <div class="flex justify-between items-center mb-2">
+             <p class="text-[10px] text-slate-400 uppercase font-black">Repayment Progress</p>
+             <p class="text-[10px] text-emerald-600 font-black">{{ Math.round((kpis.total_loan_paid / kpis.total_loan_principal) * 100) }}%</p>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div class="bg-emerald-500 h-full transition-all duration-1000" :style="{ width: (kpis.total_loan_paid / kpis.total_loan_principal * 100) + '%' }"></div>
+          </div>
+          <div class="flex justify-between mt-1">
+            <p class="text-[9px] text-slate-400">Paid: ₦{{ formatMoney(kpis.total_loan_paid) }}</p>
+            <p class="text-[9px] text-slate-400">Total: ₦{{ formatMoney(kpis.total_loan_principal) }}</p>
+          </div>
+        </div>
+
         <div v-if="kpis.expected_amount_to_pay > 0" class="mb-6">
            <p class="text-[10px] text-slate-400 uppercase font-black mb-1">Expected Amount to Pay (To Date)</p>
            <p class="text-lg font-black text-blue-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay) }}</p>
@@ -246,10 +261,6 @@
       </FinCard>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-8">
-      <button @click="$router.push('/pay')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl">💳</div>
-        <span class="text-sm font-bold text-slate-700">Allocate Fund</span>
-      </button>
       <button v-if="appStatusStore.features['chat-help-enabled']" @click="$router.push('/chat')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">💬</div>
         <span class="text-sm font-bold text-slate-700">Chat & Help</span>
@@ -433,7 +444,12 @@
                   <span v-if="isFine(tx)" class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase">Fine</span>
                 </div>
                 <p class="text-[10px] text-gray-500 uppercase font-medium">{{ formatDate(tx.created_at) }}</p>
-                <p class="text-[10px] text-slate-400 font-mono truncate">{{ txPrefix(tx) }}</p>
+                <p class="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-emerald-600 transition-colors flex items-center gap-1" @click="copy(txPrefix(tx))" title="Click to copy">
+                  {{ txPrefix(tx).length > 15 ? txPrefix(tx).substring(0, 12) + '...' : txPrefix(tx) }}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
+                </p>
               </div>
             </div>
             <div class="text-right">
@@ -813,7 +829,7 @@ const kpis = computed(() => {
   const outstandingLoans = txs.filter(t => (t.type === 'loan' || String(t.scheme?.name || '').toLowerCase().includes('loan')))
     .reduce((sum, t) => sum + Number(t.balance || 0), 0)
   const utilSpent = utils.reduce((sum, u) => sum + Number(u.amount || 0), 0)
-  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0 }
+  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
 })
 
 const chart = computed(() => {

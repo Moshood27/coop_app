@@ -40,6 +40,7 @@ export async function checkAppStatus() {
       onboarding_swiper_enabled: data.onboarding_swiper_enabled,
       onboarding_swiper_slides: data.onboarding_swiper_slides,
       opening_balance_verification_enabled: data.opening_balance_verification_enabled,
+      features: data.features || {},
     }
   } catch (error) {
     console.error('Failed to check app status:', error)

@@ -78,56 +78,56 @@ const routes = [
   { path: '/pay', name: 'pay', component: MakePayment, meta: { requiresAuth: true } },
   { path: '/passbook', name: 'passbook', component: Passbook, meta: { requiresAuth: true } },
   { path: '/reports', name: 'reports', component: Reports, meta: { requiresAuth: true } },
-  { path: '/takaful', name: 'takaful', component: Takaful, meta: { requiresAuth: true } },
+  { path: '/takaful', name: 'takaful', component: Takaful, meta: { requiresAuth: true, feature: 'takaful-enabled' } },
   { path: '/settings', name: 'settings', component: Settings, meta: { requiresAuth: true } },
   { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/membership-details', name: 'membership.details', component: MembershipDetails, meta: { requiresAuth: true } },
-  { path: '/store', name: 'store', component: Store, meta: { requiresAuth: true } },
+  { path: '/store', name: 'store', component: Store, meta: { requiresAuth: true, feature: 'store-enabled' } },
   // Merchant QR pay
-  { path: '/merchant/receive', name: 'merchant.receive', component: MerchantReceive, meta: { requiresAuth: true } },
-  { path: '/merchant/pay', name: 'merchant.pay', component: MerchantPay, meta: { requiresAuth: true } },
-  { path: '/store/orders', name: 'store.orders', component: () => import('../views/StoreOrders.vue'), meta: { requiresAuth: true } },
-  { path: '/store/orders/:id', name: 'store.order', component: OrderReceipt, meta: { requiresAuth: true } },
+  { path: '/merchant/receive', name: 'merchant.receive', component: MerchantReceive, meta: { requiresAuth: true, feature: 'receive-qr-enabled' } },
+  { path: '/merchant/pay', name: 'merchant.pay', component: MerchantPay, meta: { requiresAuth: true, feature: 'merchant-pay-enabled' } },
+  { path: '/store/orders', name: 'store.orders', component: () => import('../views/StoreOrders.vue'), meta: { requiresAuth: true, feature: 'store-enabled' } },
+  { path: '/store/orders/:id', name: 'store.order', component: OrderReceipt, meta: { requiresAuth: true, feature: 'store-enabled' } },
 
   // Vendor Portal
-  { path: '/vendor/apply', name: 'vendor.apply', component: VendorApply, meta: { requiresAuth: true } },
-  { path: '/vendor/dashboard', name: 'vendor.dashboard', component: VendorDashboard, meta: { requiresAuth: true } },
-  { path: '/vendor/products', name: 'vendor.products', component: VendorProducts, meta: { requiresAuth: true } },
-  { path: '/vendor/orders', name: 'vendor.orders', component: VendorOrders, meta: { requiresAuth: true } },
-  { path: '/vendor/settlements', name: 'vendor.settlements', component: VendorSettlements, meta: { requiresAuth: true } },
+  { path: '/vendor/apply', name: 'vendor.apply', component: VendorApply, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/dashboard', name: 'vendor.dashboard', component: VendorDashboard, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/products', name: 'vendor.products', component: VendorProducts, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/orders', name: 'vendor.orders', component: VendorOrders, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/settlements', name: 'vendor.settlements', component: VendorSettlements, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
 
-  { path: '/wasiyyah', name: 'wasiyyah', component: Wasiyyah, meta: { requiresAuth: true } },
+  { path: '/wasiyyah', name: 'wasiyyah', component: Wasiyyah, meta: { requiresAuth: true, feature: 'wassiyah-enabled' } },
   { path: '/attendance', name: 'attendance', component: Attendance, meta: { requiresAuth: true } },
   { path: '/maintenance', name: 'maintenance', component: MaintenanceMode, meta: { skipOnboarding: true, skipStatusCheck: true } },
   { path: '/update-required', name: 'update-required', component: UpdateRequired, meta: { skipOnboarding: true, skipStatusCheck: true }, props: route => ({ url: route.query.url }) },
   { path: '/pin-lock', name: 'pin-lock', component: PinLock, meta: { requiresAuth: true, skipPinLock: true } },
-  { path: '/junior-cooperative', name: 'junior.cooperative', component: JuniorCooperative, meta: { requiresAuth: true } },
-  { path: '/gold', name: 'gold', component: GoldSavings, meta: { requiresAuth: true } },
+  { path: '/junior-cooperative', name: 'junior.cooperative', component: JuniorCooperative, meta: { requiresAuth: true, feature: 'junior-coop-enabled' } },
+  { path: '/gold', name: 'gold', component: GoldSavings, meta: { requiresAuth: true, feature: 'gold-savings-enabled' } },
 
-  { path: '/goals', name: 'goals', component: () => import('../views/Goals.vue'), meta: { requiresAuth: true } },
-  { path: '/projects', name: 'projects', component: Projects, meta: { requiresAuth: true } },
-  { path: '/projects/:id', name: 'project', component: Project, meta: { requiresAuth: true } },
-  { path: '/savings-groups', name: 'savings.groups', component: SavingsGroups, meta: { requiresAuth: true } },
-  { path: '/savings-groups/create', name: 'savings.group.create', component: SavingsGroupCreate, meta: { requiresAuth: true } },
-  { path: '/savings-groups/:id', name: 'savings.group.detail', component: SavingsGroupDetail, meta: { requiresAuth: true } },
-  { path: '/chat', name: 'chat', component: ChatRooms, meta: { requiresAuth: true } },
-  { path: '/sadaqah', name: 'sadaqah', component: Sadaqah, meta: { requiresAuth: true } },
-  { path: '/sadaqah/history', name: 'sadaqah.history', component: SadaqahHistory, meta: { requiresAuth: true } },
-  { path: '/sadaqah/:id', name: 'sadaqah.detail', component: SadaqahDetail, meta: { requiresAuth: true } },
+  { path: '/goals', name: 'goals', component: () => import('../views/Goals.vue'), meta: { requiresAuth: true, feature: 'hajj-umrah-enabled' } },
+  { path: '/projects', name: 'projects', component: Projects, meta: { requiresAuth: true, feature: 'projects-enabled' } },
+  { path: '/projects/:id', name: 'project', component: Project, meta: { requiresAuth: true, feature: 'projects-enabled' } },
+  { path: '/savings-groups', name: 'savings.groups', component: SavingsGroups, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/savings-groups/create', name: 'savings.group.create', component: SavingsGroupCreate, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/savings-groups/:id', name: 'savings.group.detail', component: SavingsGroupDetail, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/chat', name: 'chat', component: ChatRooms, meta: { requiresAuth: true, feature: 'chat-help-enabled' } },
+  { path: '/sadaqah', name: 'sadaqah', component: Sadaqah, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
+  { path: '/sadaqah/history', name: 'sadaqah.history', component: SadaqahHistory, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
+  { path: '/sadaqah/:id', name: 'sadaqah.detail', component: SadaqahDetail, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
   { path: '/transparency', name: 'transparency', component: Transparency, meta: { requiresAuth: true } },
   // VTU
-  { path: '/vtu', name: 'vtu', component: VTU, meta: { requiresAuth: true } },
-  { path: '/vtu/history', name: 'vtu.history', component: VTUHistory, meta: { requiresAuth: true } },
+  { path: '/vtu', name: 'vtu', component: VTU, meta: { requiresAuth: true, feature: 'airtime-data-enabled' } },
+  { path: '/vtu/history', name: 'vtu.history', component: VTUHistory, meta: { requiresAuth: true, feature: 'airtime-data-enabled' } },
   // AGM Voting
-  { path: '/agm', name: 'agm', component: Agm, meta: { requiresAuth: true } },
-  { path: '/agm/sessions/:id', name: 'agm.session', component: AgmSession, meta: { requiresAuth: true } },
-  { path: '/agm/proposals', name: 'agm.proposals', component: ProjectProposals, meta: { requiresAuth: true } },
-  { path: '/agm/proposals/:id', name: 'agm.proposal_detail', component: ProjectProposalDetail, meta: { requiresAuth: true } },
+  { path: '/agm', name: 'agm', component: Agm, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/sessions/:id', name: 'agm.session', component: AgmSession, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/proposals', name: 'agm.proposals', component: ProjectProposals, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/proposals/:id', name: 'agm.proposal_detail', component: ProjectProposalDetail, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
   { path: '/sharia-board', name: 'sharia.board', component: ShariaBoard, meta: { requiresAuth: true } },
   { path: '/sharia-board/history', name: 'sharia.board.history', component: TahkimHistory, meta: { requiresAuth: true } },
   // Placeholder: use existing Qard Hasan prototype under /loans for now
-  { path: '/loans', name: 'loans', component: Loans, meta: { requiresAuth: true } },
-  { path: '/loans/analysis', name: 'loans.analysis', component: LoanAnalysis, meta: { requiresAuth: true } },
+  { path: '/loans', name: 'loans', component: Loans, meta: { requiresAuth: true, feature: 'apply-for-loan' } },
+  { path: '/loans/analysis', name: 'loans.analysis', component: LoanAnalysis, meta: { requiresAuth: true, feature: 'apply-for-loan' } },
   { path: '/qard', name: 'qard', component: QardHasan },
 
   // Public info pages
@@ -175,6 +175,9 @@ router.beforeEach(async (to) => {
     try {
       const appStatusStore = useAppStatusStore()
       appStatusStore.setStatus(status)
+      if (status.features) {
+        appStatusStore.setFeatures(status.features)
+      }
     } catch (e) {
       console.error('Failed to update appStatus store', e)
     }
@@ -217,6 +220,20 @@ router.beforeEach(async (to) => {
   // 1. PIN Lock gate
   if (to.meta.requiresAuth && token && appStatusStore.appPinLoginEnabled && !appStatusStore.isPinVerified && !to.meta.skipPinLock) {
     return { name: 'pin-lock', query: { redirect: to.fullPath } }
+  }
+
+  // 2. Feature Flag Check
+  if (to.meta.feature && token) {
+    const feature = to.meta.feature
+    const isEnabled = appStatusStore.features[feature] || 
+                      appStatusStore.features[`${feature}-beta`] ||
+                      (feature.includes('-enabled') && appStatusStore.features[feature.replace('-enabled', '-beta')])
+    
+    // Only block if features are actually loaded (to avoid blocking on first load/refresh before status check completes)
+    // Note: The status check at the top of beforeEach ensures features are loaded if STATUS_CHECK_INTERVAL has passed.
+    if (Object.keys(appStatusStore.features).length > 0 && !isEnabled) {
+      return { name: 'dashboard' }
+    }
   }
 
   // allow navigation

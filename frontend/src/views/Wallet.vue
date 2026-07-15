@@ -644,7 +644,12 @@
             <div class="flex items-center justify-between gap-3 mb-2">
               <div class="min-w-0">
                 <p class="text-base font-black text-slate-800">₦ {{ formatMoney(wr.amount) }}</p>
-                <p class="text-[10px] uppercase font-mono text-slate-400 tracking-tighter">REF: {{ wr.reference }}</p>
+                <p class="text-[10px] uppercase font-mono text-slate-400 tracking-tighter flex items-center gap-1 cursor-pointer hover:text-emerald-600 transition-colors" @click="copy(wr.reference)" title="Click to copy">
+                  REF: {{ wr.reference.length > 15 ? wr.reference.substring(0, 12) + '...' : wr.reference }}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
+                </p>
               </div>
               <div class="shrink-0 flex items-center gap-2">
                 <span :class="statusClass(wr.status)" class="text-[10px] font-black uppercase px-2 py-1 rounded-lg tracking-wider">{{ wr.status }}</span>
@@ -698,8 +703,11 @@
               </div>
               <div class="min-w-0">
                 <p class="text-sm font-bold text-slate-800 truncate leading-none mb-1">{{ titleFor(tx) }}</p>
-                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter leading-relaxed">
-                  {{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.reference.slice(0, 12) }}...
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter leading-relaxed flex items-center gap-1 cursor-pointer hover:text-emerald-600 transition-colors" @click="copy(tx.reference)" title="Click to copy">
+                  {{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.reference.length > 15 ? tx.reference.substring(0, 12) + '...' : tx.reference }}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
                 </p>
                 <div v-if="tx.meta?.maintenance_charge" class="mt-1 flex gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-tighter bg-slate-50 px-2 py-1 rounded-lg w-fit">
                   <span>Gross: ₦{{ formatMoney(tx.meta.gross_amount) }}</span>
@@ -1057,7 +1065,10 @@ const assignMonnifyDva = async () => {
 }
 
 const copy = async (text) => {
-  try { await navigator.clipboard.writeText(String(text || '')); alert('Copied'); } catch (_) {}
+  try { 
+    await navigator.clipboard.writeText(String(text || '')); 
+    showNotice('Success', 'Copied to clipboard', 'success');
+  } catch (_) {}
 }
 
 const goAllocate = () => {

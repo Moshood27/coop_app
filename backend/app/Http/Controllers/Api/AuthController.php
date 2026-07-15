@@ -13,13 +13,14 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Pennant\Feature;
 
 class AuthController extends Controller
 {
     // List of branches for the login dropdown
     public function status()
     {
-        return response()->json([
+        $data = [
             'status' => 'ok',
             'mobile_min_version' => Setting::get('mobile_min_version', config('cooperative.mobile_min_version')),
             'mobile_current_version' => Setting::get('mobile_current_version', config('cooperative.mobile_current_version')),
@@ -68,7 +69,46 @@ class AuthController extends Controller
                 'opay' => (bool) Setting::get('gateway_opay_enabled', true),
                 'primary' => Setting::get('primary_payment_gateway', 'paystack'),
             ],
-        ]);
+        ];
+
+        if (auth('sanctum')->check()) {
+            $data['features'] = [
+                'withdrawals_enabled' => Feature::for('global')->active('withdrawals-enabled'),
+                'withdrawals-enabled' => Feature::for('global')->active('withdrawals-enabled'),
+                'apply_for_loan' => Feature::active('apply-for-loan'),
+                'apply-for-loan' => Feature::active('apply-for-loan'),
+                'gold_market' => Feature::active('gold-savings-beta'),
+                'gold-savings-beta' => Feature::active('gold-savings-beta'),
+                'payment_failover' => Feature::for('global')->active('payment-provider-failover'),
+                'payment-provider-failover' => Feature::for('global')->active('payment-provider-failover'),
+                'shura_voting' => Feature::for('global')->active('shura-voting-active'),
+                'shura-voting-active' => Feature::for('global')->active('shura-voting-active'),
+                'prayer_quiet_mode' => Feature::for('global')->active('prayer-time-quiet-mode'),
+                'prayer-time-quiet-mode' => Feature::for('global')->active('prayer-time-quiet-mode'),
+                'show_flw_balance' => Feature::active('show-flw-balance'),
+                'show-flw-balance' => Feature::active('show-flw-balance'),
+                // New features
+                'takaful-enabled' => Feature::for('global')->active('takaful-enabled'),
+                'gold-savings-enabled' => Feature::for('global')->active('gold-savings-enabled'),
+                'group-savings-enabled' => Feature::for('global')->active('group-savings-enabled'),
+                'receive-qr-enabled' => Feature::for('global')->active('receive-qr-enabled'),
+                'merchant-pay-enabled' => Feature::for('global')->active('merchant-pay-enabled'),
+                'zakat-enabled' => Feature::for('global')->active('zakat-enabled'),
+                'junior-coop-enabled' => Feature::for('global')->active('junior-coop-enabled'),
+                'projects-enabled' => Feature::for('global')->active('projects-enabled'),
+                'project-payment-enabled' => Feature::for('global')->active('project-payment-enabled'),
+                'chat-help-enabled' => Feature::for('global')->active('chat-help-enabled'),
+                'store-enabled' => Feature::for('global')->active('store-enabled'),
+                'hajj-umrah-enabled' => Feature::for('global')->active('hajj-umrah-enabled'),
+                'sadaq-enabled' => Feature::for('global')->active('sadaq-enabled'),
+                'wassiyah-enabled' => Feature::for('global')->active('wassiyah-enabled'),
+                'vendor-enabled' => Feature::for('global')->active('vendor-enabled'),
+                'agm-voting-enabled' => Feature::for('global')->active('agm-voting-enabled'),
+                'airtime-data-enabled' => Feature::for('global')->active('airtime-data-enabled'),
+            ];
+        }
+
+        return response()->json($data);
     }
 
     public function branches()

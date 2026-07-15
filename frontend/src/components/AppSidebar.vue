@@ -107,7 +107,9 @@ const serviceItems = computed(() => {
 
   return allServices.filter(s => {
     if (!s.feature) return true
-    return appStatusStore.features[s.feature] || appStatusStore.features[s.feature + '-beta']
+    return appStatusStore.features[s.feature] || 
+           appStatusStore.features[s.feature + '-beta'] ||
+           (s.feature.includes('-enabled') && appStatusStore.features[s.feature.replace('-enabled', '-beta')])
   })
 })
 
