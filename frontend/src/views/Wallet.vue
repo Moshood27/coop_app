@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Wallet" :showBack="true" />
 
-    <div class="p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
       <!-- Balance Card -->
       <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
@@ -750,14 +750,11 @@
         @cancel="handlePinCancel"
       />
     </div>
-
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import axios from '../http.js'
 import { useRouter } from 'vue-router'

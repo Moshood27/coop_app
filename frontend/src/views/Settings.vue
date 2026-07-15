@@ -11,13 +11,11 @@
       </div>
     </div>
 
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import SupportContacts from '../components/SupportContacts.vue'

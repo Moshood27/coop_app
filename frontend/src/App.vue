@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref, computed, onBeforeUnmount, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
 import { LocalNotifications } from '@capacitor/local-notifications'
@@ -8,6 +9,8 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import BaseModal from './components/BaseModal.vue'
 import InboxDrawer from './components/InboxDrawer.vue'
 import IslamicChat from './components/IslamicChat.vue'
+import AppSidebar from './components/AppSidebar.vue'
+import AppBottomNav from './components/AppBottomNav.vue'
 import router from './router/index.js'
 import axios from './http.js'
 import { getEcho } from './realtime/echo.js'
@@ -23,7 +26,14 @@ const loadingSupport = ref(false)
 const unreadCount = ref(0)
 const isInputFocused = ref(false)
 const authToken = ref(localStorage.getItem('token'))
+const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const isLoggedIn = computed(() => !!authToken.value)
+const route = useRoute()
+
+const showNav = computed(() => {
+  const noNavRoutes = ['landing', 'login', 'register', 'forgot', 'onboarding', 'maintenance', 'update-required', 'pin-lock']
+  return isLoggedIn.value && route.name && !noNavRoutes.includes(route.name)
+})
 
 async function toggleSupportChat() {
   if (!showChat.value) {
@@ -45,6 +55,9 @@ async function toggleSupportChat() {
 window.addEventListener('storage', (e) => {
   if (e.key === 'token') {
     authToken.value = e.newValue
+  }
+  if (e.key === 'user') {
+    user.value = JSON.parse(e.newValue || '{}')
   }
 })
 let unreadTimer = null
@@ -321,8 +334,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>
-    <router-view />
+  <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <AppSidebar v-if="showNav" :user="user" />
+    
+    <div class="flex-1 flex flex-col min-w-0 relative">
+      <router-view />
+      
+      <AppBottomNav v-if="showNav" />
+    </div>
 
     <!-- Floating Chat Launcher (visible when logged in) -->
     <button

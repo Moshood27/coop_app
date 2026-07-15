@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen pb-28 overflow-x-hidden bg-slate-50">
+  <div class="min-h-screen overflow-x-hidden bg-slate-50">
     <AppHeader :user="dashboardData" :showSettings="true" />
 
     <div class="max-w-5xl mx-auto px-4 pb-10">
@@ -692,14 +692,11 @@
         </div>
       </div>
     </div>
-
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Pagination, Autoplay } from 'swiper/modules'

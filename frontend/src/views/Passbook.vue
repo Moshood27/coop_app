@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Passbook" :showBack="true">
       <template #right>
         <div class="flex items-center gap-1">
@@ -9,7 +9,7 @@
       </template>
     </AppHeader>
 
-    <div class="p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
       <div v-if="loadError" class="card p-4 border border-rose-200 bg-rose-50 text-rose-700 text-sm">
         {{ loadError }}
       </div>
@@ -89,14 +89,11 @@
       <div v-else-if="!isLoading && !showAgm" class="hidden"></div>
       <div v-else class="card p-4 animate-pulse h-20"></div>
     </div>
-
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import axios from '../http.js'
 import { getEcho } from '../realtime/echo'

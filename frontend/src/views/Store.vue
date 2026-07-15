@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50 pb-32">
+  <div class="min-h-screen bg-slate-50/50">
     <AppHeader title="Coop Store" :showBack="true">
       <template #right>
         <div class="flex items-center gap-1">
@@ -386,14 +386,12 @@
       @cancel="handlePinCancel"
     />
 
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
 import getImageUrl from '../utils/image'
 import { useRouter } from 'vue-router'

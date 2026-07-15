@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-24 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="AGM & Voting" :showBack="true" />
 
     <div class="p-4 space-y-4 max-w-md mx-auto">
@@ -74,14 +74,12 @@
       </div>
     </div>
 
-    <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
 
 const loading = ref(false)

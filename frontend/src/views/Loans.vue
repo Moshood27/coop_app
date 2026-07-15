@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Qard Hasan Records" :showBack="true" />
 
-    <div class="container-app py-4">
+    <div class="max-w-5xl mx-auto py-4 px-4">
       <div v-if="loading" class="text-center text-slate-500 py-10">Loading…</div>
       <div v-else-if="error" class="card p-4 text-rose-700 bg-rose-50 border-rose-200">{{ error }}</div>
 
@@ -502,14 +502,12 @@
           @close="scheduleModalOpen = false"
         />
 
-        <AppBottomNav />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
 import { useAppStatusStore } from '../stores/appStatus'
 import getImageUrl from '../utils/image'

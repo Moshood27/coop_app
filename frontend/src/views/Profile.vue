@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50 pb-32">
+  <div class="min-h-screen bg-slate-50">
     <AppHeader title="Profile" :showBack="true">
       <template #right>
         <button @click="$router.push('/support')" class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl hover:bg-emerald-100 transition-colors">Support</button>
       </template>
     </AppHeader>
 
-    <div class="p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
       <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 relative overflow-hidden">
         <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-40" />
 
@@ -607,8 +607,6 @@
       </div>
     </div>
 
-    <AppBottomNav />
-    
     <!-- Nursing Mother Grace Modal -->
     <div v-if="showNursingMotherModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
@@ -651,7 +649,6 @@
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
-import AppBottomNav from '../components/AppBottomNav.vue'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
