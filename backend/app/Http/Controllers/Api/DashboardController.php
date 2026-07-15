@@ -221,6 +221,7 @@ class DashboardController extends Controller
             'shares_balance' => (float) ($eligibility['shares'] ?? 0),
             'loan_limit' => $isDefaulter ? 0.0 : (float) ($eligibility['eligibility_adjusted'] ?? 0),
             'can_apply' => $canApply,
+            'months_in_system' => (int) $months,
         ];
 
         return response()->json([

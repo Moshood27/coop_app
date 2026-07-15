@@ -11,6 +11,7 @@ import InboxDrawer from './components/InboxDrawer.vue'
 import IslamicChat from './components/IslamicChat.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppBottomNav from './components/AppBottomNav.vue'
+import { useAppStatusStore } from './stores/appStatus'
 import router from './router/index.js'
 import axios from './http.js'
 import { getEcho } from './realtime/echo.js'
@@ -29,6 +30,7 @@ const authToken = ref(localStorage.getItem('token'))
 const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const isLoggedIn = computed(() => !!authToken.value)
 const route = useRoute()
+const appStatusStore = useAppStatusStore()
 
 const showNav = computed(() => {
   const noNavRoutes = ['landing', 'login', 'register', 'forgot', 'onboarding', 'maintenance', 'update-required', 'pin-lock']
@@ -345,7 +347,7 @@ onBeforeUnmount(() => {
 
     <!-- Floating Chat Launcher (visible when logged in) -->
     <button
-      v-if="isLoggedIn && !(isMobile && isInputFocused)"
+      v-if="isLoggedIn && appStatusStore.features['chat-help-enabled'] && !(isMobile && isInputFocused)"
       @click="toggleSupportChat"
       aria-label="Open Support Chat"
       class="fixed bottom-32 right-6 md:right-4 z-50 bg-emerald-600 text-white shadow-xl shadow-emerald-200 rounded-full w-14 h-14 flex items-center justify-center hover:bg-emerald-700 active:scale-95 transition-all mb-[env(safe-area-inset-bottom)]"
