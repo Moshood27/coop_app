@@ -2,7 +2,7 @@
   <aside class="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-slate-200 overflow-y-auto">
     <div class="p-6">
       <div class="flex items-center gap-3 mb-8">
-        <img src="/icons/icon-72x72.png" alt="Logo" class="w-8 h-8 rounded-xl" />
+        <img src="/images/attaqwa-favicon.svg" alt="Logo" class="w-8 h-8 rounded-xl" />
         <h1 class="text-xl font-black text-emerald-800 tracking-tight">Cooperative</h1>
       </div>
 
