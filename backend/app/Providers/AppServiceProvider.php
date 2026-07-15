@@ -25,6 +25,16 @@ use Spatie\Permission\Events\PermissionAttached;
 use Spatie\Permission\Events\PermissionDetached;
 use Laragear\WebAuthn\Contracts\WebAuthnChallengeRepository;
 use App\WebAuthn\CacheChallengeRepository;
+use Spatie\Health\Facades\Health;
+use Spatie\Health\Checks\Checks\UsedDiskSpaceCheck;
+use Spatie\Health\Checks\Checks\DatabaseCheck;
+use Spatie\Health\Checks\Checks\DebugModeCheck;
+use Spatie\Health\Checks\Checks\EnvironmentCheck;
+use Spatie\Health\Checks\Checks\QueueCheck;
+use Spatie\Health\Checks\Checks\ScheduleCheck;
+use Spatie\Health\Checks\Checks\CacheCheck;
+use Spatie\Health\Checks\Checks\HorizonCheck;
+use Spatie\Health\Checks\Checks\BackupsCheck;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -120,6 +130,18 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\QardHasanRepayment::observe(\App\Observers\QardHasanRepaymentObserver::class);
         \App\Models\TakafulContribution::observe(\App\Observers\TakafulContributionObserver::class);
         \App\Models\SadaqahContribution::observe(\App\Observers\SadaqahContributionObserver::class);
+
+        Health::checks([
+            UsedDiskSpaceCheck::new(),
+            DatabaseCheck::new(),
+            DebugModeCheck::new(),
+            EnvironmentCheck::new(),
+            QueueCheck::new(),
+            ScheduleCheck::new(),
+            CacheCheck::new(),
+            HorizonCheck::new(),
+            BackupsCheck::new(),
+        ]);
 
         // Global API rate limiter
         RateLimiter::for('api', function (Request $request) {

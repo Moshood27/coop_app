@@ -164,13 +164,14 @@ return [
              * The disk names on which the backups will be stored.
              */
             'disks' => [
+                'local',
                 'google',
             ],
 
             /*
              * Determines whether to allow backups to continue when some targets fail instead of failing completely.
              */
-            'continue_on_failure' => false,
+            'continue_on_failure' => true,
         ],
 
         /*
@@ -297,7 +298,7 @@ return [
     'monitor_backups' => [
         [
             'name' => 'ATTAQWA',
-            'disks' => ['google'],
+            'disks' => ['local', 'google'],
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,

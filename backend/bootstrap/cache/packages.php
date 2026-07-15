@@ -298,6 +298,17 @@
       0 => 'Spatie\\Backup\\BackupServiceProvider',
     ),
   ),
+  'spatie/laravel-health' => 
+  array (
+    'aliases' => 
+    array (
+      'Health' => 'Spatie\\Health\\Facades\\Health',
+    ),
+    'providers' => 
+    array (
+      0 => 'Spatie\\Health\\HealthServiceProvider',
+    ),
+  ),
   'spatie/laravel-permission' => 
   array (
     'providers' => 
