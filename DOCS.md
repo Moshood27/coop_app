@@ -34,6 +34,7 @@ Feature guides
 - WEBHOOKS.md – General webhook handling patterns.
 - VTPASS_WEBHOOK.md – VTU provider webhook specifics.
 - TELESCOPE_HORIZON.md – Monitoring jobs, webhooks, and debugging.
+- BACKUP_AND_HEALTH_MONITORING.md – **NEW:** Automated database/file backups and proactive system health monitoring.
 
 APIs and backend
 - backend/routes/api.php – Authenticated and public API routes map.
