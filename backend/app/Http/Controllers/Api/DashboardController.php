@@ -168,6 +168,9 @@ class DashboardController extends Controller
         $totalOverdue = (float) $user->totalOverdueAmount();
         $expectedToPay = (float) $user->totalExpectedAmountToPay();
         $hasActiveLoan = $user->hasActiveLoan();
+        $months = $user->monthsInSystem();
+
+        $canApply = $months >= 6 && !$isDefaulter && !$user->hasActiveLoanPenalty() && !$hasActiveLoan && (($eligibility['eligibility_adjusted'] ?? 0) > 0);
 
         // Find next due installment info
         $nextDueDate = null;
@@ -217,6 +220,7 @@ class DashboardController extends Controller
             'savings_balance' => (float) ($eligibility['savings'] ?? 0),
             'shares_balance' => (float) ($eligibility['shares'] ?? 0),
             'loan_limit' => $isDefaulter ? 0.0 : (float) ($eligibility['eligibility_adjusted'] ?? 0),
+            'can_apply' => $canApply,
         ];
 
         return response()->json([

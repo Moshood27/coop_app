@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50 pb-32">
-    <AppHeader title="Loan Analysis" :showBack="true">
+    <AppHeader title="Qard Hasan (Loan) Analysis" :showBack="true">
       <template #right>
         <a :href="downloadUrl" target="_blank" class="p-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
           <span>Report</span>
@@ -17,7 +17,7 @@
         <!-- Detailed Loan List -->
         <div class="card overflow-hidden">
           <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="section-title">Loan Details</h3>
+            <h3 class="section-title">Qard Hasan (Loan) Details</h3>
             <span class="text-[10px] font-bold text-slate-400 uppercase">{{ analysis.loans.length }} total</span>
           </div>
           <div class="divide-y divide-slate-100">

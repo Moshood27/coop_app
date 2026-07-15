@@ -299,7 +299,7 @@
                 {{ loan.is_completed ? '✅' : (loan.status === 'defaulted' ? '⚠️' : (loan.status === 'rejected' ? '❌' : '💳')) }}
               </div>
               <div>
-                <h3 class="font-black text-slate-800">Qard Hasan Loan</h3>
+                <h3 class="font-black text-slate-800">Qard Hasan (Loan)</h3>
                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ loan.qard_id_string }}</p>
               </div>
             </div>

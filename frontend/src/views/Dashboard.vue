@@ -180,9 +180,9 @@
       <!-- Qard Hasan Status & Savings Section -->
       <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-slate-800 font-bold text-lg">Qard Hasan (Loan) Status</h3>
+          <h3 v-if="kpis.has_active_loan || kpis.can_apply" class="text-slate-800 font-bold text-lg">Qard Hasan (Loan) Status</h3>
           <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan']" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
+            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
@@ -246,7 +246,7 @@
         <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
-        <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" />
+        <StatPill v-if="kpis.has_active_loan || kpis.can_apply" label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" />
         <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
       </div>
     </div> <!-- end right col -->
@@ -829,7 +829,7 @@ const kpis = computed(() => {
   const outstandingLoans = txs.filter(t => (t.type === 'loan' || String(t.scheme?.name || '').toLowerCase().includes('loan')))
     .reduce((sum, t) => sum + Number(t.balance || 0), 0)
   const utilSpent = utils.reduce((sum, u) => sum + Number(u.amount || 0), 0)
-  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
+  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, can_apply: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
 })
 
 const chart = computed(() => {
@@ -1132,7 +1132,7 @@ const payZakatFitr = async () => {
 const showPassbookInfo = () => {
   const msg = [
     'Your digital ledger with the cooperative.',
-    '• See every contribution, withdrawal, Qard Hasan disbursement/repayment, fines, and adjustments.',
+    '• See every contribution, withdrawal, Qard Hasan (Loan) disbursement/repayment, fines, and adjustments.',
     '• Tap a row to view full details and reference.',
     '• Use filters (date range, scheme/type) to find entries fast.'
   ].join('\n')
