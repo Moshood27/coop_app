@@ -337,7 +337,7 @@ onBeforeUnmount(() => {
   <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
     <AppSidebar v-if="showNav" :user="user" />
     
-    <div class="flex-1 flex flex-col min-w-0 relative" :class="{'md:pr-20 lg:pr-28': showNav}">
+    <div class="flex-1 flex flex-col min-w-0 relative" :class="{'pr-20 lg:pr-28': showNav}">
       <router-view />
       
       <AppBottomNav v-if="showNav" />
@@ -348,7 +348,7 @@ onBeforeUnmount(() => {
       v-if="isLoggedIn && !(isMobile && isInputFocused)"
       @click="toggleSupportChat"
       aria-label="Open Support Chat"
-      class="fixed bottom-32 right-6 md:right-4 z-50 bg-emerald-600 text-white shadow-xl shadow-emerald-200 rounded-full w-14 h-14 flex items-center justify-center hover:bg-emerald-700 active:scale-95 transition-all mb-[env(safe-area-inset-bottom)]"
+      class="fixed bottom-32 right-4 z-50 bg-emerald-600 text-white shadow-xl shadow-emerald-200 rounded-full w-14 h-14 flex items-center justify-center hover:bg-emerald-700 active:scale-95 transition-all mb-[env(safe-area-inset-bottom)]"
     >
       <svg v-if="!showChat" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-7 h-7">
         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-4.25c0-.621.504-1.125 1.125-1.125h1.5c.621 0 1.125.504 1.125 1.125Zm-16.5 0v4.25c0 .621.504 1.125 1.125 1.125h1.5a1.125 1.125 0 0 0 1.125-1.125v-4.25c0-.621-.504-1.125-1.125-1.125h-1.5a1.125 1.125 0 0 0-1.125 1.125ZM12 3c4.97 0 9 4.03 9 9.375v.125c0 .414-.336.75-.75.75h-1.5a.75.75 0 0 1-.75-.75V12c0-4.142-3.358-7.5-7.5-7.5S4.5 7.858 4.5 12v.5c0 .414-.336.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-.125C1.5 7.03 5.53 3 12 3Z" />
@@ -361,7 +361,7 @@ onBeforeUnmount(() => {
     <!-- Floating Chat Widget -->
     <div 
       v-if="isLoggedIn && showChat && supportRoomId" 
-      class="fixed inset-0 sm:inset-auto sm:bottom-4 sm:right-4 md:right-6 z-[60] w-full h-[100dvh] sm:h-[600px] sm:w-[450px] mb-[env(safe-area-inset-bottom)] animate-in fade-in slide-in-from-bottom-4 duration-300"
+      class="fixed inset-0 sm:inset-auto sm:bottom-4 sm:right-4 z-[60] w-full h-[100dvh] sm:h-[600px] sm:w-[450px] mb-[env(safe-area-inset-bottom)] animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div class="h-full bg-white rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl relative border border-slate-200 dark:border-gray-700">
         <IslamicChat :room-id="supportRoomId" :show-back="false" @back="showChat = false" class="flex-1" />
@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
       v-if="isLoggedIn && !(isMobile && isInputFocused)"
       @click="showInbox = true"
       aria-label="Open Inbox"
-      class="fixed bottom-20 right-6 md:right-4 z-40 bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all mb-[env(safe-area-inset-bottom)]"
+      class="fixed bottom-20 right-4 z-40 bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all mb-[env(safe-area-inset-bottom)]"
     >
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 md:w-7 md:h-7 text-slate-600">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.32a2.25 2.25 0 0 0-2.159-1.57H6.92a2.25 2.25 0 0 0-2.159 1.57L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
