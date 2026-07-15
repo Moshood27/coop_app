@@ -106,6 +106,10 @@
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-slate-800">Bank Transfer Account</h3>
           </div>
+
+          <div class="mb-4 bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+            <p class="text-xs text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+          </div>
           
           <div v-if="wallet.virtual_account?.account_number" class="space-y-4">
             <div class="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 rounded-3xl text-white shadow-lg shadow-emerald-200">
@@ -150,9 +154,6 @@
                </div>
             </div>
             <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Transfer funds to this account to top up your wallet instantly.</p>
-            <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
-              <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-            </div>
           </div>
 
             <div v-else class="space-y-4">
@@ -192,6 +193,10 @@
           <div v-if="appStatusStore.paymentGateways['flutterwave']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt)</h3>
+            </div>
+
+            <div class="mb-4 bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+              <p class="text-xs text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
             </div>
 
             <div v-if="wallet.flw_virtual_account?.account_number" class="space-y-4">
@@ -237,9 +242,6 @@
                  </div>
               </div>
               <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Alternative account — transfer funds here to top up your wallet.</p>
-              <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
-                <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-              </div>
             </div>
 
             <div v-else class="space-y-4">
@@ -279,6 +281,10 @@
           <div v-if="appStatusStore.paymentGateways['monnify']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt 2)</h3>
+              </div>
+
+              <div class="mb-4 bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+                <p class="text-xs text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
               </div>
 
               <div v-if="wallet.monnify_virtual_account?.account_number" class="space-y-4">
@@ -324,9 +330,6 @@
                    </div>
                 </div>
                 <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Monnify account — transfer funds here to top up your wallet.</p>
-                <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
-                  <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-                </div>
               </div>
 
               <div v-else class="space-y-4">
@@ -347,11 +350,15 @@
 
           <!-- Opay Virtual Account Info -->
           <div v-if="appStatusStore.paymentGateways['opay']" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt 3)</h3>
-            </div>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800">Bank Transfer Account (Alt 3)</h3>
+              </div>
 
-            <div v-if="wallet.opay_virtual_account?.account_number" class="space-y-4">
+              <div class="mb-4 bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+                <p class="text-xs text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+              </div>
+
+              <div v-if="wallet.opay_virtual_account?.account_number" class="space-y-4">
               <div class="relative overflow-hidden bg-gradient-to-br from-teal-500 to-teal-700 p-6 rounded-3xl text-white shadow-lg shadow-teal-200">
                  <!-- Subtle pattern overlay -->
                  <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
@@ -394,9 +401,6 @@
                  </div>
               </div>
               <p class="text-[11px] text-slate-500 text-center px-4 leading-relaxed">Opay account — transfer funds here to top up your wallet.</p>
-              <div class="bg-rose-50 border border-rose-100 p-3 rounded-2xl">
-                <p class="text-[10px] text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
-              </div>
             </div>
 
             <div v-else class="space-y-4">
@@ -436,7 +440,12 @@
       <div v-if="activeTab === 'fund'" class="space-y-6">
         <!-- Card Top-up Form -->
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all">
-          <h3 class="font-bold text-slate-800 mb-4">Fund Wallet (Online)</h3>
+          <h3 class="font-bold text-slate-800 mb-2">Fund Wallet (Online)</h3>
+
+          <div class="mb-4 bg-rose-50 border border-rose-100 p-3 rounded-2xl">
+            <p class="text-xs text-rose-600 font-bold text-center italic">Note: A maintenance charge of {{ wallet?.maintenance_charge_config?.percentage || 1 }}% (max ₦{{ wallet?.maintenance_charge_config?.max_amount || 500 }}) applies.</p>
+          </div>
+
           <div class="space-y-4">
             <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Gateway</label>
