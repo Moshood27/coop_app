@@ -41,6 +41,9 @@ class InactivityTimeout
                         // Revoke token and reject request
                         $token->delete();
 
+                        // Fire logout event to log activity and clear last_activity_at via listener
+                        event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
+
                         return response()->json([
                             'message' => 'Session expired due to inactivity.',
                         ], 401);

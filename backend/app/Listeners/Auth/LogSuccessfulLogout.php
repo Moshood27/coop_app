@@ -29,6 +29,11 @@ class LogSuccessfulLogout
                     'user_agent' => $this->request->userAgent(),
                 ])
                 ->log('User logged out');
+
+            // Clear last activity to ensure they don't show up in "Online Members" widget fallback
+            if (method_exists($event->user, 'updateQuietly')) {
+                $event->user->updateQuietly(['last_activity_at' => null]);
+            }
         }
     }
 }
