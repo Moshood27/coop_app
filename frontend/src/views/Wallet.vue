@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-slate-50">
     <AppHeader title="Wallet" :showBack="true" />
 
-    <div class="max-w-5xl mx-auto p-4 space-y-6">
+    <div class="max-w-5xl mx-auto p-4 pb-32 space-y-6">
       <!-- Balance Card -->
       <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
