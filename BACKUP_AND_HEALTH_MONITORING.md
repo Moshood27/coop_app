@@ -12,7 +12,9 @@ The application uses `spatie/laravel-backup` to ensure data safety and disaster 
 - **Encryption**: Backups are encrypted using the password defined in the `.env` file.
 - **Multi-Destination Storage**:
     - **Local**: Backups are stored in `storage/app/backups`.
-    - **Google Drive**: Backups are uploaded to a specified Google Drive folder for off-site resilience. The driver is registered in `AppServiceProvider.php`.
+    - **Google Drive**: Backups are uploaded to a specified Google Drive folder for off-site resilience.
+    - **Dropbox**: Backups are uploaded to Dropbox for additional redundancy.
+    The drivers are registered in `AppServiceProvider.php`.
 
 ### Configuration
 Configuration is located in `backend/config/backup.php`.
@@ -25,8 +27,14 @@ GOOGLE_DRIVE_CLIENT_SECRET=
 GOOGLE_DRIVE_REFRESH_TOKEN=
 GOOGLE_DRIVE_FOLDER_ID=
 
+# Dropbox Credentials
+DROPBOX_TOKEN=
+
 # Backup Archive Password
 BACKUP_ARCHIVE_PASSWORD=your-secure-password
+
+# Slack Notifications for Backups
+BACKUP_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 ```
 
 ### Manual Commands
@@ -69,12 +77,22 @@ The checks are registered in `AppServiceProvider.php`:
 - **View Health Status (JSON)**: `php artisan health:list --json`
 
 ### Notifications
-If a check fails, notifications can be sent via Email or Slack based on `.env` configuration:
+Both Backup and Health systems support Slack and Email notifications.
+
+#### Health Monitoring Notifications
+If a check fails, notifications are sent based on `.env`:
 ```env
 HEALTH_NOTIFICATIONS_ENABLED=true
 HEALTH_TO_ADDRESS=admin@example.com
 HEALTH_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 ```
+
+#### Backup Notifications
+Status updates (Success/Failure) are sent based on `.env`:
+```env
+BACKUP_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+```
+(If `BACKUP_SLACK_WEBHOOK_URL` is empty, it falls back to `HEALTH_SLACK_WEBHOOK_URL`).
 
 ### Scheduling
 Health checks are scheduled in `backend/routes/console.php`:
@@ -86,7 +104,7 @@ Health checks are scheduled in `backend/routes/console.php`:
 
 In the event of a total server failure:
 1. Re-provision the server using `BUILD_AND_DEPLOY.md`.
-2. Retrieve the latest backup from Google Drive or local storage.
+2. Retrieve the latest backup from Google Drive, Dropbox, or local storage.
 3. Use `php artisan backup:run --only-db` (manually or via restore script) to restore the database.
 4. Unzip the backup archive using the `BACKUP_ARCHIVE_PASSWORD`.
 5. Restore the `storage/app/public` files.

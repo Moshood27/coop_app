@@ -241,5 +241,22 @@ class AppServiceProvider extends ServiceProvider
                 $config
             );
         });
+
+        // Register Dropbox Storage Driver
+        Storage::extend('dropbox', function ($app, $config) {
+            if (empty($config['token'])) {
+                throw new \Exception('Dropbox storage driver is missing token. Please ensure DROPBOX_TOKEN is set in your .env file.');
+            }
+
+            $adapter = new \Spatie\FlysystemDropbox\DropboxAdapter(
+                new \Spatie\Dropbox\Client($config['token'])
+            );
+
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new \League\Flysystem\Filesystem($adapter),
+                $adapter,
+                $config
+            );
+        });
     }
 }

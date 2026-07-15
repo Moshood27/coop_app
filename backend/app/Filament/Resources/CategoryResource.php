@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class CategoryResource extends Resource
 {
@@ -33,6 +34,10 @@ class CategoryResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->unique(Category::class, 'slug', ignoreRecord: true),
+                Forms\Components\TextInput::make('icon')
+                    ->label('Icon Class')
+                    ->placeholder('e.g. i-mdi-home')
+                    ->helperText('Use Iconify/UnoCSS classes (e.g., i-mdi-apps, i-mdi-food).'),
                 Forms\Components\Textarea::make('description')
                     ->rows(3)
                     ->columnSpanFull(),
@@ -59,6 +64,8 @@ class CategoryResource extends Resource
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('icon')
+                    ->searchable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
                     ->label('Active'),

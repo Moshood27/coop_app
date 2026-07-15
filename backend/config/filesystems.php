@@ -79,6 +79,11 @@ return [
             'teamDriveId' => env('GOOGLE_DRIVE_TEAM_DRIVE_ID'),
         ],
 
+        'dropbox' => [
+            'driver' => 'dropbox',
+            'token' => env('DROPBOX_TOKEN'),
+        ],
+
     ],
 
     /*

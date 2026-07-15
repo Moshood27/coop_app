@@ -166,6 +166,7 @@ return [
             'disks' => [
                 'local',
                 'google',
+                'dropbox',
             ],
 
             /*
@@ -222,12 +223,12 @@ return [
      */
     'notifications' => [
         'notifications' => [
-            BackupHasFailedNotification::class => ['mail'],
-            UnhealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupHasFailedNotification::class => ['mail'],
-            BackupWasSuccessfulNotification::class => ['mail'],
-            HealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupWasSuccessfulNotification::class => ['mail'],
+            BackupHasFailedNotification::class => ['mail', 'slack'],
+            UnhealthyBackupWasFoundNotification::class => ['mail', 'slack'],
+            CleanupHasFailedNotification::class => ['mail', 'slack'],
+            BackupWasSuccessfulNotification::class => ['mail', 'slack'],
+            HealthyBackupWasFoundNotification::class => ['mail', 'slack'],
+            CleanupWasSuccessfulNotification::class => ['mail', 'slack'],
         ],
 
         /*
@@ -246,7 +247,7 @@ return [
         ],
 
         'slack' => [
-            'webhook_url' => '',
+            'webhook_url' => env('BACKUP_SLACK_WEBHOOK_URL', env('HEALTH_SLACK_WEBHOOK_URL')),
 
             /*
              * If this is set to null the default channel of the webhook will be used.

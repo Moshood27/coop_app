@@ -19,6 +19,8 @@ class ProductController extends Controller
         $perPage = max(1, min(100, $perPage));
         $search = trim((string) $request->get('q', ''));
         $categoryId = (int) $request->get('category_id', 0);
+        $minPrice = $request->get('min_price');
+        $maxPrice = $request->get('max_price');
         $sort = trim((string) $request->get('sort', 'newest'));
 
         $query = Product::query()
@@ -48,6 +50,14 @@ class ProductController extends Controller
 
         if ($categoryId > 0) {
             $query->where('category_id', $categoryId);
+        }
+
+        if ($minPrice !== null && $minPrice !== '') {
+            $query->whereRaw('(cost_price + (cost_price * (markup_percent / 100))) >= ?', [(float) $minPrice]);
+        }
+
+        if ($maxPrice !== null && $maxPrice !== '') {
+            $query->whereRaw('(cost_price + (cost_price * (markup_percent / 100))) <= ?', [(float) $maxPrice]);
         }
 
         // Sorting options: newest (default), price_asc, price_desc, name_asc, name_desc
@@ -80,6 +90,7 @@ class ProductController extends Controller
                 'category' => $p->category ? [
                     'id' => $p->category->id,
                     'name' => $p->category->name,
+                    'icon' => $p->category->icon,
                 ] : null,
                 'vendor' => $p->vendor ? [
                     'id' => $p->vendor->id,
@@ -106,7 +117,7 @@ class ProductController extends Controller
         $categories = Category::query()
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'description']);
+            ->get(['id', 'name', 'slug', 'icon', 'description']);
 
         return response()->json($categories);
     }

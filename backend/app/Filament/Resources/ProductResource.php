@@ -100,6 +100,11 @@ class ProductResource extends Resource
                 return $query->orderByRaw('LENGTH(name) ASC')->orderBy('name', 'asc');
             })
             ->columns([
+                Tables\Columns\ImageColumn::make('image_url')
+                    ->label('Image')
+                    ->disk('public')
+                    ->circular()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('category.name')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('Internal')->sortable()->toggleable(),
                 TextColumn::make('name')->searchable()->sortable(query: function (Builder $query, string $direction): Builder {

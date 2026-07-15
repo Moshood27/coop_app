@@ -1,375 +1,513 @@
 <template>
-  <div class="min-h-screen bg-slate-50/50">
-    <AppHeader title="Coop Store" :showBack="true">
-      <template #right>
+  <div class="min-h-screen bg-[#F8FAFC]">
+    <!-- Professional Header -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <button @click="$router.push('/dashboard')" class="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors">
+            <span class="i-mdi-arrow-left text-xl text-slate-600"></span>
+          </button>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">CoopStore</h1>
+        </div>
+
+        <div class="hidden md:flex flex-1 max-w-xl relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 i-mdi-magnify text-slate-400 text-xl"></span>
+          <input 
+            v-model="q" 
+            @keyup.enter="load(1)" 
+            type="search" 
+            placeholder="Search products, categories..." 
+            class="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500/20 transition-all text-sm"
+          />
+        </div>
+
         <div class="flex items-center gap-1">
-          <button class="relative p-2 hover:bg-slate-100 rounded-xl transition-colors" @click="toggleCart()">
-            <span class="i-mdi-cart-outline text-2xl text-emerald-700"></span>
-            <span v-if="totalQty" class="absolute top-0 right-0 w-5 h-5 bg-emerald-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">{{ totalQty }}</span>
+          <button 
+            class="relative p-2 hover:bg-slate-100 rounded-full transition-colors"
+            @click="showCart = true"
+          >
+            <span class="i-mdi-cart-outline text-2xl text-slate-700"></span>
+            <span v-if="totalQty" class="absolute top-1 right-1 w-5 h-5 bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-bounce-short">
+              {{ totalQty }}
+            </span>
           </button>
-          <button class="p-2 hover:bg-slate-100 rounded-xl transition-colors" @click="$router.push('/store/orders')" title="Orders">
-            <span class="i-mdi-file-document-outline text-2xl text-slate-600"></span>
-          </button>
-          <button v-if="vendor && vendor.id" class="p-2 hover:bg-emerald-50 rounded-xl transition-colors" @click="$router.push('/vendor/dashboard')" title="Vendor Portal">
-            <span class="i-mdi-store-outline text-2xl text-emerald-700"></span>
-          </button>
-          <button v-else class="p-2 hover:bg-slate-100 rounded-xl transition-colors" @click="$router.push('/vendor/apply')" title="Become a Vendor">
-            <span class="i-mdi-store-plus-outline text-2xl text-slate-400"></span>
-          </button>
-        </div>
-      </template>
-    </AppHeader>
-
-    <div class="max-w-5xl mx-auto p-4 space-y-6">
-      <!-- Search & Filters -->
-      <section class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 class="text-2xl font-black text-slate-800 uppercase leading-tight">Coop Store</h2>
-            <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600">Premium member shopping</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="p-2 hover:bg-emerald-50 rounded-xl transition-colors text-emerald-700" @click="toggleCart()" title="View Cart">
-              <span class="i-mdi-cart-outline text-2xl"></span>
-              <span v-if="totalQty" class="absolute -top-1 -right-1 w-5 h-5 bg-emerald-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">{{ totalQty }}</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="flex-1 relative group">
-            <input v-model="q" @keyup.enter="load(1)" type="search" placeholder="Search for products, electronics..." class="w-full bg-slate-50 border-2 border-transparent focus:border-emerald-500/20 focus:bg-white p-4 pl-12 rounded-[1.5rem] outline-none transition-all font-medium text-slate-800 shadow-inner" />
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-            <select v-model="selectedCategory" @change="load(1)" class="h-14 px-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:border-emerald-500 transition-colors appearance-none min-w-[140px]">
-              <option :value="0">All Categories</option>
-              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-            <select v-model="sortBy" @change="load(1)" class="h-14 px-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:border-emerald-500 transition-colors appearance-none min-w-[120px]">
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price: Low-High</option>
-              <option value="price_desc">Price: High-Low</option>
-              <option value="name_asc">A–Z</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- Products Grid -->
-      <section>
-        <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-4">
-          <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin"></div>
-          <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Updating catalog...</p>
-        </div>
-        <div v-else-if="error" class="bg-rose-50 border border-rose-100 p-6 rounded-[2rem] text-center">
-           <p class="text-rose-700 font-bold">{{ error }}</p>
-           <button @click="load(1)" class="mt-4 px-6 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest">Retry</button>
-        </div>
-        <div v-else>
-          <div v-if="!items.length" class="bg-white rounded-[2rem] p-20 text-center border border-dashed border-slate-200">
-            <div class="text-5xl mb-4">🛍️</div>
-            <h3 class="text-lg font-black text-slate-800 uppercase mb-1">No products found</h3>
-            <p class="text-sm text-slate-500">Try adjusting your search or category filters.</p>
-          </div>
           
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="p in items" :key="p.id" class="group bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-emerald-900/5 transition-all duration-300 overflow-hidden flex flex-col">
-              <!-- Product Image Area -->
-              <div class="aspect-square relative overflow-hidden bg-slate-50" @click="openQuick(p)">
-                <img v-if="p.image_url" :src="getImageUrl(p.image_url)" alt="image" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                <div v-else class="w-full h-full flex items-center justify-center text-slate-200 text-6xl">📦</div>
-                
-                <!-- Badges overlay -->
-                <div class="absolute top-4 left-4 flex flex-col gap-2">
-                  <span v-if="isNew(p.created_at)" class="bg-emerald-600 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg shadow-emerald-900/20">New</span>
-                  <span v-if="!p.is_approved" class="bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg shadow-amber-900/20">Pending</span>
-                </div>
-                
-                <!-- Quick action overlay -->
-                <div class="absolute inset-0 bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                   <button @click.stop="openQuick(p)" class="w-12 h-12 bg-white text-slate-800 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
-                      <span class="i-mdi-eye-outline text-xl"></span>
-                   </button>
-                   <button v-if="!cart[p.id] && (!p.track_stock || p.stock_quantity > 0)" @click.stop="addToCart(p)" class="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
-                      <span class="i-mdi-cart-plus text-xl"></span>
-                   </button>
-                </div>
-              </div>
+          <button 
+            class="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            @click="$router.push('/store/orders')"
+            title="My Orders"
+          >
+            <span class="i-mdi-package-variant-closed text-2xl text-slate-700"></span>
+          </button>
 
-              <!-- Product Info -->
-              <div class="p-6 flex-1 flex flex-col">
-                <div class="flex items-center justify-between gap-4 mb-2">
-                  <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest truncate">{{ p.category?.name || 'General' }}</span>
-                  <div class="text-lg font-black text-slate-900 whitespace-nowrap">₦ {{ money(p.selling_price) }}</div>
-                </div>
-                
-                <h3 class="text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors cursor-pointer line-clamp-1" @click="openQuick(p)">{{ p.name }}</h3>
-                
-                <div v-if="p.vendor" class="flex items-center gap-2 mb-3">
-                  <div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] text-slate-400 font-bold">V</div>
-                  <span class="text-[10px] text-slate-500 font-bold truncate">{{ p.vendor.name }}</span>
-                </div>
+          <div class="w-px h-6 bg-slate-200 mx-1"></div>
 
-                <p class="text-xs text-slate-500 line-clamp-2 mb-4 h-8">{{ p.description || 'No description available for this item.' }}</p>
-                
-                <div class="mt-auto space-y-3">
-                   <div v-if="p.track_stock" class="flex items-center gap-2">
-                      <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full" :style="{ width: Math.min(100, (p.stock_quantity / 10) * 100) + '%' }"></div>
-                      </div>
-                      <span v-if="p.stock_quantity > 0" class="text-[9px] font-black text-slate-400 uppercase">{{ p.stock_quantity }} Left</span>
-                      <span v-else class="text-[9px] font-black text-rose-500 uppercase">Out of Stock</span>
-                   </div>
+          <button 
+            v-if="vendor && vendor.id" 
+            class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full hover:bg-emerald-100 transition-colors"
+            @click="$router.push('/vendor/dashboard')"
+          >
+            <span class="i-mdi-store text-lg"></span>
+            <span class="text-xs font-bold hidden sm:inline">Vendor Portal</span>
+          </button>
+          <button 
+            v-else 
+            class="px-4 py-1.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-slate-800 transition-colors"
+            @click="$router.push('/vendor/apply')"
+          >
+            Sell on Coop
+          </button>
+        </div>
+      </div>
+      
+      <!-- Mobile Search Bar -->
+      <div class="md:hidden px-4 pb-3">
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 i-mdi-magnify text-slate-400 text-lg"></span>
+          <input 
+            v-model="q" 
+            @keyup.enter="load(1)" 
+            type="search" 
+            placeholder="Search products..." 
+            class="w-full bg-slate-100 border-none rounded-full py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500/20 text-sm"
+          />
+        </div>
+      </div>
+    </header>
 
-                   <div class="flex items-center gap-2 pt-2 border-t border-slate-50">
-                      <template v-if="cart[p.id]">
-                        <div class="flex-1 flex items-center justify-between bg-slate-100/50 rounded-xl p-1">
-                          <button class="w-8 h-8 flex items-center justify-center bg-white text-slate-500 hover:text-rose-600 rounded-lg shadow-sm transition-all active:scale-90" @click="decQty(p.id)">
-                            <span class="i-mdi-minus text-[10px]"></span>
-                          </button>
-                          <span class="text-xs font-black text-slate-800">{{ cart[p.id].qty }}</span>
-                          <button class="w-8 h-8 flex items-center justify-center bg-white text-slate-500 hover:text-emerald-600 rounded-lg shadow-sm transition-all active:scale-90 disabled:opacity-30" @click="incQty(p.id)" :disabled="p.track_stock && cart[p.id].qty >= p.stock_quantity">
-                            <span class="i-mdi-plus text-[10px]"></span>
-                          </button>
-                        </div>
-                      </template>
-                      <button v-else-if="!p.track_stock || p.stock_quantity > 0" class="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-900/10" @click="addToCart(p)">Add to Cart</button>
-                      <button v-else disabled class="flex-1 h-12 bg-slate-100 text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed">Sold Out</button>
-                      
-                      <div v-if="isAdmin && (!p.is_approved || p.vendor_id)" class="flex gap-1">
-                        <button v-if="!p.is_approved" @click="approveProduct(p)" class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all" title="Approve">
-                          <span class="i-mdi-check text-xl"></span>
-                        </button>
-                         <button v-if="p.is_approved && p.vendor_id" @click="rejectProduct(p)" class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all" title="Reject">
-                          <span class="i-mdi-close text-xl"></span>
-                        </button>
-                      </div>
-                   </div>
-                </div>
-              </div>
+    <main class="max-w-7xl mx-auto px-4 py-6 md:flex md:gap-8">
+      <!-- Sidebar Filters (Desktop) -->
+      <aside class="hidden md:block w-64 shrink-0 space-y-8">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Categories</h3>
+          <nav class="space-y-1">
+            <button 
+              @click="selectedCategory = 0; load(1)"
+              :class="[selectedCategory === 0 ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50']"
+              class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3"
+            >
+              <span class="i-mdi-apps text-lg"></span>
+              All Products
+            </button>
+            <button 
+              v-for="c in categories" 
+              :key="c.id"
+              @click="selectedCategory = c.id; load(1)"
+              :class="[selectedCategory === c.id ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50']"
+              class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3"
+            >
+              <span :class="c.icon || 'i-mdi-tag-outline'" class="text-lg opacity-70"></span>
+              {{ c.name }}
+            </button>
+          </nav>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Price Range</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-2">
+              <input v-model="minPrice" type="number" placeholder="Min" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-emerald-500/20 outline-none" />
+              <span class="text-slate-400 text-xs">—</span>
+              <input v-model="maxPrice" type="number" placeholder="Max" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-emerald-500/20 outline-none" />
             </div>
-          </div>
-
-          <div class="flex items-center justify-between mt-4 text-sm">
-            <button class="px-3 py-2 rounded-lg border border-slate-200 bg-white disabled:opacity-50" :disabled="page <= 1 || loading" @click="load(page - 1)">Prev</button>
-            <div class="text-slate-500">Page {{ page }} / {{ lastPage }}</div>
-            <button class="px-3 py-2 rounded-lg border border-slate-200 bg-white disabled:opacity-50" :disabled="page >= lastPage || loading" @click="load(page + 1)">Next</button>
+            <button @click="load(1)" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">Apply Filter</button>
           </div>
         </div>
-      </section>
 
-      <section v-if="showCart" class="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-100 animate-in slide-in-from-bottom duration-500">
+        <div v-if="isAdmin" class="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+          <h4 class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">Admin Tools</h4>
+          <p class="text-xs text-amber-700 mb-3 leading-relaxed">You can moderate products directly from the storefront.</p>
+          <div class="w-full h-px bg-amber-200/50 mb-3"></div>
+          <button @click="$router.push('/admin/store')" class="text-xs font-bold text-amber-800 hover:underline">Manage All Inventory →</button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 min-w-0">
+        <!-- Horizontal Categories (Mobile) -->
+        <div class="md:hidden flex gap-2 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 mb-4">
+          <button 
+            @click="selectedCategory = 0; load(1)"
+            :class="[selectedCategory === 0 ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-white text-slate-600 border border-slate-200']"
+            class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all"
+          >
+            All
+          </button>
+          <button 
+            v-for="c in categories" 
+            :key="c.id"
+            @click="selectedCategory = c.id; load(1)"
+            :class="[selectedCategory === c.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-white text-slate-600 border border-slate-200']"
+            class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
+          >
+            <span v-if="c.icon" :class="c.icon"></span>
+            {{ c.name }}
+          </button>
+        </div>
+
+        <!-- Toolbar -->
         <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
-              <span class="i-mdi-cart-outline"></span>
-            </div>
-            <div>
-              <h2 class="text-xl font-black text-slate-800 uppercase leading-tight">Your Cart</h2>
-              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ cartList.length }} items selected</p>
-            </div>
-          </div>
-          <button class="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-widest transition-colors hover:bg-rose-100" @click="clearCart()" :disabled="!totalQty">Clear</button>
-        </div>
-
-        <div v-if="!totalQty" class="py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-          <p class="text-slate-400 text-sm font-medium">Your shopping cart is empty.</p>
-        </div>
-        <div v-else class="space-y-4">
-          <div class="max-h-[40vh] overflow-y-auto pr-2 space-y-3 hide-scrollbar">
-            <div v-for="ci in cartList" :key="ci.id" class="flex items-center gap-4 p-4 rounded-[1.5rem] bg-slate-50 border border-slate-100 group transition-all">
-              <div class="w-16 h-16 rounded-xl bg-white overflow-hidden border border-slate-200 shrink-0">
-                <img v-if="ci.image_url" :src="getImageUrl(ci.image_url)" class="w-full h-full object-cover" />
-                <div v-else class="w-full h-full flex items-center justify-center text-slate-200">📦</div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-bold text-slate-800 truncate mb-0.5">{{ ci.name }}</div>
-                <div class="text-sm font-black text-emerald-700">₦ {{ money(ci.selling_price) }}</div>
-              </div>
-              <div class="flex flex-col items-end gap-2">
-                <div class="flex items-center bg-white rounded-lg p-1 border border-slate-100 shadow-sm">
-                  <button class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-rose-600 transition-colors" @click="decQty(ci.id)">
-                    <span class="i-mdi-minus text-[10px]"></span>
-                  </button>
-                  <span class="w-8 text-center text-[10px] font-black text-slate-800">{{ ci.qty }}</span>
-                  <button class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-colors" @click="incQty(ci.id)" :disabled="ci.track_stock && ci.qty >= ci.stock_quantity">
-                    <span class="i-mdi-plus text-[10px]"></span>
-                  </button>
-                </div>
-                <button class="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline" @click="remove(ci.id)">Remove</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-6 bg-slate-900 rounded-[2rem] text-white">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Subtotal</span>
-              <span class="text-2xl font-black">₦ {{ money(subtotal) }}</span>
-            </div>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Order Note (optional)</label>
-                <textarea v-model="orderNote" rows="2" placeholder="Instructions for the vendor..." class="w-full bg-white/10 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-emerald-500 transition-colors"></textarea>
-              </div>
-
-              <!-- Financing Option -->
-              <div v-if="hasInsufficient" class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-lg">💳</div>
-                  <div>
-                    <p class="text-xs font-black uppercase tracking-widest text-amber-500">Murabaha Financing</p>
-                    <p class="text-[10px] text-slate-400">Insufficient balance. Buy on credit.</p>
-                  </div>
-                </div>
-
-                <div v-if="!canUseFinancing" class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-[10px] font-bold">
-                  {{ financingReason }}
-                </div>
-                <template v-else>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Tenor</label>
-                      <select v-model.number="creditMonths" class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                        <option v-for="m in [6,7,8,9,10,11,12]" :key="m" :value="m" class="text-slate-900">{{ m }} months</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Profit Rate</label>
-                      <select v-model.number="creditProfit" class="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                        <option :value="0.10" class="text-slate-900">10%</option>
-                        <option :value="0.12" class="text-slate-900">12%</option>
-                        <option :value="0.15" class="text-slate-900">15%</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div class="text-[10px] text-slate-400 leading-relaxed px-1">
-                    Est. Total: <span class="text-white font-bold">₦ {{ money(creditEstimateTotal) }}</span> • 
-                    Monthly: <span class="text-white font-bold">₦ {{ money(creditMonthly) }}</span>
-                    <div v-if="eligData" class="mt-1 text-emerald-400 font-bold uppercase tracking-widest">Limit: ₦ {{ money(eligData.limit) }}</div>
-                  </div>
-
-                  <div class="flex items-start gap-3 p-2 bg-white/5 rounded-xl">
-                    <input type="checkbox" v-model="agreedToTerms" class="mt-1 rounded border-white/20 text-emerald-500 focus:ring-emerald-500 bg-transparent" />
-                    <label class="text-[9px] text-slate-400 leading-tight">I agree to the Murabahah Financing Terms and authorize the Coop to purchase for resale.</label>
-                  </div>
-
-                  <button @click="creditCheckout()" :disabled="placing || !totalQty || !creditValid || exceedsLimit || !agreedToTerms" class="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black uppercase tracking-wider transition-all disabled:opacity-30 disabled:grayscale">
-                    Apply & Buy on Credit
-                  </button>
-                  <p v-if="exceedsLimit" class="text-center text-rose-500 text-[9px] font-black uppercase mt-1">Exceeds limit (₦{{ money(eligData?.limit) }})</p>
-                </template>
-              </div>
-
-              <!-- Standard Checkout -->
-              <button @click="checkout()" :disabled="placing || !totalQty || hasInsufficient" class="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[1.5rem] font-black uppercase tracking-wider shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3">
-                <span v-if="placing && purchaseMode === 'cash'" class="i-mdi-loading animate-spin text-2xl"></span>
-                <span v-else class="i-mdi-check-circle-outline text-2xl"></span>
-                {{ hasInsufficient ? 'Insufficient Balance' : 'Confirm & Pay Now' }}
-              </button>
-            </div>
-          </div>
+          <h2 class="text-lg font-bold text-slate-900">
+            {{ selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : 'All Products' }}
+            <span class="ml-2 text-sm font-normal text-slate-400">({{ totalItems || 0 }})</span>
+          </h2>
           
-          <div v-if="placeError" class="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold text-center">{{ placeError }}</div>
-          <div v-if="placeSuccess" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold text-center">{{ placeSuccess }}</div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Quick View Modal (Enhanced Bottom Sheet) -->
-    <div v-if="selectedProduct" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden">
-      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeQuick()"></div>
-      <div class="relative bg-white w-full sm:max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto z-10">
-        
-        <!-- Pull bar for mobile -->
-        <div class="sm:hidden flex justify-center py-3">
-          <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+          <select v-model="sortBy" @change="load(1)" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-emerald-500/20">
+            <option value="newest">Newest First</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="name_asc">Alphabetical</option>
+          </select>
         </div>
 
-        <div class="p-6 pt-2 sm:pt-6">
-          <div class="flex items-start justify-between mb-6">
-            <div class="flex-1">
-              <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 block">{{ selectedProduct.category?.name || 'Product Details' }}</span>
-              <h2 class="text-2xl font-black text-slate-800 leading-tight">{{ selectedProduct.name }}</h2>
-            </div>
-            <button @click="closeQuick()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors">
-              <span class="i-mdi-close text-xl"></span>
-            </button>
+        <!-- Products Grid -->
+        <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="i in 6" :key="i" class="bg-white rounded-3xl p-4 border border-slate-100 animate-pulse">
+            <div class="aspect-square bg-slate-100 rounded-2xl mb-4"></div>
+            <div class="h-4 bg-slate-100 rounded w-2/3 mb-2"></div>
+            <div class="h-3 bg-slate-100 rounded w-full mb-4"></div>
+            <div class="h-8 bg-slate-100 rounded w-full"></div>
           </div>
+        </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="aspect-square rounded-3xl bg-slate-50 overflow-hidden border border-slate-100">
-               <img v-if="selectedProduct.image_url" :src="getImageUrl(selectedProduct.image_url)" alt="image" class="w-full h-full object-cover" />
-               <div v-else class="w-full h-full flex items-center justify-center text-slate-200 text-5xl">📦</div>
-            </div>
-            
-            <div class="flex flex-col">
-              <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 mb-4">
-                <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Selling Price</p>
-                <p class="text-3xl font-black text-emerald-700">₦ {{ money(selectedProduct.selling_price) }}</p>
-              </div>
+        <div v-else-if="!items.length" class="bg-white rounded-[2rem] p-16 text-center border border-dashed border-slate-200">
+          <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="i-mdi-magnify-close text-4xl text-slate-300"></span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2">No matching products</h3>
+          <p class="text-slate-500 mb-6">We couldn't find what you're looking for. Try a different search term or category.</p>
+          <button @click="q = ''; selectedCategory = 0; load(1)" class="px-6 py-2 bg-emerald-600 text-white rounded-full font-bold text-sm">Clear all filters</button>
+        </div>
 
-              <div class="space-y-4">
-                <div v-if="selectedProduct.track_stock" class="flex items-center justify-between px-2">
-                   <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Availability</span>
-                   <span v-if="selectedProduct.stock_quantity > 0" class="badge-success">{{ selectedProduct.stock_quantity }} In Stock</span>
-                   <span v-else class="bg-rose-100 text-rose-600 badge px-2 py-1">Sold Out</span>
+        <div v-else>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="p in items" :key="p.id" class="group bg-white rounded-3xl border border-slate-100 hover:border-emerald-200 transition-all duration-300 flex flex-col overflow-hidden hover:shadow-xl hover:shadow-emerald-900/5">
+              <!-- Image -->
+              <div class="aspect-square relative overflow-hidden bg-slate-50 cursor-pointer" @click="openQuick(p)">
+                <img 
+                  v-if="p.image_url" 
+                  :src="getImageUrl(p.image_url)" 
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-slate-200 bg-slate-50">
+                   <span class="i-mdi-package-variant-closed text-6xl opacity-20"></span>
                 </div>
                 
-                <div v-if="selectedProduct.vendor" class="flex items-center justify-between px-2">
-                   <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sold By</span>
-                   <span class="text-xs font-black text-slate-800">{{ selectedProduct.vendor.name }}</span>
+                <!-- Overlay Badges -->
+                <div class="absolute top-3 left-3 flex flex-col gap-2">
+                  <span v-if="isNew(p.created_at)" class="bg-emerald-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm">New</span>
+                  <span v-if="!p.is_approved" class="bg-amber-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm">Pending</span>
+                </div>
+
+                <div v-if="p.track_stock && p.stock_quantity <= 0" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                  <span class="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full">Out of Stock</span>
+                </div>
+              </div>
+
+              <!-- Content -->
+              <div class="p-5 flex-1 flex flex-col">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest truncate">
+                    {{ p.category?.name || 'General' }}
+                  </span>
+                  <span v-if="p.vendor" class="text-[9px] text-slate-400 font-medium italic truncate">
+                    by {{ p.vendor.name }}
+                  </span>
+                </div>
+                
+                <h3 class="text-sm font-bold text-slate-800 mb-1 line-clamp-2 hover:text-emerald-700 transition-colors cursor-pointer" @click="openQuick(p)">
+                  {{ p.name }}
+                </h3>
+                
+                <div class="mt-auto pt-4 flex items-center justify-between border-t border-slate-50">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-400 font-medium">Price</span>
+                    <span class="text-lg font-black text-slate-900">₦ {{ money(p.selling_price) }}</span>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <template v-if="cart[p.id]">
+                      <div class="flex items-center bg-slate-100 rounded-full p-1 border border-slate-200 shadow-inner">
+                        <button @click="decQty(p.id)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-rose-600 transition-colors">
+                          <span class="i-mdi-minus text-sm"></span>
+                        </button>
+                        <span class="w-6 text-center text-xs font-bold">{{ cart[p.id].qty }}</span>
+                        <button @click="incQty(p.id)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-emerald-600 transition-colors" :disabled="p.track_stock && cart[p.id].qty >= p.stock_quantity">
+                          <span class="i-mdi-plus text-sm"></span>
+                        </button>
+                      </div>
+                    </template>
+                    <button 
+                      v-else-if="!p.track_stock || p.stock_quantity > 0" 
+                      @click="addToCart(p)"
+                      class="w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center justify-center transition-all shadow-lg shadow-emerald-900/10 active:scale-90"
+                    >
+                      <span class="i-mdi-cart-plus text-xl"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Admin Inline Actions -->
+                <div v-if="isAdmin && !p.is_approved" class="mt-3 pt-3 border-t border-slate-50 flex gap-2">
+                  <button @click="approveProduct(p)" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-emerald-600 hover:text-white transition-all">Approve</button>
+                  <button @click="rejectProduct(p)" class="flex-1 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-all">Reject</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="mb-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Product Description</h3>
-            <div class="p-4 bg-slate-50 rounded-2xl text-sm text-slate-600 leading-relaxed border border-slate-100">
-              {{ selectedProduct.description || 'No detailed description available for this product.' }}
-            </div>
-          </div>
-
-          <!-- Admin Actions -->
-          <div v-if="isAdmin" class="flex items-center gap-3 mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">🛡️</div>
-            <div class="flex-1">
-              <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Admin Control</p>
-              <div class="flex gap-2 mt-1">
-                <button v-if="!selectedProduct.is_approved" class="text-[10px] font-black uppercase text-emerald-700 hover:underline" @click="approveProduct(selectedProduct)">Approve Now</button>
-                <button v-else-if="selectedProduct.vendor_id" class="text-[10px] font-black uppercase text-rose-700 hover:underline" @click="rejectProduct(selectedProduct)">Mark Pending</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cart Action -->
-          <div v-if="!selectedProduct.track_stock || selectedProduct.stock_quantity > 0" class="flex items-center gap-4">
-            <div class="flex items-center bg-slate-50 rounded-[1.5rem] p-1.5 border border-slate-100 shrink-0">
-              <button class="w-11 h-11 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-rose-600 shadow-sm transition-all active:scale-90" @click="quickQty = Math.max(1, (Number(quickQty)||1)-1)">
-                <span class="i-mdi-minus text-lg"></span>
-              </button>
-              <input v-model.number="quickQty" type="number" min="1" :max="selectedProduct.track_stock ? selectedProduct.stock_quantity : undefined" class="w-12 text-center bg-transparent font-black text-lg text-slate-800 border-none focus:ring-0" />
-              <button class="w-11 h-11 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-emerald-600 shadow-sm transition-all active:scale-90" @click="quickQty = Math.min((selectedProduct.track_stock ? selectedProduct.stock_quantity : 999), (Number(quickQty)||1)+1)">
-                <span class="i-mdi-plus text-lg"></span>
-              </button>
-            </div>
-            
-            <button class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-wider shadow-lg shadow-emerald-900/20 transition-all active:scale-95 flex items-center justify-center gap-2" @click="addQuickToCart()">
-              <span class="i-mdi-cart-plus text-xl"></span>
-              Add to Cart
+          <!-- Pagination -->
+          <div class="flex items-center justify-between mt-12 py-6 border-t border-slate-100">
+            <button 
+              class="px-5 py-2 rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all flex items-center gap-2" 
+              :disabled="page <= 1 || loading" 
+              @click="load(page - 1)"
+            >
+              <span class="i-mdi-chevron-left text-lg"></span>
+              Previous
             </button>
-          </div>
-          <div v-else>
-            <button disabled class="w-full h-14 bg-slate-200 text-slate-400 rounded-2xl font-black uppercase tracking-wider cursor-not-allowed">Product Out of Stock</button>
+            <div class="text-slate-400 text-xs font-bold uppercase tracking-widest">
+              Page {{ page }} of {{ lastPage }}
+            </div>
+            <button 
+              class="px-5 py-2 rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all flex items-center gap-2" 
+              :disabled="page >= lastPage || loading" 
+              @click="load(page + 1)"
+            >
+              Next
+              <span class="i-mdi-chevron-right text-lg"></span>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </main>
+
+    <!-- Side Cart Drawer -->
+    <Transition name="drawer">
+      <div v-if="showCart" class="fixed inset-0 z-50 overflow-hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showCart = false"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
+          <div class="w-screen max-w-md">
+            <div class="h-full flex flex-col bg-white shadow-2xl">
+              <div class="px-6 py-6 border-b border-slate-100 flex items-center justify-between bg-emerald-900 text-white">
+                <div class="flex items-center gap-3">
+                  <span class="i-mdi-cart text-2xl"></span>
+                  <h2 class="text-lg font-bold">Shopping Cart</h2>
+                </div>
+                <button @click="showCart = false" class="p-2 -mr-2 hover:bg-white/10 rounded-full transition-colors">
+                  <span class="i-mdi-close text-2xl"></span>
+                </button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto py-6 px-6 hide-scrollbar">
+                <div v-if="!cartList.length" class="h-full flex flex-col items-center justify-center text-center">
+                  <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                    <span class="i-mdi-cart-off text-5xl text-slate-200"></span>
+                  </div>
+                  <h3 class="text-xl font-bold text-slate-800 mb-2">Your cart is empty</h3>
+                  <p class="text-slate-500 mb-8 max-w-[200px]">Looks like you haven't added anything to your cart yet.</p>
+                  <button @click="showCart = false" class="px-8 py-3 bg-emerald-600 text-white rounded-full font-bold shadow-lg shadow-emerald-900/20 active:scale-95 transition-all">Start Shopping</button>
+                </div>
+
+                <div v-else class="space-y-6">
+                  <div v-for="item in cartList" :key="item.id" class="flex gap-4">
+                    <div class="w-20 h-20 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
+                      <img v-if="item.image_url" :src="getImageUrl(item.image_url)" class="w-full h-full object-cover" />
+                      <div v-else class="w-full h-full flex items-center justify-center text-slate-200">
+                        <span class="i-mdi-package-variant-closed text-2xl"></span>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-start justify-between gap-2 mb-1">
+                        <h4 class="text-sm font-bold text-slate-900 truncate">{{ item.name }}</h4>
+                        <button @click="remove(item.id)" class="text-slate-400 hover:text-rose-500">
+                          <span class="i-mdi-trash-can-outline text-lg"></span>
+                        </button>
+                      </div>
+                      <p class="text-xs text-emerald-700 font-black mb-3">₦ {{ money(item.selling_price) }}</p>
+                      
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center bg-slate-50 rounded-lg p-1 border border-slate-200">
+                          <button @click="decQty(item.id)" class="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-rose-600">
+                            <span class="i-mdi-minus text-xs"></span>
+                          </button>
+                          <span class="w-8 text-center text-xs font-bold">{{ item.qty }}</span>
+                          <button @click="incQty(item.id)" class="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-emerald-600" :disabled="item.track_stock && item.qty >= item.stock_quantity">
+                            <span class="i-mdi-plus text-xs"></span>
+                          </button>
+                        </div>
+                        <span class="text-sm font-bold text-slate-900">₦ {{ money(item.selling_price * item.qty) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="cartList.length" class="border-t border-slate-100 p-6 space-y-4">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span class="text-sm">Subtotal</span>
+                    <span class="text-sm font-bold">₦ {{ money(subtotal) }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-900">
+                    <span class="text-base font-bold uppercase tracking-wider">Total</span>
+                    <span class="text-xl font-black">₦ {{ money(subtotal) }}</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Wallet Balance</span>
+                    <span :class="hasInsufficient ? 'text-rose-600' : 'text-emerald-700'" class="text-xs font-bold">₦ {{ money(walletBalance) }}</span>
+                  </div>
+                  
+                  <div v-if="hasInsufficient" class="p-3 bg-amber-50 rounded-xl border border-amber-100 space-y-3">
+                     <div class="flex items-center gap-2">
+                        <span class="i-mdi-alert-circle text-amber-500 text-lg"></span>
+                        <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Insufficient Funds</span>
+                     </div>
+                     <p class="text-[10px] text-amber-700 leading-tight">Apply for <b>Murabaha Credit</b> to complete this purchase.</p>
+                     
+                     <div v-if="canUseFinancing" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                          <div>
+                            <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Tenor</label>
+                            <select v-model.number="creditMonths" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold">
+                              <option v-for="m in [6,12]" :key="m" :value="m">{{ m }} Months</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="block text-[8px] font-bold text-slate-400 uppercase mb-1">Profit</label>
+                            <select v-model.number="creditProfit" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold">
+                              <option :value="0.10">10%</option>
+                              <option :value="0.12">12%</option>
+                              <option :value="0.15">15%</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                          <input type="checkbox" v-model="agreedToTerms" class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                          <label class="text-[9px] text-slate-500 leading-tight">I agree to the Murabaha Financing terms.</label>
+                        </div>
+                        <button 
+                          @click="creditCheckout()" 
+                          :disabled="placing || exceedsLimit || !agreedToTerms"
+                          class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                        >
+                          Buy on Credit (₦{{ money(creditMonthly) }}/mo)
+                        </button>
+                        <p v-if="exceedsLimit" class="text-[8px] text-center text-rose-500 font-bold uppercase mt-1">Limit Exceeded (Max: ₦{{ money(eligData?.limit) }})</p>
+                     </div>
+                     <div v-else class="text-[9px] text-rose-600 font-bold bg-rose-50 p-2 rounded-lg">
+                       {{ financingReason }}
+                     </div>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <textarea 
+                    v-model="orderNote" 
+                    placeholder="Order notes (optional)" 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                    rows="2"
+                  ></textarea>
+                  
+                  <button 
+                    @click="checkout()" 
+                    :disabled="placing || hasInsufficient || !totalQty"
+                    class="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 disabled:grayscale"
+                  >
+                    <span v-if="placing" class="i-mdi-loading animate-spin text-xl"></span>
+                    <template v-else>
+                      <span class="i-mdi-lock-outline text-xl"></span>
+                      Confirm & Pay
+                    </template>
+                  </button>
+                </div>
+                
+                <p v-if="placeError" class="text-center text-rose-600 text-[10px] font-bold">{{ placeError }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Quick View Modal -->
+    <Transition name="modal">
+      <div v-if="selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeQuick()"></div>
+        <div class="relative bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+          <button @click="closeQuick()" class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-slate-500 hover:bg-white transition-all shadow-sm">
+            <span class="i-mdi-close text-xl"></span>
+          </button>
+          
+          <!-- Image Section -->
+          <div class="md:w-1/2 bg-slate-50 p-8 flex items-center justify-center">
+            <div class="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white">
+              <img v-if="selectedProduct.image_url" :src="getImageUrl(selectedProduct.image_url)" class="w-full h-full object-cover" />
+              <div v-else class="w-full h-full flex items-center justify-center text-slate-200">
+                <span class="i-mdi-package-variant-closed text-9xl opacity-20"></span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Info Section -->
+          <div class="md:w-1/2 p-8 md:p-12 overflow-y-auto hide-scrollbar flex flex-col">
+            <div class="mb-8">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full">
+                  {{ selectedProduct.category?.name || 'General' }}
+                </span>
+                <span v-if="selectedProduct.track_stock && selectedProduct.stock_quantity > 0" class="text-[10px] font-bold text-emerald-600">
+                  <span class="i-mdi-check-circle text-sm mr-1"></span> In Stock
+                </span>
+                <span v-else-if="selectedProduct.track_stock" class="text-[10px] font-bold text-rose-500">
+                  <span class="i-mdi-close-circle text-sm mr-1"></span> Out of Stock
+                </span>
+              </div>
+              <h2 class="text-3xl font-black text-slate-800 leading-tight mb-2">{{ selectedProduct.name }}</h2>
+              <p v-if="selectedProduct.vendor" class="text-sm text-slate-400">Sold by <span class="text-slate-600 font-bold">{{ selectedProduct.vendor.name }}</span></p>
+            </div>
+            
+            <div class="mb-8">
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Description</span>
+              <p class="text-slate-600 text-sm leading-relaxed">{{ selectedProduct.description || 'No detailed description available.' }}</p>
+            </div>
+            
+            <div class="mt-auto space-y-8">
+              <div class="flex items-end justify-between">
+                <div>
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Unit Price</span>
+                  <div class="text-3xl font-black text-slate-900">₦ {{ money(selectedProduct.selling_price) }}</div>
+                </div>
+                
+                <div class="flex items-center bg-slate-50 rounded-2xl p-2 border border-slate-100">
+                  <button @click="quickQty = Math.max(1, (Number(quickQty)||1)-1)" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-slate-500 shadow-sm hover:text-rose-600 active:scale-90 transition-all">
+                    <span class="i-mdi-minus"></span>
+                  </button>
+                  <input v-model.number="quickQty" type="number" class="w-14 text-center bg-transparent text-lg font-black text-slate-800 border-none focus:ring-0" />
+                  <button @click="quickQty = Math.min((selectedProduct.track_stock ? selectedProduct.stock_quantity : 999), (Number(quickQty)||1)+1)" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-slate-500 shadow-sm hover:text-emerald-600 active:scale-90 transition-all">
+                    <span class="i-mdi-plus"></span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <button 
+                  @click="addQuickToCart()" 
+                  :disabled="selectedProduct.track_stock && selectedProduct.stock_quantity <= 0"
+                  class="flex-1 h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-base font-black uppercase tracking-widest transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-30 disabled:grayscale"
+                >
+                  <span class="i-mdi-cart-plus text-2xl"></span>
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- PIN Prompt Modal -->
     <CustomNotice
@@ -378,14 +516,13 @@
       :title="'Confirm Purchase'"
       :message="'Enter your 4-digit Transaction PIN to confirm checkout.'"
       :prompt="true"
-      inputLabel="Transaction PIN (4 digits)"
+      inputLabel="Transaction PIN"
       confirmText="Confirm"
       cancelText="Cancel"
       :busy="placing"
       @confirm="handlePinConfirm"
       @cancel="handlePinCancel"
     />
-
   </div>
 </template>
 
@@ -406,6 +543,9 @@ const q = ref('')
 const selectedCategory = ref(0)
 const categories = ref([])
 const sortBy = ref('newest')
+const minPrice = ref('')
+const maxPrice = ref('')
+const totalItems = ref(0)
 
 const vendor = ref(null)
 const isAdmin = ref(false)
@@ -445,10 +585,18 @@ const load = async (p = 1) => {
   try {
     page.value = p
     const { data } = await axios.get('/api/products', {
-      params: { page: p, q: q.value || '', category_id: selectedCategory.value, sort: sortBy.value }
+      params: { 
+        page: p, 
+        q: q.value || '', 
+        category_id: selectedCategory.value, 
+        sort: sortBy.value,
+        min_price: minPrice.value,
+        max_price: maxPrice.value
+      }
     })
     const list = Array.isArray(data) ? data : (data?.data || [])
     items.value = list
+    totalItems.value = Number(data?.total || list.length)
     lastPage.value = Number(data?.last_page || 1)
   } catch (e) {
     error.value = e?.response?.data?.message || e.message
@@ -534,8 +682,21 @@ const restoreCart = () => {
 const toggleCart = () => { showCart.value = !showCart.value }
 const addToCart = (p) => {
   const existing = cart.value[p.id]
-  if (existing) existing.qty += 1
-  else cart.value[p.id] = { id: p.id, name: p.name, selling_price: Number(p.selling_price), qty: 1 }
+  if (existing) {
+    if (!p.track_stock || existing.qty < p.stock_quantity) {
+      existing.qty += 1
+    }
+  } else {
+    cart.value[p.id] = { 
+      id: p.id, 
+      name: p.name, 
+      selling_price: Number(p.selling_price), 
+      qty: 1,
+      image_url: p.image_url,
+      track_stock: p.track_stock,
+      stock_quantity: p.stock_quantity
+    }
+  }
   showCart.value = true
 }
 const incQty = (id) => { if (cart.value[id]) cart.value[id].qty += 1 }
@@ -600,8 +761,22 @@ const addQuickToCart = () => {
   if (!p) return
   const qty = Math.max(1, Number(quickQty.value) || 1)
   const existing = cart.value[p.id]
-  if (existing) existing.qty += qty
-  else cart.value[p.id] = { id: p.id, name: p.name, selling_price: Number(p.selling_price), qty }
+  if (existing) {
+    existing.qty += qty
+    if (p.track_stock && existing.qty > p.stock_quantity) {
+      existing.qty = p.stock_quantity
+    }
+  } else {
+    cart.value[p.id] = { 
+      id: p.id, 
+      name: p.name, 
+      selling_price: Number(p.selling_price), 
+      qty: qty,
+      image_url: p.image_url,
+      track_stock: p.track_stock,
+      stock_quantity: p.stock_quantity
+    }
+  }
   closeQuick()
   showCart.value = true
 }
@@ -689,12 +864,65 @@ onMounted(() => { restoreCart(); load(1); loadWallet(); loadCategories(); loadSt
 </script>
 
 <style scoped>
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 1rem; }
-.section-title { font-weight: 800; color: #0f172a; }
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.animate-bounce-short {
+  animation: bounce-short 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes bounce-short {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+/* Drawer Transitions */
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+
+.drawer-enter-from .absolute.inset-y-0.right-0,
+.drawer-leave-to .absolute.inset-y-0.right-0 {
+  transform: translateX(100%);
+}
+
+.drawer-enter-to .absolute.inset-y-0.right-0,
+.drawer-leave-from .absolute.inset-y-0.right-0 {
+  transform: translateX(0);
+}
+
+/* Modal Transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .relative.bg-white,
+.modal-leave-active .relative.bg-white {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-enter-from .relative.bg-white {
+  transform: scale(0.9) translateY(20px);
+}
+
+.modal-leave-to .relative.bg-white {
+  transform: scale(0.95);
 }
 </style>

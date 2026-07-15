@@ -43,7 +43,7 @@ return [
         'enabled' => env('HEALTH_NOTIFICATIONS_ENABLED', true),
 
         'notifications' => [
-            CheckFailedNotification::class => ['mail'],
+            CheckFailedNotification::class => ['mail', 'slack'],
         ],
 
         /*
