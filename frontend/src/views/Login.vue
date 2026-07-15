@@ -243,6 +243,7 @@ const afterLogin = async (token, user) => {
   localStorage.setItem('token', token)
   appStatusStore.isPinVerified = false
   if (user) {
+    localStorage.setItem('user', JSON.stringify(user))
     localStorage.setItem('user_id', user.id)
     localStorage.setItem('is_admin', user.is_admin ? 'true' : 'false')
   }
