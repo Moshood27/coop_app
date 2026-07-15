@@ -329,9 +329,9 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Unauthorized: You do not have permission to mark attendance for others.'], 403);
         }
 
-        // Allow marking for ongoing or scheduled meetings (admins/officers might mark early arrivals)
-        if (!in_array($meeting->status, ['ongoing', 'scheduled'])) {
-            return response()->json(['message' => "Meeting is currently in '{$meeting->status}' status and cannot accept attendance."], 400);
+        // Only allow marking for ongoing meetings as per user request
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => "Meeting is currently in '{$meeting->status}' status. You can only mark attendance when the meeting is 'ongoing'."], 400);
         }
 
         try {
@@ -417,6 +417,10 @@ class AttendanceController extends Controller
 
         if (!$request->user()->hasPermissionTo('mark_attendance')) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => "Meeting is currently in '{$meeting->status}' status. You can only unmark attendance when the meeting is 'ongoing'."], 400);
         }
 
         try {

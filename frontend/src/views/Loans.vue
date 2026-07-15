@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50">
-    <AppHeader title="Qard Hasan Records" :showBack="true" />
+    <AppHeader title="Qard Hasan (Loan) Records" :showBack="true" />
 
     <div class="max-w-5xl mx-auto py-4 px-4">
       <div v-if="loading" class="text-center text-slate-500 py-10">Loading…</div>
@@ -13,9 +13,9 @@
                   🤝
                 </div>
                 <div>
-                  <h3 class="text-lg font-black text-slate-800">Qard Hasan Applications Paused</h3>
+                  <h3 class="text-lg font-black text-slate-800">Qard Hasan (Loan) Applications Paused</h3>
                   <p class="text-xs text-slate-500 mt-2 leading-relaxed px-4">
-                    Qard Hasan applications are currently restricted. This might be due to monthly budget limits or system maintenance.
+                    Qard Hasan (Loan) applications are currently restricted. This might be due to monthly budget limits or system maintenance.
                     Please check back later or contact your branch admin.
                   </p>
                 </div>
@@ -83,7 +83,7 @@
                 <!-- Create Loan Form -->
                 <div class="card overflow-hidden">
                   <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Configure Qard Hasan</h3>
+                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Configure Qard Hasan (Loan)</h3>
                     <div class="flex gap-2">
                       <router-link to="/loans/analysis" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 hover:bg-emerald-100 transition-colors">Analysis</router-link>
                       <button class="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full border border-slate-200 hover:bg-slate-200 transition-colors" @click="fetchEligibility">Refresh</button>
@@ -200,7 +200,7 @@
                       </div>
 
                       <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2" :disabled="creating" @click="createLoan">
-                        <span v-if="!creating">Apply for Qard Hasan</span>
+                        <span v-if="!creating">Apply for Qard Hasan (Loan)</span>
                         <template v-else>
                           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           <span>Processing...</span>
@@ -219,11 +219,11 @@
                 <div class="space-y-2">
                   <h3 class="text-lg font-black text-slate-800">Application Restricted</h3>
                   <p class="text-xs text-slate-500 leading-relaxed px-6" v-if="hasOpenLoan">
-                    Our policy requires members to complete their active Qard Hasan before applying for a new one. 
+                    Our policy requires members to complete their active Qard Hasan (Loan) before applying for a new one. 
                     Finish your current plan to unlock more credit.
                   </p>
                   <p class="text-xs text-slate-500 leading-relaxed px-6" v-else>
-                    {{ eligibility.reason || 'You are currently not eligible to request Qard Hasan. Ensure you have at least 6 months of membership and sufficient contributions.' }}
+                    {{ eligibility.reason || 'You are currently not eligible to request Qard Hasan (Loan). Ensure you have at least 6 months of membership and sufficient contributions.' }}
                   </p>
                 </div>
                 <div class="pt-2">
@@ -372,7 +372,7 @@
                 <h4 class="text-xs font-black uppercase tracking-widest">Application Rejected</h4>
               </div>
               <p class="text-[11px] text-rose-600 font-bold leading-relaxed italic">
-                {{ loan.rejection_reason || 'Unfortunately, your Qard Hasan application was not approved by the committee at this time. Please contact your branch administrator for more details.' }}
+                {{ loan.rejection_reason || 'Unfortunately, your Qard Hasan (Loan) application was not approved by the committee at this time. Please contact your branch administrator for more details.' }}
               </p>
             </div>
 
@@ -383,7 +383,7 @@
                   📜
                 </div>
                 <div>
-                  <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest">Qard Hasan Agreement</h4>
+                  <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest">Qard Hasan (Loan) Agreement</h4>
                   <p class="text-[10px] text-amber-700 font-bold" v-if="loan.approved_at">Action required to disburse funds</p>
                   <p class="text-[10px] text-amber-700 font-bold" v-else>Awaiting committee approval</p>
                 </div>
