@@ -89,14 +89,14 @@ class AdminPanelProvider extends PanelProvider
             ->darkModeBrandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo-dark.svg'))
             ->favicon(asset('images/'.config('brand.slug', 'attaqwa').'-favicon.svg'))
             ->colors([
-                'primary' => Color::Sky,
+                'primary' => Color::Indigo,
                 'gray' => Color::Slate,
                 'info' => Color::Blue,
                 'success' => Color::Emerald,
                 'warning' => Color::Amber,
                 'danger' => Color::Rose,
             ])
-            ->font('Inter')
+            ->font('Instrument Sans')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->navigationGroups([
@@ -183,6 +183,7 @@ class AdminPanelProvider extends PanelProvider
                     ->enableBrowserSessions(),
             ])
             ->renderHook('panels::head.end', fn () => view('filament.print-styles'))
+            ->renderHook('panels::head.end', fn () => view('filament.custom-theme'))
             ->renderHook('panels::head.end', fn (): string => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/app.js\'])'))
             ->renderHook('panels::body.start', fn () => view('filament.print-header'))
             ->renderHook('panels::body.end', fn () => view('filament.inactivity-handler'))
