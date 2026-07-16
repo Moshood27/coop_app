@@ -184,7 +184,7 @@
             {{ (kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan) Status' : 'Savings & Investment Portfolio' }}
           </h3>
           <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700" @click.stop>Apply for Qard Hasan (Loan)</router-link>
+            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" @click.stop class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
@@ -225,8 +225,8 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2">
-          <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" />
-          <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" />
+          <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" @click.stop="$router.push('/passbook')" class="cursor-pointer" />
+          <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" @click.stop="$router.push('/passbook')" class="cursor-pointer" />
         </div>
         
         <div v-if="kpis.is_defaulted" class="mt-6 flex items-center gap-3 bg-rose-50 p-4 rounded-3xl border border-rose-100">
@@ -299,7 +299,7 @@
         <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
         <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
       </button>
-      <button @click="$router.push('/reports')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
+      <button @click.stop="$router.push('/reports')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">📈</div>
         <span class="text-sm font-bold text-slate-700">Reports</span>
       </button>
@@ -307,7 +307,7 @@
         <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center text-2xl">🛡️</div>
         <span class="text-sm font-bold text-slate-700">Takaful</span>
       </button>
-      <button @click="$router.push('/transparency')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
+      <button @click.stop="$router.push('/transparency')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-lime-50 rounded-2xl flex items-center justify-center text-2xl">🧾</div>
         <span class="text-sm font-bold text-slate-700">Transparency</span>
       </button>
