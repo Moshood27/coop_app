@@ -1,5 +1,5 @@
 <template>
-  <div :class="pillClass">
+  <div :class="pillClass" @click="$emit('click')">
     <div class="flex items-center gap-1.5 opacity-70">
       <span v-if="icon" class="text-xs">{{ icon }}</span>
       <span class="text-[9px] uppercase tracking-wider font-bold truncate">{{ label }}</span>
@@ -21,6 +21,8 @@ const props = defineProps({
   intent: { type: String, default: 'default' }, // default | success | warning | danger
   icon: { type: String, default: '' },
 })
+
+defineEmits(['click'])
 
 const colorMap = {
   default: 'bg-slate-50 text-slate-900 border-slate-200/50',

@@ -184,7 +184,7 @@
             {{ (kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan) Status' : 'Savings & Investment Portfolio' }}
           </h3>
           <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
+            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700" @click.stop>Apply for Qard Hasan (Loan)</router-link>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
@@ -295,7 +295,7 @@
         <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📶</div>
         <span class="text-sm font-bold text-slate-700">Airtime/Data</span>
       </button>
-      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
+      <button id="loan-btn" @click.stop="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
         <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
         <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
       </button>
