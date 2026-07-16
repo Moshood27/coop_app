@@ -14,7 +14,7 @@
 
       <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
         <!-- Left Column: Primary Info & Warnings -->
-        <div class="lg:col-span-7 space-y-4">
+      <div class="lg:col-span-7 space-y-4" id="main-content-left">
           <div id="balance-card" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
         <div class="flex items-center gap-2 mb-2 relative z-10">
@@ -245,19 +245,19 @@
       <!-- KPI row -->
       <div class="mt-4 grid grid-cols-2 gap-3">
         <StatPill label="Contributions" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.contributions))" hint="Total" intent="success" icon="💰" />
-        <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
+        <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click.stop="$router.push('/loans')" class="cursor-pointer" />
+        <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click.stop="$router.push('/loans')" class="cursor-pointer" />
+        <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click.stop="$router.push('/gold')" class="cursor-pointer" />
         <StatPill 
           :label="(kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan)' : 'Loan Eligibility'" 
           :value="(kpis.has_active_loan || kpis.can_apply) ? (currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))) : (kpis.months_in_system + ' / 6 Months')" 
           :hint="(kpis.has_active_loan || kpis.can_apply) ? 'Outstanding' : (kpis.is_defaulted ? 'Account Blocked' : 'Tenure Requirement')" 
           :intent="(kpis.has_active_loan || kpis.can_apply) ? 'danger' : 'info'" 
           icon="📊" 
-          @click="$router.push('/loans')"
+          @click.stop="$router.push('/loans')"
           class="cursor-pointer"
         />
-        <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
+        <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click.stop="$router.push('/profile')" class="cursor-pointer" />
       </div>
     </div> <!-- end right col -->
   </div> <!-- end grid -->
