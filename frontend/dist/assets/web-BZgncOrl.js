@@ -1,0 +1,1 @@
+import{w as e}from"./index-CT5FxSNI.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

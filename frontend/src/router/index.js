@@ -126,8 +126,8 @@ const routes = [
   { path: '/sharia-board', name: 'sharia.board', component: ShariaBoard, meta: { requiresAuth: true } },
   { path: '/sharia-board/history', name: 'sharia.board.history', component: TahkimHistory, meta: { requiresAuth: true } },
   // Placeholder: use existing Qard Hasan prototype under /loans for now
-  { path: '/loans', name: 'loans', component: Loans, meta: { requiresAuth: true, feature: 'apply-for-loan' } },
-  { path: '/loans/analysis', name: 'loans.analysis', component: LoanAnalysis, meta: { requiresAuth: true, feature: 'apply-for-loan' } },
+  { path: '/loans', name: 'loans', component: Loans, meta: { requiresAuth: true } },
+  { path: '/loans/analysis', name: 'loans.analysis', component: LoanAnalysis, meta: { requiresAuth: true } },
   { path: '/qard', name: 'qard', component: QardHasan },
 
   // Public info pages
