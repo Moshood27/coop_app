@@ -14,7 +14,7 @@
 
       <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
         <!-- Left Column: Primary Info & Warnings -->
-      <div class="lg:col-span-7 space-y-4" id="main-content-left">
+        <div class="lg:col-span-7 space-y-4">
           <div id="balance-card" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
         <div class="flex items-center gap-2 mb-2 relative z-10">
@@ -184,7 +184,7 @@
             {{ (kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan) Status' : 'Savings & Investment Portfolio' }}
           </h3>
           <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" @click.stop class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
+            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
@@ -225,8 +225,8 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2">
-          <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" @click.stop="$router.push('/passbook')" class="cursor-pointer" />
-          <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" @click.stop="$router.push('/passbook')" class="cursor-pointer" />
+          <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" />
+          <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" />
         </div>
         
         <div v-if="kpis.is_defaulted" class="mt-6 flex items-center gap-3 bg-rose-50 p-4 rounded-3xl border border-rose-100">
@@ -245,19 +245,19 @@
       <!-- KPI row -->
       <div class="mt-4 grid grid-cols-2 gap-3">
         <StatPill label="Contributions" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.contributions))" hint="Total" intent="success" icon="💰" />
-        <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click.stop="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click.stop="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click.stop="$router.push('/gold')" class="cursor-pointer" />
+        <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
+        <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
+        <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
         <StatPill 
           :label="(kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan)' : 'Loan Eligibility'" 
           :value="(kpis.has_active_loan || kpis.can_apply) ? (currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))) : (kpis.months_in_system + ' / 6 Months')" 
           :hint="(kpis.has_active_loan || kpis.can_apply) ? 'Outstanding' : (kpis.is_defaulted ? 'Account Blocked' : 'Tenure Requirement')" 
           :intent="(kpis.has_active_loan || kpis.can_apply) ? 'danger' : 'info'" 
           icon="📊" 
-          @click.stop="$router.push('/loans')"
+          @click="$router.push('/loans')"
           class="cursor-pointer"
         />
-        <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click.stop="$router.push('/profile')" class="cursor-pointer" />
+        <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
       </div>
     </div> <!-- end right col -->
   </div> <!-- end grid -->
@@ -295,11 +295,11 @@
         <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📶</div>
         <span class="text-sm font-bold text-slate-700">Airtime/Data</span>
       </button>
-      <button id="loan-btn" @click.stop="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
+      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
         <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
         <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
       </button>
-      <button @click.stop="$router.push('/reports')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
+      <button @click="$router.push('/reports')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">📈</div>
         <span class="text-sm font-bold text-slate-700">Reports</span>
       </button>
@@ -307,7 +307,7 @@
         <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center text-2xl">🛡️</div>
         <span class="text-sm font-bold text-slate-700">Takaful</span>
       </button>
-      <button @click.stop="$router.push('/transparency')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
+      <button @click="$router.push('/transparency')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-lime-50 rounded-2xl flex items-center justify-center text-2xl">🧾</div>
         <span class="text-sm font-bold text-slate-700">Transparency</span>
       </button>
