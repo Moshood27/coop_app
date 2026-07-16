@@ -8,7 +8,6 @@ use App\Models\ChatRoom;
 use App\Services\ChatService;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Clusters\Settings;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,11 +16,11 @@ use Filament\Notifications\Notification;
 
 class StaffResource extends Resource
 {
-    protected static ?string $cluster = Settings::class;
-
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
+
+    protected static ?string $navigationGroup = 'Communication';
 
     protected static ?string $slug = 'chat-staff';
 

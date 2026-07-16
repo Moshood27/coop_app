@@ -10,7 +10,6 @@ use App\Models\ProjectProfit;
 use App\Models\ShariahAuditLog as ShariahAudit;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Clusters\Investments;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -18,11 +17,11 @@ use Filament\Tables\Table;
 
 class ProjectProfitResource extends Resource
 {
-    protected static ?string $cluster = Investments::class;
-
     protected static ?string $model = ProjectProfit::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-receipt-percent';
+
+    protected static ?string $navigationGroup = 'Investments';
 
     protected static ?int $navigationSort = 30;
 

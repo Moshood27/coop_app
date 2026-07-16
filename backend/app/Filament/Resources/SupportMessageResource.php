@@ -6,7 +6,6 @@ use App\Filament\Resources\SupportMessageResource\Pages;
 use App\Models\SupportMessage;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Clusters\Communication;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -14,13 +13,13 @@ use Filament\Tables\Table;
 
 class SupportMessageResource extends Resource
 {
-    protected static ?string $cluster = Communication::class;
-
     protected static ?string $model = SupportMessage::class;
 
     protected static ?string $recordTitleAttribute = 'body';
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+
+    protected static ?string $navigationGroup = 'Communication';
 
     protected static ?string $navigationLabel = 'Legacy Support';
 

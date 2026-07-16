@@ -9,7 +9,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Notifications\Notification;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Clusters\Settings;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,8 +17,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class BranchResource extends Resource
 {
-    protected static ?string $cluster = Settings::class;
-
     protected static ?string $model = Branch::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';

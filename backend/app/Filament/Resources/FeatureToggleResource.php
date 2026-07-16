@@ -6,7 +6,6 @@ use App\Filament\Resources\FeatureToggleResource\Pages;
 use App\Models\Feature;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Filament\Clusters\Settings;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,11 +15,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class FeatureToggleResource extends Resource
 {
-    protected static ?string $cluster = Settings::class;
-
     protected static ?string $model = Feature::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-flag';
+
+    protected static ?string $navigationGroup = 'Settings';
 
     protected static ?string $label = 'Feature Toggle';
 
