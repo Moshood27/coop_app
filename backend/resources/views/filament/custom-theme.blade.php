@@ -2,6 +2,7 @@
     /* Global Rounding & Aesthetics for Fintech Look */
     :root {
         --filament-widgets-chart-border-radius: 1.25rem;
+        --fi-topbar-height: 4rem;
     }
 
     .fi-main-ctn {
@@ -90,23 +91,32 @@
 
     /* Navbar (Topbar) Design & Dropdown Fixes */
     .fi-topbar {
-        background-color: rgba(255, 255, 255, 0.75) !important;
+        background-color: rgba(255, 255, 255, 0.8) !important;
         backdrop-filter: blur(12px) !important;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
         position: sticky !important;
-        top: 0;
-        z-index: 30 !important;
+        top: 0 !important;
+        z-index: 40 !important;
         height: 4rem !important;
+        display: flex !important;
+        align-items: center !important;
+        overflow: visible !important;
     }
 
     .dark .fi-topbar {
-        background-color: rgba(15, 23, 42, 0.8) !important;
+        background-color: rgba(15, 23, 42, 0.9) !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .fi-topbar > div {
+        width: 100% !important;
+        overflow: visible !important;
     }
 
     .fi-topbar-items-ctn {
         padding-left: 1rem !important;
         padding-right: 1rem !important;
+        overflow: visible !important;
     }
 
     /* Topbar Icons & Buttons */
@@ -126,11 +136,11 @@
     /* Theme Switcher & Dropdown Visibility Fix */
     /* Ensure dropdowns appear above the topbar and are positioned correctly */
     .fi-dropdown-panel {
-        z-index: 10000 !important;
+        z-index: 9999 !important;
         border-radius: 1rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        margin-top: 0.5rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        margin-top: 1rem !important;
     }
 
     .dark .fi-dropdown-panel {
