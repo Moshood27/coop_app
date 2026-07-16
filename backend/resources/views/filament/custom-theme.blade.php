@@ -17,12 +17,12 @@
     .fi-section, .fi-card, .fi-ta-ctn {
         border-radius: 1.25rem !important;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03) !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
     }
 
     .dark .fi-section, .dark .fi-card, .dark .fi-ta-ctn {
         background-color: #0f172a !important;
-        border-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
     }
 
@@ -68,17 +68,27 @@
     }
 
     /* Input Fields */
-    .fi-fo-text-input, .fi-fo-select, .fi-fo-textarea, .fi-fo-datetime-picker {
+    .fi-fo-text-input, .fi-fo-select, .fi-fo-textarea, .fi-fo-datetime-picker, .fi-input-wrp {
         border-radius: 0.75rem !important;
-        border-color: rgba(0, 0, 0, 0.1) !important;
-        transition: all 0.2s;
+        border: 1px solid #d1d5db !important; /* Slate-300 for better visibility */
+        transition: all 0.2s ease-in-out !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
 
-    .dark .fi-fo-text-input, .dark .fi-fo-select, .dark .fi-fo-textarea, .dark .fi-fo-datetime-picker {
+    .fi-fo-text-input:focus-within, .fi-input-wrp:focus-within {
+        border-color: #6366f1 !important; /* Indigo-500 focus */
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    }
+
+    .dark .fi-fo-text-input, .dark .fi-fo-select, .dark .fi-fo-textarea, .dark .fi-fo-datetime-picker, .dark .fi-input-wrp {
         background-color: #1e293b !important;
-        border-color: rgba(255, 255, 255, 0.1) !important;
+        border-color: #475569 !important; /* Slate-600 for dark mode */
         color: white !important;
+    }
+
+    .dark .fi-fo-text-input:focus-within, .dark .fi-input-wrp:focus-within {
+        border-color: #818cf8 !important; /* Indigo-400 focus */
+        box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15) !important;
     }
 
     /* Buttons */
