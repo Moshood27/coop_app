@@ -178,13 +178,11 @@
     <!-- Right Column: Status & Performance -->
     <div class="lg:col-span-5 space-y-6 mt-6 lg:mt-0">
       <!-- Qard Hasan Status & Savings Section -->
-      <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100 transition-all active:scale-[0.99] cursor-pointer" @click="(kpis.has_active_loan || kpis.can_apply) ? $router.push('/loans') : $router.push('/wallet')">
+      <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-slate-800 font-bold text-lg">
-            {{ (kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan) Status' : 'Savings & Investment Portfolio' }}
-          </h3>
+          <h3 class="text-slate-800 font-bold text-lg">Qard Hasan (Loan) Status</h3>
           <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan'] && (kpis.has_active_loan || kpis.can_apply)" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
+            <router-link v-if="appStatusStore.features['apply-for-loan']" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
           </div>
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
@@ -248,15 +246,7 @@
         <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
-        <StatPill 
-          :label="(kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan)' : 'Loan Eligibility'" 
-          :value="(kpis.has_active_loan || kpis.can_apply) ? (currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))) : (kpis.months_in_system + ' / 6 Months')" 
-          :hint="(kpis.has_active_loan || kpis.can_apply) ? 'Outstanding' : (kpis.is_defaulted ? 'Account Blocked' : 'Tenure Requirement')" 
-          :intent="(kpis.has_active_loan || kpis.can_apply) ? 'danger' : 'info'" 
-          icon="📊" 
-          @click="$router.push('/loans')"
-          class="cursor-pointer"
-        />
+        <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" />
         <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
       </div>
     </div> <!-- end right col -->
@@ -295,7 +285,7 @@
         <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📶</div>
         <span class="text-sm font-bold text-slate-700">Airtime/Data</span>
       </button>
-      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
+      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
         <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
         <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
       </button>
@@ -839,7 +829,7 @@ const kpis = computed(() => {
   const outstandingLoans = txs.filter(t => (t.type === 'loan' || String(t.scheme?.name || '').toLowerCase().includes('loan')))
     .reduce((sum, t) => sum + Number(t.balance || 0), 0)
   const utilSpent = utils.reduce((sum, u) => sum + Number(u.amount || 0), 0)
-  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, can_apply: false, months_in_system: 0, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
+  return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
 })
 
 const chart = computed(() => {
