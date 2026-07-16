@@ -179,7 +179,7 @@
     <div class="lg:col-span-5 space-y-6 mt-6 lg:mt-0">
       <!-- Qard Hasan Status & Savings Section -->
       <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-6 cursor-pointer" @click="$router.push('/loans')">
           <h3 class="text-slate-800 font-bold text-lg">Qard Hasan (Loan) Status</h3>
           <div class="flex items-center gap-3">
             <router-link v-if="appStatusStore.features['apply-for-loan']" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
@@ -187,7 +187,7 @@
           <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
         </div>
         
-        <div class="flex items-end gap-1 mb-8" v-if="kpis.has_active_loan || kpis.total_due_amount > 0">
+        <div class="flex items-end gap-1 mb-8 cursor-pointer" v-if="kpis.has_active_loan || kpis.total_due_amount > 0" @click="$router.push('/loans')">
           <template v-if="kpis.total_due_amount > 0">
             <span class="text-3xl font-black text-rose-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount) }}</span>
             <span class="text-[10px] text-rose-500 font-bold uppercase mb-2 ml-1 tracking-wider">Overdue Amount</span>
@@ -217,7 +217,7 @@
           </div>
         </div>
 
-        <div v-if="kpis.expected_amount_to_pay > 0" class="mb-6">
+        <div v-if="kpis.expected_amount_to_pay > 0" class="mb-6 cursor-pointer" @click="$router.push('/loans')">
            <p class="text-[10px] text-slate-400 uppercase font-black mb-1">Expected Amount to Pay (To Date)</p>
            <p class="text-lg font-black text-blue-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay) }}</p>
         </div>
@@ -246,7 +246,7 @@
         <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
-        <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" />
+        <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" @click="$router.push('/loans')" class="cursor-pointer" />
         <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
       </div>
     </div> <!-- end right col -->
