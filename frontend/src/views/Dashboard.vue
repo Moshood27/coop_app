@@ -254,6 +254,8 @@
           :hint="(kpis.has_active_loan || kpis.can_apply) ? 'Outstanding' : (kpis.is_defaulted ? 'Account Blocked' : 'Tenure Requirement')" 
           :intent="(kpis.has_active_loan || kpis.can_apply) ? 'danger' : 'info'" 
           icon="📊" 
+          @click="$router.push('/loans')"
+          class="cursor-pointer"
         />
         <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
       </div>
