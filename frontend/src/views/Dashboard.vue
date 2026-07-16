@@ -178,7 +178,7 @@
     <!-- Right Column: Status & Performance -->
     <div class="lg:col-span-5 space-y-6 mt-6 lg:mt-0">
       <!-- Qard Hasan Status & Savings Section -->
-      <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100">
+      <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100 transition-all active:scale-[0.99] cursor-pointer" @click="(kpis.has_active_loan || kpis.can_apply) ? $router.push('/loans') : $router.push('/wallet')">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-slate-800 font-bold text-lg">
             {{ (kpis.has_active_loan || kpis.can_apply) ? 'Qard Hasan (Loan) Status' : 'Savings & Investment Portfolio' }}
@@ -295,7 +295,7 @@
         <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📶</div>
         <span class="text-sm font-bold text-slate-700">Airtime/Data</span>
       </button>
-      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
+      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all cursor-pointer">
         <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
         <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
       </button>
