@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProjectInvestmentResource\Pages;
 use App\Models\ProjectInvestment;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Investments;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -12,10 +13,11 @@ use Filament\Tables\Columns\TextColumn;
 
 class ProjectInvestmentResource extends Resource
 {
+    protected static ?string $cluster = Investments::class;
+
     protected static ?string $model = ProjectInvestment::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationGroup = 'Investments';
     protected static ?int $navigationSort = 20;
 
     public static function shouldRegisterNavigation(): bool

@@ -7,6 +7,7 @@ use App\Filament\Resources\ProjectResource\RelationManagers;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Investments;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -15,11 +16,11 @@ use Filament\Tables\Table;
 
 class ProjectResource extends Resource
 {
+    protected static ?string $cluster = Investments::class;
+
     protected static ?string $model = Project::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
-
-    protected static ?string $navigationGroup = 'Investments';
 
     protected static ?int $navigationSort = 10;
 

@@ -6,6 +6,7 @@ use App\Filament\Resources\ChatAuditResource\Pages;
 use App\Models\ChatMessage;
 use Filament\Forms;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Communication;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,11 +15,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ChatAuditResource extends Resource
 {
+    protected static ?string $cluster = Communication::class;
+
     protected static ?string $model = ChatMessage::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-
-    protected static ?string $navigationGroup = 'Communication';
 
     protected static ?string $pluralModelLabel = 'Chat Audit Log';
 

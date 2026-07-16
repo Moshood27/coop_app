@@ -6,6 +6,7 @@ use App\Filament\Resources\ShariahAuditLogResource\Pages;
 use App\Models\ShariahAuditLog;
 use Filament\Forms;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Auditing;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,11 +15,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ShariahAuditLogResource extends Resource
 {
+    protected static ?string $cluster = Auditing::class;
+
     protected static ?string $model = ShariahAuditLog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-
-    protected static ?string $navigationGroup = 'Security & Logs';
 
     protected static ?string $navigationLabel = 'Shariah Audit Log';
 

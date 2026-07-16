@@ -8,6 +8,7 @@ use App\Models\ProjectProposal;
 use Filament\Forms;
 use Illuminate\Support\Facades\DB;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Investments;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -15,10 +16,11 @@ use Filament\Tables\Table;
 
 class ProjectProposalResource extends Resource
 {
+    protected static ?string $cluster = Investments::class;
+
     protected static ?string $model = ProjectProposal::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-light-bulb';
-    protected static ?string $navigationGroup = 'AGM & Voting';
     protected static ?int $navigationSort = 35;
 
     public static function form(Form $form): Form

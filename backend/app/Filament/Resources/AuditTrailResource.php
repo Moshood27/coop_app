@@ -39,6 +39,7 @@ use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use App\Filament\Clusters\Auditing;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -47,11 +48,11 @@ use Spatie\Activitylog\Models\Activity;
 
 class AuditTrailResource extends Resource
 {
+    protected static ?string $cluster = Auditing::class;
+
     protected static ?string $model = Activity::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-
-    protected static ?string $navigationGroup = 'Security & Logs';
 
     protected static ?string $navigationLabel = 'Activity Log';
 

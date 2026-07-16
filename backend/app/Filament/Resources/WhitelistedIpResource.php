@@ -6,6 +6,7 @@ use App\Filament\Resources\WhitelistedIpResource\Pages;
 use App\Models\WhitelistedIp;
 use Filament\Forms;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Settings;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,11 +18,11 @@ use Filament\Forms\Components\DateTimePicker;
 
 class WhitelistedIpResource extends Resource
 {
+    protected static ?string $cluster = Settings::class;
+
     protected static ?string $model = WhitelistedIp::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-
-    protected static ?string $navigationGroup = 'Settings';
 
     public static function form(Form $form): Form
     {

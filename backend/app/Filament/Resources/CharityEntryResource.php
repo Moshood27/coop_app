@@ -12,6 +12,7 @@ use Filament\Infolists\Components\Section as InfoSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\RepeatableEntry;
+use App\Filament\Clusters\Charity;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -27,11 +28,11 @@ use App\Models\User;
 
 class CharityEntryResource extends Resource
 {
+    protected static ?string $cluster = Charity::class;
+
     protected static ?string $model = CharityEntry::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
-
-    protected static ?string $navigationGroup = 'Financials';
 
     protected static ?string $label = 'Charity Ledger';
 

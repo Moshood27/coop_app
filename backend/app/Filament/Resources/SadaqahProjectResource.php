@@ -16,6 +16,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Form;
+use App\Filament\Clusters\Charity;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -24,11 +25,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SadaqahProjectResource extends Resource
 {
+    protected static ?string $cluster = Charity::class;
+
     protected static ?string $model = SadaqahProject::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
-
-    protected static ?string $navigationGroup = 'Charity';
 
     public static function form(Form $form): Form
     {

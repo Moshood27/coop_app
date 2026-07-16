@@ -108,6 +108,11 @@ class ContributionResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->label('Contribution Items')
+                            ->grid([
+                                'md' => 2,
+                            ])
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => isset($state['scheme_id']) ? Scheme::find($state['scheme_id'])?->name : null)
                             ->required()
                             ->minItems(1)
                             ->schema([

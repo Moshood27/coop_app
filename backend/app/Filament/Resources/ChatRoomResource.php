@@ -11,6 +11,7 @@ use App\Services\ChatService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use App\Filament\Clusters\Communication;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -19,13 +20,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ChatRoomResource extends Resource
 {
+    protected static ?string $cluster = Communication::class;
+
     protected static ?string $model = ChatRoom::class;
 
     protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
-
-    protected static ?string $navigationGroup = 'Communication';
 
     protected static ?string $navigationLabel = 'Chat Rooms';
 

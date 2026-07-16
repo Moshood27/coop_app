@@ -133,4 +133,21 @@
         background-color: #f1f5f9 !important;
         border: none !important;
     }
+
+    /* Hide Tawk.to widget on mobile and data-entry views */
+    @media (max-width: 1024px) {
+        .tawk-min-container, [id^="tawk-"], iframe[src*="tawk.to"] {
+            display: none !important;
+        }
+    }
+
+    /* Also hide on any create/edit resource pages to prevent overlap with actions */
+    .fi-resource-create-page .tawk-min-container,
+    .fi-resource-edit-page .tawk-min-container,
+    .fi-resource-create-page [id^="tawk-"],
+    .fi-resource-edit-page [id^="tawk-"],
+    .fi-resource-create-page iframe[src*="tawk.to"],
+    .fi-resource-edit-page iframe[src*="tawk.to"] {
+        display: none !important;
+    }
 </style>

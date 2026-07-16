@@ -10,6 +10,7 @@ use App\Services\GoldSilverPriceService;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use App\Filament\Clusters\Charity;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,11 +19,11 @@ use Illuminate\Support\Facades\DB;
 
 class ZakatResource extends Resource
 {
+    protected static ?string $cluster = Charity::class;
+
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-sparkles';
-
-    protected static ?string $navigationGroup = 'Financials';
 
     protected static ?string $modelLabel = 'Zakat Tracker';
 
