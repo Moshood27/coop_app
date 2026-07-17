@@ -30,7 +30,8 @@ class SmsService
         }
 
         $driver = config('sms.driver', 'termii');
-        Log::debug('Attempting to send SMS', ['to' => $to, 'driver' => $driver]);
+        $channel = config('sms.channel', 'generic');
+        Log::debug('Attempting to send SMS', ['to' => $to, 'driver' => $driver, 'channel' => $channel]);
         try {
             if ($driver === 'termii') {
                 return $this->sendViaTermii($to, $message);

@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Models\Branch;
 use App\Services\MonnifyService;
 use App\Services\OpayService;
-use App\Traits\VerifiesOtp;
 use App\Support\SecurityUtils;
 use Laravel\Pennant\Feature;
 use Illuminate\Http\Request;
@@ -24,7 +23,7 @@ use Illuminate\Support\Str;
 
 class WalletController extends Controller
 {
-    use VerifiesOtp;
+    use \App\Traits\VerifiesOtp;
 
     public function resolveRecipient(Request $request)
     {

@@ -23,13 +23,12 @@ use App\Mail\LoanDisbursedAdminNotification;
 use App\Mail\LoanRequestedAdminNotification;
 use App\Services\AttaqwaScoreService;
 use App\Notifications\LoanApprovedNotification;
-use App\Traits\VerifiesOtp;
 use App\Notifications\OtpNotification;
 use Laravel\Pennant\Feature;
 
 class LoanController extends Controller
 {
-    use VerifiesOtp;
+    use \App\Traits\VerifiesOtp;
     // Return loans for the authenticated user only
     public function index(Request $request)
     {

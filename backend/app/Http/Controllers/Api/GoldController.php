@@ -13,10 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Pennant\Feature;
 use Illuminate\Support\Facades\Log;
-
 class GoldController extends Controller
 {
-    use VerifiesOtp;
+    use \App\Traits\VerifiesOtp;
 
     protected $goldService;
     protected $zakatService;
