@@ -338,6 +338,10 @@
       <path value="$PROJECT_DIR$/backend/vendor/google/apiclient" />
       <path value="$PROJECT_DIR$/backend/vendor/masbug/flysystem-google-drive-ext" />
       <path value="$PROJECT_DIR$/backend/vendor/google/apiclient-services" />
+      <path value="$PROJECT_DIR$/backend/vendor/spatie/regex" />
+      <path value="$PROJECT_DIR$/backend/vendor/spatie/enum" />
+      <path value="$PROJECT_DIR$/backend/vendor/spatie/laravel-health" />
+      <path value="$PROJECT_DIR$/backend/vendor/laravel/slack-notification-channel" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">

@@ -495,7 +495,10 @@ class UserResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
-                TextColumn::make('phone')->label('Phone')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('phone')
+                    ->label('Phone')
+                    ->searchable(['phone', 'secondary_phone'])
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('address')->label('Address')->limit(30)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->searchable(),
                 Tables\Columns\IconColumn::make('is_distant')

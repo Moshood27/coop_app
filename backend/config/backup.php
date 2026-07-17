@@ -223,12 +223,12 @@ return [
      */
     'notifications' => [
         'notifications' => [
-            BackupHasFailedNotification::class => ['mail', 'slack'],
-            UnhealthyBackupWasFoundNotification::class => ['mail', 'slack'],
-            CleanupHasFailedNotification::class => ['mail', 'slack'],
-            BackupWasSuccessfulNotification::class => ['mail', 'slack'],
-            HealthyBackupWasFoundNotification::class => ['mail', 'slack'],
-            CleanupWasSuccessfulNotification::class => ['mail', 'slack'],
+            BackupHasFailedNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
+            UnhealthyBackupWasFoundNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
+            CleanupHasFailedNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
+            BackupWasSuccessfulNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
+            HealthyBackupWasFoundNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
+            CleanupWasSuccessfulNotification::class => array_filter(['mail', (env('BACKUP_SLACK_WEBHOOK_URL') ?: env('HEALTH_SLACK_WEBHOOK_URL')) ? 'slack' : null]),
         ],
 
         /*

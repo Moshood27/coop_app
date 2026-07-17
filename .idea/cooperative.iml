@@ -330,6 +330,10 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/google/apiclient" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/google/apiclient-services" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/masbug/flysystem-google-drive-ext" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/laravel/slack-notification-channel" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/enum" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-health" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/regex" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

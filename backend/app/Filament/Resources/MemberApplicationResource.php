@@ -257,7 +257,7 @@ class MemberApplicationResource extends Resource
                             ->orderBy("other_names", $direction);
                     }),
                 TextColumn::make('email')->searchable(),
-                TextColumn::make('phone')->searchable(),
+                TextColumn::make('phone')->searchable(['phone', 'secondary_phone']),
                 Tables\Columns\TextColumn::make('approval_status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

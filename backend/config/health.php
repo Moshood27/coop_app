@@ -43,7 +43,7 @@ return [
         'enabled' => env('HEALTH_NOTIFICATIONS_ENABLED', true),
 
         'notifications' => [
-            CheckFailedNotification::class => ['mail', 'slack'],
+            CheckFailedNotification::class => array_filter(['mail', env('HEALTH_SLACK_WEBHOOK_URL') ? 'slack' : null]),
         ],
 
         /*
