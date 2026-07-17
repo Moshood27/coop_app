@@ -91,14 +91,7 @@
           <div>
             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Disco</label>
             <select v-model="electricity.disco" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-              <option value="aedc">AEDC</option>
-              <option value="ekedc">EKEDC</option>
-              <option value="ikeja-electric">IKEDC</option>
-              <option value="ibedc">IBEDC</option>
-              <option value="eedc">EEDC</option>
-              <option value="kedco">KEDCO</option>
-              <option value="phed">PHED</option>
-              <option value="jed">JED</option>
+              <option v-for="d in electricityDiscos" :key="d.code" :value="d.code">{{ d.name }}</option>
             </select>
           </div>
           <div>
@@ -236,6 +229,7 @@ const balance = ref(0)
 const tab = ref('airtime')
 const bundles = ref([])
 const tvBundles = ref([])
+const electricityDiscos = ref([])
 const loadingAirtime = ref(false)
 const loadingData = ref(false)
 const loadingElectricity = ref(false)
@@ -356,6 +350,18 @@ const loadTvBundles = async () => {
     tvBundles.value = data.bundles || []
   } catch (e) {
     console.error('TV bundles load error', e)
+  }
+}
+
+const loadElectricityDiscos = async () => {
+  try {
+    const { data } = await axios.get('/api/vtu/electricity/discos')
+    electricityDiscos.value = data.discos || []
+    if (electricityDiscos.value.length > 0 && !electricity.value.disco) {
+      electricity.value.disco = electricityDiscos.value[0].code
+    }
+  } catch (e) {
+    console.error('Discos load error', e)
   }
 }
 
@@ -627,6 +633,7 @@ onMounted(() => {
   loadWallet()
   loadBundles()
   loadTvBundles()
+  loadElectricityDiscos()
 })
 
 // Watchers

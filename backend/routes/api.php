@@ -246,6 +246,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/vtu/transactions', [\App\Http\Controllers\Api\UtilityController::class, 'transactions']);
     Route::get('/vtu/data/bundles', [\App\Http\Controllers\Api\UtilityController::class, 'dataBundles']);
     Route::get('/vtu/tv/bundles', [\App\Http\Controllers\Api\UtilityController::class, 'tvBundles']);
+    Route::get('/vtu/electricity/discos', [\App\Http\Controllers\Api\UtilityController::class, 'electricityDiscos']);
     Route::post('/vtu/airtime', [\App\Http\Controllers\Api\UtilityController::class, 'purchaseAirtime']);
     Route::post('/vtu/data', [\App\Http\Controllers\Api\UtilityController::class, 'purchaseData']);
     Route::post('/vtu/electricity', [\App\Http\Controllers\Api\UtilityController::class, 'purchaseElectricity']);

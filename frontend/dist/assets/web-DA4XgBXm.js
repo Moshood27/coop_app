@@ -1,1 +1,0 @@
-import{w as e}from"./index-CfiM_eJC.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

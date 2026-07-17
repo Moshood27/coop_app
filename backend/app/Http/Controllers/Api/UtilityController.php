@@ -1409,6 +1409,57 @@ class UtilityController extends Controller
         return response()->json(['message' => 'No VTU provider available for TV bundles'], 502);
     }
 
+    public function electricityDiscos(Request $request)
+    {
+        $cacheKey = 'vtu:electricity:discos';
+        if ($cached = Cache::get($cacheKey)) {
+            return response()->json($cached);
+        }
+
+        $ck = config('services.vtu.clubkonnect', []);
+        $ckUser = $ck['user_id'] ?? null;
+        $ckBase = rtrim((string)($ck['base_url'] ?? 'https://www.nellobytesystems.com'), '/');
+
+        if ($ckUser) {
+            try {
+                $r = Http::timeout(10)->get($ckBase . '/APIElectricityTypeV2.asp', ['UserID' => $ckUser]);
+                $j = $r->json();
+                if ($r->ok() && isset($j['ELECTRIC_COMPANY'])) {
+                    $discos = [];
+                    foreach ($j['ELECTRIC_COMPANY'] as $d) {
+                        $discos[] = [
+                            'code' => (string) ($d['ELECTRIC_COMPANY_CODE'] ?? ''),
+                            'name' => (string) ($d['ELECTRIC_COMPANY_NAME'] ?? ''),
+                        ];
+                    }
+                    if (!empty($discos)) {
+                        $res = ['provider' => 'clubkonnect', 'discos' => $discos];
+                        Cache::put($cacheKey, $res, now()->addHours(24));
+                        return response()->json($res);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ClubKonnect Discos Fetch Failed: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback to hardcoded list if API fails
+        $discos = [
+            ['code' => '01', 'name' => 'Eko Electric (EKEDC)'],
+            ['code' => '02', 'name' => 'Ikeja Electric (IKEDC)'],
+            ['code' => '03', 'name' => 'Abuja Electric (AEDC)'],
+            ['code' => '04', 'name' => 'Kano Electric (KEDCO)'],
+            ['code' => '05', 'name' => 'Port Harcourt Electric (PHED)'],
+            ['code' => '06', 'name' => 'Jos Electric (JED)'],
+            ['code' => '07', 'name' => 'Kaduna Electric (KAEDCO)'],
+            ['code' => '08', 'name' => 'Ibadan Electric (IBEDC)'],
+            ['code' => '09', 'name' => 'Enugu Electric (EEDC)'],
+            ['code' => '10', 'name' => 'Benin Electric (BEDC)'],
+            ['code' => '11', 'name' => 'Yola Electric (YEDC)'],
+        ];
+        return response()->json(['provider' => 'hardcoded', 'discos' => $discos]);
+    }
+
     public function purchaseElectricity(Request $request)
     {
         $validated = $request->validate([
@@ -2384,7 +2435,7 @@ class UtilityController extends Controller
                 'benin-electric' => '10', 'bedc' => '10',
                 'yola-electric' => '11', 'yedc' => '11',
             ];
-            $discoCode = $mapDisco[$service] ?? null;
+            $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
             $meterNo = $payload['billersCode'] ?? ($payload['MeterNo'] ?? null);
             $meterType = strtolower((string)($payload['variation_code'] ?? 'prepaid')) === 'postpaid' ? '02' : '01';
             $amount = $payload['amount'] ?? null;
@@ -2431,7 +2482,7 @@ class UtilityController extends Controller
                     'benin-electric' => '10', 'bedc' => '10',
                     'yola-electric' => '11', 'yedc' => '11',
                 ];
-                $discoCode = $mapDisco[$service] ?? null;
+                $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
                 $meterType = strtolower((string)($payload['type'] ?? 'prepaid')) === 'postpaid' ? '02' : '01';
 
                 $endpoint = '/APIVerifyElectricityV1.asp';
