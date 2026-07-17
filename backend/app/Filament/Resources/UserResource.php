@@ -11,6 +11,9 @@ use App\Models\Branch;
 use App\Models\ShariahAuditLog as ShariahAudit;
 use App\Models\User;
 use App\Models\Contribution;
+use App\Models\Scheme;
+use App\Models\QardHasan;
+use App\Models\QardHasanRepayment;
 use App\Models\MemberApplication;
 use App\Services\ChatService;
 use App\Filament\Resources\ChatRoomResource;
@@ -925,6 +928,165 @@ class UserResource extends Resource
                                     ]
                                 );
                             });
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Action failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->color('danger')
+                    ->requiresConfirmation(),
+                Action::make('debitScheme')
+                    ->label('Debit Scheme')
+                    ->icon('heroicon-o-minus-circle')
+                    ->form([
+                        Forms\Components\Select::make('scheme_id')
+                            ->label('Scheme')
+                            ->options(Scheme::where('active', true)->pluck('name', 'id'))
+                            ->required()
+                            ->searchable(),
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount to debit')
+                            ->numeric()
+                            ->minValue(0.01)
+                            ->required()
+                            ->prefix('₦'),
+                        Forms\Components\Select::make('reason')
+                            ->label('Reason')
+                            ->options([
+                                'loan_repayment' => 'Loan Repayment',
+                                'rule_violation' => 'Cooperative Rule Violation',
+                                'other' => 'Other',
+                            ])
+                            ->required()
+                            ->live(),
+                        Forms\Components\Select::make('qard_hasan_id')
+                            ->label('Select Loan')
+                            ->options(fn (User $record) => $record->qardHasans()
+                                ->whereIn('status', ['active', 'defaulted'])
+                                ->get()
+                                ->mapWithKeys(fn ($loan) => [$loan->id => "{$loan->qard_id_string} (Bal: ₦" . number_format($loan->principal_amount - $loan->paid_amount, 2) . ")"]))
+                            ->visible(fn (callable $get) => $get('reason') === 'loan_repayment')
+                            ->required(fn (callable $get) => $get('reason') === 'loan_repayment'),
+                        Forms\Components\Textarea::make('note')
+                            ->label('Note')
+                            ->maxLength(255)
+                            ->required()
+                            ->placeholder('Enter detailed reason for this debit'),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        $scheme = Scheme::find($data['scheme_id']);
+                        $amount = (float) $data['amount'];
+                        $reason = $data['reason'];
+                        $note = $data['note'];
+
+                        $columnMap = [
+                            'Savings' => 'ordinary_savings',
+                            'Ordinary Savings' => 'ordinary_savings',
+                            'Shares' => 'shares_capital',
+                            'Share Capital' => 'shares_capital',
+                            'Development' => 'development_fund_balance',
+                            'Building' => 'building_balance',
+                            'AGM' => 'agm_balance',
+                            'Loan Repayment' => 'loan_repayment_balance',
+                            'Fine' => 'fine_balance',
+                            'Welfare' => 'welfare_balance',
+                            'Lateness' => 'lateness_balance',
+                            'Stationery' => 'stationery_balance',
+                            'Loan Form' => 'loan_form_balance',
+                            'Others' => 'others_balance',
+                            'ID Card' => 'id_card_balance',
+                            'Emergency' => 'emergency_balance',
+                            'Entrance' => 'entrance_balance',
+                            'H Savings' => 'h_savings_balance',
+                            'Investment' => 'investment_balance',
+                            'Group Savings' => 'group_savings_balance',
+                            'Special Savings' => 'special_savings_balance',
+                            'Takaful' => 'takaful_balance',
+                            'Digital Gold' => 'gold_balance',
+                        ];
+
+                        $currentBalance = 0;
+                        if (isset($columnMap[$scheme->name])) {
+                            $column = $columnMap[$scheme->name];
+                            $currentBalance = (float) $record->$column;
+                        } else {
+                            $currentBalance = (float) $record->contributions()
+                                ->where('scheme_id', $scheme->id)
+                                ->where('status', 'success')
+                                ->sum('amount');
+                        }
+
+                        if ($currentBalance < $amount) {
+                            Notification::make()
+                                ->title('Insufficient scheme balance')
+                                ->body("The user only has ₦" . number_format($currentBalance, 2) . " in their {$scheme->name} scheme.")
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        try {
+                            DB::transaction(function () use ($record, $scheme, $amount, $reason, $data, $note) {
+                                $contribution = Contribution::create([
+                                    'user_id' => $record->id,
+                                    'scheme_id' => $scheme->id,
+                                    'amount' => -$amount,
+                                    'reference' => 'DEBIT-' . strtoupper($reason) . '-' . time(),
+                                    'status' => 'success',
+                                    'category' => $reason === 'loan_repayment' ? 'loan_repayment' : 'debit',
+                                    'note' => $note,
+                                    'qard_hasan_id' => $reason === 'loan_repayment' ? $data['qard_hasan_id'] : null,
+                                ]);
+
+                                $record->syncSchemeBalance($scheme->name);
+
+                                if ($reason === 'loan_repayment') {
+                                    $loan = QardHasan::find($data['qard_hasan_id']);
+                                    QardHasanRepayment::create([
+                                        'qard_hasan_id' => $loan->id,
+                                        'amount' => $amount,
+                                        'reference' => 'SCHEME-DEBIT-' . $contribution->id,
+                                        'status' => 'success',
+                                        'paid_at' => now(),
+                                    ]);
+
+                                    $loan->paid_amount = (float) $loan->paid_amount + $amount;
+                                    if ($loan->paid_amount >= $loan->principal_amount) {
+                                        $loan->status = 'completed';
+                                    }
+                                    $loan->save();
+                                }
+
+                                ShariahAudit::log(auth()->user(), 'scheme_debit', [
+                                    'user_id' => $record->id,
+                                    'scheme_id' => $scheme->id,
+                                    'scheme_name' => $scheme->name,
+                                    'amount' => $amount,
+                                    'reason' => $reason,
+                                    'note' => $note,
+                                    'contribution_id' => $contribution->id,
+                                ]);
+
+                                $record->notifyMember(
+                                    'Scheme Debited',
+                                    "Your {$scheme->name} has been debited with ₦" . number_format($amount, 2) . " for " . str_replace('_', ' ', $reason) . ".",
+                                    [
+                                        'type' => 'scheme_debit',
+                                        'scheme' => $scheme->name,
+                                        'amount' => $amount,
+                                        'reason' => $reason,
+                                    ]
+                                );
+                            });
+
+                            Notification::make()
+                                ->title('Scheme debited successfully')
+                                ->success()
+                                ->send();
+
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Action failed')

@@ -124,14 +124,28 @@ class LedgerService
      */
     public function recordLoanDisbursement(\App\Models\QardHasan $loan): LedgerJournal
     {
+        $principal = (float) $loan->principal_amount;
+        $adminFeeFlat = (float) ($loan->admin_fee_flat ?? 0);
+        $adminFeePct = (float) ($loan->admin_fee_pct ?? 0);
+        $totalFee = $adminFeeFlat + ($principal * ($adminFeePct / 100));
+        $netDisbursed = $principal - $totalFee;
+
+        $entries = [
+            ['code' => '1300', 'debit' => $principal, 'description' => 'Loan Asset (Principal)'],
+        ];
+
+        if ($totalFee > 0) {
+            $entries[] = ['code' => '1100', 'credit' => $netDisbursed, 'description' => 'Bank Withdrawal (Net Disbursed)'];
+            $entries[] = ['code' => '4500', 'credit' => $totalFee, 'description' => 'Management Fee Income (Loan Admin Fee)'];
+        } else {
+            $entries[] = ['code' => '1100', 'credit' => $principal, 'description' => 'Bank Withdrawal'];
+        }
+
         return $this->recordByCode([
             'date' => $loan->approved_at ?? now(),
             'reference' => $loan->qard_id_string,
             'description' => "Qard Hasan Disbursement to {$loan->user->name}",
-        ], [
-            ['code' => '1300', 'debit' => $loan->principal_amount, 'description' => 'Loan Asset'],
-            ['code' => '1100', 'credit' => $loan->principal_amount, 'description' => 'Bank Withdrawal'],
-        ]);
+        ], $entries);
     }
 
     /**
@@ -140,12 +154,20 @@ class LedgerService
      */
     public function recordLoanRepayment(\App\Models\QardHasanRepayment $repayment): LedgerJournal
     {
+        $debitAccount = '1100'; // Bank
+        $debitDesc = 'Bank Deposit';
+
+        if (str_starts_with((string) $repayment->reference, 'TAKAFUL_PAYOUT')) {
+            $debitAccount = '2210'; // Takaful Pool Fund
+            $debitDesc = 'Takaful Pool Settlement';
+        }
+
         return $this->recordByCode([
             'date' => $repayment->paid_at ?? now(),
             'reference' => $repayment->reference,
             'description' => "Qard Hasan Repayment from {$repayment->qardHasan->user->name}",
         ], [
-            ['code' => '1100', 'debit' => $repayment->amount, 'description' => 'Bank Deposit'],
+            ['code' => $debitAccount, 'debit' => $repayment->amount, 'description' => $debitDesc],
             ['code' => '1300', 'credit' => $repayment->amount, 'description' => 'Loan Asset Reduction'],
         ]);
     }
@@ -155,14 +177,39 @@ class LedgerService
      */
     public function recordWalletCredit(\App\Models\WalletTransaction $tx): LedgerJournal
     {
+        $actualAmount = (float) $tx->amount;
+        $maintenanceCharge = (float) ($tx->meta['maintenance_charge'] ?? 0);
+        $grossAmount = $actualAmount + $maintenanceCharge;
+
+        $entries = [
+            ['code' => '2200', 'credit' => $actualAmount, 'description' => "Member Deposit ({$tx->user->membership_number})"],
+        ];
+
+        if ($maintenanceCharge > 0) {
+            $entries[] = ['code' => '1100', 'debit' => $grossAmount, 'description' => 'Bank Deposit (Gross)'];
+            $entries[] = ['code' => '4500', 'credit' => $maintenanceCharge, 'description' => 'Management Fee Income (Maintenance)'];
+        } else {
+            // Also check for vendor_payout which is an internal transfer
+            if ($tx->source === 'vendor_payout') {
+                // Dr Accounts Payable (or Cost of Sales), Cr Member Deposit
+                return $this->recordByCode([
+                    'date' => $tx->created_at ?? now(),
+                    'reference' => $tx->reference,
+                    'description' => "Vendor Payout to {$tx->user->name}",
+                ], [
+                    ['code' => '2000', 'debit' => $actualAmount, 'description' => 'Accounts Payable Settlement'],
+                    ['code' => '2200', 'credit' => $actualAmount, 'description' => "Member Deposit ({$tx->user->membership_number})"],
+                ]);
+            }
+
+            $entries[] = ['code' => '1100', 'debit' => $actualAmount, 'description' => 'Bank Deposit'];
+        }
+
         return $this->recordByCode([
             'date' => $tx->created_at ?? now(),
             'reference' => $tx->reference,
             'description' => "Wallet Credit for {$tx->user->name} via {$tx->source}",
-        ], [
-            ['code' => '1100', 'debit' => $tx->amount, 'description' => 'Bank Deposit'],
-            ['code' => '2200', 'credit' => $tx->amount, 'description' => "Member Deposit ({$tx->user->membership_number})"],
-        ]);
+        ], $entries);
     }
 
     /**
@@ -175,9 +222,19 @@ class LedgerService
         $creditDescription = 'Bank Withdrawal';
 
         // Map internal charges to income instead of bank withdrawal
-        if (in_array($tx->source, ['admin_charge', 'attendance_fine', 'attendance_fine_collection'])) {
+        if (in_array($tx->source, ['attendance_fine', 'attendance_fine_collection', 'loan_penalty'])) {
             $creditAccount = '4200'; // Fine/Sitting Fee Income
-            $creditDescription = 'Internal Income (Fine/Fee)';
+            $creditDescription = 'Internal Income (Fine)';
+        } elseif ($tx->source === 'admin_charge') {
+            $creditAccount = '4500'; // Management Fee Income
+            $creditDescription = 'Internal Income (Admin Charge)';
+        } elseif ($tx->source === 'takaful_contribution') {
+            // Internal movement to pool
+            $creditAccount = '2210';
+            $creditDescription = 'Takaful Pool Transfer';
+        } elseif (in_array($tx->source, ['store_installment', 'store_installment_auto'])) {
+            $creditAccount = '1310';
+            $creditDescription = 'Murabahah Receivable Reduction';
         }
 
         return $this->recordByCode([
@@ -228,12 +285,20 @@ class LedgerService
      */
     public function recordExpense(\App\Models\ExpenseEntry $expense): LedgerJournal
     {
+        $debitAccount = '5000'; // Operating Expenses
+
+        if (stripos((string) $expense->category, 'takaful') !== false) {
+            $debitAccount = '2210'; // Takaful Pool Fund (Liability reduction)
+        } elseif (stripos((string) $expense->category, 'charity') !== false || stripos((string) $expense->category, 'zakat') !== false) {
+            $debitAccount = '2220'; // Charity Fund (Restricted)
+        }
+
         return $this->recordByCode([
             'date' => $expense->date ?? now(),
             'reference' => $expense->payout_reference ?? 'EXP-' . $expense->id,
             'description' => "Expense: {$expense->title} ({$expense->category})",
         ], [
-            ['code' => '5000', 'debit' => $expense->amount, 'description' => "Expense - {$expense->category}"],
+            ['code' => $debitAccount, 'debit' => $expense->amount, 'description' => "Expense - {$expense->category}"],
             ['code' => '1100', 'credit' => $expense->amount, 'description' => 'Bank Withdrawal'],
         ]);
     }
@@ -248,9 +313,9 @@ class LedgerService
             'reference' => $order->reference,
             'description' => "Store Order: {$order->reference} from {$order->user->name}",
         ], [
-            ['code' => '1100', 'debit' => $order->total_amount, 'description' => 'Bank/Wallet Receipt'],
-            ['code' => '4100', 'credit' => $order->total_profit, 'description' => 'Murabahah Profit'],
-            ['code' => '1200', 'credit' => $order->total_cost, 'description' => 'Inventory Cost'],
+            ['code' => '1100', 'debit' => $order->total_amount, 'description' => 'Bank Receipt'],
+            ['code' => '4400', 'credit' => $order->total_profit, 'description' => 'Murabahah Profit'],
+            ['code' => '2000', 'credit' => $order->total_cost, 'description' => 'Accounts Payable (Vendor Portion)'],
         ]);
     }
     /**
