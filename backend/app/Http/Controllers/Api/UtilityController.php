@@ -2231,6 +2231,18 @@ class UtilityController extends Controller
                 $msg = "{$providerName} authentication failed. Please update credentials or check if you are using live keys in SANDBOX mode.";
             }
 
+            // Smarter failover detection: if primary failed with "N/A" and fallback failed with auth, provide context.
+            $attempts = $response['attempts'] ?? [];
+            if (($response['provider_used'] ?? '') === 'vtpass' && isset($attempts['clubkonnect'])) {
+                $ck = $attempts['clubkonnect'];
+                if ($ck['ok'] && !empty($ck['body'])) {
+                    $ckCname = strtoupper(trim((string)($ck['body']['customer_name'] ?? $ck['body']['Customer_Name'] ?? '')));
+                    if ($ckCname === 'N/A' || str_contains($ckCname, 'INVALID')) {
+                        $msg = "Primary provider (ClubKonnect) could not verify meter (returned N/A). Fallback to VTpass also failed: " . $msg;
+                    }
+                }
+            }
+
             // If sandbox is enabled and we failed, warn the user
             if (config('services.vtu.sandbox') && (str_contains(strtoupper((string)$msg), 'INVALID') || str_contains(strtoupper((string)$msg), 'NOT FOUND'))) {
                 $msg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
@@ -2245,7 +2257,8 @@ class UtilityController extends Controller
             return response()->json([
                 'message' => $msg,
                 'details' => $response['body'] ?? $response['error'],
-                'provider' => $response['provider_used'] ?? 'unknown'
+                'provider' => $response['provider_used'] ?? 'unknown',
+                'attempts' => $attempts // include attempts for admin troubleshooting
             ], 422);
         }
 
@@ -2395,6 +2408,7 @@ class UtilityController extends Controller
         // Smart router: ClubKonnect -> Shago -> VTPass
         $order = array_filter(array_map('trim', explode(',', (string) config('services.vtu.routing_order', 'clubkonnect,shago,vtpass'))));
         $lastError = null;
+        $attempts = [];
 
         foreach ($order as $provider) {
             $provider = strtolower($provider);
@@ -2408,9 +2422,17 @@ class UtilityController extends Controller
                 continue;
             }
 
+            // Record attempt details for debugging and smarter error reporting
+            $attempts[$provider] = [
+                'ok' => $resp['ok'],
+                'status' => $resp['status'] ?? null,
+                'error' => $resp['error'] ?? null,
+                'body' => $resp['body'] ?? null,
+            ];
+
             // If provider not configured, skip to next
             if (($resp['status'] ?? null) === 0 && ($resp['error'] ?? '') === 'Provider not configured') {
-                $lastError = $resp;
+                $lastError = array_merge($resp, ['provider_used' => $provider]);
                 continue;
             }
 
@@ -2423,6 +2445,7 @@ class UtilityController extends Controller
                 $bodyMsg = strtoupper((string)(is_array($resp['body']) ? ($resp['body']['message'] ?? $resp['body']['response_description'] ?? '') : ($resp['body'] ?? '')));
                 if (str_contains($errMsg, 'AUTHENTICATION_FAILED') || str_contains($errMsg, 'INVALID_CREDENTIALS') ||
                     str_contains($bodyMsg, 'AUTHENTICATION_FAILED') || str_contains($bodyMsg, 'INVALID CREDENTIALS')) {
+                    $lastError['attempts'] = $attempts;
                     return $lastError;
                 }
 
@@ -2430,7 +2453,7 @@ class UtilityController extends Controller
             }
 
             $body = $resp['body'] ?? null;
-            $resWithProvider = array_merge($resp, ['provider_used' => $provider]);
+            $resWithProvider = array_merge($resp, ['provider_used' => $provider, 'attempts' => $attempts]);
 
             // If already a success, return immediately
             if ($this->isVtpassSuccess($body)) {
@@ -2445,7 +2468,9 @@ class UtilityController extends Controller
             $lastError = $resWithProvider;
         }
 
-        return $lastError ?: [ 'ok' => false, 'error' => 'No VTU provider available', 'body' => null, 'status' => 0 ];
+        $finalRes = $lastError ?: [ 'ok' => false, 'error' => 'No VTU provider available', 'body' => null, 'status' => 0 ];
+        $finalRes['attempts'] = $attempts;
+        return $finalRes;
     }
 
     private function callClubKonnect(string $type, array $payload): array
@@ -2555,8 +2580,8 @@ class UtilityController extends Controller
                 'kano-electric' => '04', 'kedco' => '04',
                 'port-harcourt-electric' => '05', 'phed' => '05',
                 'jos-electric' => '06', 'jed' => '06', 'jedc' => '06',
-                'kaduna-electric' => '07', 'kaedco' => '07',
-                'ibadan-electric' => '08', 'ibedc' => '08',
+                'ibadan-electric' => '07', 'ibedc' => '07',
+                'kaduna-electric' => '08', 'kaedco' => '08',
                 'enugu-electric' => '09', 'eedc' => '09',
                 'benin-electric' => '10', 'bedc' => '10',
                 'yola-electric' => '11', 'yedc' => '11',
@@ -2603,8 +2628,8 @@ class UtilityController extends Controller
                     'kano-electric' => '04', 'kedco' => '04',
                     'port-harcourt-electric' => '05', 'phed' => '05',
                     'jos-electric' => '06', 'jed' => '06', 'jedc' => '06',
-                    'kaduna-electric' => '07', 'kaedco' => '07',
-                    'ibadan-electric' => '08', 'ibedc' => '08',
+                    'ibadan-electric' => '07', 'ibedc' => '07',
+                    'kaduna-electric' => '08', 'kaedco' => '08',
                     'enugu-electric' => '09', 'eedc' => '09',
                     'benin-electric' => '10', 'bedc' => '10',
                     'yola-electric' => '11', 'yedc' => '11',
