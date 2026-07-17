@@ -33,7 +33,12 @@ class UtilityMerchantVerificationTest extends TestCase
 
         // It should NOT be successful
         $response->assertStatus(422);
-        $response->assertJsonPath('message', 'Invalid Meter/Smartcard Number or Provider mismatch');
+        // Message might have sandbox note if enabled in test env
+        $response->assertJson(fn (\Illuminate\Testing\Fluent\AssertableJson $json) =>
+            $json->has('message')
+                 ->where('message', fn ($m) => str_contains($m, 'Invalid Meter/Smartcard Number'))
+                 ->etc()
+        );
     }
 
     public function test_verify_merchant_fails_when_provider_returns_invalid_customer_name()
@@ -55,7 +60,12 @@ class UtilityMerchantVerificationTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonPath('message', 'Invalid Meter/Smartcard Number or Provider mismatch');
+        // Message might have sandbox note if enabled in test env
+        $response->assertJson(fn (\Illuminate\Testing\Fluent\AssertableJson $json) =>
+            $json->has('message')
+                 ->where('message', fn ($m) => str_contains($m, 'Invalid Meter/Smartcard Number'))
+                 ->etc()
+        );
     }
 
     public function test_verify_merchant_succeeds_with_valid_name()
@@ -100,6 +110,6 @@ class UtilityMerchantVerificationTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonFragment(['message' => 'Provider authentication failed. Please check ClubKonnect credentials.']);
+        $response->assertJsonFragment(['message' => 'Provider authentication failed. Please update ClubKonnect/Nellobyte or VTpass credentials in the system configuration.']);
     }
 }

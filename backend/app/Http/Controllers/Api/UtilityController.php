@@ -2225,8 +2225,13 @@ class UtilityController extends Controller
             $msg = $response['body']['message'] ?? $response['body']['response_description'] ?? $response['error'] ?? 'Verification failed';
 
             // Human-friendly mapping for common provider errors
-            if (str_contains(strtoupper((string)$msg), 'AUTHENTICATION_FAILED')) {
-                $msg = 'Provider authentication failed. Please check ClubKonnect credentials.';
+            if (str_contains(strtoupper((string)$msg), 'AUTHENTICATION_FAILED') || str_contains(strtoupper((string)$msg), 'INVALID_CREDENTIALS')) {
+                $msg = 'Provider authentication failed. Please update ClubKonnect/Nellobyte or VTpass credentials in the system configuration.';
+            }
+
+            // If sandbox is enabled and we failed, warn the user
+            if (config('services.vtu.vtpass.sandbox') && (str_contains(strtoupper((string)$msg), 'INVALID') || str_contains(strtoupper((string)$msg), 'NOT FOUND'))) {
+                $msg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
             }
 
             Log::warning('Merchant verification failed', [
@@ -2262,8 +2267,15 @@ class UtilityController extends Controller
             if (!$errorMsg) {
                 if ($customerName && (str_contains(strtoupper($customerName), 'INVALID') || strtoupper(trim($customerName)) === 'N/A')) {
                     $errorMsg = 'Invalid Meter/Smartcard Number or Provider mismatch';
-                } elseif ($customerName && str_contains(strtoupper($customerName), 'NOT FOUND')) {
+
+                    if (config('services.vtu.vtpass.sandbox')) {
+                        $errorMsg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
+                    }
+                } elseif ($customerName && (str_contains(strtoupper($customerName), 'NOT FOUND') || str_contains(strtoupper($customerName), 'ERR_011'))) {
                     $errorMsg = 'Customer not found. Please verify the number.';
+                    if (config('services.vtu.vtpass.sandbox')) {
+                        $errorMsg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
+                    }
                 } else {
                     $errorMsg = $customerName ?: 'Verification failed';
                 }
@@ -2393,6 +2405,14 @@ class UtilityController extends Controller
 
             if (!$resp['ok']) {
                 $lastError = $resp; // network or http error, try next
+
+                // If it's an authentication error, stop failover and return immediately
+                // This prevents masking config issues with generic "Invalid Number" from next provider
+                $errMsg = strtoupper((string)($resp['error'] ?? ''));
+                if (str_contains($errMsg, 'AUTHENTICATION_FAILED') || str_contains($errMsg, 'INVALID_CREDENTIALS')) {
+                    return array_merge($resp, ['provider_used' => $provider]);
+                }
+
                 continue;
             }
 
@@ -2630,6 +2650,11 @@ class UtilityController extends Controller
                 if (str_contains($sf, 'FAILED') || str_contains($sf, 'INVALID') || str_contains($sf, 'MISSING') || str_contains($sf, 'ERROR')) {
                     $ok = false;
                     $error = $statusField;
+
+                    // Specific check for ClubKonnect auth failure to ensure it's not swallowed by generic failover
+                    if (str_contains($sf, 'AUTHENTICATION_FAILED')) {
+                        $error = 'AUTHENTICATION_FAILED_CLUBKONNECT';
+                    }
                 }
             }
         } catch (\Throwable $e) {
