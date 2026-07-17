@@ -2223,6 +2223,11 @@ class UtilityController extends Controller
 
         if (!$response['ok']) {
             $msg = $response['body']['message'] ?? $response['body']['response_description'] ?? $response['error'] ?? 'Verification failed';
+            Log::warning('Merchant verification failed', [
+                'type' => $vtuType,
+                'payload' => $payload,
+                'response' => $response
+            ]);
             return response()->json([
                 'message' => $msg,
                 'details' => $response['body'] ?? $response['error']
@@ -2239,6 +2244,10 @@ class UtilityController extends Controller
             str_contains(strtoupper($customerName), 'NOT FOUND') ||
             strtoupper(trim($customerName)) === 'N/A'
         ) {
+            Log::info('Merchant verification: customer name invalid', [
+                'customerName' => $customerName,
+                'body' => $body
+            ]);
             $errorMsg = $body['message'] ?? $body['response_description'] ?? $body['content']['error'] ?? $body['customer_name'] ?? $body['Customer_Name'] ?? 'Verification failed';
             if ($errorMsg === 'Verification failed' && $customerName && $customerName !== 'N/A') {
                 $errorMsg = $customerName;
@@ -2249,6 +2258,11 @@ class UtilityController extends Controller
                 'details' => $body
             ], 422);
         }
+
+        Log::info('Merchant verification success', [
+            'type' => $vtuType,
+            'customerName' => $customerName
+        ]);
 
         return response()->json([
             'customer_name' => $customerName,
@@ -2489,12 +2503,13 @@ class UtilityController extends Controller
                 'abuja-electric' => '03', 'aedc' => '03',
                 'kano-electric' => '04', 'kedco' => '04',
                 'port-harcourt-electric' => '05', 'phed' => '05',
-                'jos-electric' => '06', 'jed' => '06',
+                'jos-electric' => '06', 'jed' => '06', 'jedc' => '06',
                 'kaduna-electric' => '07', 'kaedco' => '07',
                 'ibadan-electric' => '08', 'ibedc' => '08',
                 'enugu-electric' => '09', 'eedc' => '09',
                 'benin-electric' => '10', 'bedc' => '10',
                 'yola-electric' => '11', 'yedc' => '11',
+                'aba-electric' => '12', 'abedc' => '12', 'aba' => '12', 'aple' => '12',
             ];
             $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
             $meterNo = $payload['billersCode'] ?? ($payload['MeterNo'] ?? null);
@@ -2542,7 +2557,7 @@ class UtilityController extends Controller
                     'enugu-electric' => '09', 'eedc' => '09',
                     'benin-electric' => '10', 'bedc' => '10',
                     'yola-electric' => '11', 'yedc' => '11',
-                    'aba-electric' => '12', 'abedc' => '12', 'aba' => '12',
+                    'aba-electric' => '12', 'abedc' => '12', 'aba' => '12', 'aple' => '12',
                 ];
                 $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
 
