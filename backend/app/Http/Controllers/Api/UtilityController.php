@@ -1500,6 +1500,7 @@ class UtilityController extends Controller
                 ['code' => '09', 'name' => 'Enugu Electric (EEDC)'],
                 ['code' => '10', 'name' => 'Benin Electric (BEDC)'],
                 ['code' => '11', 'name' => 'Yola Electric (YEDC)'],
+                ['code' => '12', 'name' => 'Aba Power (APLE/ABEDC)'],
             ];
             $provider = 'hardcoded';
         } else {
@@ -2541,6 +2542,7 @@ class UtilityController extends Controller
                     'enugu-electric' => '09', 'eedc' => '09',
                     'benin-electric' => '10', 'bedc' => '10',
                     'yola-electric' => '11', 'yedc' => '11',
+                    'aba-electric' => '12', 'abedc' => '12', 'aba' => '12',
                 ];
                 $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
 
@@ -2654,6 +2656,9 @@ class UtilityController extends Controller
                 'eedc' => 'enugu-electric',
                 'bedc' => 'benin-electric',
                 'yedc' => 'yola-electric',
+                'abedc' => 'aba-electric',
+                'aba' => 'aba-electric',
+                'aple' => 'aba-electric',
                 // Numeric codes to serviceIDs
                 '01' => 'eko-electric',
                 '02' => 'ikeja-electric',
@@ -2666,6 +2671,7 @@ class UtilityController extends Controller
                 '09' => 'enugu-electric',
                 '10' => 'benin-electric',
                 '11' => 'yola-electric',
+                '12' => 'aba-electric',
             ];
         } elseif (str_contains($type, 'cable')) {
             $mapping = [

@@ -190,7 +190,7 @@
               <label class="lbl">Meter Number</label>
               <div class="flex gap-2">
                 <input v-model="electricity.meter" type="text" placeholder="Meter number" class="flex-1 inp font-bold" />
-                <button @click="verifyMerchant" :disabled="verification.loading || !electricity.meter" 
+                <button @click="verifyMerchant" :disabled="verification.loading || !electricity.meter || !electricity.disco" 
                   class="bg-slate-800 text-white px-4 rounded-xl text-[10px] font-bold uppercase active:scale-90 transition-all">
                   {{ verification.loading ? '...' : 'Verify' }}
                 </button>
@@ -239,7 +239,7 @@
               <label class="lbl">Smartcard / IUC Number</label>
               <div class="flex gap-2">
                 <input v-model="cable.smartcard" type="text" placeholder="IUC number" class="flex-1 inp font-bold" />
-                <button @click="verifyMerchant" :disabled="verification.loading || !cable.smartcard" 
+                <button @click="verifyMerchant" :disabled="verification.loading || !cable.smartcard || !cable.service" 
                   class="bg-slate-800 text-white px-4 rounded-xl text-[10px] font-bold uppercase">
                   Verify
                 </button>
