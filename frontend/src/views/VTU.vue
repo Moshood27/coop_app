@@ -20,7 +20,7 @@
       <div class="px-4 py-6 bg-white border-b border-slate-100">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Available Balance</p>
+            <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Available Balance</p>
             <div class="flex items-center gap-2">
               <h2 class="text-3xl font-black text-slate-800 tracking-tight">₦ {{ formatMoney(balance) }}</h2>
               <button @click="loadWallet" class="p-1 text-slate-300 hover:text-emerald-600 transition-colors">
@@ -70,7 +70,7 @@
                       {{ n.short }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter" :class="airtime.network === n.id ? 'text-emerald-700' : 'text-slate-400'">{{ n.name }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="airtime.network === n.id ? 'text-emerald-700' : 'text-slate-600'">{{ n.name }}</span>
                 </button>
               </div>
             </div>
@@ -118,7 +118,7 @@
                       {{ n.short }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">{{ n.name }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="dataForm.network === n.id ? 'text-emerald-700' : 'text-slate-500'">{{ n.name }}</span>
                 </button>
               </div>
             </div>
@@ -218,7 +218,7 @@
                       {{ p.id }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">{{ p.n }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="cable.service === p.id ? 'text-emerald-700' : 'text-slate-500'">{{ p.n }}</span>
                 </button>
               </div>
             </div>

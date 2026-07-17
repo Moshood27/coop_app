@@ -89,7 +89,14 @@ html, body, #app { height: 100%; }
 
   /* Admin helpers used elsewhere */
   .lbl { @apply block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1; }
-  .inp { @apply w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all; }
+  .inp { 
+    @apply w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all;
+    color: #0f172a !important;
+  }
+  .inp option {
+    @apply text-slate-900 bg-white;
+    color: #0f172a !important;
+  }
 
   /* Empty state */
   .empty-state { @apply text-center text-slate-500 text-sm; }
