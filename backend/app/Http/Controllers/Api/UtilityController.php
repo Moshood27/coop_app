@@ -2223,6 +2223,12 @@ class UtilityController extends Controller
 
         if (!$response['ok']) {
             $msg = $response['body']['message'] ?? $response['body']['response_description'] ?? $response['error'] ?? 'Verification failed';
+
+            // Human-friendly mapping for common provider errors
+            if (str_contains(strtoupper((string)$msg), 'AUTHENTICATION_FAILED')) {
+                $msg = 'Provider authentication failed. Please check ClubKonnect credentials.';
+            }
+
             Log::warning('Merchant verification failed', [
                 'type' => $vtuType,
                 'payload' => $payload,
@@ -2539,7 +2545,7 @@ class UtilityController extends Controller
                 $mapCable = [ 'dstv' => '01', 'gotv' => '02', 'startimes' => '03' ];
                 $cableCode = $mapCable[$service] ?? $service;
 
-                $endpoint = '/APIVerifyCableTVV1.0.asp';
+                $endpoint = '/APIVerifyCableTVV1.asp';
                 $params = array_merge($params, [
                     'CableTV' => $cableCode,
                     'SmartCardNo' => $billersCode,
@@ -2596,13 +2602,19 @@ class UtilityController extends Controller
             $status = $resp->status();
             $body = $resp->body();
             $json = $resp->json();
-            if (!$resp->ok()) {
-                Log::warning('ClubKonnect bad response', ['status' => $status, 'body' => $body, 'endpoint' => $endpoint]);
-                return [ 'ok' => false, 'error' => 'Bad response', 'body' => (is_array($json)?$json:['raw' => $body]), 'status' => $status ];
-            }
-            // Pass through JSON; success/pending are detected by isVtpassSuccess/isVtpassPending via statuscode/orderstatus
+            $ok = $resp->ok();
             $bodyOut = is_array($json) ? $json : [ 'raw' => $body ];
-            $ok = true;
+
+            // Detect Nellobyte error status even on 200 OK
+            $statusField = $bodyOut['status'] ?? $bodyOut['statuscode'] ?? $bodyOut['StatusCode'] ?? null;
+            if ($ok && $statusField && is_string($statusField)) {
+                $sf = strtoupper($statusField);
+                // Common Nellobyte error indicators
+                if (str_contains($sf, 'FAILED') || str_contains($sf, 'INVALID') || str_contains($sf, 'MISSING') || str_contains($sf, 'ERROR')) {
+                    $ok = false;
+                    $error = $statusField;
+                }
+            }
         } catch (\Throwable $e) {
             Log::error('ClubKonnect HTTP error', ['error' => $e->getMessage(), 'endpoint' => $endpoint]);
             $error = 'Network error';
