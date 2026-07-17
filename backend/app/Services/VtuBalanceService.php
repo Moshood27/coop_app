@@ -28,7 +28,7 @@ class VtuBalanceService
 
     public function fetchVtpassBalance(): ?array
     {
-        $baseUrl = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+        $baseUrl = rtrim((string)config('services.vtu.base_url') ?: 'https://vtpass.com/api', '/');
         $apiKey = config('services.vtu.api_key');
         $publicKey = config('services.vtu.public_key');
         $secretKey = config('services.vtu.secret_key');

@@ -1242,7 +1242,7 @@ class UtilityController extends Controller
             $resp = Http::withHeaders([
                 'api-key' => config('services.vtu.api_key'),
                 'public-key' => config('services.vtu.public_key'),
-            ])->get(config('services.vtu.base_url') . '/service-variations', [
+            ])->get((config('services.vtu.base_url') ?: 'https://vtpass.com/api') . '/service-variations', [
                 'serviceID' => $serviceId
             ]);
 
@@ -1285,7 +1285,7 @@ class UtilityController extends Controller
         ]);
 
         $service = strtolower($validated['service']);
-        $baseUrl = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+        $baseUrl = rtrim((string)config('services.vtu.base_url') ?: 'https://vtpass.com/api', '/');
         $apiKey = config('services.vtu.api_key');
         $publicKey = config('services.vtu.public_key');
         $secretKey = config('services.vtu.secret_key');
@@ -1465,7 +1465,7 @@ class UtilityController extends Controller
         // 2. Try VTpass as fallback if ClubKonnect failed or returned garbage
         if (empty($discos)) {
             $vtApiKey = config('services.vtu.api_key');
-            $vtBase = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+            $vtBase = rtrim((string)config('services.vtu.base_url') ?: 'https://vtpass.com/api', '/');
             if ($vtApiKey) {
                 try {
                     $r = Http::withHeaders(['api-key' => $vtApiKey])
@@ -2768,7 +2768,7 @@ class UtilityController extends Controller
             $payload['serviceID'] = $mapping[$serviceID];
         }
 
-        $baseUrl = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+        $baseUrl = rtrim((string)config('services.vtu.base_url') ?: 'https://vtpass.com/api', '/');
         $apiKey = config('services.vtu.api_key');
         $publicKey = config('services.vtu.public_key');
         $secretKey = config('services.vtu.secret_key');
@@ -2897,7 +2897,7 @@ class UtilityController extends Controller
 
     private function requeryVtpass(string $reference): array
     {
-        $baseUrl = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+        $baseUrl = rtrim((string)config('services.vtu.base_url') ?: 'https://vtpass.com/api', '/');
         $apiKey = config('services.vtu.api_key');
         $publicKey = config('services.vtu.public_key');
         $secretKey = config('services.vtu.secret_key');

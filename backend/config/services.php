@@ -74,20 +74,27 @@ return [
         // Or set VTU_BASE_URL directly to override
         'base_url' => (function () {
             $sandboxDefault = env('APP_ENV') === 'local';
-            $sandbox = filter_var(env('VTU_SANDBOX', $sandboxDefault), FILTER_VALIDATE_BOOLEAN);
+            $vtuSandbox = env('VTU_SANDBOX');
+            $sandbox = ($vtuSandbox === null || $vtuSandbox === '')
+                ? $sandboxDefault
+                : filter_var($vtuSandbox, FILTER_VALIDATE_BOOLEAN);
+
             if ($sandbox) {
                 // Force sandbox base URL when VTU_SANDBOX=true (or in local by default)
                 return 'https://sandbox.vtpass.com/api';
             }
             // Live/base URL can be overridden via VTU_BASE_URL
-            return env('VTU_BASE_URL', 'https://vtpass.com/api');
+            return env('VTU_BASE_URL') ?: 'https://vtpass.com/api';
         })(),
         'api_key' => env('VTPASS_API_KEY'),
         'public_key' => env('VTPASS_PUBLIC_KEY'),
         'secret_key' => env('VTPASS_SECRET_KEY'),
         'sandbox' => (function () {
             $sandboxDefault = env('APP_ENV') === 'local';
-            return filter_var(env('VTU_SANDBOX', $sandboxDefault), FILTER_VALIDATE_BOOLEAN);
+            $vtuSandbox = env('VTU_SANDBOX');
+            return ($vtuSandbox === null || $vtuSandbox === '')
+                ? $sandboxDefault
+                : filter_var($vtuSandbox, FILTER_VALIDATE_BOOLEAN);
         })(),
         // Revenue knobs
         'default_discount' => (float) env('VTU_DEFAULT_DISCOUNT', 0.03), // 3% default
