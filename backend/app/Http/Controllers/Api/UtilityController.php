@@ -51,12 +51,33 @@ class UtilityController extends Controller
             $status = 'pending';
         }
 
+        // If electricity success but no token, try to requery provider to get the token
+        if ($status === 'success' && ($tx->type === 'electricity' || $tx->type === 'cable') && !$this->extractToken($payload)) {
+            if ($tx->provider === 'clubkonnect') {
+                $requery = $this->requeryClubKonnectByRequestId($tx->reference);
+                if ($requery['ok'] && $this->extractToken($requery['body'])) {
+                    $payload = array_merge($payload, (array)$requery['body']);
+                }
+            }
+        }
+
         // Idempotent updates inside DB transaction
         DB::transaction(function () use ($tx, $status, $payload) {
             $user = $tx->user()->lockForUpdate()->first();
 
+            // Preserve token if exists in previous response but missing in new one
+            $existingResponse = $tx->provider_response;
+            $finalPayload = $payload;
+            if (is_array($existingResponse)) {
+                $oldToken = $this->extractToken($existingResponse);
+                $newToken = $this->extractToken($finalPayload);
+                if (!$newToken && $oldToken) {
+                    $finalPayload['metertoken'] = $oldToken;
+                }
+            }
+
             // Always persist provider response
-            $tx->provider_response = $payload;
+            $tx->provider_response = $finalPayload;
 
             if ($status === 'success') {
                 // If not already marked success, finalize and ensure wallet is debited once
@@ -505,6 +526,7 @@ class UtilityController extends Controller
 
         $response = $this->callVtuSmart('airtime', $payload);
         $providerUsed = $response['provider_used'] ?? 'clubkonnect';
+        $tx->update(['provider' => $providerUsed]);
 
         if (!$response['ok']) {
             $tx->update([
@@ -604,7 +626,7 @@ class UtilityController extends Controller
                                             'user_id' => $lockedUser->id,
                                             'type' => 'debit',
                                             'amount' => $amount,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'reference' => $tx->reference,
                                             'source' => 'vtu_airtime',
                                             'meta' => [
                                                 'network' => $tx->network,
@@ -741,7 +763,6 @@ class UtilityController extends Controller
             // Profit = amount - cost_price (pre-set)
             $profit = round(((float)$tx->amount - (float)$tx->cost_price), 2);
 
-            // Update tx status and profit
             $tx->update([
                 'status' => 'success',
                 'profit' => $profit,
@@ -755,7 +776,7 @@ class UtilityController extends Controller
                 'user_id' => $lockedUser->id,
                 'type' => 'debit',
                 'amount' => $amount,
-                'reference' => $body['orderid'] ?? ($body['requestId'] ?? $tx->reference),
+                'reference' => $tx->reference,
                 'source' => 'vtu_airtime',
                 'meta' => [
                     'network' => $tx->network,
@@ -876,6 +897,7 @@ class UtilityController extends Controller
             $response = $this->callVtuSmart('data', $payload);
         }
         $providerUsed = $response['provider_used'] ?? $provider;
+        $tx->update(['provider' => $providerUsed]);
 
         if (!$response['ok']) {
             $tx->update([
@@ -975,7 +997,7 @@ class UtilityController extends Controller
                                             'user_id' => $lockedUser->id,
                                             'type' => 'debit',
                                             'amount' => $debit,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'reference' => $tx->reference,
                                             'source' => 'vtu_data',
                                             'meta' => [
                                                 'network' => $tx->network,
@@ -1127,7 +1149,7 @@ class UtilityController extends Controller
                 'user_id' => $lockedUser->id,
                 'type' => 'debit',
                 'amount' => $debit,
-                'reference' => $body['orderid'] ?? ($body['requestId'] ?? $tx->reference),
+                'reference' => $tx->reference,
                 'source' => 'vtu_data',
                 'meta' => [
                     'network' => $tx->network,
@@ -1589,6 +1611,7 @@ class UtilityController extends Controller
 
         $response = $this->callVtuSmart('electricity', $payload);
         $providerUsed = $response['provider_used'] ?? 'clubkonnect';
+        $tx->update(['provider' => $providerUsed]);
         if (!$response['ok']) {
             $tx->update([
                 'status' => 'failed',
@@ -1669,13 +1692,13 @@ class UtilityController extends Controller
                                             'status' => 'pending',
                                             'profit' => $profit,
                                             'provider_response' => $ckb,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'order_id' => $ckb['orderid'] ?? null,
                                         ]);
                                         WalletTransaction::create([
                                             'user_id' => $lockedUser->id,
                                             'type' => 'debit',
                                             'amount' => $totalDebit,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'reference' => $tx->reference,
                                             'source' => 'vtu_electricity',
                                             'meta' => [
                                                 'disco' => $serviceId,
@@ -1804,13 +1827,13 @@ class UtilityController extends Controller
                 'status' => 'success',
                 'profit' => $profit,
                 'provider_response' => $body,
-                'reference' => $body['orderid'] ?? $tx->reference,
+                'order_id' => $body['orderid'] ?? null,
             ]);
             WalletTransaction::create([
                 'user_id' => $lockedUser->id,
                 'type' => 'debit',
                 'amount' => $totalDebit,
-                'reference' => $body['orderid'] ?? $tx->reference,
+                'reference' => $tx->reference,
                 'source' => 'vtu_electricity',
                 'meta' => [
                     'disco' => $serviceId,
@@ -1836,13 +1859,13 @@ class UtilityController extends Controller
         $user->refresh();
         try {
             $sms = app(\App\Services\SmsService::class);
-            $token = $body['metertoken'] ?? ($body['mainToken'] ?? ($body['token'] ?? ($body['purchased_code'] ?? ($body['data']['token'] ?? null))));
+            $token = $this->extractToken($body);
             $tokenMsg = $token ? " Token: $token." : "";
             $msg = 'Electricity vend: ₦'.number_format($totalDebit, 2).' to meter '.($meter).' ('.strtoupper($serviceId).').'.$tokenMsg.' Ref: '.$reference.'. Bal: ₦'.number_format((float)$user->balance, 2);
             $sms->send($user->phone ?? null, $msg);
         } catch (\Throwable $e) {}
 
-        $token = $body['metertoken'] ?? ($body['mainToken'] ?? ($body['token'] ?? ($body['purchased_code'] ?? ($body['data']['token'] ?? null))));
+        $token = $this->extractToken($body);
         return response()->json([
             'message' => 'Electricity token vended! ' . ($token ? "Token: $token" : ""),
             'status' => 'success',
@@ -1922,6 +1945,7 @@ class UtilityController extends Controller
 
         $response = $this->callVtuSmart('cable', $payload);
         $providerUsed = $response['provider_used'] ?? 'clubkonnect';
+        $tx->update(['provider' => $providerUsed]);
         if (!$response['ok']) {
             $tx->update([
                 'status' => 'failed',
@@ -2005,14 +2029,13 @@ class UtilityController extends Controller
                                             'status' => 'pending',
                                             'profit' => $profit,
                                             'provider_response' => $ckb,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'order_id' => $ckb['orderid'] ?? null,
                                         ]);
-
                                         WalletTransaction::create([
                                             'user_id' => $lockedUser->id,
                                             'type' => 'debit',
                                             'amount' => $totalDebit,
-                                            'reference' => $ckb['orderid'] ?? $tx->reference,
+                                            'reference' => $tx->reference,
                                             'source' => 'vtu_cable',
                                             'meta' => [
                                                 'service' => $service,
@@ -2148,13 +2171,13 @@ class UtilityController extends Controller
                 'status' => 'success',
                 'profit' => $profit,
                 'provider_response' => $body,
-                'reference' => $body['orderid'] ?? $tx->reference,
+                'order_id' => $body['orderid'] ?? null,
             ]);
             WalletTransaction::create([
                 'user_id' => $lockedUser->id,
                 'type' => 'debit',
                 'amount' => $totalDebit,
-                'reference' => $body['orderid'] ?? $tx->reference,
+                'reference' => $tx->reference,
                 'source' => 'vtu_cable',
                 'meta' => [
                     'service' => $service,
@@ -2892,6 +2915,19 @@ class UtilityController extends Controller
         return [ 'ok' => true, 'body' => $json, 'status' => $resp->status() ];
     }
 
+    private function extractToken($body): ?string
+    {
+        if (!is_array($body)) return null;
+        $token = $body['metertoken'] ?? ($body['mainToken'] ?? ($body['token'] ?? ($body['purchased_code'] ?? ($body['data']['token'] ?? ($body['main_token'] ?? null)))));
+        if (!$token) {
+            $remark = (string)($body['orderremark'] ?? ($body['remark'] ?? ($body['OrderRemark'] ?? '')));
+            if (preg_match('/TOKEN:\s*([\d\s-]+)/i', $remark, $matches)) {
+                $token = trim($matches[1]);
+            }
+        }
+        return $token;
+    }
+
     private function isVtpassSuccess($body): bool
     {
         if (is_array($body)) {
@@ -2907,12 +2943,19 @@ class UtilityController extends Controller
 
             // Nellobytes/ClubKonnect success: statuscode=200 (ORDER_COMPLETED)
             $ckCode = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
-            if (in_array($ckCode, ['200', 'OK', '201', '000', 'ORDER_COMPLETED'])) { // be literal
-                return true;
-            }
             $orderStatusUp = strtoupper((string)($body['orderstatus'] ?? ($body['order_status'] ?? ($body['OrderStatus'] ?? ''))));
-            if (in_array($orderStatusUp, ['ORDER_COMPLETED', 'COMPLETED', 'SUCCESS'])) {
-                return true;
+            $remark = strtoupper((string)($body['orderremark'] ?? ($body['remark'] ?? ($body['OrderRemark'] ?? ''))));
+
+            // If remark says it's still processing, it's not success even if status says COMPLETED
+            if (str_contains($remark, 'PROCESSING') || str_contains($remark, 'WAIT') || str_contains($remark, 'RETRY')) {
+                // Not success yet
+            } else {
+                if (in_array($ckCode, ['200', 'OK', '201', '000', 'ORDER_COMPLETED'])) { // be literal
+                    return true;
+                }
+                if (in_array($orderStatusUp, ['ORDER_COMPLETED', 'COMPLETED', 'SUCCESS'])) {
+                    return true;
+                }
             }
 
             // If a non-empty, non-invalid name is present, consider it success
@@ -2955,11 +2998,13 @@ class UtilityController extends Controller
             if (in_array($status, ['pending', 'processing', 'initiated', 'queued', 'order_received', 'order_onhold'])) { return true; }
             $txStatus = strtolower((string)($body['data']['transactions']['status'] ?? ($body['content']['transactions']['status'] ?? ($body['transactions']['status'] ?? ''))));
             if (in_array($txStatus, ['pending', 'processing', 'initiated', 'queued'])) { return true; }
-            // Nellobytes/ClubKonnect pending fields
             $ckCode = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
             $orderStatusUp = strtoupper((string)($body['orderstatus'] ?? ($body['order_status'] ?? ($body['OrderStatus'] ?? ''))));
-            if (in_array($ckCode, ['100', 'ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD', 'PENDING', 'PROCESSING']) ||
-                in_array($orderStatusUp, ['ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD'])) {
+            $remark = strtoupper((string)($body['orderremark'] ?? ($body['remark'] ?? ($body['OrderRemark'] ?? ''))));
+
+            if (in_array($ckCode, ['100', '522', 'ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD', 'PENDING', 'PROCESSING']) ||
+                in_array($orderStatusUp, ['ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD']) ||
+                str_contains($remark, 'PROCESSING') || str_contains($remark, 'WAIT') || str_contains($remark, 'RETRY')) {
 
                 // If it's a verification response from ClubKonnect/Nellobytes with "N/A", don't treat as pending
                 // so the router can failover to another provider.
