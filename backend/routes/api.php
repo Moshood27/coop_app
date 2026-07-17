@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\ZakatController;
 use App\Http\Controllers\Api\SadaqahController;
 use App\Http\Controllers\Api\AdminProductController;
 use App\Http\Controllers\Api\AdminVendorController;
+use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\SecurityController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\MemberRegistrationController;
@@ -433,15 +434,19 @@ Route::prefix('qard-hasan')->group(function () {
 
 
 // Admin reports endpoints
-Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/reports')->group(function () {
-    Route::get('/branch-performance', [AdminReportsController::class, 'branchPerformance']);
-    Route::get('/scheme-popularity', [AdminReportsController::class, 'schemePopularity']);
-    Route::get('/delinquency', [AdminReportsController::class, 'delinquency']);
-    Route::get('/reconciliation', [AdminReportsController::class, 'reconciliation']);
-    Route::get('/total-liquidity', [AdminReportsController::class, 'totalLiquidity']);
-    Route::get('/audit-trail', [AdminReportsController::class, 'auditTrail']);
-    Route::get('/user-growth', [AdminReportsController::class, 'userGrowth']);
-    Route::get('/system-health', [AdminReportsController::class, 'systemHealth']);
+Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+
+    Route::prefix('reports')->group(function () {
+        Route::get('/branch-performance', [AdminReportsController::class, 'branchPerformance']);
+        Route::get('/scheme-popularity', [AdminReportsController::class, 'schemePopularity']);
+        Route::get('/delinquency', [AdminReportsController::class, 'delinquency']);
+        Route::get('/reconciliation', [AdminReportsController::class, 'reconciliation']);
+        Route::get('/total-liquidity', [AdminReportsController::class, 'totalLiquidity']);
+        Route::get('/audit-trail', [AdminReportsController::class, 'auditTrail']);
+        Route::get('/user-growth', [AdminReportsController::class, 'userGrowth']);
+        Route::get('/system-health', [AdminReportsController::class, 'systemHealth']);
+    });
 });
 
 // Admin import endpoints

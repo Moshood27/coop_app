@@ -6,5 +6,5 @@ docker-compose.yml
 docker-compose.pro.yml
 *.jks
 *.keystore
-
+*.md
 

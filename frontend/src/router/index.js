@@ -66,6 +66,7 @@ const AdminVTU = () => import('../views/admin/AdminVTU.vue')
 const AdminProducts = () => import('../views/admin/AdminProducts.vue')
 const AdminVendors = () => import('../views/admin/AdminVendors.vue')
 const AdminTakaful = () => import('../views/admin/AdminTakaful.vue')
+const AdminDashboard = () => import('../views/admin/AdminDashboard.vue')
 
 const routes = [
   { path: '/', name: 'landing', component: Landing, meta: { guest: true, skipOnboarding: true } },
@@ -148,6 +149,8 @@ const routes = [
   { path: '/admin/products', name: 'admin.products', component: AdminProducts, meta: { requiresAdmin: true } },
   { path: '/admin/vendors', name: 'admin.vendors', component: AdminVendors, meta: { requiresAdmin: true } },
   { path: '/admin/takaful', name: 'admin.takaful', component: AdminTakaful, meta: { requiresAdmin: true } },
+  { path: '/admin/portal', name: 'admin.portal', component: AdminDashboard, meta: { requiresAdmin: true } },
+  { path: '/admin', redirect: '/admin/portal' },
 ]
 
 const isNative = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))

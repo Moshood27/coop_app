@@ -353,7 +353,7 @@
         <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">⚖️</div>
         <span class="text-sm font-bold text-slate-700">Sharia Board</span>
       </button>
-      <button v-if="dashboardData.is_admin" @click="$router.push('/admin/vendors')" class="bg-rose-50 p-5 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center gap-2 active:bg-rose-100 transition-all">
+      <button v-if="dashboardData.is_admin" @click="$router.push('/admin/portal')" class="bg-rose-50 p-5 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center gap-2 active:bg-rose-100 transition-all">
         <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-2xl">👮</div>
         <span class="text-sm font-bold text-rose-800">Admin Portal</span>
       </button>

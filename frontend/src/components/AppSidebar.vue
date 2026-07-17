@@ -37,7 +37,7 @@
     </div>
 
     <div class="mt-auto p-6 space-y-4">
-      <button v-if="isAdmin" @click="router.push('/admin/vendors')" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold text-sm transition-all border border-emerald-100 shadow-sm">
+      <button v-if="isAdmin" @click="router.push('/admin/portal')" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-bold text-sm transition-all border border-emerald-100 shadow-sm">
         <span class="i-mdi-shield-account text-xl"></span>
         Admin Portal
       </button>
