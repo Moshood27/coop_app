@@ -1184,7 +1184,7 @@ class UtilityController extends Controller
         $convenience = (float) config('services.vtu.convenience_fee', 0);
 
         // 1. Determine Primary Provider
-        $order = explode(',', config('services.vtu.routing_order', 'clubkonnect,vtpass'));
+        $order = explode(',', (string)config('services.vtu.routing_order', 'clubkonnect,vtpass'));
         $primaryProvider = strtolower(trim($order[0]));
 
         // 2. Try to fetch from ClubKonnect if it's primary
@@ -1196,15 +1196,12 @@ class UtilityController extends Controller
                 ]);
 
                 $j = $r->json();
-
                 $mobileNetworkData = $j['MOBILE_NETWORK'] ?? null;
                 if ($r->ok() && $mobileNetworkData) {
                     $bundles = [];
-                    // Find the specific network (e.g., "MTN", "Glo")
-                    // We search case-insensitively to match 'mtn' vs 'MTN'
                     $networkKey = null;
                     foreach (array_keys($mobileNetworkData) as $k) {
-                        if (strtolower($k) === strtolower($network)) {
+                        if (strtolower((string)$k) === strtolower($network)) {
                             $networkKey = $k;
                             break;
                         }
@@ -1212,11 +1209,12 @@ class UtilityController extends Controller
 
                     if ($networkKey && isset($mobileNetworkData[$networkKey][0]['PRODUCT'])) {
                         $products = $mobileNetworkData[$networkKey][0]['PRODUCT'];
-
                         foreach ($products as $p) {
+                            $code = (string)($p['PRODUCT_ID'] ?? $p['dataplan_id'] ?? '');
+                            $name = $p['PRODUCT_NAME'] ?? ($p['name'] ?? $code);
                             $bundles[] = [
-                                'code' => (string) ($p['PRODUCT_ID'] ?? $p['dataplan_id'] ?? ''),
-                                'name' => $p['PRODUCT_NAME'] ?? ($p['name'] ?? ''),
+                                'code' => $code,
+                                'name' => (string)$name,
                                 'amount' => (float) ($p['PRODUCT_AMOUNT'] ?? ($p['amount'] ?? 0)),
                                 'fixed' => true,
                                 'convenience_fee' => $convenience,
@@ -1252,9 +1250,11 @@ class UtilityController extends Controller
             $raw = $json['content']['variations'] ?? [];
 
             $bundles = array_map(function ($v) use ($convenience) {
+                $code = $v['variation_code'];
+                $name = $v['name'] ?? $code;
                 return [
-                    'code' => $v['variation_code'], // String ID for VTpass
-                    'name' => $v['name'],
+                    'code' => (string)$code,
+                    'name' => (string)$name,
                     'amount' => (float) $v['variation_amount'],
                     'fixed' => true,
                     'convenience_fee' => $convenience,
@@ -1269,12 +1269,11 @@ class UtilityController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            // 4. Ultimate Fallback (Cache)
             return response()->json([
                 'network' => $network,
                 'provider' => 'cache',
                 'bundles' => Cache::get($cacheKey, []),
-                'note' => 'System offline. Showing last known plans.'
+                'note' => 'System offline.'
             ]);
         }
     }
@@ -1379,13 +1378,13 @@ class UtilityController extends Controller
                 if ($resp->ok() && is_array($json)) {
                     $raw = $json['content']['varations'] ?? $json['content']['variations'] ?? $json['data']['variations'] ?? [];
                     $bundles = array_values(array_map(function ($v) use ($convenience) {
-                        $code = $v['variation_code'] ?? ($v['code'] ?? null);
-                        $name = $v['name'] ?? '';
+                        $code = (string)($v['variation_code'] ?? ($v['code'] ?? ''));
+                        $name = $v['name'] ?? $code;
                         $amount = (float) ($v['variation_amount'] ?? ($v['amount'] ?? 0));
                         $fixed = (bool) ($v['fixedPrice'] ?? ($v['fixed'] ?? true));
                         return [
                             'code' => $code,
-                            'name' => $name,
+                            'name' => (string)$name,
                             'amount' => $amount,
                             'fixed' => $fixed,
                             'convenience_fee' => $convenience,
@@ -1412,9 +1411,10 @@ class UtilityController extends Controller
     public function electricityDiscos(Request $request)
     {
         $cacheKey = 'vtu:electricity:discos';
-        if ($cached = Cache::get($cacheKey)) {
-            return response()->json($cached);
-        }
+        // Force refresh for now to fix empty names issue
+        // if ($cached = Cache::get($cacheKey)) {
+        //     return response()->json($cached);
+        // }
 
         $ck = config('services.vtu.clubkonnect', []);
         $ckUser = $ck['user_id'] ?? null;
@@ -1427,9 +1427,13 @@ class UtilityController extends Controller
                 if ($r->ok() && isset($j['ELECTRIC_COMPANY'])) {
                     $discos = [];
                     foreach ($j['ELECTRIC_COMPANY'] as $d) {
+                        $name = (string) ($d['ELECTRIC_COMPANY_NAME'] ?? '');
+                        if (empty($name)) {
+                            $name = (string) ($d['ELECTRIC_COMPANY_CODE'] ?? 'Unknown');
+                        }
                         $discos[] = [
                             'code' => (string) ($d['ELECTRIC_COMPANY_CODE'] ?? ''),
-                            'name' => (string) ($d['ELECTRIC_COMPANY_NAME'] ?? ''),
+                            'name' => $name,
                         ];
                     }
                     if (!empty($discos)) {

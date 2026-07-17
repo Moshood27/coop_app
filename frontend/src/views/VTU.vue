@@ -70,7 +70,7 @@
                       {{ n.short }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="airtime.network === n.id ? 'text-emerald-700' : 'text-slate-600'">{{ n.name }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="airtime.network === n.id ? 'text-emerald-700' : 'text-slate-700'">{{ n.name }}</span>
                 </button>
               </div>
             </div>
@@ -118,7 +118,7 @@
                       {{ n.short }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="dataForm.network === n.id ? 'text-emerald-700' : 'text-slate-500'">{{ n.name }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="dataForm.network === n.id ? 'text-emerald-700' : 'text-slate-700'">{{ n.name }}</span>
                 </button>
               </div>
             </div>
@@ -133,7 +133,7 @@
               <select v-model="dataForm.bundleCode" class="inp py-4 px-5 text-sm font-semibold">
                 <option value="">Select a plan</option>
                 <option v-for="b in bundles" :key="b.code" :value="b.code">
-                  {{ b.name }} (₦{{ formatMoney(b.amount) }})
+                  {{ b.name || b.code }} (₦{{ formatMoney(b.amount) }})
                 </option>
               </select>
               <div v-if="selectedBundle" class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
@@ -155,10 +155,22 @@
             <div class="space-y-4">
               <div class="space-y-2">
                 <label class="lbl">Distribution Company (Disco)</label>
-                <select v-model="electricity.disco" class="inp text-sm font-bold">
-                  <option value="" disabled>Select Disco</option>
-                  <option v-for="d in electricityDiscos" :key="d.code" :value="d.code">{{ d.name }}</option>
-                </select>
+                <div class="grid grid-cols-2 gap-2">
+                  <button v-for="d in electricityDiscos" :key="d.code" @click="electricity.disco = d.code"
+                    class="p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 group"
+                    :class="electricity.disco === d.code ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 bg-white'">
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black group-hover:bg-slate-200 transition-colors"
+                      :class="electricity.disco === d.code ? 'text-emerald-700' : 'text-slate-500'">
+                      {{ getShortName(d.name) }}
+                    </div>
+                    <span class="text-[11px] font-bold leading-tight" :class="electricity.disco === d.code ? 'text-emerald-700' : 'text-slate-800'">
+                      {{ d.name || d.code }}
+                    </span>
+                  </button>
+                  <div v-if="!electricityDiscos.length" class="col-span-2 py-4 text-center text-slate-400 text-xs italic">
+                    Loading companies...
+                  </div>
+                </div>
               </div>
               
               <div class="space-y-2">
@@ -167,7 +179,7 @@
                   <button v-for="t in ['prepaid', 'postpaid']" :key="t" 
                     @click="electricity.meterType = t"
                     class="flex-1 py-3 rounded-xl border-2 transition-all font-bold text-xs uppercase tracking-wider"
-                    :class="electricity.meterType === t ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-100 bg-slate-50 text-slate-400'">
+                    :class="electricity.meterType === t ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500'">
                     {{ t }}
                   </button>
                 </div>
@@ -218,7 +230,7 @@
                       {{ p.id }}
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="cable.service === p.id ? 'text-emerald-700' : 'text-slate-500'">{{ p.n }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter transition-colors" :class="cable.service === p.id ? 'text-emerald-700' : 'text-slate-700'">{{ p.n }}</span>
                 </button>
               </div>
             </div>
@@ -241,7 +253,7 @@
               <label class="lbl">Package</label>
               <select v-model="cable.bundleCode" class="inp text-sm font-bold">
                 <option value="">Choose package</option>
-                <option v-for="b in tvBundles" :key="b.code" :value="b.code">{{ b.name }} (₦{{ formatMoney(b.amount) }})</option>
+                <option v-for="b in tvBundles" :key="b.code" :value="b.code">{{ b.name || b.code }} (₦{{ formatMoney(b.amount) }})</option>
               </select>
             </div>
 
@@ -387,6 +399,10 @@ function handlePinCancel() {
 
 // Helpers
 const formatMoney = (val) => Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
+const getShortName = (name) => {
+  if (!name) return '?'
+  return name.split(/[\s()]/).filter(x => x.length > 2 && x.toUpperCase() === x).join('') || name.substring(0, 3).toUpperCase()
+}
 const canBuyAirtime = computed(() => !!airtime.value.network && airtime.value.phone?.length >= 10 && Number(airtime.value.amount) >= 50)
 const canBuyData = computed(() => !!dataForm.value.network && dataForm.value.phone?.length >= 10 && !!dataForm.value.bundleCode)
 const canBuyElectricity = computed(() => !!electricity.value.disco && !!electricity.value.meterType && electricity.value.meter?.length >= 6 && Number(electricity.value.amount) >= 100)
