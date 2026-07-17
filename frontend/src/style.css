@@ -88,8 +88,8 @@ html, body, #app { height: 100%; }
   .navbar-inner { @apply mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between; }
 
   /* Admin helpers used elsewhere */
-  .lbl { @apply block text-[10px] font-bold text-gray-500 uppercase mb-1 ml-1; }
-  .inp { @apply w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500; }
+  .lbl { @apply block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1; }
+  .inp { @apply w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all; }
 
   /* Empty state */
   .empty-state { @apply text-center text-slate-500 text-sm; }

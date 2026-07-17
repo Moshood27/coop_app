@@ -152,19 +152,25 @@
 
           <!-- ELECTRICITY FORM -->
           <div v-if="tab==='electricity'" class="animate-fade-in space-y-6">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-4">
               <div class="space-y-2">
-                <label class="lbl">Disco</label>
+                <label class="lbl">Distribution Company (Disco)</label>
                 <select v-model="electricity.disco" class="inp text-sm font-bold">
+                  <option value="" disabled>Select Disco</option>
                   <option v-for="d in electricityDiscos" :key="d.code" :value="d.code">{{ d.name }}</option>
                 </select>
               </div>
+              
               <div class="space-y-2">
                 <label class="lbl">Meter Type</label>
-                <select v-model="electricity.meterType" class="inp text-sm font-bold">
-                  <option value="prepaid">Prepaid</option>
-                  <option value="postpaid">Postpaid</option>
-                </select>
+                <div class="flex gap-3">
+                  <button v-for="t in ['prepaid', 'postpaid']" :key="t" 
+                    @click="electricity.meterType = t"
+                    class="flex-1 py-3 rounded-xl border-2 transition-all font-bold text-xs uppercase tracking-wider"
+                    :class="electricity.meterType === t ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-slate-100 bg-slate-50 text-slate-400'">
+                    {{ t }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -318,7 +324,7 @@ const loadingCable = ref(false)
 
 const airtime = ref({ network: 'mtn', phone: '', amount: '' })
 const dataForm = ref({ network: 'mtn', phone: '', bundleCode: '', vtuProvider: '' })
-const electricity = ref({ disco: 'aedc', meterType: 'prepaid', meter: '', amount: '', phone: '' })
+const electricity = ref({ disco: '', meterType: 'prepaid', meter: '', amount: '', phone: '' })
 const cable = ref({ service: 'dstv', smartcard: '', bundleCode: '', phone: '' })
 
 // Verification state
