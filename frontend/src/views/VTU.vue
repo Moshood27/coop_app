@@ -1,184 +1,251 @@
 <template>
-  <div class="min-h-screen bg-slate-50 font-sans">
+  <div class="min-h-screen bg-slate-50 font-sans pb-24">
     <!-- Header -->
-    <AppHeader title="Airtime, Data & Bills" :showBack="true">
-      <template #right>
-        <router-link to="/vtu/history" class="text-emerald-700 text-xs font-bold mr-2">History</router-link>
-      </template>
-    </AppHeader>
-
-    <div class="p-4 pb-32 space-y-6 max-w-md mx-auto">
-      <!-- Balance Card -->
-      <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl transform transition-all active:scale-95">
-        <p class="text-emerald-100 text-sm font-medium">Available Wallet Balance</p>
-        <h2 class="text-4xl font-bold mt-1 tracking-tight">₦ {{ formatMoney(balance) }}</h2>
+    <header class="header-fintech sticky top-0 z-50">
+      <div class="flex items-center justify-between px-4 h-16">
+        <div class="flex items-center gap-3">
+          <button @click="$router.back()" class="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
+            <span class="material-icons text-2xl">arrow_back</span>
+          </button>
+          <h1 class="text-lg font-bold text-slate-800">Airtime & Bills</h1>
+        </div>
+        <router-link to="/vtu/history" class="text-emerald-700 text-sm font-bold bg-emerald-50 px-3 py-1.5 rounded-full active:scale-95 transition-all">
+          History
+        </router-link>
       </div>
+    </header>
 
-      <!-- Tab Switcher -->
-      <div class="segmented grid grid-cols-4 gap-1">
-        <button class="segment" :class="tab==='airtime' ? 'segment-active' : ''" @click="tab='airtime'">Airtime</button>
-        <button class="segment" :class="tab==='data' ? 'segment-active' : ''" @click="tab='data'">Data</button>
-        <button class="segment" :class="tab==='electricity' ? 'segment-active' : ''" @click="tab='electricity'">Electricity</button>
-        <button class="segment" :class="tab==='cable' ? 'segment-active' : ''" @click="tab='cable'">Cable TV</button>
-      </div>
-
-      <!-- Airtime Form -->
-      <div v-if="tab==='airtime'" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Select Network</label>
-          <select v-model="airtime.network" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500 transition-colors">
-            <option value="mtn">MTN</option>
-            <option value="airtel">Airtel</option>
-            <option value="glo">Glo</option>
-            <option value="9mobile">9mobile</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Phone Number</label>
-          <input v-model="airtime.phone" type="tel" placeholder="0803 000 0000" class="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500" />
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Amount (₦)</label>
-          <input v-model.number="airtime.amount" type="number" min="50" placeholder="e.g. 100" class="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500" />
-        </div>
-        <button @click="buyAirtime" :disabled="loadingAirtime || !canBuyAirtime" class="btn-primary w-full py-4 rounded-2xl active:scale-95">
-          <span v-if="loadingAirtime" class="flex items-center justify-center gap-2">
-             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-             Processing...
-          </span>
-          <span v-else>Buy Airtime</span>
-        </button>
-      </div>
-
-      <!-- Data Form -->
-      <div v-if="tab==='data'" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div class="grid grid-cols-2 gap-3">
+    <div class="max-w-md mx-auto">
+      <!-- Balance Section -->
+      <div class="px-4 py-6 bg-white border-b border-slate-100">
+        <div class="flex items-center justify-between">
           <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Network</label>
-            <select v-model="dataForm.network" @change="loadBundles" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-              <option value="mtn">MTN</option>
-              <option value="airtel">Airtel</option>
-              <option value="glo">Glo</option>
-              <option value="9mobile">9mobile</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Phone Number</label>
-            <input v-model="dataForm.phone" type="tel" placeholder="0803..." class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Select Bundle</label>
-          <select v-model="dataForm.bundleCode" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-            <option disabled value="">Choose a plan...</option>
-            <option v-for="b in bundles" :key="b.code" :value="b.code">
-              {{ b.name }} — ₦ {{ formatMoney(b.amount) }}
-            </option>
-          </select>
-          <p v-if="selectedBundle" class="mt-2 text-xs text-slate-500 ml-1 italic text-center">
-            Total to be debited: <span class="font-bold text-emerald-700">₦ {{ formatMoney(selectedBundle.total_debit) }}</span>
-          </p>
-        </div>
-        <button @click="buyData" :disabled="loadingData || !canBuyData" class="btn-primary w-full py-4 rounded-2xl active:scale-95">
-          <span v-if="loadingData">Processing...</span>
-          <span v-else>Buy Data Bundle</span>
-        </button>
-      </div>
-
-      <!-- Electricity Form -->
-      <div v-if="tab==='electricity'" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Disco</label>
-            <select v-model="electricity.disco" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-              <option v-for="d in electricityDiscos" :key="d.code" :value="d.code">{{ d.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Meter Type</label>
-            <select v-model="electricity.meterType" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-              <option value="prepaid">Prepaid</option>
-              <option value="postpaid">Postpaid</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Meter Number</label>
-          <div class="flex gap-2">
-            <input v-model="electricity.meter" type="text" placeholder="e.g. 1234567890" class="flex-1 bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500" />
-            <button @click="verifyMerchant" :disabled="verification.loading || !electricity.meter || electricity.meter.length < 6" class="btn-muted text-xs">
-              {{ verification.loading ? '...' : 'Verify' }}
-            </button>
-          </div>
-          <p v-if="verification.verified && tab==='electricity'" class="mt-1 text-[10px] text-emerald-600 font-bold ml-1">
-            Name: {{ verification.customerName }}
-          </p>
-          <p v-if="verification.error && tab==='electricity'" class="mt-1 text-[10px] text-red-500 font-bold ml-1">
-            {{ verification.error }}
-          </p>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Amount (₦)</label>
-          <input v-model.number="electricity.amount" type="number" min="100" placeholder="e.g. 1000" class="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500" />
-          <p class="mt-2 text-[10px] text-slate-500 italic ml-1">Note: A small convenience fee may apply.</p>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Phone (Optional)</label>
-          <input v-model="electricity.phone" type="tel" placeholder="0803..." class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500" />
-        </div>
-        <button @click="buyElectricity" :disabled="loadingElectricity || !canBuyElectricity" class="btn-primary w-full py-4 rounded-2xl active:scale-95">
-          <span v-if="loadingElectricity">Processing...</span>
-          <span v-else>Vend Electricity</span>
-        </button>
-      </div>
-
-      <!-- Cable TV Form -->
-      <div v-if="tab==='cable'" class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Service</label>
-            <select v-model="cable.service" @change="loadTvBundles" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-              <option value="dstv">DSTV</option>
-              <option value="gotv">GOTV</option>
-              <option value="startimes">Startimes</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Smartcard Number</label>
-            <div class="flex gap-2">
-              <input v-model="cable.smartcard" type="text" placeholder="e.g. 1234567890" class="flex-1 bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500" />
-              <button @click="verifyMerchant" :disabled="verification.loading || !cable.smartcard || cable.smartcard.length < 6" class="btn-muted text-xs">
-                {{ verification.loading ? '...' : 'Verify' }}
+            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Available Balance</p>
+            <div class="flex items-center gap-2">
+              <h2 class="text-3xl font-black text-slate-800 tracking-tight">₦ {{ formatMoney(balance) }}</h2>
+              <button @click="loadWallet" class="p-1 text-slate-300 hover:text-emerald-600 transition-colors">
+                <span class="material-icons text-lg">refresh</span>
               </button>
             </div>
-            <p v-if="verification.verified && tab==='cable'" class="mt-1 text-[10px] text-emerald-600 font-bold ml-1">
-              Name: {{ verification.customerName }}
-            </p>
-            <p v-if="verification.error && tab==='cable'" class="mt-1 text-[10px] text-red-500 font-bold ml-1">
-              {{ verification.error }}
-            </p>
           </div>
+          <router-link to="/wallet/topup" class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all">
+            <span class="material-icons">add</span>
+          </router-link>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Select Package</label>
-          <select v-model="cable.bundleCode" class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500">
-            <option disabled value="">Choose a package...</option>
-            <option v-for="b in tvBundles" :key="b.code" :value="b.code">
-              {{ b.name }} — ₦ {{ formatMoney(b.amount) }}
-            </option>
-          </select>
-          <p v-if="selectedTvBundle" class="mt-2 text-xs text-slate-500 ml-1 italic text-center">
-            Total to be debited: <span class="font-bold text-emerald-700">₦ {{ formatMoney(selectedTvBundle.total_debit) }}</span>
-          </p>
+      </div>
+
+      <!-- Service Selection Grid -->
+      <div class="p-4">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 grid grid-cols-4 gap-2">
+          <button v-for="s in services" :key="s.id" @click="tab = s.id" 
+            class="flex flex-col items-center gap-2 p-2 rounded-2xl transition-all duration-300 relative group"
+            :class="tab === s.id ? 'bg-emerald-50' : 'hover:bg-slate-50'">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all"
+              :class="tab === s.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-slate-100 text-slate-500'">
+              <span class="material-icons text-2xl">{{ s.icon }}</span>
+            </div>
+            <span class="text-[10px] font-bold text-center leading-tight" 
+              :class="tab === s.id ? 'text-emerald-700' : 'text-slate-500'">{{ s.name }}</span>
+            <div v-if="tab === s.id" class="absolute -bottom-1 w-1 h-1 bg-emerald-600 rounded-full"></div>
+          </button>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Phone (Optional)</label>
-          <input v-model="cable.phone" type="tel" placeholder="0803..." class="w-full bg-slate-50 p-4 rounded-xl border-slate-200 text-sm outline-none focus:border-emerald-500" />
+      </div>
+
+      <!-- Main Form Area -->
+      <div class="px-4 pb-12">
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-6 space-y-6 min-h-[400px]">
+          
+          <!-- AIRTIME FORM -->
+          <div v-if="tab==='airtime'" class="animate-fade-in space-y-6">
+            <div class="space-y-3">
+              <label class="lbl">Select Network</label>
+              <div class="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 hide-scrollbar">
+                <button v-for="n in networks" :key="n.id" @click="airtime.network = n.id"
+                  class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                  <div :class="[
+                    airtime.network === n.id ? 'border-emerald-500 bg-emerald-50 shadow-md ring-2 ring-emerald-100' : 'border-slate-100 bg-white',
+                    'w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all duration-300'
+                  ]">
+                    <div :style="{ backgroundColor: n.color }" class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-inner">
+                      {{ n.short }}
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter" :class="airtime.network === n.id ? 'text-emerald-700' : 'text-slate-400'">{{ n.name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Recipient Phone Number</label>
+              <div class="relative">
+                <input v-model="airtime.phone" type="tel" placeholder="0803 000 0000" class="inp py-4 px-5 text-base font-semibold" />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 material-icons">contact_phone</span>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <label class="lbl">Amount (₦)</label>
+              <input v-model.number="airtime.amount" type="number" placeholder="Enter Amount" class="inp py-4 px-5 text-xl font-black text-emerald-700" />
+              
+              <div class="grid grid-cols-4 gap-2">
+                <button v-for="amt in [100, 200, 500, 1000]" :key="amt" @click="airtime.amount = amt"
+                  class="py-2.5 rounded-xl border border-slate-200 text-xs font-bold transition-all active:scale-90"
+                  :class="airtime.amount === amt ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-slate-50 text-slate-600'">
+                  ₦{{ amt }}
+                </button>
+              </div>
+            </div>
+
+            <button @click="buyAirtime" :disabled="loadingAirtime || !canBuyAirtime" 
+              class="w-full bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+              <span v-if="loadingAirtime" class="animate-spin material-icons">sync</span>
+              <span>{{ loadingAirtime ? 'Processing...' : 'Recharge Now' }}</span>
+            </button>
+          </div>
+
+          <!-- DATA FORM -->
+          <div v-if="tab==='data'" class="animate-fade-in space-y-6">
+            <div class="space-y-3">
+              <label class="lbl">Select Network</label>
+              <div class="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 hide-scrollbar">
+                <button v-for="n in networks" :key="n.id" @click="dataForm.network = n.id"
+                  class="flex-shrink-0 flex flex-col items-center gap-2 group">
+                  <div :class="[
+                    dataForm.network === n.id ? 'border-emerald-500 bg-emerald-50 shadow-md ring-2 ring-emerald-100' : 'border-slate-100 bg-white',
+                    'w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all duration-300'
+                  ]">
+                    <div :style="{ backgroundColor: n.color }" class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs">
+                      {{ n.short }}
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">{{ n.name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Phone Number</label>
+              <input v-model="dataForm.phone" type="tel" placeholder="0803 000 0000" class="inp py-4 px-5 text-base font-semibold" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Data Plan</label>
+              <select v-model="dataForm.bundleCode" class="inp py-4 px-5 text-sm font-semibold">
+                <option value="">Select a plan</option>
+                <option v-for="b in bundles" :key="b.code" :value="b.code">
+                  {{ b.name }} (₦{{ formatMoney(b.amount) }})
+                </option>
+              </select>
+              <div v-if="selectedBundle" class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                <p class="text-[10px] text-emerald-800 font-bold uppercase text-center">
+                  Total Charge: ₦{{ formatMoney(selectedBundle.total_debit) }}
+                </p>
+              </div>
+            </div>
+
+            <button @click="buyData" :disabled="loadingData || !canBuyData" 
+              class="w-full bg-emerald-700 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+              <span v-if="loadingData" class="animate-spin material-icons">sync</span>
+              <span>Buy Data</span>
+            </button>
+          </div>
+
+          <!-- ELECTRICITY FORM -->
+          <div v-if="tab==='electricity'" class="animate-fade-in space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="lbl">Disco</label>
+                <select v-model="electricity.disco" class="inp text-sm font-bold">
+                  <option v-for="d in electricityDiscos" :key="d.code" :value="d.code">{{ d.name }}</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label class="lbl">Meter Type</label>
+                <select v-model="electricity.meterType" class="inp text-sm font-bold">
+                  <option value="prepaid">Prepaid</option>
+                  <option value="postpaid">Postpaid</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Meter Number</label>
+              <div class="flex gap-2">
+                <input v-model="electricity.meter" type="text" placeholder="Meter number" class="flex-1 inp font-bold" />
+                <button @click="verifyMerchant" :disabled="verification.loading || !electricity.meter" 
+                  class="bg-slate-800 text-white px-4 rounded-xl text-[10px] font-bold uppercase active:scale-90 transition-all">
+                  {{ verification.loading ? '...' : 'Verify' }}
+                </button>
+              </div>
+              <div v-if="verification.verified" class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <p class="text-xs text-emerald-800 font-bold flex items-center gap-2">
+                  <span class="material-icons text-sm">check_circle</span>
+                  {{ verification.customerName }}
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Amount (₦)</label>
+              <input v-model.number="electricity.amount" type="number" placeholder="Enter amount" class="inp py-4 text-xl font-black text-emerald-700" />
+            </div>
+
+            <button @click="buyElectricity" :disabled="loadingElectricity || !canBuyElectricity" 
+              class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl transition-all active:scale-95">
+              Pay Bill
+            </button>
+          </div>
+
+          <!-- CABLE TV FORM -->
+          <div v-if="tab==='cable'" class="animate-fade-in space-y-6">
+             <div class="space-y-3">
+              <label class="lbl">Select Provider</label>
+              <div class="flex gap-4">
+                <button v-for="p in [{id:'dstv', n:'DSTV', c:'#0067b2'}, {id:'gotv', n:'GOTV', c:'#ec1c24'}, {id:'startimes', n:'Star', c:'#f7941d'}]" 
+                  :key="p.id" @click="cable.service = p.id"
+                  class="flex-1 flex flex-col items-center gap-2">
+                  <div :class="[
+                    cable.service === p.id ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100' : 'border-slate-100 bg-white',
+                    'w-full aspect-square rounded-2xl border-2 flex items-center justify-center transition-all'
+                  ]">
+                    <div :style="{ backgroundColor: p.c }" class="w-10 h-10 rounded-lg flex items-center justify-center text-[10px] text-white font-black uppercase">
+                      {{ p.id }}
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-400">{{ p.n }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Smartcard / IUC Number</label>
+              <div class="flex gap-2">
+                <input v-model="cable.smartcard" type="text" placeholder="IUC number" class="flex-1 inp font-bold" />
+                <button @click="verifyMerchant" :disabled="verification.loading || !cable.smartcard" 
+                  class="bg-slate-800 text-white px-4 rounded-xl text-[10px] font-bold uppercase">
+                  Verify
+                </button>
+              </div>
+              <div v-if="verification.verified" class="mt-2 p-3 bg-emerald-50 rounded-xl">
+                <p class="text-xs text-emerald-800 font-bold">{{ verification.customerName }}</p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="lbl">Package</label>
+              <select v-model="cable.bundleCode" class="inp text-sm font-bold">
+                <option value="">Choose package</option>
+                <option v-for="b in tvBundles" :key="b.code" :value="b.code">{{ b.name }} (₦{{ formatMoney(b.amount) }})</option>
+              </select>
+            </div>
+
+            <button @click="buyCable" :disabled="loadingCable || !canBuyCable" 
+              class="w-full bg-emerald-700 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl active:scale-95 transition-all">
+              Subscribe
+            </button>
+          </div>
+
         </div>
-        <button @click="buyCable" :disabled="loadingCable || !canBuyCable" class="btn-primary w-full py-4 rounded-2xl active:scale-95">
-          <span v-if="loadingCable">Processing...</span>
-          <span v-else>Subscribe</span>
-        </button>
       </div>
     </div>
 
@@ -216,7 +283,6 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import AppHeader from '../components/AppHeader.vue'
 import AppBottomNav from '../components/AppBottomNav.vue'
 import axios from '../http'
 import CustomNotice from '../components/CustomNotice.vue'
@@ -227,6 +293,21 @@ import { useAppStatusStore } from '../stores/appStatus'
 const appStatusStore = useAppStatusStore()
 const balance = ref(0)
 const tab = ref('airtime')
+
+const services = [
+  { id: 'airtime', name: 'Airtime', icon: 'phone_android' },
+  { id: 'data', name: 'Data', icon: 'wifi' },
+  { id: 'electricity', name: 'Electricity', icon: 'bolt' },
+  { id: 'cable', name: 'TV Cable', icon: 'tv' },
+]
+
+const networks = [
+  { id: 'mtn', name: 'MTN', short: 'MTN', color: '#FFCC00' },
+  { id: 'airtel', name: 'Airtel', short: 'AIR', color: '#FF0000' },
+  { id: 'glo', name: 'Glo', short: 'GLO', color: '#2DB400' },
+  { id: '9mobile', name: '9mobile', short: '9M', color: '#00573C' },
+]
+
 const bundles = ref([])
 const tvBundles = ref([])
 const electricityDiscos = ref([])
@@ -663,6 +744,13 @@ watch(tab, () => {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
