@@ -1239,10 +1239,14 @@ class UtilityController extends Controller
 
         // 3. Fallback to VTpass
         try {
-            $resp = Http::withHeaders([
-                'api-key' => config('services.vtu.api_key'),
-                'public-key' => config('services.vtu.public_key'),
-            ])->get((config('services.vtu.base_url') ?: 'https://vtpass.com/api') . '/service-variations', [
+            $vtApiKey = config('services.vtu.api_key');
+            $vtPublicKey = config('services.vtu.public_key');
+            $vtHeaders = [ 'api-key' => $vtApiKey ];
+            // For GET requests, VTpass uses public-key
+            if ($vtPublicKey) { $vtHeaders['public-key'] = $vtPublicKey; }
+            elseif (config('services.vtu.secret_key')) { $vtHeaders['secret-key'] = config('services.vtu.secret_key'); }
+
+            $resp = Http::withHeaders($vtHeaders)->get((config('services.vtu.base_url') ?: 'https://vtpass.com/api') . '/service-variations', [
                 'serviceID' => $serviceId
             ]);
 
@@ -1373,8 +1377,9 @@ class UtilityController extends Controller
         // VTpass fallback
         if ($apiKey && ($publicKey || $secretKey)) {
             $headers = [ 'api-key' => $apiKey ];
+            // For GET requests, VTpass prefers public-key
             if ($publicKey) { $headers['public-key'] = $publicKey; }
-            if ($secretKey) { $headers['secret-key'] = $secretKey; }
+            elseif ($secretKey) { $headers['secret-key'] = $secretKey; }
 
             try {
                 $resp = Http::withHeaders($headers)
@@ -2435,19 +2440,20 @@ class UtilityController extends Controller
 
             // If provider not configured, skip to next
             if (($resp['status'] ?? null) === 0 && ($resp['error'] ?? '') === 'Provider not configured') {
-                $lastError = array_merge($resp, ['provider_used' => $provider]);
                 continue;
             }
 
             if (!$resp['ok']) {
                 $lastError = array_merge($resp, ['provider_used' => $provider]); // network or http error, try next
+                Log::warning("VTU provider $provider failed", ['error' => $resp['error'] ?? 'Unknown', 'status' => $resp['status'] ?? 0]);
 
                 // If it's an authentication error, stop failover and return immediately
                 // This prevents masking config issues with generic "Invalid Number" from next provider
                 $errMsg = strtoupper((string)($resp['error'] ?? ''));
                 $bodyMsg = strtoupper((string)(is_array($resp['body']) ? ($resp['body']['message'] ?? $resp['body']['response_description'] ?? '') : ($resp['body'] ?? '')));
-                if (str_contains($errMsg, 'AUTHENTICATION_FAILED') || str_contains($errMsg, 'INVALID_CREDENTIALS') ||
-                    str_contains($bodyMsg, 'AUTHENTICATION_FAILED') || str_contains($bodyMsg, 'INVALID CREDENTIALS')) {
+                if (str_contains($errMsg, 'AUTHENTICATION') || str_contains($errMsg, 'CREDENTIAL') ||
+                    str_contains($bodyMsg, 'AUTHENTICATION') || str_contains($bodyMsg, 'CREDENTIAL') ||
+                    str_contains($bodyMsg, 'INVALID_APIKEY') || str_contains($bodyMsg, 'USER_NOT_FOUND')) {
                     $lastError['attempts'] = $attempts;
                     return $lastError;
                 }
@@ -2670,13 +2676,18 @@ class UtilityController extends Controller
         try {
             // Use GET for all ClubKonnect/Nellobytes endpoints as per documentation.
             // Removing acceptJson() as some older endpoints might fail with standard JSON headers.
-            $resp = Http::timeout(15)
+            $resp = Http::timeout(20)
                 ->get($baseUrl . $endpoint, $params);
             $status = $resp->status();
             $body = $resp->body();
             $json = $resp->json();
             $ok = $resp->ok();
             $bodyOut = is_array($json) ? $json : [ 'raw' => $body ];
+
+            if (!$ok) {
+                Log::warning('ClubKonnect bad HTTP status', ['status' => $status, 'body' => $bodyOut, 'endpoint' => $endpoint]);
+                $error = 'Provider HTTP error ' . $status;
+            }
 
             // Detect Nellobyte error status even on 200 OK
             $statusField = $bodyOut['status'] ?? $bodyOut['statuscode'] ?? $bodyOut['StatusCode'] ?? null;
@@ -2690,14 +2701,16 @@ class UtilityController extends Controller
             if ($ok && $statusField && is_string($statusField)) {
                 $sf = strtoupper($statusField);
                 // Common Nellobyte error indicators
-                if (str_contains($sf, 'FAILED') || str_contains($sf, 'INVALID') || str_contains($sf, 'MISSING') || str_contains($sf, 'ERROR')) {
+                if (str_contains($sf, 'FAILED') || str_contains($sf, 'INVALID') || str_contains($sf, 'MISSING') || str_contains($sf, 'ERROR') || str_contains($sf, 'USER_NOT_FOUND')) {
                     $ok = false;
                     $error = $statusField;
 
                     // Specific check for ClubKonnect auth failure to ensure it's not swallowed by generic failover
-                    if (str_contains($sf, 'AUTHENTICATION_FAILED')) {
+                    if (str_contains($sf, 'AUTHENTICATION_FAILED') || str_contains($sf, 'INVALID_APIKEY') || str_contains($sf, 'USER_NOT_FOUND')) {
                         $error = 'AUTHENTICATION_FAILED_CLUBKONNECT';
                     }
+
+                    Log::warning('ClubKonnect logic error', ['status' => $statusField, 'body' => $bodyOut, 'endpoint' => $endpoint]);
                 }
             }
         } catch (\Throwable $e) {
@@ -2816,13 +2829,20 @@ class UtilityController extends Controller
             ];
         }
 
-        $headers = [ 'api-key' => $apiKey ];
-        if ($publicKey) { $headers['public-key'] = $publicKey; }
-        if ($secretKey) { $headers['secret-key'] = $secretKey; }
-
         $endpoint = '/pay';
         if ($type === 'verify-cable' || $type === 'verify-electricity') {
             $endpoint = '/merchant-verify';
+        }
+
+        $headers = [ 'api-key' => $apiKey ];
+        // For VTpass POST requests, use secret-key. For GET requests, use public-key.
+        if ($endpoint === '/merchant-verify' || str_contains($endpoint, 'variations') || str_contains($endpoint, 'status')) {
+             if ($publicKey) { $headers['public-key'] = $publicKey; }
+             elseif ($secretKey) { $headers['secret-key'] = $secretKey; }
+        } else {
+             // Payment /pay requires secret-key
+             if ($secretKey) { $headers['secret-key'] = $secretKey; }
+             elseif ($publicKey) { $headers['public-key'] = $publicKey; }
         }
 
         try {
@@ -2955,8 +2975,9 @@ class UtilityController extends Controller
         }
 
         $headers = [ 'api-key' => $apiKey ];
-        if ($publicKey) { $headers['public-key'] = $publicKey; }
+        // Requery is a POST request, use secret-key
         if ($secretKey) { $headers['secret-key'] = $secretKey; }
+        elseif ($publicKey) { $headers['public-key'] = $publicKey; }
 
         try {
             $resp = Http::withHeaders($headers)
