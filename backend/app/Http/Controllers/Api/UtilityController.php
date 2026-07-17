@@ -2190,17 +2190,26 @@ class UtilityController extends Controller
             'serviceID' => 'required',
             'billersCode' => 'required',
             'type' => 'nullable', // required for cable/electricity
+            'service_type' => 'nullable|in:electricity,cable',
         ]);
 
         $type = (string) $request->input('type', 'prepaid');
         $serviceId = (string) $request->input('serviceID');
         $billersCode = (string) $request->input('billersCode');
+        $serviceType = (string) $request->input('service_type');
 
         // Determine if it's cable or electricity for the router
         $vtuType = 'verify-electricity';
-        $cableServices = ['dstv', 'gotv', 'startimes', 'showmax'];
-        if (in_array(strtolower($serviceId), $cableServices)) {
+        if ($serviceType === 'cable') {
             $vtuType = 'verify-cable';
+        } elseif ($serviceType === 'electricity') {
+            $vtuType = 'verify-electricity';
+        } else {
+            // Guessing logic for backward compatibility
+            $cableServices = ['dstv', 'gotv', 'startimes', 'showmax'];
+            if (in_array(strtolower($serviceId), $cableServices)) {
+                $vtuType = 'verify-cable';
+            }
         }
 
         $payload = [
@@ -2534,6 +2543,11 @@ class UtilityController extends Controller
                     'yola-electric' => '11', 'yedc' => '11',
                 ];
                 $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
+
+                if (!$discoCode) {
+                    return [ 'ok' => false, 'error' => 'Unsupported electricity company for this provider', 'body' => [ 'service' => $service ], 'status' => 0 ];
+                }
+
                 $meterType = strtolower((string)($payload['type'] ?? 'prepaid')) === 'postpaid' ? '02' : '01';
 
                 $endpoint = '/APIVerifyElectricityV1.asp';
@@ -2623,20 +2637,49 @@ class UtilityController extends Controller
     private function callVtpass(string $type, array $payload): array
     {
         $serviceID = strtolower((string)($payload['serviceID'] ?? ''));
-        $mapping = [
-            'ekedc' => 'eko-electric',
-            'ikedc' => 'ikeja-electric',
-            'aedc' => 'abuja-electric',
-            'kedco' => 'kano-electric',
-            'phed' => 'port-harcourt-electric',
-            'jed' => 'jos-electric',
-            'jedc' => 'jos-electric',
-            'kaedco' => 'kaduna-electric',
-            'ibedc' => 'ibadan-electric',
-            'eedc' => 'enugu-electric',
-            'bedc' => 'benin-electric',
-            'yedc' => 'yola-electric',
-        ];
+
+        // Comprehensive mapping for VTpass
+        $mapping = [];
+        if (str_contains($type, 'electricity')) {
+            $mapping = [
+                'ekedc' => 'eko-electric',
+                'ikedc' => 'ikeja-electric',
+                'aedc' => 'abuja-electric',
+                'kedco' => 'kano-electric',
+                'phed' => 'port-harcourt-electric',
+                'jed' => 'jos-electric',
+                'jedc' => 'jos-electric',
+                'kaedco' => 'kaduna-electric',
+                'ibedc' => 'ibadan-electric',
+                'eedc' => 'enugu-electric',
+                'bedc' => 'benin-electric',
+                'yedc' => 'yola-electric',
+                // Numeric codes to serviceIDs
+                '01' => 'eko-electric',
+                '02' => 'ikeja-electric',
+                '03' => 'abuja-electric',
+                '04' => 'kano-electric',
+                '05' => 'port-harcourt-electric',
+                '06' => 'jos-electric',
+                '07' => 'kaduna-electric',
+                '08' => 'ibadan-electric',
+                '09' => 'enugu-electric',
+                '10' => 'benin-electric',
+                '11' => 'yola-electric',
+            ];
+        } elseif (str_contains($type, 'cable')) {
+            $mapping = [
+                'dstv' => 'dstv',
+                'gotv' => 'gotv',
+                'startimes' => 'startimes',
+                'showmax' => 'showmax',
+                // Numeric codes to serviceIDs
+                '01' => 'dstv',
+                '02' => 'gotv',
+                '03' => 'startimes',
+            ];
+        }
+
         if (isset($mapping[$serviceID])) {
             $payload['serviceID'] = $mapping[$serviceID];
         }

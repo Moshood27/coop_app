@@ -484,7 +484,8 @@ const verifyMerchant = async () => {
     const { data } = await axios.post('/api/vtu/verify-merchant', {
       serviceID,
       billersCode,
-      type
+      type,
+      service_type: tab.value
     })
 
     const name = data?.customer_name || data?.Customer_Name || data?.customername || data?.content?.Customer_Name || data?.content?.customer_name;
