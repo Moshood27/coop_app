@@ -112,4 +112,36 @@ class UtilityMerchantVerificationTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonFragment(['message' => 'Provider authentication failed. Please update ClubKonnect/Nellobyte or VTpass credentials in the system configuration.']);
     }
+
+    public function test_verify_merchant_fails_over_when_first_provider_returns_na()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        config(['services.vtu.routing_order' => 'clubkonnect,vtpass']);
+        config(['services.vtu.clubkonnect.enabled' => true]);
+
+        Http::fake([
+            'https://www.nellobytesystems.com/*' => Http::response([
+                'customer_name' => 'N/A',
+                'status' => '100'
+            ], 200),
+            'https://vtpass.com/api/*' => Http::response([
+                'content' => [
+                    'Customer_Name' => 'REAL SUCCESS NAME'
+                ],
+                'code' => '000'
+            ], 200)
+        ]);
+
+        $response = $this->postJson('/api/vtu/verify-merchant', [
+            'serviceID' => 'eko-electric',
+            'billersCode' => '10101010101',
+            'type' => 'prepaid'
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('customer_name', 'REAL SUCCESS NAME');
+        $response->assertJsonPath('provider', 'vtpass');
+    }
 }

@@ -2880,9 +2880,18 @@ class UtilityController extends Controller
             if (in_array($txStatus, ['pending', 'processing', 'initiated', 'queued'])) { return true; }
             // Nellobytes/ClubKonnect pending fields
             $ckCode = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
-            if (in_array($ckCode, ['100', 'ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD', 'PENDING', 'PROCESSING'])) { return true; }
-            $orderStatusUp = strtoupper((string)($body['orderstatus'] ?? ($body['order_status'] ?? '')));
-            if (in_array($orderStatusUp, ['ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD'])) { return true; }
+            $orderStatusUp = strtoupper((string)($body['orderstatus'] ?? ($body['order_status'] ?? ($body['OrderStatus'] ?? ''))));
+            if (in_array($ckCode, ['100', 'ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD', 'PENDING', 'PROCESSING']) ||
+                in_array($orderStatusUp, ['ORDER_RECEIVED', 'RECEIVED', 'ORDER_ONHOLD', 'ONHOLD'])) {
+
+                // If it's a verification response from ClubKonnect/Nellobytes with "N/A", don't treat as pending
+                // so the router can failover to another provider.
+                $cname = strtoupper(trim((string)($body['customer_name'] ?? $body['Customer_Name'] ?? $body['customername'] ?? $body['content']['Customer_Name'] ?? $body['content']['customer_name'] ?? '')));
+                if ($cname !== '' && ($cname === 'N/A' || str_contains($cname, 'INVALID') || str_contains($cname, 'NOT FOUND'))) {
+                    return false;
+                }
+                return true;
+            }
             $desc = strtolower((string)($body['response_description'] ?? ($body['message'] ?? '')));
             if ($desc && (str_contains($desc, 'pending') || str_contains($desc, 'processing') || str_contains($desc, 'initiated') || str_contains($desc, 'queue'))) { return true; }
             // Some VTpass variants use non-000 codes while processing
