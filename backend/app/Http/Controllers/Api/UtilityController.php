@@ -2566,6 +2566,14 @@ class UtilityController extends Controller
             $package = $payload['variation_code'] ?? ($payload['Package'] ?? null);
             $smartcard = $payload['billersCode'] ?? ($payload['SmartCardNo'] ?? null);
             $phone = $payload['phone'] ?? ($payload['PhoneNo'] ?? null);
+            // Fallback to authenticated user phone if not provided in payload
+            if (!$phone && auth()->check()) {
+                $phone = $this->normalizeMsisdn(auth()->user()->phone ?? '');
+            }
+            if (!$phone) {
+                // If still no phone, use a default placeholder
+                $phone = '08000000000';
+            }
             if (!$service || !$package || !$smartcard || !$requestId) {
                 return [ 'ok' => false, 'error' => 'Missing required fields', 'body' => [ 'note' => 'service/package/smartcard/request_id required' ], 'status' => 0 ];
             }
@@ -2583,17 +2591,17 @@ class UtilityController extends Controller
             // Electricity purchase via APIElectricityV1.asp
             $service = strtolower((string)($payload['serviceID'] ?? ''));
             $mapDisco = [
-                'eko-electric' => '01', 'ekedc' => '01',
-                'ikeja-electric' => '02', 'ikedc' => '02',
-                'abuja-electric' => '03', 'aedc' => '03',
-                'kano-electric' => '04', 'kedco' => '04',
-                'port-harcourt-electric' => '05', 'phed' => '05',
-                'jos-electric' => '06', 'jed' => '06', 'jedc' => '06',
-                'ibadan-electric' => '07', 'ibedc' => '07',
-                'kaduna-electric' => '08', 'kaedco' => '08',
-                'enugu-electric' => '09', 'eedc' => '09',
-                'benin-electric' => '10', 'bedc' => '10',
-                'yola-electric' => '11', 'yedc' => '11',
+                'eko-electric' => '01', 'ekedc' => '01', 'eko' => '01',
+                'ikeja-electric' => '02', 'ikedc' => '02', 'ikeja' => '02',
+                'abuja-electric' => '03', 'aedc' => '03', 'abuja' => '03',
+                'kano-electric' => '04', 'kedco' => '04', 'kano' => '04',
+                'port-harcourt-electric' => '05', 'phed' => '05', 'ph' => '05', 'portharcourt' => '05',
+                'jos-electric' => '06', 'jed' => '06', 'jedc' => '06', 'jos' => '06',
+                'ibadan-electric' => '07', 'ibedc' => '07', 'ibadan' => '07',
+                'kaduna-electric' => '08', 'kaedco' => '08', 'kaduna' => '08',
+                'enugu-electric' => '09', 'eedc' => '09', 'enugu' => '09',
+                'benin-electric' => '10', 'bedc' => '10', 'benin' => '10',
+                'yola-electric' => '11', 'yedc' => '11', 'yola' => '11',
                 'aba-electric' => '12', 'abedc' => '12', 'aba' => '12', 'aple' => '12',
             ];
             $discoCode = $mapDisco[$service] ?? (is_numeric($service) && strlen($service) === 2 ? $service : null);
@@ -2601,6 +2609,14 @@ class UtilityController extends Controller
             $meterType = strtolower((string)($payload['variation_code'] ?? 'prepaid')) === 'postpaid' ? '02' : '01';
             $amount = $payload['amount'] ?? null;
             $phone = $payload['phone'] ?? ($payload['PhoneNo'] ?? null);
+            // Fallback to authenticated user phone if not provided in payload
+            if (!$phone && auth()->check()) {
+                $phone = $this->normalizeMsisdn(auth()->user()->phone ?? '');
+            }
+            if (!$phone) {
+                // If still no phone, use a default placeholder
+                $phone = '08000000000';
+            }
 
             if (!$discoCode || !$meterNo || !$amount || !$requestId) {
                 return [ 'ok' => false, 'error' => 'Missing required fields', 'body' => [ 'note' => 'disco/meterno/amount/request_id required' ], 'status' => 0 ];
@@ -2611,7 +2627,7 @@ class UtilityController extends Controller
                 'ElectricCompany' => $discoCode,
                 'MeterType' => $meterType,
                 'MeterNo' => $meterNo,
-                'Amount' => $amount,
+                'Amount' => (int) $amount,
                 'RequestID' => $requestId,
             ]);
             if (!empty($phone)) { $params['PhoneNo'] = $phone; }
@@ -2674,6 +2690,13 @@ class UtilityController extends Controller
 
         $status = 0; $ok = false; $bodyOut = null; $error = null;
         try {
+            // Mask APIKey in logs
+            $logParams = $params;
+            if (isset($logParams['APIKey'])) {
+                $logParams['APIKey'] = substr((string)$logParams['APIKey'], 0, 5) . '...';
+            }
+            Log::info("Calling ClubKonnect: $endpoint", ['params' => $logParams]);
+
             // Use GET for all ClubKonnect/Nellobytes endpoints as per documentation.
             // Removing acceptJson() as some older endpoints might fail with standard JSON headers.
             $resp = Http::timeout(20)
