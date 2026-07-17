@@ -2248,15 +2248,25 @@ class UtilityController extends Controller
         if (!$customerName ||
             str_contains(strtoupper($customerName), 'INVALID') ||
             str_contains(strtoupper($customerName), 'NOT FOUND') ||
-            strtoupper(trim($customerName)) === 'N/A'
+            str_contains(strtoupper($customerName), 'ERR') ||
+            str_contains(strtoupper($customerName), 'N/A') ||
+            strtoupper(trim($customerName)) === 'N/A' ||
+            strtoupper(trim($customerName)) === 'NULL'
         ) {
             Log::info('Merchant verification: customer name invalid', [
                 'customerName' => $customerName,
                 'body' => $body
             ]);
-            $errorMsg = $body['message'] ?? $body['response_description'] ?? $body['content']['error'] ?? $body['customer_name'] ?? $body['Customer_Name'] ?? 'Verification failed';
-            if ($errorMsg === 'Verification failed' && $customerName && $customerName !== 'N/A') {
-                $errorMsg = $customerName;
+
+            $errorMsg = $body['message'] ?? $body['response_description'] ?? $body['content']['error'] ?? null;
+            if (!$errorMsg) {
+                if ($customerName && (str_contains(strtoupper($customerName), 'INVALID') || strtoupper(trim($customerName)) === 'N/A')) {
+                    $errorMsg = 'Invalid Meter/Smartcard Number or Provider mismatch';
+                } elseif ($customerName && str_contains(strtoupper($customerName), 'NOT FOUND')) {
+                    $errorMsg = 'Customer not found. Please verify the number.';
+                } else {
+                    $errorMsg = $customerName ?: 'Verification failed';
+                }
             }
 
             return response()->json([
@@ -2607,6 +2617,13 @@ class UtilityController extends Controller
 
             // Detect Nellobyte error status even on 200 OK
             $statusField = $bodyOut['status'] ?? $bodyOut['statuscode'] ?? $bodyOut['StatusCode'] ?? null;
+            if (!$statusField && is_string($body)) {
+                $upBody = strtoupper(trim($body));
+                if (str_contains($upBody, 'FAILED') || str_contains($upBody, 'INVALID') || str_contains($upBody, 'MISSING') || str_contains($upBody, 'ERROR')) {
+                    $statusField = $body;
+                }
+            }
+
             if ($ok && $statusField && is_string($statusField)) {
                 $sf = strtoupper($statusField);
                 // Common Nellobyte error indicators

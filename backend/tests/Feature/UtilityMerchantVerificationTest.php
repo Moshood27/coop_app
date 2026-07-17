@@ -33,7 +33,7 @@ class UtilityMerchantVerificationTest extends TestCase
 
         // It should NOT be successful
         $response->assertStatus(422);
-        $response->assertJsonPath('message', 'Verification failed');
+        $response->assertJsonPath('message', 'Invalid Meter/Smartcard Number or Provider mismatch');
     }
 
     public function test_verify_merchant_fails_when_provider_returns_invalid_customer_name()
@@ -55,7 +55,7 @@ class UtilityMerchantVerificationTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonPath('message', 'Verification failed');
+        $response->assertJsonPath('message', 'Invalid Meter/Smartcard Number or Provider mismatch');
     }
 
     public function test_verify_merchant_succeeds_with_valid_name()
@@ -80,5 +80,26 @@ class UtilityMerchantVerificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('status', 'success');
         $response->assertJsonPath('customer_name', 'JOHN DOE');
+    }
+
+    public function test_verify_merchant_returns_auth_error_from_clubkonnect()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        Http::fake([
+            '*' => Http::response([
+                'status' => 'AUTHENTICATION_FAILED_1'
+            ], 200)
+        ]);
+
+        $response = $this->postJson('/api/vtu/verify-merchant', [
+            'serviceID' => '01',
+            'billersCode' => '1234567890',
+            'type' => 'prepaid'
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['message' => 'Provider authentication failed. Please check ClubKonnect credentials.']);
     }
 }
