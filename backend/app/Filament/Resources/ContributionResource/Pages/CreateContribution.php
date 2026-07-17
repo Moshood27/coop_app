@@ -25,6 +25,7 @@ class CreateContribution extends CreateRecord
 
         $userId = $data['user_id'] ?? null;
         $status = $data['status'] ?? 'pending';
+        $paidAt = $data['paid_at'] ?? null;
 
         if (! $userId) {
             throw ValidationException::withMessages([
@@ -79,13 +80,14 @@ class CreateContribution extends CreateRecord
 
         $firstRecord = null;
 
-        DB::transaction(function () use ($normalizedItems, $userId, $status, &$firstRecord) {
+        DB::transaction(function () use ($normalizedItems, $userId, $status, $paidAt, &$firstRecord) {
             foreach ($normalizedItems as $item) {
                 $row = [
                     'user_id' => $userId,
                     'scheme_id' => $item['scheme_id'],
                     'amount' => $item['amount'],
                     'status' => $status,
+                    'paid_at' => $paidAt,
                     // Intentionally skip 'reference' to let the model auto-generate unique references
                 ];
                 if (! empty($item['project_id'])) {

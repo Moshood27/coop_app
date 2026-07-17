@@ -25,6 +25,7 @@ class Contribution extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'units' => 'decimal:6',
+        'paid_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -39,6 +40,7 @@ class Contribution extends Model
         'category',
         'qard_hasan_id',
         'ledger_journal_id',
+        'paid_at',
     ];
 
     protected static function booted(): void
@@ -116,7 +118,7 @@ class Contribution extends Model
                                     'amount' => $applied,
                                     'reference' => $model->reference,
                                     'status' => 'success',
-                                    'paid_at' => now(),
+                                    'paid_at' => $model->paid_at ?? now(),
                                 ]);
 
                                 $q->paid_amount = $before + $applied;
@@ -229,7 +231,7 @@ class Contribution extends Model
                                             'amount' => $applied,
                                             'reference' => $model->reference,
                                             'status' => 'success',
-                                            'paid_at' => now(),
+                                            'paid_at' => $model->paid_at ?? now(),
                                         ]);
 
                                         $q->paid_amount = $before + $applied;

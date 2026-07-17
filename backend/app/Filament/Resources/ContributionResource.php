@@ -68,7 +68,7 @@ class ContributionResource extends Resource
                                 if ($loans->count() > 0) {
                                     $loanHtml = "<div class='mt-2 pt-2 border-t border-gray-200 dark:border-gray-700'><p class='text-xs font-bold text-danger-600 uppercase mb-1'>Active Loans Summary</p><div class='grid grid-cols-2 gap-2'>";
                                     foreach ($loans as $loan) {
-                                        $remaining = $loan->principal_amount - $loan->paid_amount;
+                                        $remaining = (float)$loan->principal_amount - (float)$loan->paid_amount;
                                         $loanHtml .= "<div class='text-[10px] bg-white dark:bg-gray-900 p-1 rounded border border-gray-100 dark:border-gray-800'>
                                             <span class='block text-gray-400'>Loan #{$loan->id}</span>
                                             <span class='font-bold text-gray-700 dark:text-gray-300'>₦" . number_format($remaining, 2) . "</span>
@@ -92,7 +92,7 @@ class ContributionResource extends Resource
                                         <div class='flex-1 border-l border-gray-200 dark:border-gray-700 pl-6'>
                                             <div class='flex flex-col'>
                                                 <span class='text-[10px] uppercase tracking-widest text-gray-400 font-bold'>Total Wallet Balance</span>
-                                                <span class='text-2xl font-black text-success-600 tracking-tight'>₦" . number_format($user->balance, 2) . "</span>
+                                                <span class='text-2xl font-black text-success-600 tracking-tight'>₦" . number_format((float)$user->balance, 2) . "</span>
                                             </div>
                                             {$loanHtml}
                                         </div>
@@ -155,7 +155,7 @@ class ContributionResource extends Resource
                                                 return \App\Models\QardHasan::where('user_id', $userId)
                                                     ->whereIn('status', ['active', 'defaulted'])
                                                     ->get()
-                                                    ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                                                    ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format((float)$loan->principal_amount - (float)$loan->paid_amount, 2).")"]);
                                             })
                                             ->searchable()
                                             ->visible(function (Forms\Get $get) {
@@ -182,7 +182,7 @@ class ContributionResource extends Resource
                                     ]),
                             ])
                             ->itemLabel(fn (array $state): ?string => ($state['scheme_id'] ?? null)
-                                ? Scheme::find($state['scheme_id'])?->name . ' - ₦' . number_format($state['amount'] ?? 0, 2)
+                                ? Scheme::find($state['scheme_id'])?->name . ' - ₦' . number_format((float) ($state['amount'] ?? 0), 2)
                                 : null)
                             ->collapsible()
                             ->cloneable()
@@ -238,7 +238,7 @@ class ContributionResource extends Resource
                                         return \App\Models\QardHasan::where('user_id', $userId)
                                             ->whereIn('status', ['active', 'defaulted'])
                                             ->get()
-                                            ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format($loan->principal_amount - $loan->paid_amount, 2).")"]);
+                                            ->mapWithKeys(fn($loan) => [$loan->id => "Loan #{$loan->id} (Rem: ₦".number_format((float)$loan->principal_amount - (float)$loan->paid_amount, 2).")"]);
                                     })
                                     ->searchable()
                                     ->visible(function (Forms\Get $get, Contribution $record) {
@@ -291,6 +291,10 @@ class ContributionResource extends Resource
                                     ->default('success')
                                     ->required()
                                     ->native(false),
+                                Forms\Components\DateTimePicker::make('paid_at')
+                                    ->label('Contribution Date')
+                                    ->default(now())
+                                    ->helperText('Select the actual date the contribution was made'),
                                 Forms\Components\TextInput::make('reference')
                                     ->maxLength(255)
                                     ->helperText('Leave empty to auto-generate')
@@ -306,7 +310,15 @@ class ContributionResource extends Resource
             ->poll('10s')
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('created_at')->label('Time')->since()->sortable(),
+                TextColumn::make('paid_at')
+                    ->label('Date')
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('System Time')
+                    ->since()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.full_name')
                     ->label('Member')
                     ->searchable(['surname', 'name', 'other_names']),

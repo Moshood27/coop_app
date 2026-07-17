@@ -1229,7 +1229,7 @@ class AccountingReportService
                         'member_name' => $user->full_name,
                         'membership_number' => $user->membership_number,
                         'total_contributed' => (float)$userTotal,
-                        'last_contribution_date' => $user->contributions->max('created_at'),
+                        'last_contribution_date' => $user->contributions->max(fn($c) => $c->paid_at ?? $c->created_at),
                     ];
                     $branchData['total_amount'] += (float)$userTotal;
                 }

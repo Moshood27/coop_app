@@ -158,7 +158,7 @@ class AttaqwaScoreService
         // Find the latest successful contribution to start checking backwards
         $latest = Contribution::where('user_id', $user->id)
             ->where('status', 'success')
-            ->orderByDesc('created_at')
+            ->orderByRaw('COALESCE(paid_at, created_at) DESC')
             ->first();
 
         if (!$latest) return;
@@ -166,14 +166,23 @@ class AttaqwaScoreService
         // Check 12 consecutive months of savings (at least one successful contribution per month)
         // starting from the month of the latest contribution
         $has12Months = true;
-        $curr = Carbon::parse($latest->created_at)->startOfMonth();
+        $curr = Carbon::parse($latest->paid_at ?? $latest->created_at)->startOfMonth();
 
         for ($i = 0; $i < 12; $i++) {
             $month = (clone $curr)->subMonths($i);
             $exists = Contribution::where('user_id', $user->id)
                 ->where('status', 'success')
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
+                ->where(function($q) use ($month) {
+                    $q->where(function($sq) use ($month) {
+                        $sq->whereNull('paid_at')
+                           ->whereYear('created_at', $month->year)
+                           ->whereMonth('created_at', $month->month);
+                    })->orWhere(function($sq) use ($month) {
+                        $sq->whereNotNull('paid_at')
+                           ->whereYear('paid_at', $month->year)
+                           ->whereMonth('paid_at', $month->month);
+                    });
+                })
                 ->exists();
 
             if (!$exists) {
@@ -271,14 +280,20 @@ class AttaqwaScoreService
         $since = Carbon::now()->startOfMonth()->subMonths(5);
         $cons = Contribution::where('user_id', $user->id)
             ->where('status', 'success')
-            ->where('created_at', '>=', $since)
-            ->get(['id', 'amount', 'created_at']);
+            ->where(function($q) use ($since) {
+                $q->where(function($sq) use ($since) {
+                    $sq->whereNull('paid_at')->where('created_at', '>=', $since);
+                })->orWhere(function($sq) use ($since) {
+                    $sq->whereNotNull('paid_at')->where('paid_at', '>=', $since);
+                });
+            })
+            ->get(['id', 'amount', 'created_at', 'paid_at']);
 
         // Count unique months with at least one contribution
         $months = [];
         $totalAmount = 0.0;
         foreach ($cons as $c) {
-            $m = Carbon::parse($c->created_at)->format('Y-m');
+            $m = Carbon::parse($c->paid_at ?? $c->created_at)->format('Y-m');
             $months[$m] = true;
             $totalAmount += (float) $c->amount;
         }
