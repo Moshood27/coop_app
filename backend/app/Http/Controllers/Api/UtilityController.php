@@ -1315,8 +1315,10 @@ class UtilityController extends Controller
             $ckUser = $ck['user_id'] ?? null;
             $ckBase = rtrim((string)($ck['base_url'] ?? 'https://www.nellobytesystems.com'), '/');
             try {
+                $params = [ 'UserID' => $ckUser ];
+                if (!empty($ck['api_key'])) { $params['APIKey'] = $ck['api_key']; }
                 $r = Http::timeout(10)
-                    ->get($ckBase . '/APICableTVPackagesV2.asp', [ 'UserID' => $ckUser ]);
+                    ->get($ckBase . '/APICableTVPackagesV2.asp', $params);
                 $j = $r->json();
                 if ($r->ok() && is_array($j)) {
                     $map = [ 'dstv' => ['DStv','dstv'], 'gotv' => ['GOtv','gotv'], 'startimes' => ['StarTimes','startimes','Startimes','STARTIMES'] ];
@@ -1338,7 +1340,11 @@ class UtilityController extends Controller
                             $code = (string)($p['package_id'] ?? ($p['code'] ?? ($p['package_code'] ?? ($p['id'] ?? ($p['PRODUCT_ID'] ?? ($p['ID'] ?? ''))))));
                             $name = (string)($p['name'] ?? ($p['description'] ?? ($p['PRODUCT_NAME'] ?? '')));
                             $amount = (float)($p['amount'] ?? ($p['price'] ?? ($p['cost'] ?? ($p['PRODUCT_AMOUNT'] ?? 0))));
-                            if ($code === '') { continue; }
+
+                            // Filter out garbage
+                            if ($code === '' || strtolower($code) === 'unk') { continue; }
+                            if (strtolower($name) === 'unknown') { $name = $code; }
+
                             $bundles[] = [
                                 'code' => $code,
                                 'name' => $name,
@@ -1418,28 +1424,37 @@ class UtilityController extends Controller
 
         $ck = config('services.vtu.clubkonnect', []);
         $ckUser = $ck['user_id'] ?? null;
+        $ckKey = $ck['api_key'] ?? null;
         $ckBase = rtrim((string)($ck['base_url'] ?? 'https://www.nellobytesystems.com'), '/');
 
+        $discos = [];
+
+        // 1. Try ClubKonnect
         if ($ckUser) {
             try {
-                $r = Http::timeout(10)->get($ckBase . '/APIElectricityTypeV2.asp', ['UserID' => $ckUser]);
+                $params = ['UserID' => $ckUser];
+                if ($ckKey) $params['APIKey'] = $ckKey;
+
+                $r = Http::timeout(10)->get($ckBase . '/APIElectricityTypeV2.asp', $params);
                 $j = $r->json();
                 if ($r->ok() && isset($j['ELECTRIC_COMPANY'])) {
-                    $discos = [];
                     foreach ($j['ELECTRIC_COMPANY'] as $d) {
-                        $name = (string) ($d['ELECTRIC_COMPANY_NAME'] ?? '');
-                        if (empty($name)) {
-                            $name = (string) ($d['ELECTRIC_COMPANY_CODE'] ?? 'Unknown');
+                        $name = trim((string) ($d['ELECTRIC_COMPANY_NAME'] ?? ''));
+                        $code = trim((string) ($d['ELECTRIC_COMPANY_CODE'] ?? ''));
+
+                        // Filter out garbage/placeholders like "UNK" or "Unknown"
+                        if ((empty($name) || strtolower($name) === 'unknown') && (empty($code) || strtolower($code) === 'unk')) {
+                            continue;
                         }
+
+                        if (empty($name) || strtolower($name) === 'unknown') {
+                            $name = $code ?: 'Unknown';
+                        }
+
                         $discos[] = [
-                            'code' => (string) ($d['ELECTRIC_COMPANY_CODE'] ?? ''),
+                            'code' => $code,
                             'name' => $name,
                         ];
-                    }
-                    if (!empty($discos)) {
-                        $res = ['provider' => 'clubkonnect', 'discos' => $discos];
-                        Cache::put($cacheKey, $res, now()->addHours(24));
-                        return response()->json($res);
                     }
                 }
             } catch (\Throwable $e) {
@@ -1447,21 +1462,53 @@ class UtilityController extends Controller
             }
         }
 
-        // Fallback to hardcoded list if API fails
-        $discos = [
-            ['code' => '01', 'name' => 'Eko Electric (EKEDC)'],
-            ['code' => '02', 'name' => 'Ikeja Electric (IKEDC)'],
-            ['code' => '03', 'name' => 'Abuja Electric (AEDC)'],
-            ['code' => '04', 'name' => 'Kano Electric (KEDCO)'],
-            ['code' => '05', 'name' => 'Port Harcourt Electric (PHED)'],
-            ['code' => '06', 'name' => 'Jos Electric (JED)'],
-            ['code' => '07', 'name' => 'Kaduna Electric (KAEDCO)'],
-            ['code' => '08', 'name' => 'Ibadan Electric (IBEDC)'],
-            ['code' => '09', 'name' => 'Enugu Electric (EEDC)'],
-            ['code' => '10', 'name' => 'Benin Electric (BEDC)'],
-            ['code' => '11', 'name' => 'Yola Electric (YEDC)'],
-        ];
-        return response()->json(['provider' => 'hardcoded', 'discos' => $discos]);
+        // 2. Try VTpass as fallback if ClubKonnect failed or returned garbage
+        if (empty($discos)) {
+            $vtApiKey = config('services.vtu.api_key');
+            $vtBase = rtrim(config('services.vtu.base_url', 'https://vtpass.com/api'), '/');
+            if ($vtApiKey) {
+                try {
+                    $r = Http::withHeaders(['api-key' => $vtApiKey])
+                        ->timeout(10)
+                        ->get($vtBase . '/services', ['identifier' => 'electricity-bill']);
+                    $j = $r->json();
+                    if ($r->ok() && isset($j['content'])) {
+                        foreach ($j['content'] as $s) {
+                            $discos[] = [
+                                'code' => (string) ($s['serviceID'] ?? ''),
+                                'name' => (string) ($s['name'] ?? ''),
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('VTpass Discos Fetch Failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        // 3. Fallback to hardcoded list if all APIs fail
+        if (empty($discos)) {
+            $discos = [
+                ['code' => '01', 'name' => 'Eko Electric (EKEDC)'],
+                ['code' => '02', 'name' => 'Ikeja Electric (IKEDC)'],
+                ['code' => '03', 'name' => 'Abuja Electric (AEDC)'],
+                ['code' => '04', 'name' => 'Kano Electric (KEDCO)'],
+                ['code' => '05', 'name' => 'Port Harcourt Electric (PHED)'],
+                ['code' => '06', 'name' => 'Jos Electric (JED)'],
+                ['code' => '07', 'name' => 'Kaduna Electric (KAEDCO)'],
+                ['code' => '08', 'name' => 'Ibadan Electric (IBEDC)'],
+                ['code' => '09', 'name' => 'Enugu Electric (EEDC)'],
+                ['code' => '10', 'name' => 'Benin Electric (BEDC)'],
+                ['code' => '11', 'name' => 'Yola Electric (YEDC)'],
+            ];
+            $provider = 'hardcoded';
+        } else {
+            $provider = 'api';
+        }
+
+        $res = ['provider' => $provider, 'discos' => $discos];
+        Cache::put($cacheKey, $res, now()->addHours(24));
+        return response()->json($res);
     }
 
     public function purchaseElectricity(Request $request)
