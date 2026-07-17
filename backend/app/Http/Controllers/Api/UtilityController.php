@@ -2230,18 +2230,20 @@ class UtilityController extends Controller
             }
 
             // If sandbox is enabled and we failed, warn the user
-            if (config('services.vtu.vtpass.sandbox') && (str_contains(strtoupper((string)$msg), 'INVALID') || str_contains(strtoupper((string)$msg), 'NOT FOUND'))) {
+            if (config('services.vtu.sandbox') && (str_contains(strtoupper((string)$msg), 'INVALID') || str_contains(strtoupper((string)$msg), 'NOT FOUND'))) {
                 $msg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
             }
 
             Log::warning('Merchant verification failed', [
                 'type' => $vtuType,
                 'payload' => $payload,
-                'response' => $response
+                'response' => $response,
+                'provider' => $response['provider_used'] ?? 'unknown'
             ]);
             return response()->json([
                 'message' => $msg,
-                'details' => $response['body'] ?? $response['error']
+                'details' => $response['body'] ?? $response['error'],
+                'provider' => $response['provider_used'] ?? 'unknown'
             ], 422);
         }
 
@@ -2256,11 +2258,13 @@ class UtilityController extends Controller
             str_contains(strtoupper($customerName), 'ERR') ||
             str_contains(strtoupper($customerName), 'N/A') ||
             strtoupper(trim($customerName)) === 'N/A' ||
-            strtoupper(trim($customerName)) === 'NULL'
+            strtoupper(trim($customerName)) === 'NULL' ||
+            (isset($body['status']) && $body['status'] === '100' && strtoupper(trim((string)$customerName)) === 'N/A')
         ) {
             Log::info('Merchant verification: customer name invalid', [
                 'customerName' => $customerName,
-                'body' => $body
+                'body' => $body,
+                'provider' => $response['provider_used'] ?? 'unknown'
             ]);
 
             $errorMsg = $body['message'] ?? $body['response_description'] ?? $body['content']['error'] ?? null;
@@ -2268,12 +2272,16 @@ class UtilityController extends Controller
                 if ($customerName && (str_contains(strtoupper($customerName), 'INVALID') || strtoupper(trim($customerName)) === 'N/A')) {
                     $errorMsg = 'Invalid Meter/Smartcard Number or Provider mismatch';
 
-                    if (config('services.vtu.vtpass.sandbox')) {
+                    if ($response['provider_used'] === 'clubkonnect' && ($body['status'] ?? null) === '100') {
+                        $errorMsg = 'Verification failed (Provider returned ORDER_RECEIVED instead of customer data). This disco might not support verification or the service is temporarily unavailable.';
+                    }
+
+                    if (config('services.vtu.sandbox')) {
                         $errorMsg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
                     }
                 } elseif ($customerName && (str_contains(strtoupper($customerName), 'NOT FOUND') || str_contains(strtoupper($customerName), 'ERR_011'))) {
                     $errorMsg = 'Customer not found. Please verify the number.';
-                    if (config('services.vtu.vtpass.sandbox')) {
+                    if (config('services.vtu.sandbox')) {
                         $errorMsg .= ' (Note: System is currently in SANDBOX mode. Real meter numbers may not be recognized.)';
                     }
                 } else {
@@ -2283,7 +2291,8 @@ class UtilityController extends Controller
 
             return response()->json([
                 'message' => $errorMsg,
-                'details' => $body
+                'details' => $body,
+                'provider' => $response['provider_used'] ?? 'unknown'
             ], 422);
         }
 
