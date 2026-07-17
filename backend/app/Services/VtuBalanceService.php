@@ -65,32 +65,30 @@ class VtuBalanceService
     public function fetchClubKonnectBalance(): ?array
     {
         $cfg = config('services.vtu.clubkonnect', []);
-        if (empty($cfg['enabled']) || empty($cfg['base_url']) || (empty($cfg['api_key']) && (empty($cfg['username']) || empty($cfg['password'])))) {
+        if (empty($cfg['enabled']) || empty($cfg['base_url']) || empty($cfg['user_id']) || empty($cfg['api_key'])) {
             return null; // not configured
         }
         $baseUrl = rtrim((string) $cfg['base_url'], '/');
-        $headers = [];
-        if (!empty($cfg['api_key'])) {
-            $headers['Authorization'] = 'Bearer ' . $cfg['api_key'];
-        }
-        if (!empty($cfg['username'])) {
-            $headers['X-CK-Username'] = $cfg['username'];
-            $headers['X-CK-Password'] = $cfg['password'] ?? '';
-        }
+
         try {
-            $resp = Http::withHeaders($headers)
-                ->acceptJson()
-                ->timeout(10)
+            // Nellobytes/ClubKonnect balance check uses UserID and APIKey as query params on a specific .asp endpoint
+            $resp = Http::timeout(10)
                 ->retry(1, 200)
-                ->get($baseUrl . '/balance');
+                ->get($baseUrl . '/APIWalletBalanceV1.asp', [
+                    'UserID' => $cfg['user_id'],
+                    'APIKey' => $cfg['api_key'],
+                ]);
+
             $json = $resp->json();
             if (!$resp->ok()) {
-                Log::warning('ClubKonnect balance bad response', ['status' => $resp->status(), 'body' => $json]);
-                return [ 'ok' => false, 'raw' => $json ];
+                Log::warning('ClubKonnect balance bad response', ['status' => $resp->status(), 'body' => $resp->body()]);
+                return [ 'ok' => false, 'raw' => $json ?: $resp->body() ];
             }
-            // Attempt common shapes
-            $amount = (float) ($json['data']['balance'] ?? ($json['balance'] ?? ($json['wallet_balance'] ?? 0)));
-            $currency = (string) ($json['data']['currency'] ?? ($json['currency'] ?? 'NGN'));
+
+            // ClubKonnect common balance shape: {"status":"ORDER_COMPLETED","wallet_balance":"1234.56"}
+            $amount = (float) ($json['wallet_balance'] ?? ($json['balance'] ?? ($json['data']['balance'] ?? 0)));
+            $currency = (string) ($json['currency'] ?? ($json['data']['currency'] ?? 'NGN'));
+
             return [ 'ok' => true, 'available' => $amount, 'currency' => $currency, 'raw' => $json ];
         } catch (\Throwable $e) {
             Log::error('ClubKonnect balance HTTP error', ['error' => $e->getMessage()]);
