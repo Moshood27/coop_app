@@ -23,7 +23,7 @@ class AdminDashboardController extends Controller
             'pending_loans' => QardHasan::where('status', 'pending')->count(),
             'pending_withdrawals' => WithdrawalRequest::where('status', 'pending')->count(),
             'pending_vendors' => Vendor::where('is_approved', false)->count(),
-            'unread_support' => SupportMessage::where('is_read', false)->count(),
+            'unread_support' => SupportMessage::whereNull('read_at')->count(),
         ];
 
         // Recent Activity (Simplified)
