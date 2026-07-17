@@ -1438,9 +1438,12 @@ class UtilityController extends Controller
                 $r = Http::timeout(10)->get($ckBase . '/APIElectricityTypeV2.asp', $params);
                 $j = $r->json();
                 if ($r->ok() && isset($j['ELECTRIC_COMPANY'])) {
-                    foreach ($j['ELECTRIC_COMPANY'] as $d) {
-                        $name = trim((string) ($d['ELECTRIC_COMPANY_NAME'] ?? ''));
-                        $code = trim((string) ($d['ELECTRIC_COMPANY_CODE'] ?? ''));
+                    foreach ($j['ELECTRIC_COMPANY'] as $item) {
+                        // ClubKonnect sometimes returns an array of arrays of objects
+                        $d = (is_array($item) && isset($item[0])) ? $item[0] : $item;
+
+                        $name = trim((string) ($d['ELECTRIC_COMPANY_NAME'] ?? $d['NAME'] ?? ''));
+                        $code = trim((string) ($d['ELECTRIC_COMPANY_CODE'] ?? $d['ID'] ?? ''));
 
                         // Filter out garbage/placeholders like "UNK" or "Unknown"
                         if ((empty($name) || strtolower($name) === 'unknown') && (empty($code) || strtolower($code) === 'unk')) {
@@ -1495,8 +1498,8 @@ class UtilityController extends Controller
                 ['code' => '04', 'name' => 'Kano Electric (KEDCO)'],
                 ['code' => '05', 'name' => 'Port Harcourt Electric (PHED)'],
                 ['code' => '06', 'name' => 'Jos Electric (JED)'],
-                ['code' => '07', 'name' => 'Kaduna Electric (KAEDCO)'],
-                ['code' => '08', 'name' => 'Ibadan Electric (IBEDC)'],
+                ['code' => '07', 'name' => 'Ibadan Electric (IBEDC)'],
+                ['code' => '08', 'name' => 'Kaduna Electric (KAEDCO)'],
                 ['code' => '09', 'name' => 'Enugu Electric (EEDC)'],
                 ['code' => '10', 'name' => 'Benin Electric (BEDC)'],
                 ['code' => '11', 'name' => 'Yola Electric (YEDC)'],
@@ -2775,8 +2778,8 @@ class UtilityController extends Controller
                 '04' => 'kano-electric',
                 '05' => 'port-harcourt-electric',
                 '06' => 'jos-electric',
-                '07' => 'kaduna-electric',
-                '08' => 'ibadan-electric',
+                '07' => 'ibadan-electric',
+                '08' => 'kaduna-electric',
                 '09' => 'enugu-electric',
                 '10' => 'benin-electric',
                 '11' => 'yola-electric',
