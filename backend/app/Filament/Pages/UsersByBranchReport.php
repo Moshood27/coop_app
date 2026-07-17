@@ -67,7 +67,7 @@ class UsersByBranchReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Branch', 'Name', 'Membership #', 'Email', 'Phone', 'Status', 'Joined At']);
+            fputcsv($out, ['Branch', 'Name', 'Membership #', 'Email', 'Phone', 'Status', 'Joined At'], ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['members'] as $member) {
@@ -79,9 +79,9 @@ class UsersByBranchReport extends Page
                         $member['phone'],
                         ucfirst($member['status']),
                         $member['joined_at'],
-                    ]);
+                    ], ",", "\"", "\\");
                 }
-                fputcsv($out, []);
+                fputcsv($out, [], ",", "\"", "\\");
             }
 
             fputcsv($out, [
@@ -92,7 +92,7 @@ class UsersByBranchReport extends Page
                 '',
                 '',
                 '',
-            ]);
+            ], ",", "\"", "\\");
 
             fclose($out);
         }, 'users-by-branch-report.csv', $headers);

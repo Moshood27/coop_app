@@ -133,14 +133,14 @@ class ExportController extends Controller
 
             $callback = function () use ($contributions) {
                 $file = fopen('php://output', 'w');
-                fputcsv($file, ['Date', 'Scheme', 'Reference', 'Amount']);
+                fputcsv($file, ['Date', 'Scheme', 'Reference', 'Amount'], ",", "\"", "\\");
                 foreach ($contributions as $c) {
                     fputcsv($file, [
                         $c->created_at->format('d-m-Y H:i'),
                         optional($c->scheme)->name ?? '-',
                         $c->reference,
                         number_format((float)$c->amount, 2, '.', ''),
-                    ]);
+                    ], ",", "\"", "\\");
                 }
                 fclose($file);
             };
@@ -211,10 +211,10 @@ class ExportController extends Controller
 
         $callback = function () use ($transactions, $openingBalance, $data) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Description', 'Reference', 'Credit', 'Debit', 'Balance']);
+            fputcsv($file, ['Date', 'Description', 'Reference', 'Credit', 'Debit', 'Balance'], ",", "\"", "\\");
 
             $currentBalance = (float) $openingBalance;
-            fputcsv($file, [$data['period']['from'], 'OPENING BALANCE', '-', '-', '-', number_format($currentBalance, 2, '.', '')]);
+            fputcsv($file, [$data['period']['from'], 'OPENING BALANCE', '-', '-', '-', number_format($currentBalance, 2, '.', '')], ",", "\"", "\\");
 
             foreach ($transactions as $tx) {
                 $isCredit = strtolower((string) $tx->type) === 'credit';
@@ -238,7 +238,7 @@ class ExportController extends Controller
                     $isCredit ? number_format($amt, 2, '.', '') : '',
                     ! $isCredit ? number_format($amt, 2, '.', '') : '',
                     number_format($currentBalance, 2, '.', ''),
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fclose($file);

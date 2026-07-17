@@ -31,10 +31,10 @@ class ZakatController extends Controller
         $this->zakatService = $zakatService;
     }
 
-    public function estimate(Request $request)
+    public function estimate(Request $request, $allowLive = true)
     {
         $user = $request->user();
-        $estimate = $this->zakatService->getEstimate($user);
+        $estimate = $this->zakatService->getEstimate($user, $allowLive);
 
         return response()->json([
             'base' => $estimate['base'],

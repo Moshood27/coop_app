@@ -71,21 +71,21 @@ class IncomeAndExpenditure extends Page
         ];
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Income & Expenditure', $data['from'] . ' to ' . $data['to']]);
-            fputcsv($out, []);
-            fputcsv($out, ['Income', 'Amount']);
+            fputcsv($out, ['Income & Expenditure', $data['from'] . ' to ' . $data['to']], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Income', 'Amount'], ",", "\"", "\\");
             foreach ($data['income'] as $line) {
-                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')]);
+                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['Total Income', number_format($data['total_income'], 2, '.', '')]);
-            fputcsv($out, []);
-            fputcsv($out, ['Expenses', 'Amount']);
+            fputcsv($out, ['Total Income', number_format($data['total_income'], 2, '.', '')], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Expenses', 'Amount'], ",", "\"", "\\");
             foreach ($data['expenses'] as $line) {
-                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')]);
+                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['Total Expenses', number_format($data['total_expense'], 2, '.', '')]);
-            fputcsv($out, []);
-            fputcsv($out, ['Surplus / (Deficit)', number_format($data['surplus'], 2, '.', '')]);
+            fputcsv($out, ['Total Expenses', number_format($data['total_expense'], 2, '.', '')], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Surplus / (Deficit)', number_format($data['surplus'], 2, '.', '')], ",", "\"", "\\");
             fclose($out);
         }, 'income-expenditure.csv', $headers);
     }

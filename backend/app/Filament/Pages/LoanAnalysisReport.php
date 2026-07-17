@@ -84,8 +84,8 @@ class LoanAnalysisReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, [$data['cooperative_name'] . ' LOAN ANALYSIS REPORT AS AT MONTH OF ' . strtoupper($data['month']) . ' ' . $data['year']]);
-            fputcsv($out, ['S/N', 'NAME OF MEMBERS AND BRANCH', 'DATE GRANTED', 'LOAN GRANTED', 'AMOUNT REPAID', 'EXPECTED AMOUNT TO PAY', 'AMOUNT DEFAULTED', 'LOAN BALANCE', 'SHARE/SAVINGS BALANCE', 'PHONE NUMBER', 'PERIOD OF DEFAULT']);
+            fputcsv($out, [$data['cooperative_name'] . ' LOAN ANALYSIS REPORT AS AT MONTH OF ' . strtoupper($data['month']) . ' ' . $data['year']], ",", "\"", "\\");
+            fputcsv($out, ['S/N', 'NAME OF MEMBERS AND BRANCH', 'DATE GRANTED', 'LOAN GRANTED', 'AMOUNT REPAID', 'EXPECTED AMOUNT TO PAY', 'AMOUNT DEFAULTED', 'LOAN BALANCE', 'SHARE/SAVINGS BALANCE', 'PHONE NUMBER', 'PERIOD OF DEFAULT'], ",", "\"", "\\");
 
             foreach ($data['rows'] as $row) {
                 fputcsv($out, [
@@ -100,7 +100,7 @@ class LoanAnalysisReport extends Page
                     number_format($row['savings_balance'], 2, '.', ''),
                     $row['phone_number'],
                     $row['period_of_default'],
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fputcsv($out, [
@@ -115,7 +115,7 @@ class LoanAnalysisReport extends Page
                 number_format($data['totals']['savings_balance'], 2, '.', ''),
                 '',
                 ''
-            ]);
+            ], ",", "\"", "\\");
 
             fclose($out);
         }, $filename, $headers);

@@ -221,7 +221,7 @@ class ImportController extends Controller
         $failed = 0;
         $errors = [];
 
-        while (($data = fgetcsv($handle)) !== false) {
+        while (($data = fgetcsv($handle, 0, ",", "\"", "\\")) !== false) {
             $rowNum++;
             // Skip BOM on first column if present
             if ($rowNum === 1) {

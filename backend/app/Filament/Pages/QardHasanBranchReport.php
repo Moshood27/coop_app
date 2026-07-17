@@ -84,7 +84,7 @@ class QardHasanBranchReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Branch', 'Member', 'Loan ID', 'Principal', 'Paid', 'Overdue', 'Outstanding', 'Last Payment', 'Status']);
+            fputcsv($out, ['Branch', 'Member', 'Loan ID', 'Principal', 'Paid', 'Overdue', 'Outstanding', 'Last Payment', 'Status'], ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['loans'] as $loan) {
@@ -98,7 +98,7 @@ class QardHasanBranchReport extends Page
                         number_format($loan['outstanding'], 2, '.', ''),
                         $loan['last_payment_date'] instanceof \Carbon\Carbon ? $loan['last_payment_date']->format('d-m-Y') : ($loan['last_payment_date'] ?? 'N/A'),
                         $loan['status'],
-                    ]);
+                    ], ",", "\"", "\\");
                 }
                 // Branch total
                 fputcsv($out, [
@@ -110,8 +110,8 @@ class QardHasanBranchReport extends Page
                     number_format($branch['total_outstanding'], 2, '.', ''),
                     '',
                     '',
-                ]);
-                fputcsv($out, []); // Empty line between branches
+                ], ",", "\"", "\\");
+                fputcsv($out, [], ",", "\"", "\\"); // Empty line between branches
             }
 
             // Grand total
@@ -125,7 +125,7 @@ class QardHasanBranchReport extends Page
                     number_format($data['grand_total_outstanding'], 2, '.', ''),
                     '',
                     '',
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fclose($out);

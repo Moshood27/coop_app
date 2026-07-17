@@ -16,13 +16,13 @@ class ZakatService
         $this->priceService = $priceService;
     }
 
-    public function getEstimate(User $user)
+    public function getEstimate(User $user, $allowLive = true)
     {
         // Resolve scheme IDs for Savings, Shares and Digital Gold
         $schemes = Scheme::whereIn('name', ['Savings', 'Shares', 'Special Savings', 'Ordinary Savings', 'Share Capital', 'Digital Gold'])->pluck('id', 'name');
 
         // Gold market value (Sell price)
-        $goldPrice = $this->priceService->getSellPrice();
+        $goldPrice = $this->priceService->getSellPrice($allowLive);
 
         // Use the common helper to get base wealth
         $base = $user->zakatBaseWealth($goldPrice ?? 0);
@@ -37,7 +37,7 @@ class ZakatService
         $currentGoldValue = $goldPrice ? round($user->gold_balance * $goldPrice, 2) : 0;
         $walletBalance = (float) $user->balance;
 
-        $nisab = (float) $this->priceService->getGoldNisab();
+        $nisab = (float) $this->priceService->getGoldNisab($allowLive);
         $rate = (float) config('zakat.rate', 0.025);
         $lunarDays = (int) config('zakat.lunar_days', 354);
         $isRamadan = $this->priceService->isRamadan();

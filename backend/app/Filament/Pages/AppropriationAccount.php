@@ -72,19 +72,19 @@ class AppropriationAccount extends Page
         ];
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Appropriation Account', ($data['from'] ?? '') . ' to ' . ($data['to'] ?? '')]);
-            fputcsv($out, []);
-            fputcsv($out, ['Surplus for the Period', number_format((float)($data['surplus'] ?? 0), 2, '.', '')]);
-            fputcsv($out, []);
-            fputcsv($out, ['Appropriations', 'Amount']);
+            fputcsv($out, ['Appropriation Account', ($data['from'] ?? '') . ' to ' . ($data['to'] ?? '')], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Surplus for the Period', number_format((float)($data['surplus'] ?? 0), 2, '.', '')], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Appropriations', 'Amount'], ",", "\"", "\\");
             foreach (($data['appropriations'] ?? []) as $line) {
                 $name = $line['name'] ?? '';
                 $amt = (float)($line['amount'] ?? 0);
                 $pct = isset($line['percent']) ? ' (' . number_format((float)$line['percent'], 2, '.', '') . '%)' : '';
-                fputcsv($out, [$name . $pct, number_format($amt, 2, '.', '')]);
+                fputcsv($out, [$name . $pct, number_format($amt, 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['Total Appropriations', number_format((float)($data['total_appropriated'] ?? 0), 2, '.', '')]);
-            fputcsv($out, ['Carried Forward', number_format((float)($data['carried_forward'] ?? 0), 2, '.', '')]);
+            fputcsv($out, ['Total Appropriations', number_format((float)($data['total_appropriated'] ?? 0), 2, '.', '')], ",", "\"", "\\");
+            fputcsv($out, ['Carried Forward', number_format((float)($data['carried_forward'] ?? 0), 2, '.', '')], ",", "\"", "\\");
             fclose($out);
         }, 'appropriation-account.csv', $headers);
     }

@@ -75,7 +75,7 @@ class WalletTransactionsBranchReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Credits', 'Debits', 'Net', 'Transactions', 'Last Activity']);
+            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Credits', 'Debits', 'Net', 'Transactions', 'Last Activity'], ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['members'] as $member) {
@@ -88,7 +88,7 @@ class WalletTransactionsBranchReport extends Page
                         number_format($member['net'], 2, '.', ''),
                         $member['transaction_count'],
                         $member['last_transaction_date'] instanceof \Carbon\Carbon ? $member['last_transaction_date']->format('d-m-Y') : ($member['last_transaction_date'] ?? 'N/A'),
-                    ]);
+                    ], ",", "\"", "\\");
                 }
                 // Branch total
                 fputcsv($out, [
@@ -100,8 +100,8 @@ class WalletTransactionsBranchReport extends Page
                     number_format($branch['total_net'], 2, '.', ''),
                     '',
                     '',
-                ]);
-                fputcsv($out, []);
+                ], ",", "\"", "\\");
+                fputcsv($out, [], ",", "\"", "\\");
             }
 
             // Grand total
@@ -115,7 +115,7 @@ class WalletTransactionsBranchReport extends Page
                     number_format($data['grand_total_net'], 2, '.', ''),
                     '',
                     '',
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fclose($out);

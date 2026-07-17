@@ -33,7 +33,7 @@ class DashboardController extends Controller
         try {
             // Instantiate ZakatController to reuse estimate logic
             $zakatController = app(ZakatController::class);
-            $estimate = $zakatController->estimate($request)->getData(true);
+            $estimate = $zakatController->estimate($request, false)->getData(true);
 
             if ($estimate && isset($estimate['base'], $estimate['nisab'])) {
                 $zakatStatus = [
@@ -119,8 +119,8 @@ class DashboardController extends Controller
             $totalLoanPaid = (float) ($loanStats->total_paid ?? 0);
         }
 
-        $goldBasePrice = $this->priceService->getGoldPrice();
-        $goldSellPrice = $this->priceService->getSellPrice();
+        $goldBasePrice = $this->priceService->getGoldPrice(false);
+        $goldSellPrice = $this->priceService->getSellPrice(false);
 
         $activeDisputesCount = 0;
         if (Schema::hasTable('sharia_disputes')) {

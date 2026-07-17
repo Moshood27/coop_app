@@ -173,7 +173,7 @@ class ProjectProposalResource extends Resource
                     ->action(function ($record) {
                         return response()->streamDownload(function () use ($record) {
                             $handle = fopen('php://output', 'w');
-                            fputcsv($handle, ['Choice', 'Weight (Votes)']);
+                            fputcsv($handle, ['Choice', 'Weight (Votes)'], ",", "\"", "\\");
 
                             $votes = \App\Models\ProjectProposalVote::query()
                                 ->select('choice', DB::raw('SUM(weight) as total_weight'))
@@ -185,7 +185,7 @@ class ProjectProposalResource extends Resource
                                 fputcsv($handle, [
                                     strtoupper($v->choice),
                                     $v->total_weight
-                                ]);
+                                ], ",", "\"", "\\");
                             }
                             fclose($handle);
                         }, "proposal_results_{$record->id}.csv");

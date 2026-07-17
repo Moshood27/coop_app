@@ -82,7 +82,7 @@ class SchemeBranchReport extends Page
             }
             $headerRow[] = 'Total';
 
-            fputcsv($out, $headerRow);
+            fputcsv($out, $headerRow, ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['members'] as $member) {
@@ -95,7 +95,7 @@ class SchemeBranchReport extends Page
                         $row[] = number_format($member['schemes'][$scheme['id']] ?? 0, 2, '.', '');
                     }
                     $row[] = number_format($member['total'], 2, '.', '');
-                    fputcsv($out, $row);
+                    fputcsv($out, $row, ",", "\"", "\\");
                 }
 
                 // Branch total
@@ -108,9 +108,9 @@ class SchemeBranchReport extends Page
                     $branchTotalRow[] = number_format($branch['totals'][$scheme['id']] ?? 0, 2, '.', '');
                 }
                 $branchTotalRow[] = number_format($branch['branch_total'], 2, '.', '');
-                fputcsv($out, $branchTotalRow);
+                fputcsv($out, $branchTotalRow, ",", "\"", "\\");
 
-                fputcsv($out, []); // Empty line between branches
+                fputcsv($out, [], ",", "\"", "\\"); // Empty line between branches
             }
 
             // Grand total
@@ -124,7 +124,7 @@ class SchemeBranchReport extends Page
                     $grandTotalRow[] = number_format($data['grand_totals'][$scheme['id']] ?? 0, 2, '.', '');
                 }
                 $grandTotalRow[] = number_format($data['grand_total_all'], 2, '.', '');
-                fputcsv($out, $grandTotalRow);
+                fputcsv($out, $grandTotalRow, ",", "\"", "\\");
             }
 
             fclose($out);

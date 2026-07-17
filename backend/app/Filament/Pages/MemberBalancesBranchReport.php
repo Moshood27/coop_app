@@ -76,7 +76,7 @@ class MemberBalancesBranchReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Savings', 'Special Savings', 'Shares', 'Gold (g)', 'Gold (Val)', 'Other Funds', 'Total Wealth']);
+            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Savings', 'Special Savings', 'Shares', 'Gold (g)', 'Gold (Val)', 'Other Funds', 'Total Wealth'], ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['members'] as $member) {
@@ -91,7 +91,7 @@ class MemberBalancesBranchReport extends Page
                         number_format($member['gold_value'], 2, '.', ''),
                         number_format($member['other_funds'], 2, '.', ''),
                         number_format($member['total_wealth'], 2, '.', ''),
-                    ]);
+                    ], ",", "\"", "\\");
                 }
                 // Branch total
                 fputcsv($out, [
@@ -105,8 +105,8 @@ class MemberBalancesBranchReport extends Page
                     number_format($branch['total_gold_value'], 2, '.', ''),
                     number_format($branch['total_other'], 2, '.', ''),
                     number_format($branch['total_savings'] + $branch['total_special_savings'] + $branch['total_shares'] + $branch['total_gold_value'] + $branch['total_other'], 2, '.', ''),
-                ]);
-                fputcsv($out, []);
+                ], ",", "\"", "\\");
+                fputcsv($out, [], ",", "\"", "\\");
             }
 
             // Grand total
@@ -122,7 +122,7 @@ class MemberBalancesBranchReport extends Page
                     number_format($data['grand_total_gold_value'], 2, '.', ''),
                     number_format($data['grand_total_other'], 2, '.', ''),
                     number_format($data['grand_total_savings'] + $data['grand_total_special_savings'] + $data['grand_total_shares'] + $data['grand_total_gold_value'] + $data['grand_total_other'], 2, '.', ''),
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fclose($out);

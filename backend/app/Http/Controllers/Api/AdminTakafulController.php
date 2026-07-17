@@ -178,7 +178,7 @@ class AdminTakafulController extends Controller
         ];
         $callback = function () use ($rows) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Date','Direction','Amount','Reference','User ID','Period','Qard Code','Reason']);
+            fputcsv($out, ['Date','Direction','Amount','Reference','User ID','Period','Qard Code','Reason'], ",", "\"", "\\");
             foreach ($rows as $r) {
                 $u = $r->meta['user_id'] ?? null;
                 $period = $r->meta['period'] ?? null;
@@ -193,7 +193,7 @@ class AdminTakafulController extends Controller
                     $period,
                     $qard,
                     $reason,
-                ]);
+                ], ",", "\"", "\\");
             }
             fclose($out);
         };
@@ -249,7 +249,7 @@ class AdminTakafulController extends Controller
         ];
         $callback = function () use ($rows, $period) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Period','User ID','Amount','Status','Reference','Date']);
+            fputcsv($out, ['Period','User ID','Amount','Status','Reference','Date'], ",", "\"", "\\");
             foreach ($rows as $r) {
                 fputcsv($out, [
                     $period,
@@ -258,7 +258,7 @@ class AdminTakafulController extends Controller
                     $r->status,
                     $r->reference,
                     $r->created_at,
-                ]);
+                ], ",", "\"", "\\");
             }
             fclose($out);
         };

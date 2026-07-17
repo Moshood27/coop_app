@@ -117,7 +117,7 @@ class AgmSessionResource extends Resource
                     ->action(function ($record) {
                         return response()->streamDownload(function () use ($record) {
                             $handle = fopen('php://output', 'w');
-                            fputcsv($handle, ['Position', 'Candidate', 'Weight (Votes)']);
+                            fputcsv($handle, ['Position', 'Candidate', 'Weight (Votes)'], ",", "\"", "\\");
 
                             $votes = \App\Models\AgmVote::query()
                                 ->select('position', 'candidate_id', DB::raw('SUM(weight) as total_weight'))
@@ -132,7 +132,7 @@ class AgmSessionResource extends Resource
                                     $v->position,
                                     optional($candidates->get($v->candidate_id))->name ?? 'Unknown',
                                     $v->total_weight
-                                ]);
+                                ], ",", "\"", "\\");
                             }
                             fclose($handle);
                         }, "agm_results_{$record->id}.csv");

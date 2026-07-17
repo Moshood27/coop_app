@@ -68,19 +68,19 @@ class BalanceSheet extends Page
         ];
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Balance Sheet as of', $data['as_of'] ?? '']);
-            fputcsv($out, []);
-            fputcsv($out, ['Assets', 'Amount']);
+            fputcsv($out, ['Balance Sheet as of', $data['as_of'] ?? ''], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Assets', 'Amount'], ",", "\"", "\\");
             foreach ($data['assets'] as $line) {
-                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')]);
+                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['Total Assets', number_format($data['total_assets'], 2, '.', '')]);
-            fputcsv($out, []);
-            fputcsv($out, ['Liabilities & Equity', 'Amount']);
+            fputcsv($out, ['Total Assets', number_format($data['total_assets'], 2, '.', '')], ",", "\"", "\\");
+            fputcsv($out, [], ",", "\"", "\\");
+            fputcsv($out, ['Liabilities & Equity', 'Amount'], ",", "\"", "\\");
             foreach ($data['liabilities'] as $line) {
-                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')]);
+                fputcsv($out, [$line['name'], number_format($line['amount'], 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['Total Liabilities & Equity', number_format($data['total_liabilities_and_equity'], 2, '.', '')]);
+            fputcsv($out, ['Total Liabilities & Equity', number_format($data['total_liabilities_and_equity'], 2, '.', '')], ",", "\"", "\\");
             fclose($out);
         }, 'balance-sheet.csv', $headers);
     }

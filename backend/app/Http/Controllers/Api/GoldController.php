@@ -346,7 +346,7 @@ class GoldController extends Controller
 
         $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Type', 'Amount (Naira)', 'Units (Grams)', 'Status']);
+            fputcsv($file, ['Date', 'Type', 'Amount (Naira)', 'Units (Grams)', 'Status'], ",", "\"", "\\");
 
             foreach ($transactions as $tx) {
                 fputcsv($file, [
@@ -355,7 +355,7 @@ class GoldController extends Controller
                     abs($tx->amount),
                     $tx->units,
                     $tx->status
-                ]);
+                ], ",", "\"", "\\");
             }
             fclose($file);
         };

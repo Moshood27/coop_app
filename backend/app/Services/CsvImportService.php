@@ -261,7 +261,7 @@ class CsvImportService
             rewind($handle);
         }
 
-        while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+        while (($data = fgetcsv($handle, 0, $delimiter, "\"", "\\")) !== false) {
             $rowNum++;
             if ($rowNum === 1) {
                 $header = array_map(function($h) {

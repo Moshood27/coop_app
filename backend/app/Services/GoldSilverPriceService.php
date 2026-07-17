@@ -20,16 +20,16 @@ class GoldSilverPriceService
      * Get the current Nisab based on Gold and Silver prices.
      * Usually the lower of the two is used for Nisab.
      */
-    public function getDynamicNisab()
+    public function getDynamicNisab($allowLive = true)
     {
         if (!$this->apiKey) {
             return config('zakat.nisab_ngn');
         }
 
-        return Cache::remember('zakat_dynamic_nisab', now()->addHours(12), function () {
+        return Cache::remember('zakat_dynamic_nisab', now()->addHours(12), function () use ($allowLive) {
             try {
-                $goldPricePerGram = $this->getPrice('XAU');
-                $silverPricePerGram = $this->getPrice('XAG');
+                $goldPricePerGram = $this->getPrice('XAU', $allowLive);
+                $silverPricePerGram = $this->getPrice('XAG', $allowLive);
 
                 if ($goldPricePerGram && $silverPricePerGram) {
                     $goldNisab = $goldPricePerGram * config('zakat.nisab_gold_grams');
@@ -52,9 +52,9 @@ class GoldSilverPriceService
     /**
      * Get Gold Nisab specifically (85g)
      */
-    public function getGoldNisab()
+    public function getGoldNisab($allowLive = true)
     {
-        $goldPricePerGram = $this->getGoldPrice();
+        $goldPricePerGram = $this->getGoldPrice($allowLive);
         if ($goldPricePerGram) {
             return $goldPricePerGram * config('zakat.nisab_gold_grams', 85);
         }
@@ -64,25 +64,33 @@ class GoldSilverPriceService
     /**
      * Get gold price per gram in NGN
      */
-    public function getGoldPrice()
+    public function getGoldPrice($allowLive = true)
     {
         if (!$this->apiKey) {
+            $isInvalid = Cache::get('gold_api_key_v1_invalid', false);
+            if ($isInvalid) {
+                 return $this->getPrice('XAU', false);
+            }
             Log::warning("Gold API Key is missing. Returning null for gold price.");
             return null;
         }
 
+        if (!$allowLive) {
+            return Cache::get('current_gold_price_ngn') ?? $this->getPrice('XAU', false);
+        }
+
         return Cache::remember('current_gold_price_ngn', now()->addMinutes(10), function () {
-            return $this->getPrice('XAU');
+            return $this->getPrice('XAU', true);
         });
     }
 
     /**
      * Get comprehensive gold price data including USD and NGN
      */
-    public function getGoldPriceData()
+    public function getGoldPriceData($allowLive = true)
     {
         $currency = config('zakat.goldapi_currency', 'USD');
-        $goldPrice = $this->getGoldPrice(); // This is already NGN if currency is USD
+        $goldPrice = $this->getGoldPrice($allowLive); // This is already NGN if currency is USD
 
         if (!$goldPrice) return null;
 
@@ -109,9 +117,9 @@ class GoldSilverPriceService
     /**
      * Get buy price (with optional fee or spread)
      */
-    public function getBuyPrice()
+    public function getBuyPrice($allowLive = true)
     {
-        $base = $this->getGoldPrice();
+        $base = $this->getGoldPrice($allowLive);
         if (!$base) return null;
 
         // Buying is at a slightly higher price (spread)
@@ -122,9 +130,9 @@ class GoldSilverPriceService
     /**
      * Get sell price (with optional fee or spread)
      */
-    public function getSellPrice()
+    public function getSellPrice($allowLive = true)
     {
-        $base = $this->getGoldPrice();
+        $base = $this->getGoldPrice($allowLive);
         if (!$base) return null;
 
         // Selling is at a slightly lower price (spread)
@@ -162,12 +170,18 @@ class GoldSilverPriceService
     /**
      * Get price per gram for a given symbol (XAU or XAG)
      */
-    public function getPrice($symbol)
+    public function getPrice($symbol, $allowLive = true)
     {
         // Check if API key was marked invalid
         $isInvalid = Cache::get('gold_api_key_v1_invalid', false);
 
-        if (!$this->apiKey || $isInvalid) {
+        if (!$this->apiKey || $isInvalid || !$allowLive) {
+            // If not allowing live, try cache first if it's Gold
+            if (!$allowLive && $symbol === 'XAU') {
+                $cached = Cache::get('current_gold_price_ngn');
+                if ($cached) return $cached;
+            }
+
             // Mock price for development if no API key or it's known invalid
             $mockBase = $symbol === 'XAU' ? 85000 : 1200;
             return $mockBase;

@@ -36,7 +36,7 @@ class GoldApiKeyTest extends TestCase
         $this->assertEquals(85000, $price);
 
         // Should have cached the invalid status
-        $this->assertTrue(Cache::has('gold_api_key_invalid'));
+        $this->assertTrue(Cache::has('gold_api_key_v1_invalid'));
 
         // Subsequent calls should NOT trigger another Http request
         Http::assertSentCount(1);

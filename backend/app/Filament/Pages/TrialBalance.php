@@ -58,11 +58,11 @@ class TrialBalance extends Page
         ];
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Account', 'Debit', 'Credit']);
+            fputcsv($out, ['Account', 'Debit', 'Credit'], ",", "\"", "\\");
             foreach ($data['accounts'] as $name => $row) {
-                fputcsv($out, [$name, number_format($row['debit'], 2, '.', ''), number_format($row['credit'], 2, '.', '')]);
+                fputcsv($out, [$name, number_format($row['debit'], 2, '.', ''), number_format($row['credit'], 2, '.', '')], ",", "\"", "\\");
             }
-            fputcsv($out, ['TOTAL', number_format($data['total_debit'], 2, '.', ''), number_format($data['total_credit'], 2, '.', '')]);
+            fputcsv($out, ['TOTAL', number_format($data['total_debit'], 2, '.', ''), number_format($data['total_credit'], 2, '.', '')], ",", "\"", "\\");
             fclose($out);
         }, 'trial-balance.csv', $headers);
     }

@@ -73,7 +73,7 @@ class ContributionBranchReport extends Page
 
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Total Contributed', 'Last Contribution']);
+            fputcsv($out, ['Branch', 'Member', 'Membership #', 'Total Contributed', 'Last Contribution'], ",", "\"", "\\");
 
             foreach ($data['branches'] as $branch) {
                 foreach ($branch['members'] as $member) {
@@ -83,7 +83,7 @@ class ContributionBranchReport extends Page
                         $member['membership_number'],
                         number_format($member['total_contributed'], 2, '.', ''),
                         $member['last_contribution_date'] instanceof \Carbon\Carbon ? $member['last_contribution_date']->format('d-m-Y') : ($member['last_contribution_date'] ?? 'N/A'),
-                    ]);
+                    ], ",", "\"", "\\");
                 }
                 // Branch total
                 fputcsv($out, [
@@ -92,8 +92,8 @@ class ContributionBranchReport extends Page
                     '',
                     number_format($branch['total_amount'], 2, '.', ''),
                     '',
-                ]);
-                fputcsv($out, []); // Empty line between branches
+                ], ",", "\"", "\\");
+                fputcsv($out, [], ",", "\"", "\\"); // Empty line between branches
             }
 
             // Grand total
@@ -104,7 +104,7 @@ class ContributionBranchReport extends Page
                     '',
                     number_format($data['grand_total_amount'], 2, '.', ''),
                     '',
-                ]);
+                ], ",", "\"", "\\");
             }
 
             fclose($out);
