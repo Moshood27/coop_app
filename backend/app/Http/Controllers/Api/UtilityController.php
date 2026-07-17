@@ -2223,10 +2223,12 @@ class UtilityController extends Controller
 
         if (!$response['ok']) {
             $msg = $response['body']['message'] ?? $response['body']['response_description'] ?? $response['error'] ?? 'Verification failed';
+            $upMsg = strtoupper((string)$msg);
 
             // Human-friendly mapping for common provider errors
-            if (str_contains(strtoupper((string)$msg), 'AUTHENTICATION_FAILED') || str_contains(strtoupper((string)$msg), 'INVALID_CREDENTIALS')) {
-                $msg = 'Provider authentication failed. Please update ClubKonnect/Nellobyte or VTpass credentials in the system configuration.';
+            if (str_contains($upMsg, 'AUTHENTICATION') || str_contains($upMsg, 'CREDENTIAL') || ($response['status'] ?? 0) === 401) {
+                $providerName = ucfirst($response['provider_used'] ?? 'VTU');
+                $msg = "{$providerName} authentication failed. Please update credentials or check if you are using live keys in SANDBOX mode.";
             }
 
             // If sandbox is enabled and we failed, warn the user
@@ -2413,30 +2415,34 @@ class UtilityController extends Controller
             }
 
             if (!$resp['ok']) {
-                $lastError = $resp; // network or http error, try next
+                $lastError = array_merge($resp, ['provider_used' => $provider]); // network or http error, try next
 
                 // If it's an authentication error, stop failover and return immediately
                 // This prevents masking config issues with generic "Invalid Number" from next provider
                 $errMsg = strtoupper((string)($resp['error'] ?? ''));
-                if (str_contains($errMsg, 'AUTHENTICATION_FAILED') || str_contains($errMsg, 'INVALID_CREDENTIALS')) {
-                    return array_merge($resp, ['provider_used' => $provider]);
+                $bodyMsg = strtoupper((string)(is_array($resp['body']) ? ($resp['body']['message'] ?? $resp['body']['response_description'] ?? '') : ($resp['body'] ?? '')));
+                if (str_contains($errMsg, 'AUTHENTICATION_FAILED') || str_contains($errMsg, 'INVALID_CREDENTIALS') ||
+                    str_contains($bodyMsg, 'AUTHENTICATION_FAILED') || str_contains($bodyMsg, 'INVALID CREDENTIALS')) {
+                    return $lastError;
                 }
 
                 continue;
             }
 
             $body = $resp['body'] ?? null;
+            $resWithProvider = array_merge($resp, ['provider_used' => $provider]);
+
             // If already a success, return immediately
             if ($this->isVtpassSuccess($body)) {
-                return array_merge($resp, ['provider_used' => $provider]);
+                return $resWithProvider;
             }
             // If pending, do not failover; return pending so requery/webhook can finalize
             if ($this->isVtpassPending($body)) {
-                return array_merge($resp, ['provider_used' => $provider]);
+                return $resWithProvider;
             }
 
             // Otherwise, treat as provider-declared failure: try next provider
-            $lastError = $resp;
+            $lastError = $resWithProvider;
         }
 
         return $lastError ?: [ 'ok' => false, 'error' => 'No VTU provider available', 'body' => null, 'status' => 0 ];
