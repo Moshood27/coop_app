@@ -1,15 +1,13 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 sm:p-8">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 sm:p-6 pb-20">
     <div class="max-w-7xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4 mb-6">
+        <button @click="$router.push('/admin/portal')" class="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95 transition-all">
+          <span class="i-mdi-chevron-left text-2xl"></span>
+        </button>
         <div>
-          <p class="text-xs font-semibold tracking-widest text-indigo-700 uppercase">Admin Portal</p>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Airtime/Data (VTU) Monitor</h1>
-          <p class="text-slate-600">Track member purchases, status, and profit in real-time.</p>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <router-link to="/admin/imports" class="btn-muted">Bulk Import</router-link>
-          <router-link to="/admin/login" class="btn-muted">Admin Login</router-link>
+          <p class="text-[10px] font-bold tracking-[0.2em] text-indigo-700 uppercase">Admin Portal</p>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">VTU Monitor</h1>
         </div>
       </div>
 
@@ -140,10 +138,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import axiosBase from '../../http.js'
+import { ref, reactive, onMounted, computed } from 'vue'
+import axios from '../../http.js'
 
-const adminToken = ref(localStorage.getItem('admin_token') || '')
+const adminToken = localStorage.getItem('admin_token')
+const memberToken = localStorage.getItem('token')
+const isAdmin = localStorage.getItem('is_admin') === 'true'
+
+const hasAccess = computed(() => !!adminToken || (!!memberToken && isAdmin))
 const items = ref([])
 const page = ref(1)
 const perPage = 20
@@ -152,8 +154,6 @@ const prevUrl = ref(null)
 const summary = reactive({ count: 0, amount: 0, cost_price: 0, profit: 0, by_status: {} })
 
 const filters = reactive({ type: '', status: '', network: '', q: '', date_from: '', date_to: '' })
-
-const client = axiosBase.create ? axiosBase.create() : axiosBase
 
 const money = (v) => Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
 const fmtDate = (d) => new Date(d).toLocaleString()
@@ -171,13 +171,12 @@ const buildParams = () => {
 }
 
 const load = async (url = null) => {
-  if (!adminToken.value) {
+  if (!hasAccess.value) {
     alert('Please login as admin')
     return
   }
-  const headers = { Authorization: `Bearer ${adminToken.value}` }
   const finalUrl = url || `/api/admin/vtu/transactions?${buildParams().toString()}`
-  const { data } = await client.get(finalUrl, { headers })
+  const { data } = await axios.get(finalUrl)
   items.value = data?.data || []
   summary.count = data?.summary?.count || 0
   summary.amount = data?.summary?.amount || 0

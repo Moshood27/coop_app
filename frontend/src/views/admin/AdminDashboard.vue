@@ -12,14 +12,35 @@
 
     <div class="p-6 space-y-8 max-w-lg mx-auto">
       <!-- KPI Overview -->
-      <section v-if="stats" class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100">
-          <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Members</p>
-          <h3 class="text-2xl font-black text-slate-800">{{ stats.total_users }}</h3>
+      <section v-if="stats" class="space-y-4">
+        <!-- Main Liquidity Card (Responsive) -->
+        <div class="bg-emerald-900 p-6 rounded-[2.5rem] shadow-lg shadow-emerald-200 text-white relative overflow-hidden transition-all duration-300">
+          <div class="absolute -right-6 -top-6 text-white/10 text-9xl">
+             <span class="i-mdi-cash-multiple"></span>
+          </div>
+          <div class="relative z-10">
+            <p class="text-[10px] font-black text-emerald-300 uppercase tracking-[0.2em] mb-2">Net Liquidity</p>
+            <div class="flex items-baseline flex-wrap gap-x-2">
+              <span class="text-xl font-bold opacity-70">₦</span>
+              <h3 :class="[
+                'font-black tracking-tighter leading-none',
+                (liquidity.net || 0).toLocaleString('en-NG').length > 12 ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'
+              ]">
+                {{ formatMoney(liquidity.net) }}
+              </h3>
+            </div>
+          </div>
         </div>
-        <div class="bg-emerald-900 p-5 rounded-[2rem] shadow-lg shadow-emerald-200 text-white">
-          <p class="text-[10px] font-black text-emerald-300 uppercase tracking-widest mb-1">Net Liquidity</p>
-          <h3 class="text-xl font-black">₦ {{ formatMoney(liquidity.net) }}</h3>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Members</p>
+            <h3 class="text-2xl font-black text-slate-800">{{ stats.total_users }}</h3>
+          </div>
+          <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Loans</p>
+            <h3 class="text-2xl font-black text-slate-800">{{ stats.active_loans }}</h3>
+          </div>
         </div>
       </section>
 
@@ -68,6 +89,24 @@
         </div>
       </section>
 
+      <!-- VTU Balances -->
+      <section v-if="Object.keys(vtu_balances).length" class="space-y-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">VTU Provider Balances</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div v-for="(bal, provider) in vtu_balances" :key="provider" class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+              <span class="i-mdi-wallet text-sm"></span>
+            </div>
+            <div class="overflow-hidden">
+              <p class="text-[9px] font-black text-slate-400 uppercase truncate">{{ provider }}</p>
+              <p class="text-sm font-black text-slate-800 tracking-tight" :class="bal.available < 5000 ? 'text-rose-600' : ''">
+                ₦{{ formatMoney(bal.available) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Management Modules -->
       <section class="space-y-4">
         <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Mobile Management</h3>
@@ -97,7 +136,7 @@
             <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-cellphone-wireless"></span>
             </div>
-            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">VTU History</span>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">VTU Monitor</span>
           </button>
 
           <button @click="$router.push('/admin/imports')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
@@ -144,6 +183,7 @@ import axios from '../../http'
 
 const stats = ref(null)
 const liquidity = ref(null)
+const vtu_balances = ref({})
 const recent_users = ref([])
 const loading = ref(true)
 
@@ -152,6 +192,7 @@ const load = async () => {
     const { data } = await axios.get('/api/admin/dashboard')
     stats.value = data.stats
     liquidity.value = data.liquidity
+    vtu_balances.value = data.vtu_balances || {}
     recent_users.value = data.recent_users
   } catch (e) {
     console.error('Failed to load admin dashboard', e)
@@ -178,6 +219,4 @@ onMounted(load)
 </script>
 
 <style scoped>
-/* Custom grid icons from MDI via Unocss style classes */
-.i-mdi-storefront { --un-icon: url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 24 24' width='1.2em' height='1.2em' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M17 18c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2M7 18c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2m0-3h10c.5 0 1-.4 1-1V5c0-.6-.5-1-1-1H7c-.5 0-1 .4-1 1v9c0 .6.5 1 1 1M4 4h16c1.1 0 2 .9 2 2v11c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2'/%3E%3C/svg%3E"); mask: var(--un-icon) no-repeat; mask-size: 100% 100%; -webkit-mask: var(--un-icon) no-repeat; -webkit-mask-size: 100% 100%; background-color: currentColor; width: 1.2em; height: 1.2em; display: inline-block; }
 </style>

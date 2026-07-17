@@ -15,7 +15,7 @@ class SupportMessagesRelationManager extends RelationManager
     public function render(): View
     {
         return view('filament.resources.user-resource.relation-managers.support-messages', [
-            'user' => $this->getOwnerRecord(),
+            'chatRoom' => app(\App\Services\ChatService::class)->getOrCreatePrivateRoom(auth()->user(), $this->getOwnerRecord()),
         ]);
     }
 

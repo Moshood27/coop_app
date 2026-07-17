@@ -1,15 +1,13 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 sm:p-8">
+  <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 sm:p-6 pb-20">
     <div class="max-w-7xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4 mb-6">
+        <button @click="$router.push('/admin/portal')" class="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95 transition-all">
+          <span class="i-mdi-chevron-left text-2xl"></span>
+        </button>
         <div>
-          <p class="text-xs font-semibold tracking-widest text-emerald-700 uppercase">Admin Portal</p>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Takaful (Member Welfare Pool)</h1>
-          <p class="text-slate-600">Monitor pool ledger, filter by member, and trigger manual batch charges.</p>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <router-link to="/admin/vtu" class="btn-muted">VTU Monitor</router-link>
-          <router-link to="/admin/products" class="btn-muted">Products</router-link>
+          <p class="text-[10px] font-bold tracking-[0.2em] text-emerald-700 uppercase">Admin Portal</p>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Takaful Management</h1>
         </div>
       </div>
 
@@ -166,11 +164,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import axiosBase from '../../http.js'
+import { ref, reactive, onMounted, computed } from 'vue'
+import axios from '../../http.js'
 
-const adminToken = ref(localStorage.getItem('admin_token') || '')
-const client = axiosBase.create ? axiosBase.create() : axiosBase
+const adminToken = localStorage.getItem('admin_token')
+const memberToken = localStorage.getItem('token')
+const isAdmin = localStorage.getItem('is_admin') === 'true'
+
+const hasAccess = computed(() => !!adminToken || (!!memberToken && isAdmin))
 
 // Summary state
 const summary = reactive({ period: '', pool_balance: 0, contributions: { count: 0, sum: 0, by_status: {} } })
@@ -195,8 +196,8 @@ const money = (v) => Number(v || 0).toLocaleString(undefined, { minimumFractionD
 const fmtDate = (d) => { try { return new Date(d).toLocaleString() } catch { return d } }
 
 const loadSummary = async () => {
-  if (!adminToken.value) { alert('Please login as admin'); return }
-  const { data } = await client.get(`/api/admin/takaful/summary`, { headers: authHeaders(), params: { period: summaryFilters.period } })
+  if (!hasAccess.value) { alert('Please login as admin'); return }
+  const { data } = await axios.get(`/api/admin/takaful/summary`, { params: { period: summaryFilters.period } })
   Object.assign(summary, data || {})
 }
 
@@ -210,9 +211,9 @@ const buildLedgerParams = () => {
 }
 
 const loadLedger = async (url = null) => {
-  if (!adminToken.value) { alert('Please login as admin'); return }
+  if (!hasAccess.value) { alert('Please login as admin'); return }
   const finalUrl = url || `/api/admin/takaful/ledger?${buildLedgerParams().toString()}`
-  const { data } = await client.get(finalUrl, { headers: authHeaders() })
+  const { data } = await axios.get(finalUrl)
   ledgerRows.value = data?.data || []
   Object.assign(ledgerSummary, data?.summary || {})
   nextUrl.value = data?.next_page_url || null
@@ -225,7 +226,7 @@ const next = async () => { if (!nextUrl.value) return; page.value += 1; await lo
 const prev = async () => { if (!prevUrl.value) return; page.value = Math.max(1, page.value - 1); await loadLedger(prevUrl.value) }
 
 const triggerCharge = async () => {
-  if (!adminToken.value) { alert('Please login as admin'); return }
+  if (!hasAccess.value) { alert('Please login as admin'); return }
   if (loading.charge) return
   loading.charge = true
   chargeResult.value = null
@@ -236,7 +237,7 @@ const triggerCharge = async () => {
       user_id: chargeForm.user_id || undefined,
       dry_run: !!chargeForm.dry_run,
     }
-    const { data } = await client.post('/api/admin/takaful/charge', payload, { headers: authHeaders() })
+    const { data } = await axios.post('/api/admin/takaful/charge', payload)
     chargeResult.value = data
     alert(`Charge ${data.dry_run ? 'dry-run ' : ''}completed. Processed: ${data.processed}, Created: ${data.created}, Charged: ₦ ${money(data.charged)}`)
     await loadSummary(); await reloadLedger()
@@ -251,16 +252,16 @@ const resetCharge = () => { Object.assign(chargeForm, { period: new Date().toISO
 
 const getExportSummaryUrl = (type) => {
   const path = type === 'pdf' ? '/api/admin/takaful/export/summary.pdf' : '/api/admin/takaful/export/summary.csv'
-  const baseUrl = axiosBase.defaults.baseURL || ''
-  const params = new URLSearchParams({ period: summaryFilters.period, token: adminToken.value })
+  const baseUrl = axios.defaults.baseURL || ''
+  const params = new URLSearchParams({ period: summaryFilters.period, token: adminToken || memberToken })
   return `${baseUrl}${path}?${params.toString()}`
 }
 
 const getExportLedgerUrl = (type) => {
   const path = type === 'pdf' ? '/api/admin/takaful/export/ledger.pdf' : '/api/admin/takaful/export/ledger.csv'
-  const baseUrl = axiosBase.defaults.baseURL || ''
+  const baseUrl = axios.defaults.baseURL || ''
   const params = buildLedgerParams()
-  params.append('token', adminToken.value)
+  params.append('token', adminToken || memberToken)
   return `${baseUrl}${path}?${params.toString()}`
 }
 

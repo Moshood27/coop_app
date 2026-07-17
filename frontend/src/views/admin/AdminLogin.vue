@@ -76,10 +76,12 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import brand from '../../brand'
 import SupportContacts from '../../components/SupportContacts.vue'
 
+const router = useRouter()
 const loading = ref(false)
 const showPassword = ref(false)
 const error = ref('')
@@ -96,9 +98,10 @@ const handleLogin = async () => {
   try {
     const { data } = await axios.post('/api/admin/login', form.value)
     localStorage.setItem('admin_token', data.token)
-    // Redirect to Filament panel
-    const origin = import.meta?.env?.VITE_BACKEND_ORIGIN || ''
-    window.location.href = `${origin}/admin`
+    localStorage.setItem('is_admin', 'true')
+    
+    // Redirect to mobile admin portal instead of full Filament panel
+    router.push('/admin/portal')
   } catch (e) {
     error.value = e?.response?.data?.message || e?.response?.data?.errors?.email?.[0] || 'Login Failed'
   } finally {

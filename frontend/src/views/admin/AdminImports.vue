@@ -1,19 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 p-4 sm:p-8">
+  <div class="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 p-4 sm:p-6 pb-20">
     <div class="max-w-5xl mx-auto">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4 mb-6">
+        <button @click="$router.push('/admin/portal')" class="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-500 active:scale-95 transition-all">
+          <span class="i-mdi-chevron-left text-2xl"></span>
+        </button>
         <div>
-          <p class="text-xs font-semibold tracking-widest text-amber-700 uppercase">Admin Portal</p>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Bulk Import</h1>
-          <p class="text-slate-600">Import Members, Schemes, and Loans from CSV files.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <router-link to="/admin/vtu" class="btn-muted">VTU Monitor</router-link>
-          <router-link to="/admin/login" class="btn-muted">Admin Login</router-link>
+          <p class="text-[10px] font-bold tracking-[0.2em] text-amber-700 uppercase">Admin Portal</p>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Bulk Import</h1>
         </div>
       </div>
 
-      <div v-if="!adminToken" class="mb-6 p-4 border border-amber-300 bg-amber-50 rounded">
+      <div v-if="!hasAccess" class="mb-6 p-4 border border-amber-300 bg-amber-50 rounded">
         <p class="text-amber-800 text-sm">You are not logged in as admin. Please <router-link to="/admin/login" class="underline font-semibold">login</router-link> to continue.</p>
       </div>
 
@@ -75,9 +73,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import axiosBase from '../../http.js'
+import axios from '../../http.js'
 
-const adminToken = ref(localStorage.getItem('admin_token') || '')
+const adminToken = localStorage.getItem('admin_token')
+const memberToken = localStorage.getItem('token')
+const isAdmin = localStorage.getItem('is_admin') === 'true'
+
+const hasAccess = computed(() => !!adminToken || (!!memberToken && isAdmin))
 
 const files = ref({ members: null, schemes: null, loans: null })
 const loading = ref({ members: false, schemes: false, loans: false })
@@ -94,13 +96,8 @@ const onFileChange = (e, type) => {
   files.value[type] = file || null
 }
 
-const client = computed(() => {
-  const instance = axiosBase.create ? axiosBase.create() : axiosBase
-  return instance
-})
-
 const upload = async (type) => {
-  if (!adminToken.value) {
+  if (!hasAccess.value) {
     alert('Please login as admin to perform imports.')
     return
   }
@@ -115,11 +112,7 @@ const upload = async (type) => {
   loading.value[type] = true
   results.value[type] = null
   try {
-    const { data } = await client.value.post(url, fd, {
-      headers: {
-        'Authorization': `Bearer ${adminToken.value}`,
-      }
-    })
+    const { data } = await axios.post(url, fd)
     results.value[type] = data
   } catch (e) {
     results.value[type] = { error: e?.response?.data?.message || 'Upload failed' }

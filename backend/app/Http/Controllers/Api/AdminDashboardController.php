@@ -9,12 +9,13 @@ use App\Models\WithdrawalRequest;
 use App\Models\Contribution;
 use App\Models\Vendor;
 use App\Models\SupportMessage;
+use App\Services\VtuBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, VtuBalanceService $vtuService)
     {
         // Basic Counts
         $stats = [
@@ -25,6 +26,9 @@ class AdminDashboardController extends Controller
             'pending_vendors' => Vendor::where('is_approved', false)->count(),
             'unread_support' => SupportMessage::whereNull('read_at')->count(),
         ];
+
+        // VTU Balances
+        $vtu_balances = $vtuService->getBalances();
 
         // Recent Activity (Simplified)
         $recent_users = User::latest()
@@ -43,6 +47,7 @@ class AdminDashboardController extends Controller
 
         return response()->json([
             'stats' => $stats,
+            'vtu_balances' => $vtu_balances,
             'recent_users' => $recent_users,
             'liquidity' => [
                 'deposits' => $total_deposits,

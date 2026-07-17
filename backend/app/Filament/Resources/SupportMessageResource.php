@@ -77,7 +77,7 @@ class SupportMessageResource extends Resource
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->color('primary')
                     ->modalContent(fn (SupportMessage $record) => view('filament.resources.user-resource.relation-managers.support-messages', [
-                        'user' => $record->user,
+                        'chatRoom' => app(\App\Services\ChatService::class)->getOrCreatePrivateRoom(auth()->user(), $record->user),
                     ]))
                     ->modalSubmitAction(false)
                     ->modalCancelAction(false)

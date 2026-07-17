@@ -1,3 +1,3 @@
 <div>
-    @livewire('support-chat', ['user' => $user])
+    @livewire('modern-chat', ['chatRoom' => $chatRoom])
 </div>
