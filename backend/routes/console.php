@@ -13,4 +13,4 @@ Schedule::command('app:apply-monthly-fines')->monthlyOn(5, '00:00');
 Schedule::command('telescope:prune')->daily();
 Schedule::command('backup:clean')->daily()->at('01:00');
 Schedule::command('backup:run')->daily()->at('02:00');
-Schedule::command('health:run')->everyFifteenMinutes();
+Schedule::command('health:check')->everyFifteenMinutes();

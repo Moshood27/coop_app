@@ -73,8 +73,8 @@ The checks are registered in `AppServiceProvider.php`:
 9. **Backups**: Checks if recent backups exist and are successful.
 
 ### Manual Commands
-- **Run Health Checks**: `php artisan health:run`
-- **View Health Status (JSON)**: `php artisan health:list --json`
+- **Run Health Checks**: `php artisan health:check`
+- **View Health Status**: `php artisan health:list`
 
 ### Notifications
 Both Backup and Health systems support Slack and Email notifications.
@@ -96,7 +96,7 @@ BACKUP_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 
 ### Scheduling
 Health checks are scheduled in `backend/routes/console.php`:
-- `health:run`: Every 15 minutes.
+- `health:check`: Every 15 minutes.
 
 ---
 

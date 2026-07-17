@@ -171,13 +171,22 @@ class LedgerService
      */
     public function recordWalletDebit(\App\Models\WalletTransaction $tx): LedgerJournal
     {
+        $creditAccount = '1100'; // Default: Bank
+        $creditDescription = 'Bank Withdrawal';
+
+        // Map internal charges to income instead of bank withdrawal
+        if (in_array($tx->source, ['admin_charge', 'attendance_fine', 'attendance_fine_collection'])) {
+            $creditAccount = '4200'; // Fine/Sitting Fee Income
+            $creditDescription = 'Internal Income (Fine/Fee)';
+        }
+
         return $this->recordByCode([
             'date' => $tx->created_at ?? now(),
             'reference' => $tx->reference,
             'description' => "Wallet Debit for {$tx->user->name} via {$tx->source}",
         ], [
             ['code' => '2200', 'debit' => $tx->amount, 'description' => "Member Withdrawal ({$tx->user->membership_number})"],
-            ['code' => '1100', 'credit' => $tx->amount, 'description' => 'Bank Withdrawal'],
+            ['code' => $creditAccount, 'credit' => $tx->amount, 'description' => $creditDescription],
         ]);
     }
 

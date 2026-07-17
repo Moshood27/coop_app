@@ -46,6 +46,18 @@ class UserObserver
             if ($user->outstanding_fines > 0) {
                 $this->processOutstandingFines($user);
             }
+
+            // 2. Process administrative charges (Sitting Fees)
+            if ($user->admin_charge_balance > 0 && $user->admin_charge_auto_deduct) {
+                app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
+            }
+        }
+
+        // If auto-deduct was enabled
+        if ($user->wasChanged('admin_charge_auto_deduct') && $user->admin_charge_auto_deduct) {
+            if ($user->admin_charge_balance > 0 && $user->balance > 0) {
+                app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
+            }
         }
     }
 

@@ -100,6 +100,10 @@ class AdministrativeChargeService
 
         $amountToDeduct = min($due, $balance);
 
+        if ($amountToDeduct <= 0) {
+            return false;
+        }
+
         return DB::transaction(function () use ($user, $amountToDeduct, $due, &$stats) {
             // Deduct from wallet
             $user->decrement('balance', $amountToDeduct);
