@@ -201,6 +201,12 @@
                   {{ verification.customerName }}
                 </p>
               </div>
+              <div v-if="verification.error" class="mt-2 p-3 bg-red-50 rounded-xl border border-red-200">
+                <p class="text-xs text-red-800 font-bold flex items-center gap-2">
+                  <span class="material-icons text-sm">error</span>
+                  {{ verification.error }}
+                </p>
+              </div>
             </div>
 
             <div class="space-y-2">
@@ -246,6 +252,12 @@
               </div>
               <div v-if="verification.verified" class="mt-2 p-3 bg-emerald-50 rounded-xl">
                 <p class="text-xs text-emerald-800 font-bold">{{ verification.customerName }}</p>
+              </div>
+              <div v-if="verification.error" class="mt-2 p-3 bg-red-50 rounded-xl border border-red-200">
+                <p class="text-xs text-red-800 font-bold flex items-center gap-2">
+                  <span class="material-icons text-sm">error</span>
+                  {{ verification.error }}
+                </p>
               </div>
             </div>
 
