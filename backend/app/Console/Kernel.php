@@ -54,6 +54,9 @@ class Kernel extends ConsoleKernel
         // Reconcile pending VTU transactions every 5 minutes and refund failures
         $schedule->job(new \App\Jobs\ReconcileUtilityTransactions)->everyFiveMinutes();
 
+        // Reconcile pending external contributions (Paystack/Monnify) every 30 minutes
+        $schedule->command('reconcile:contributions')->everyThirtyMinutes();
+
         // Update meeting statuses every minute
         $schedule->command('app:update-meeting-statuses')->everyMinute();
 

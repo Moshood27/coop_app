@@ -31,21 +31,22 @@ class VerifyFinancialAudit extends Command
         $this->info("--- Double-Entry Ledger Verification ---");
 
         // 1. Check for unbalanced journals (Total Debits must equal Total Credits for each journal)
-        $unbalancedJournals = LedgerJournal::with('entries')->get()->filter(function ($journal) {
-            $debits = (float) $journal->entries->sum('debit');
-            $credits = (float) $journal->entries->sum('credit');
-            return abs($debits - $credits) > 0.001;
+        $unbalancedCount = 0;
+        LedgerJournal::with('entries')->chunk(100, function ($journals) use (&$unbalancedCount) {
+            foreach ($journals as $journal) {
+                $debits = (float) $journal->entries->sum('debit');
+                $credits = (float) $journal->entries->sum('credit');
+                if (abs($debits - $credits) > 0.001) {
+                    $this->error("❌ Unbalanced journal ID: {$journal->id}, Ref: {$journal->reference}, Diff: " . ($debits - $credits));
+                    $unbalancedCount++;
+                }
+            }
         });
 
-        if ($unbalancedJournals->isEmpty()) {
+        if ($unbalancedCount === 0) {
             $this->info("✅ All journals are internally balanced (Debits = Credits).");
         } else {
-            $this->error("❌ Found " . $unbalancedJournals->count() . " unbalanced journals!");
-            foreach ($unbalancedJournals as $j) {
-                $debits = $j->entries->sum('debit');
-                $credits = $j->entries->sum('credit');
-                $this->line("   Journal ID: {$j->id}, Ref: {$j->reference}, Diff: " . ($debits - $credits));
-            }
+            $this->error("❌ Found " . $unbalancedCount . " unbalanced journals!");
         }
 
         // 2. Global Balance Check (Total Debits across all entries must equal Total Credits)

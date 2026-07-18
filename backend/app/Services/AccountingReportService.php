@@ -71,34 +71,34 @@ class AccountingReportService
             $wtQuery->where('created_at', '>=', $fromDate);
         }
         $wtQuery->where('created_at', '<=', $toDate);
-        $wtQuery->orderBy('created_at');
-
-        foreach ($wtQuery->get() as $wt) {
-            $amount = (float) $wt->amount;
-            if ($wt->type === 'credit') {
-                // Dr Cash/Bank, Cr Wallets Payable
-                $post('Cash & Bank', $amount, 0);
-                $post('Wallets Payable', 0, $amount);
-            } else { // debit
-                if (($wt->source ?? null) === 'wallet_allocation') {
-                    // Dr Wallets Payable, Cr Member Savings Payable
-                    $post('Wallets Payable', $amount, 0);
-                    $post('Member Savings Payable', 0, $amount);
-                } elseif (($wt->source ?? null) === 'store_installment') {
-                    // Dr Wallets Payable, Cr Murabahah Receivables
-                    $post('Wallets Payable', $amount, 0);
-                    $post('Murabahah Receivables', 0, $amount);
-                } elseif (($wt->source ?? null) === 'admin_charge') {
-                    // Dr Wallets Payable, Cr Income - Administrative Fees
-                    $post('Wallets Payable', $amount, 0);
-                    $post('Income - Administrative Fees', 0, $amount);
-                } else {
-                    // Fallback: Dr Wallets Payable, Cr Cash (e.g., withdrawal)
-                    $post('Wallets Payable', $amount, 0);
-                    $post('Cash & Bank', 0, $amount);
+        $wtQuery->orderBy('created_at')->chunk(500, function ($wts) use ($post) {
+            foreach ($wts as $wt) {
+                $amount = (float) $wt->amount;
+                if ($wt->type === 'credit') {
+                    // Dr Cash/Bank, Cr Wallets Payable
+                    $post('Cash & Bank', $amount, 0);
+                    $post('Wallets Payable', 0, $amount);
+                } else { // debit
+                    if (($wt->source ?? null) === 'wallet_allocation') {
+                        // Dr Wallets Payable, Cr Member Savings Payable
+                        $post('Wallets Payable', $amount, 0);
+                        $post('Member Savings Payable', 0, $amount);
+                    } elseif (($wt->source ?? null) === 'store_installment') {
+                        // Dr Wallets Payable, Cr Murabahah Receivables
+                        $post('Wallets Payable', $amount, 0);
+                        $post('Murabahah Receivables', 0, $amount);
+                    } elseif (($wt->source ?? null) === 'admin_charge') {
+                        // Dr Wallets Payable, Cr Income - Administrative Fees
+                        $post('Wallets Payable', $amount, 0);
+                        $post('Income - Administrative Fees', 0, $amount);
+                    } else {
+                        // Fallback: Dr Wallets Payable, Cr Cash (e.g., withdrawal)
+                        $post('Wallets Payable', $amount, 0);
+                        $post('Cash & Bank', 0, $amount);
+                    }
                 }
             }
-        }
+        });
 
         // Loans disbursed (treat created active/completed as disbursed)
         $loanQuery = QardHasan::query()->whereIn('status', ['active', 'completed', 'defaulted']);
@@ -106,11 +106,13 @@ class AccountingReportService
             $loanQuery->where('created_at', '>=', $fromDate);
         }
         $loanQuery->where('created_at', '<=', $toDate);
-        foreach ($loanQuery->get() as $loan) {
-            $principal = (float) $loan->principal_amount;
-            $post('Loans Receivable', $principal, 0);
-            $post('Cash & Bank', 0, $principal);
-        }
+        $loanQuery->chunk(500, function ($loans) use ($post) {
+            foreach ($loans as $loan) {
+                $principal = (float) $loan->principal_amount;
+                $post('Loans Receivable', $principal, 0);
+                $post('Cash & Bank', 0, $principal);
+            }
+        });
 
         // Loan repayments (cash in, reduce receivable)
         $repQuery = QardHasanRepayment::query();
@@ -126,11 +128,13 @@ class AccountingReportService
         });
         // Include common success statuses only
         $repQuery->whereIn('status', ['success', 'paid', 'completed']);
-        foreach ($repQuery->get() as $rep) {
-            $amt = (float) $rep->amount;
-            $post('Cash & Bank', $amt, 0);
-            $post('Loans Receivable', 0, $amt);
-        }
+        $repQuery->chunk(500, function ($reps) use ($post) {
+            foreach ($reps as $rep) {
+                $amt = (float) $rep->amount;
+                $post('Cash & Bank', $amt, 0);
+                $post('Loans Receivable', 0, $amt);
+            }
+        });
 
         // Charity receipts -> restricted fund
         $charityQuery = CharityEntry::query();
@@ -138,11 +142,13 @@ class AccountingReportService
             $charityQuery->where('created_at', '>=', $fromDate);
         }
         $charityQuery->where('created_at', '<=', $toDate);
-        foreach ($charityQuery->get() as $ce) {
-            $amt = (float) $ce->amount;
-            $post('Cash & Bank', $amt, 0);
-            $post('Charity Fund (Restricted)', 0, $amt);
-        }
+        $charityQuery->chunk(500, function ($ces) use ($post) {
+            foreach ($ces as $ce) {
+                $amt = (float) $ce->amount;
+                $post('Cash & Bank', $amt, 0);
+                $post('Charity Fund (Restricted)', 0, $amt);
+            }
+        });
 
         // Manual Income Entries (admin-entered)
         if (Schema::hasTable('income_entries')) {
@@ -151,13 +157,15 @@ class AccountingReportService
                 $miQuery->where('date', '>=', $fromDate->toDateString());
             }
             $miQuery->where('date', '<=', $toDate->toDateString());
-            foreach ($miQuery->get() as $mi) {
-                $amt = (float) $mi->amount;
-                $cat = $mi->category ?: 'Uncategorized';
-                // Dr Cash & Bank, Cr Income - {Category}
-                $post('Cash & Bank', $amt, 0);
-                $post('Income - ' . $cat, 0, $amt);
-            }
+            $miQuery->chunk(500, function ($mis) use ($post) {
+                foreach ($mis as $mi) {
+                    $amt = (float) $mi->amount;
+                    $cat = $mi->category ?: 'Uncategorized';
+                    // Dr Cash & Bank, Cr Income - {Category}
+                    $post('Cash & Bank', $amt, 0);
+                    $post('Income - ' . $cat, 0, $amt);
+                }
+            });
         }
 
         // Manual Expense Entries (admin-entered)
@@ -171,13 +179,15 @@ class AccountingReportService
                 $meQuery->where('date', '>=', $fromDate->toDateString());
             }
             $meQuery->where('date', '<=', $toDate->toDateString());
-            foreach ($meQuery->get() as $me) {
-                $amt = (float) $me->amount;
-                $cat = $me->category ?: 'Uncategorized';
-                // Dr Expense - {Category}, Cr Cash & Bank
-                $post('Expense - ' . $cat, $amt, 0);
-                $post('Cash & Bank', 0, $amt);
-            }
+            $meQuery->chunk(500, function ($mes) use ($post) {
+                foreach ($mes as $me) {
+                    $amt = (float) $me->amount;
+                    $cat = $me->category ?: 'Uncategorized';
+                    // Dr Expense - {Category}, Cr Cash & Bank
+                    $post('Expense - ' . $cat, $amt, 0);
+                    $post('Cash & Bank', 0, $amt);
+                }
+            });
         }
 
         // Store Profits (Murabahah)
@@ -186,24 +196,26 @@ class AccountingReportService
             $storeQuery->where('updated_at', '>=', $fromDate);
         }
         $storeQuery->where('updated_at', '<=', $toDate);
-        foreach ($storeQuery->get() as $order) {
-            $isMurabahah = isset($order->meta['financing']['type']) && $order->meta['financing']['type'] === 'murabaha';
-            $profit = (float) $order->total_profit;
-            $cost = (float) $order->total_cost;
-            $total = (float) $order->total_amount;
+        $storeQuery->chunk(500, function ($orders) use ($post) {
+            foreach ($orders as $order) {
+                $isMurabahah = isset($order->meta['financing']['type']) && $order->meta['financing']['type'] === 'murabaha';
+                $profit = (float) $order->total_profit;
+                $cost = (float) $order->total_cost;
+                $total = (float) $order->total_amount;
 
-            if ($isMurabahah) {
-                // Dr Murabahah Receivables, Cr Cash (Cost), Cr Store Profit (Income)
-                $post('Murabahah Receivables', $total, 0);
-                $post('Cash & Bank', 0, $cost);
-                $post('Income - Store Profit', 0, $profit);
-            } else {
-                // Cash order (Wallet debit)
-                // Dr Cash (Total), Cr Store Profit (Income), Cr Cash (Cost) -> Net: Dr Cash (Profit)
-                $post('Cash & Bank', $profit, 0);
-                $post('Income - Store Profit', 0, $profit);
+                if ($isMurabahah) {
+                    // Dr Murabahah Receivables, Cr Cash (Cost), Cr Store Profit (Income)
+                    $post('Murabahah Receivables', $total, 0);
+                    $post('Cash & Bank', 0, $cost);
+                    $post('Income - Store Profit', 0, $profit);
+                } else {
+                    // Cash order (Wallet debit)
+                    // Dr Cash (Total), Cr Store Profit (Income), Cr Cash (Cost) -> Net: Dr Cash (Profit)
+                    $post('Cash & Bank', $profit, 0);
+                    $post('Income - Store Profit', 0, $profit);
+                }
             }
-        }
+        });
 
         // Project Management Fees (Investment ROI)
         $projectQuery = ProjectProfit::query();
@@ -211,11 +223,13 @@ class AccountingReportService
             $projectQuery->where('created_at', '>=', $fromDate);
         }
         $projectQuery->where('created_at', '<=', $toDate);
-        foreach ($projectQuery->get() as $pp) {
-            $fee = (float) $pp->management_fee_amount;
-            $post('Cash & Bank', $fee, 0);
-            $post('Income - Investment ROI', 0, $fee);
-        }
+        $projectQuery->chunk(500, function ($pps) use ($post) {
+            foreach ($pps as $pp) {
+                $fee = (float) $pp->management_fee_amount;
+                $post('Cash & Bank', $fee, 0);
+                $post('Income - Investment ROI', 0, $fee);
+            }
+        });
 
         // Member Balances (Snapshot as of $toDate for current liabilities)
         // Note: Trial Balance usually tracks flows, but for a Coop, we often need current state.
