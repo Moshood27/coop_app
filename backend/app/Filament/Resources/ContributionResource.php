@@ -115,7 +115,15 @@ class ContributionResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('scheme_id')
                                             ->label('Scheme')
-                                            ->options(Scheme::where('active', true)->pluck('name', 'id'))
+                                            ->options(function () {
+                                                $options = Scheme::where('active', true)->pluck('name', 'id')->toArray();
+                                                $hasShares = Scheme::where('active', true)->where(fn($q) => $q->where('name', 'Shares')->orWhere('name', 'like', '%share%'))->exists();
+                                                $hasSavings = Scheme::where('active', true)->where(fn($q) => $q->where('name', 'Savings')->orWhere('name', 'like', '%saving%'))->exists();
+                                                if ($hasShares && $hasSavings) {
+                                                    $options['combined'] = 'Shares & Savings (50/50 Split)';
+                                                }
+                                                return $options;
+                                            })
                                             ->searchable()
                                             ->required()
                                             ->reactive()
@@ -181,9 +189,14 @@ class ContributionResource extends Resource
                                             ->helperText('Link to a savings group'),
                                     ]),
                             ])
-                            ->itemLabel(fn (array $state): ?string => ($state['scheme_id'] ?? null)
-                                ? Scheme::find($state['scheme_id'])?->name . ' - ₦' . number_format((float) ($state['amount'] ?? 0), 2)
-                                : null)
+                            ->itemLabel(function (array $state): ?string {
+                                if (!($state['scheme_id'] ?? null)) return null;
+                                if ($state['scheme_id'] === 'combined') {
+                                    return 'Shares & Savings (50/50 Split) - ₦' . number_format((float) ($state['amount'] ?? 0), 2);
+                                }
+                                $scheme = Scheme::find($state['scheme_id']);
+                                return ($scheme?->name ?? 'Unknown') . ' - ₦' . number_format((float) ($state['amount'] ?? 0), 2);
+                            })
                             ->collapsible()
                             ->cloneable()
                             ->reorderableWithButtons()
