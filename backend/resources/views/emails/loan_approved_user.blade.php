@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Loan Approved</title>
-</head>
-<body>
-    <h3>Assalāmu ‘alaykum, {{ $member->name ?? 'Member' }}!</h3>
+@extends('layouts.mail')
+
+@section('title', 'Loan Approved')
+
+@section('content')
+    <p class="salam">Assalāmu ‘alaykum {{ $member->name ?? 'Member' }},</p>
     <p>We pray this message finds you in good health and īmān.</p>
     <p>We are pleased to inform you that your Qard Hasan request <strong>{{ $loan->qard_id_string }}</strong> has been approved.</p>
 
@@ -21,7 +20,4 @@
 
     <p>Once you upload the signed agreement, our admin will verify it and disburse the funds to your wallet.</p>
     <p>May Allāh place barakah in this for you.</p>
-
-    <p>Jazākumullāhu khayran,<br>{{ config('app.name') }}</p>
-</body>
-</html>
+@endsection

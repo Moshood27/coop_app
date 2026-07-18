@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Loan Agreement Rejected</title>
-</head>
-<body>
-    <h3>Assalāmu ‘alaykum, {{ $member->name ?? 'Member' }}</h3>
+@extends('layouts.mail')
+
+@section('title', 'Loan Agreement Rejected')
+
+@section('content')
+    <p class="salam">Assalāmu ‘alaykum {{ $member->name ?? 'Member' }},</p>
     <p>We pray this message finds you in good health and īmān.</p>
     <p>The signed loan agreement you uploaded for <strong>{{ $loan->qard_id_string }}</strong> was not accepted for the following reason:</p>
 
@@ -25,5 +24,4 @@
     <p>Once you re-upload, our admin will review it again for final verification and disbursement.</p>
 
     <p>Thank you.</p>
-</body>
-</html>
+@endsection
