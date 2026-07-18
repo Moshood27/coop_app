@@ -101,6 +101,13 @@ Route::get('/login', function (\Illuminate\Http\Request $request) {
 })->name('login');
 
 
+Route::get('/payment-callback', function (\Illuminate\Http\Request $request) {
+    // Redirect browser requests to the member app payment callback page
+    $query = $request->getQueryString();
+    return redirect('/app/payment-callback' . ($query ? '?' . $query : ''));
+});
+
+
 // Web (session-authenticated) export routes for Takaful to support Filament downloads without Bearer tokens.
 Route::middleware(['auth'])->prefix('admin/takaful/export')->group(function () {
     Route::get('/ledger.csv', [AdminTakafulController::class, 'exportLedgerCsv'])->name('takaful.web.export.ledger.csv');

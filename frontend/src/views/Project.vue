@@ -218,6 +218,10 @@ import { useAppStatusStore } from '../stores/appStatus'
 
 const route = useRoute()
 const appStatusStore = useAppStatusStore()
+
+const baseRaw = import.meta?.env?.BASE_URL || '/'
+const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`
+
 const id = ref(Number(route.params.id))
 
 const loading = ref(true)
@@ -281,7 +285,7 @@ const initiateUnitPurchase = async () => {
         }
       ],
       gateway: selectedGateway.value,
-      callback_url: window.location.origin + '/payment-callback?gateway=' + selectedGateway.value
+      callback_url: window.location.origin + basePath + 'payment-callback?gateway=' + selectedGateway.value
     }
 
     const { data } = await axios.post('/api/initiate-payment', payload)

@@ -284,6 +284,9 @@ const route = useRoute()
 const router = useRouter()
 const appStatusStore = useAppStatusStore()
 
+const baseRaw = import.meta?.env?.BASE_URL || '/'
+const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`
+
 const { notice, showNotice, closeNotice } = useNotice()
 const pinPrompt = ref({ visible: false })
 const group = ref({})
@@ -447,7 +450,7 @@ const payViaGateway = async (gateway) => {
     const { data } = await axios.post('/api/initiate-payment', {
       items: [item],
       gateway: gateway,
-      callback_url: window.location.origin + '/payment-callback?gateway=' + gateway
+      callback_url: window.location.origin + basePath + 'payment-callback?gateway=' + gateway
     })
     
     if (data.authorization_url || data.checkout_url) {

@@ -179,6 +179,10 @@ import { useAppStatusStore } from '../stores/appStatus'
 
 const route = useRoute()
 const appStatusStore = useAppStatusStore()
+
+const baseRaw = import.meta?.env?.BASE_URL || '/'
+const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`
+
 const project = ref(null)
 const loading = ref(false)
 const submitting = ref(false)
@@ -224,7 +228,7 @@ const initiateContribution = async (gateway) => {
       amount: form.value.amount,
       is_anonymous: form.value.is_anonymous,
       gateway: gateway,
-      callback_url: window.location.origin + '/payment-callback?gateway=' + gateway
+      callback_url: window.location.origin + basePath + 'payment-callback?gateway=' + gateway
     })
     
     if (data.authorization_url) {

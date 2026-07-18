@@ -430,6 +430,10 @@ import axios from '../http.js'
 import { useAppStatusStore } from '../stores/appStatus'
 
 const appStatusStore = useAppStatusStore()
+
+const baseRaw = import.meta?.env?.BASE_URL || '/'
+const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`
+
 const loading = ref(false)
 const activeTab = ref('buy')
 const showZakatReport = ref(false)
@@ -602,7 +606,7 @@ const handlePayZakat = async () => {
   if (!confirm(`Pay ₦${formatMoney(goldData.value.zakat.report.zakat_due)} Zakat?`)) return
   loading.value = true
   const gateway = zakatForm.value.gateway
-  const callback_url = `${window.location.origin}/payment-callback?gateway=${gateway}`
+  const callback_url = `${window.location.origin}${basePath}payment-callback?gateway=${gateway}`
   try {
     const res = await axios.post('/api/zakat/pay', {
       gateway,
@@ -634,7 +638,7 @@ const handlePayFitr = async () => {
   if (!confirm(`Pay ₦${formatMoney(goldData.value.zakat.report.fitr_amount)} Zakat Al-Fitr?`)) return
   loading.value = true
   const gateway = zakatForm.value.gateway
-  const callback_url = `${window.location.origin}/payment-callback?gateway=${gateway}`
+  const callback_url = `${window.location.origin}${basePath}payment-callback?gateway=${gateway}`
   try {
     const res = await axios.post('/api/zakat/pay-fitr', {
       gateway,

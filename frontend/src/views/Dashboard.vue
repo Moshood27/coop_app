@@ -759,6 +759,9 @@ const pinErrors = ref({})
 
 const { hideBalances, toggleBalances } = useBalanceVisibility()
 
+const baseRaw = import.meta?.env?.BASE_URL || '/'
+const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`
+
 const hasSeenDashboardSwiper = ref(localStorage.getItem('has_seen_dashboard_swiper') === 'true')
 const dismissSwiper = () => {
   localStorage.setItem('has_seen_dashboard_swiper', 'true')
@@ -1061,8 +1064,6 @@ const logout = async () => {
   } catch (_) {}
   localStorage.removeItem('token')
   localStorage.removeItem('is_admin')
-  const base = import.meta?.env?.BASE_URL || '/'
-  const basePath = (base && base.endsWith('/')) ? base : `${base}/`
   window.location.assign(`${basePath}login`)
 }
 
