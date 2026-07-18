@@ -28,13 +28,20 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'inactivity' => \App\Http\Middleware\InactivityTimeout::class,
             'track_activity' => \App\Http\Middleware\TrackUserActivity::class,
+            'bypass_cache' => \App\Http\Middleware\BypassCache::class,
         ]);
 
-        // Append security headers to all web and API responses
-        $middleware->appendToGroup('web', [\App\Http\Middleware\SecurityHeaders::class]);
+        // Append security and cache headers to all web and API responses
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\BypassCache::class,
+        ]);
         $middleware->prependToGroup('api', [\App\Http\Middleware\QueryTokenToBearer::class]);
-        $middleware->appendToGroup('api', [\App\Http\Middleware\SecurityHeaders::class]);
-        $middleware->appendToGroup('api', [\App\Http\Middleware\TrackUserActivity::class]);
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\TrackUserActivity::class,
+            \App\Http\Middleware\BypassCache::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->report(function (AccessDeniedHttpException $e) {
