@@ -302,7 +302,7 @@ return [
             'disks' => array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null]),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
-                MaximumStorageInMegabytes::class => 5000,
+                MaximumStorageInMegabytes::class => env('BACKUP_MAX_STORAGE_MB', 20000),
             ],
         ],
 
@@ -367,7 +367,7 @@ return [
              * this amount of megabytes has been reached.
              * Set null for unlimited size.
              */
-            'delete_oldest_backups_when_using_more_megabytes_than' => 5000,
+            'delete_oldest_backups_when_using_more_megabytes_than' => env('BACKUP_MAX_STORAGE_MB', 20000),
         ],
 
         /*
