@@ -123,7 +123,7 @@ class ContributionResource extends Resource
                                                 $options = $allSchemes->pluck('name', 'id')->toArray();
 
                                                 if ($shares && $savings) {
-                                                    $options['combined'] = 'Shares & Savings (50/50 Split)';
+                                                    $options = ['combined' => 'Shares & Savings (50/50 Split)'] + $options;
                                                     unset($options[$shares->id]);
                                                     unset($options[$savings->id]);
                                                 }
