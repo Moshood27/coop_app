@@ -1,9 +1,10 @@
-@extends('layouts.mail')
-
-@section('title', 'Loan Agreement Verified')
-
-@section('content')
-    <p class="salam">Great news, {{ $member->name ?? 'Member' }}!</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loan Agreement Verified</title>
+</head>
+<body>
+    <h3>Great news, {{ $member->name ?? 'Member' }}!</h3>
     <p>Your signed loan agreement for <strong>{{ $loan->qard_id_string }}</strong> has been verified by our team.</p>
 
     <p>Your loan is now being processed for final disbursement. You will be notified once the funds are credited to your wallet.</p>
@@ -15,4 +16,5 @@
     </ul>
 
     <p>Thank you for your cooperation!</p>
-@endsection
+</body>
+</html>

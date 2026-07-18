@@ -2,15 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
 <title>{{ config('app.name') }}</title>
-<script type="application/ld+json">
-{
-  "@context": "http://schema.org",
-  "@type": "Organization",
-  "name": "{{ config('app.name') }}",
-  "url": "{{ config('app.url') }}",
-  "logo": "{{ config('app.url') . '/images/' . config('brand.slug', 'attaqwa') . '-logo.svg' }}"
-}
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="color-scheme" content="light">

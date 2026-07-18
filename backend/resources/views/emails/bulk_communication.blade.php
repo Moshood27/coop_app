@@ -1,8 +1,12 @@
-@extends('layouts.mail')
-
-@section('title', $title)
-
-@section('content')
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ $title }}</title>
+</head>
+<body>
     <h1>{{ $title }}</h1>
     <p>{{ $message }}</p>
-@endsection
+    <br>
+    <p>Regards,<br>{{ config('app.name') }}</p>
+</body>
+</html>
