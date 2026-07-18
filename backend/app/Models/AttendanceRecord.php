@@ -29,7 +29,6 @@ class AttendanceRecord extends Model
         'verified_biometrically',
         'verified_via_beacon',
         'is_offline_sync',
-        'signature_path',
     ];
 
     protected $casts = [
