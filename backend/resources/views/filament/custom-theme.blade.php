@@ -15,14 +15,14 @@
 
     /* Cards & Sections */
     .fi-section, .fi-card, .fi-ta-ctn {
-        border-radius: 1.25rem !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03) !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        border-radius: 1rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02) !important;
+        border: 1px solid rgba(0, 0, 0, 0.06) !important;
     }
 
     .dark .fi-section, .dark .fi-card, .dark .fi-ta-ctn {
         background-color: #0f172a !important;
-        border-color: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
     }
 
@@ -37,14 +37,14 @@
     }
 
     .dark .fi-sidebar {
-        background-color: #0f172a !important;
+        background-color: #020617 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
     .fi-sidebar-header {
         border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
     }
 
     .dark .fi-sidebar-header {
@@ -52,19 +52,63 @@
     }
 
     .fi-sidebar-item-button {
-        border-radius: 0.75rem !important;
-        margin: 0.125rem 0.5rem !important;
-        transition: all 0.2s;
+        border-radius: 0.5rem !important;
+        margin: 0.125rem 0.75rem !important;
+        transition: all 0.2s ease;
+        padding: 0.6rem 0.75rem !important;
+        color: #64748b !important;
+    }
+
+    .fi-sidebar-item-button:hover {
+        background-color: rgba(16, 185, 129, 0.05) !important;
+        color: #10b981 !important;
+    }
+
+    .dark .fi-sidebar-item-button:hover {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: #34d399 !important;
+    }
+
+    .fi-sidebar-item-button.fi-active {
+        background-color: rgba(16, 185, 129, 0.08) !important;
+        color: #059669 !important;
+        font-weight: 600 !important;
+        border-left: 4px solid #10b981 !important;
+        border-radius: 0 0.5rem 0.5rem 0 !important;
+        margin-left: 0 !important;
+        padding-left: 1.25rem !important;
+    }
+
+    .dark .fi-sidebar-item-button.fi-active {
+        background-color: rgba(16, 185, 129, 0.12) !important;
+        color: #34d399 !important;
+        border-left-color: #34d399 !important;
+    }
+
+    .fi-sidebar-item-icon {
+        color: #94a3b8 !important;
+        transition: color 0.2s ease;
+    }
+
+    .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+    .fi-sidebar-item-button.fi-active .fi-sidebar-item-icon {
+        color: #10b981 !important;
+    }
+
+    .dark .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+    .dark .fi-sidebar-item-button.fi-active .fi-sidebar-item-icon {
+        color: #34d399 !important;
     }
 
     .fi-sidebar-group-label {
-        letter-spacing: 0.05em;
-        font-weight: 700;
+        letter-spacing: 0.1em;
+        font-weight: 800;
         text-transform: uppercase;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #94a3b8;
-        padding-left: 1.25rem !important;
-        margin-top: 1.5rem !important;
+        padding-left: 1.5rem !important;
+        margin-top: 2rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
     /* Input Fields */
@@ -76,8 +120,8 @@
     }
 
     .fi-fo-text-input:focus-within, .fi-input-wrp:focus-within {
-        border-color: #6366f1 !important; /* Indigo-500 focus */
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+        border-color: #10b981 !important; /* Emerald-500 focus */
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
     }
 
     .dark .fi-fo-text-input, .dark .fi-fo-select, .dark .fi-fo-textarea, .dark .fi-fo-datetime-picker, .dark .fi-input-wrp {
@@ -87,8 +131,8 @@
     }
 
     .dark .fi-fo-text-input:focus-within, .dark .fi-input-wrp:focus-within {
-        border-color: #818cf8 !important; /* Indigo-400 focus */
-        box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15) !important;
+        border-color: #34d399 !important; /* Emerald-400 focus */
+        box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15) !important;
     }
 
     /* Buttons */
@@ -174,8 +218,8 @@
 
     .fi-global-search-input-ctn input:focus {
         background-color: white !important;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
-        border: 1px solid rgb(99, 102, 241) !important;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+        border: 1px solid #10b981 !important;
     }
 
     .dark .fi-global-search-input-ctn input:focus {

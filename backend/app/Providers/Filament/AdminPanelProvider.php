@@ -89,7 +89,7 @@ class AdminPanelProvider extends PanelProvider
             ->darkModeBrandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo-dark.svg'))
             ->favicon(asset('images/'.config('brand.slug', 'attaqwa').'-favicon.svg'))
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::Emerald,
                 'gray' => Color::Slate,
                 'info' => Color::Blue,
                 'success' => Color::Emerald,
