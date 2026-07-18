@@ -342,6 +342,9 @@
       <path value="$PROJECT_DIR$/backend/vendor/spatie/enum" />
       <path value="$PROJECT_DIR$/backend/vendor/spatie/laravel-health" />
       <path value="$PROJECT_DIR$/backend/vendor/laravel/slack-notification-channel" />
+      <path value="$PROJECT_DIR$/backend/vendor/graham-campbell/guzzle-factory" />
+      <path value="$PROJECT_DIR$/backend/vendor/spatie/dropbox-api" />
+      <path value="$PROJECT_DIR$/backend/vendor/spatie/flysystem-dropbox" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">

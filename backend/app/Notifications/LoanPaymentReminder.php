@@ -32,10 +32,10 @@ class LoanPaymentReminder extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Gentle Reminder: Qard Hasan Repayment (Barakah-Focused)')
+            ->subject('Gentle Reminder: Qard Hasan (Loan) Repayment (Barakah-Focused)')
             ->greeting('Assalāmu ‘alaykum ' . ($notifiable->full_name ?: $notifiable->name) . ',')
             ->line('We pray this message finds you in good health and īmān.')
-            ->line('This is a gentle reminder regarding your outstanding Qard Hasan repayment.')
+            ->line('This is a gentle reminder regarding your outstanding Qard Hasan (Loan) repayment.')
             ->line('Amount to pay: ₦' . number_format($this->amountToPay, 2))
             ->line('Due Date: ' . $this->dueDateText)
             ->action('View My Account', url('/loans'))

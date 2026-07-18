@@ -334,6 +334,9 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/enum" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-health" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/regex" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/graham-campbell/guzzle-factory" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/dropbox-api" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/flysystem-dropbox" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
