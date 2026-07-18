@@ -1039,6 +1039,7 @@ class UserResource extends Resource
                                     'category' => $reason === 'loan_repayment' ? 'loan_repayment' : 'debit',
                                     'note' => $note,
                                     'qard_hasan_id' => $reason === 'loan_repayment' ? $data['qard_hasan_id'] : null,
+                                    'paid_at' => now(),
                                 ]);
 
                                 $record->syncSchemeBalance($scheme->name);
@@ -1472,6 +1473,7 @@ class UserResource extends Resource
                                 'category' => 'fine',
                                 'status' => 'success',
                                 'reference' => 'MANUAL_FINE_' . Str::random(8),
+                                'paid_at' => now(),
                             ]);
 
                             ShariahAudit::log(auth()->user(), 'manual_fine_payment_recorded', [

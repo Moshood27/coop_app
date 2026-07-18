@@ -72,6 +72,7 @@ class EditUser extends EditRecord
                                 'category' => 'fine',
                                 'status' => 'success',
                                 'reference' => 'MANUAL_FINE_' . \Illuminate\Support\Str::random(8),
+                                'paid_at' => now(),
                             ]);
 
                             \App\Models\ShariahAuditLog::log(auth()->user(), 'manual_fine_payment_recorded', [
