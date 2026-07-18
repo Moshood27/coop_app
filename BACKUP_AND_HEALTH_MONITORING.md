@@ -12,8 +12,8 @@ The application uses `spatie/laravel-backup` to ensure data safety and disaster 
 - **Encryption**: Backups are encrypted using the password defined in the `.env` file.
 - **Multi-Destination Storage**:
     - **Local**: Backups are stored in `storage/app/backups`.
-    - **Google Drive**: Backups are uploaded to a specified Google Drive folder for off-site resilience.
-    - **Dropbox**: Backups are uploaded to Dropbox for additional redundancy.
+    - **Cloudflare R2**: Backups are uploaded to R2 for high-durability off-site storage.
+    - **Google Drive**: Backups are uploaded to a specified Google Drive folder for additional resilience.
     The drivers are registered in `AppServiceProvider.php`.
 
 ### Configuration
@@ -21,14 +21,17 @@ Configuration is located in `backend/config/backup.php`.
 
 **Required Environment Variables:**
 ```env
+# Cloudflare R2 Credentials
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=
+CLOUDFLARE_R2_ENDPOINT=
+
 # Google Drive Credentials
 GOOGLE_DRIVE_CLIENT_ID=
 GOOGLE_DRIVE_CLIENT_SECRET=
 GOOGLE_DRIVE_REFRESH_TOKEN=
 GOOGLE_DRIVE_FOLDER_ID=
-
-# Dropbox Credentials
-DROPBOX_TOKEN=
 
 # Backup Archive Password
 BACKUP_ARCHIVE_PASSWORD=your-secure-password
@@ -104,7 +107,7 @@ Health checks are scheduled in `backend/routes/console.php`:
 
 In the event of a total server failure:
 1. Re-provision the server using `BUILD_AND_DEPLOY.md`.
-2. Retrieve the latest backup from Google Drive, Dropbox, or local storage.
+2. Retrieve the latest backup from Cloudflare R2, Google Drive, or local storage.
 3. Use `php artisan backup:run --only-db` (manually or via restore script) to restore the database.
 4. Unzip the backup archive using the `BACKUP_ARCHIVE_PASSWORD`.
 5. Restore the `storage/app/public` files.

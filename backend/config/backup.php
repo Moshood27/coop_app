@@ -166,7 +166,7 @@ return [
             'disks' => [
                 'local',
                 'google',
-                'dropbox',
+                'r2',
             ],
 
             /*
@@ -299,7 +299,7 @@ return [
     'monitor_backups' => [
         [
             'name' => 'ATTAQWA',
-            'disks' => ['local', 'google', 'dropbox'],
+            'disks' => ['local', 'google', 'r2'],
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,
