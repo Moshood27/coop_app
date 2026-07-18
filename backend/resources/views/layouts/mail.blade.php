@@ -6,6 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="x-apple-disable-message-reformatting">
     <title>@yield('title', config('app.name'))</title>
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Organization",
+      "name": "{{ config('app.name') }}",
+      "url": "{{ config('app.url') }}",
+      "logo": "{{ config('app.url') . '/images/' . config('brand.slug', 'attaqwa') . '-logo.svg' }}"
+    }
+    </script>
     <style>
         html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
         * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
@@ -32,12 +41,12 @@
 </head>
 <body class="bg">
     <div class="card">
-        <div class="header">
-            <a href="{{ config('app.frontend_url') ?? config('app.url') }}" target="_blank" style="display: inline-block;">
+        <div class="header" itemscope itemtype="http://schema.org/Organization">
+            <a href="{{ config('app.frontend_url') ?? config('app.url') }}" itemprop="url" target="_blank" style="display: inline-block;">
                 @php($brandSlug = config('brand.slug', 'attaqwa'))
-                <img src="{{ config('app.url') . '/images/' . $brandSlug . '-logo.svg' }}" alt="{{ config('app.name') }}" height="50" style="height: 50px; max-height: 50px;">
+                <img src="{{ config('app.url') . '/images/' . $brandSlug . '-logo.svg' }}" itemprop="logo" alt="{{ config('app.name') }}" height="50" style="height: 50px; max-height: 50px;">
             </a>
-            <div style="margin-top: 10px; font-size: 18px; font-weight: bold; color: #374151;">{{ config('app.name') }}</div>
+            <div style="margin-top: 10px; font-size: 18px; font-weight: bold; color: #374151;" itemprop="name">{{ config('app.name') }}</div>
         </div>
         <div class="content">
             @yield('content')
