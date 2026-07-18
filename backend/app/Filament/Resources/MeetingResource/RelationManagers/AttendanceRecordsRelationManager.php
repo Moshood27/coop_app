@@ -38,6 +38,12 @@ class AttendanceRecordsRelationManager extends RelationManager
                     ])
                     ->required(),
                 Forms\Components\DateTimePicker::make('attended_at'),
+                Forms\Components\FileUpload::make('signature_path')
+                    ->label('Manual Signature')
+                    ->image()
+                    ->disk('public')
+                    ->directory('attendance_signatures')
+                    ->visibility('public'),
                 Forms\Components\Toggle::make('verified_biometrically')
                     ->label('Verified via Fingerprint')
                     ->disabled(),
@@ -108,6 +114,14 @@ class AttendanceRecordsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('attended_at')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\IconColumn::make('signature_path')
+                    ->label('Signed')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => !empty($record->signature_path))
+                    ->trueIcon('heroicon-o-pencil-square')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
                 Tables\Columns\IconColumn::make('verified_biometrically')
                     ->label('Biometric')
                     ->boolean()
@@ -142,6 +156,10 @@ class AttendanceRecordsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['marked_by_id'] = auth()->id();
+                        return $data;
+                    })
                     ->after(function ($record) {
                         if ($record->status === 'present' && $record->attended_at) {
                             $meeting = $this->getOwnerRecord();
@@ -236,6 +254,10 @@ class AttendanceRecordsRelationManager extends RelationManager
                         // or admin can manually trigger audit.
                     }),
                 Tables\Actions\EditAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['marked_by_id'] = auth()->id();
+                        return $data;
+                    })
                     ->after(function (AttendanceRecord $record, array $data, AttendanceRecord $oldRecord) {
                         // Handle Absence Fine status change
                         $oldStatus = $oldRecord->status;
@@ -276,13 +298,23 @@ class AttendanceRecordsRelationManager extends RelationManager
                     ->icon('heroicon-m-check-circle')
                     ->color('success')
                     ->hidden(fn ($record) => $record->status === 'present')
-                    ->action(function ($record) {
+                    ->form([
+                        Forms\Components\FileUpload::make('signature_path')
+                            ->label('Signature')
+                            ->image()
+                            ->disk('public')
+                            ->directory('attendance_signatures')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
                         $meeting = $this->getOwnerRecord();
                         $attendanceService = app(\App\Services\AttendanceService::class);
 
                         $record->update([
                             'status' => 'present',
                             'attended_at' => now(),
+                            'marked_by_id' => auth()->id(),
+                            'signature_path' => $data['signature_path'],
                         ]);
 
                         if ($attendanceService->isLate($meeting, $record->attended_at)) {
@@ -311,6 +343,7 @@ class AttendanceRecordsRelationManager extends RelationManager
                         ->label('Mark as Present')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
+                        ->requiresConfirmation()
                         ->action(function (Collection $records) {
                             $meeting = $this->getOwnerRecord();
                             $attendanceService = app(\App\Services\AttendanceService::class);
@@ -319,6 +352,7 @@ class AttendanceRecordsRelationManager extends RelationManager
                                 $record->update([
                                     'status' => 'present',
                                     'attended_at' => now(),
+                                    'marked_by_id' => auth()->id(),
                                 ]);
 
                                 if ($attendanceService->isLate($meeting, $record->attended_at)) {
