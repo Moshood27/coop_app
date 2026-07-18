@@ -131,7 +131,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\TakafulContribution::observe(\App\Observers\TakafulContributionObserver::class);
         \App\Models\SadaqahContribution::observe(\App\Observers\SadaqahContributionObserver::class);
 
-        Health::checks([
+        $checks = [
             UsedDiskSpaceCheck::new(),
             DatabaseCheck::new(),
             DebugModeCheck::new(),
@@ -140,9 +140,17 @@ class AppServiceProvider extends ServiceProvider
             ScheduleCheck::new(),
             CacheCheck::new(),
             HorizonCheck::new(),
-            BackupsCheck::new()
-                ->addConfig('ATTAQWA', array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null])),
-        ]);
+        ];
+
+        foreach (array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null]) as $disk) {
+            $checks[] = BackupsCheck::new()
+                ->onDisk($disk)
+                ->locatedAt('ATTAQWA')
+                ->name('Backups: ' . ucfirst($disk))
+                ->youngestBackShouldHaveBeenMadeBefore(now()->subDay());
+        }
+
+        Health::checks($checks);
 
         // Global API rate limiter
         RateLimiter::for('api', function (Request $request) {
