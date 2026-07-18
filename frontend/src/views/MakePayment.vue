@@ -2,10 +2,17 @@
   <div class="min-h-screen bg-slate-50 font-sans">
     <AppHeader title="Allocate Fund" :showBack="true" />
 
-    <div class="p-4 pb-32 space-y-6 max-w-md mx-auto">
+    <div class="p-4 pb-80 space-y-6 max-w-md mx-auto">
       <!-- Wallet Balance -->
       <div class="bg-gradient-to-br from-blue-700 to-blue-900 rounded-[2rem] p-6 text-white shadow-xl">
-        <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Wallet Balance</p>
+        <div class="flex items-center justify-between">
+          <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Wallet Balance</p>
+          <button @click="loadWallet" :disabled="refreshingBalance" class="p-1 opacity-80 hover:opacity-100 transition-opacity disabled:opacity-40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" :class="{'animate-spin': refreshingBalance}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
         <p class="text-3xl font-extrabold tracking-tight mt-1">₦ {{ Number(walletBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</p>
       </div>
 
@@ -151,7 +158,7 @@
     </div>
   </div>
 
-    <div class="fixed left-0 right-0 bottom-16 p-4">
+    <div class="fixed left-0 right-0 bottom-16 p-4 z-40">
       <div class="card card-elevated p-4">
         <div class="flex justify-between items-center mb-4">
           <span class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Total Amount</span>
@@ -245,6 +252,7 @@ watch(() => appStatusStore.paymentGateways?.primary, (newVal) => {
   if (newVal) selectedGateway.value = newVal
 })
 const walletBalance = ref(0)
+const refreshingBalance = ref(false)
 const summaryEnd = ref(null)
 
 const totalAmount = computed(() => paymentList.value.reduce((sum, i) => sum + Number(i.amount || 0), 0))
@@ -367,10 +375,14 @@ const loadProjects = async () => {
 
 const loadWallet = async () => {
   try {
+    refreshingBalance.value = true
     const { data } = await axios.get('/api/wallet')
     walletBalance.value = data.balance || 0
     specialSavingsBalance.value = data.special_savings_balance || 0
-  } catch (_) {}
+  } catch (_) {
+  } finally {
+    refreshingBalance.value = false
+  }
 }
 
 const initiatePayment = async () => {

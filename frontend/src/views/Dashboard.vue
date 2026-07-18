@@ -19,16 +19,23 @@
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
         <div class="flex items-center gap-2 mb-2 relative z-10">
           <p class="text-emerald-100 text-sm font-medium">Available Balance</p>
-          <button @click="toggleBalances()" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors" title="Toggle visibility">
-            <svg v-if="hideBalances" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m3.313-3.313A9.959 9.959 0 0112 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-1.447 0-2.811-.31-4.04-.864m1.107-1.107l1.107-1.107m2.774-2.774l.553-.553m2.21-2.21l.553-.553" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-1">
+            <button @click="toggleBalances()" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors" title="Toggle visibility">
+              <svg v-if="hideBalances" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m3.313-3.313A9.959 9.959 0 0112 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-1.447 0-2.811-.31-4.04-.864m1.107-1.107l1.107-1.107m2.774-2.774l.553-.553m2.21-2.21l.553-.553" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+              </svg>
+            </button>
+            <button @click="load()" :disabled="refreshing" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40" title="Refresh balance">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" :class="{'animate-spin': refreshing}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
         </div>
         <h1 class="text-3xl sm:text-4xl leading-tight font-bold relative z-10 tracking-tight">
           ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.balance) }}
@@ -738,6 +745,7 @@ const appStatusStore = useAppStatusStore()
 
 const currency = '₦'
 const dashboardData = ref({})
+const refreshing = ref(false)
 const liveActions = ref([])
 const activeTab = ref('transactions')
 const searchQuery = ref('')
@@ -933,41 +941,47 @@ const checkMigration = async () => {
 }
 
 const load = async () => {
-  const token = localStorage.getItem('token')
-  const { data } = await axios.get('/api/dashboard', { headers: { Authorization: `Bearer ${token}` } })
-  dashboardData.value = data
-  localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false')
-  
-  if (data.features) {
-    appStatusStore.setFeatures(data.features)
-  }
-  
-  // Check Migration status
-  checkMigration()
-  
-  // Check Gender
-  if (!data.gender) {
-    showGenderModal.value = true
-  } else if (!isValidEmail(data.email)) {
-    // Check Email
-    showEmailModal.value = true
-    // If the email is clearly invalid (like a membership number or nonsense), clear it for them to type fresh
-    emailForm.value.email = '' 
-  } else if (appStatusStore.setTransactionPinEnabled && !data.kpis.has_pin) {
-    // Check PIN
-    showPinModal.value = true
-  }
-
-  // Show Zakat alert if reached nisab but not yet paid (or simply reached nisab)
-  if (appStatusStore.features['zakat-enabled'] && data.zakat_status?.reached_nisab) {
-    const due = formatMoney(data.zakat_status.zakat_due)
-    const nisab = formatMoney(data.zakat_status.nisab)
+  try {
+    refreshing.value = true
+    const token = localStorage.getItem('token')
+    const { data } = await axios.get('/api/dashboard', { headers: { Authorization: `Bearer ${token}` } })
+    dashboardData.value = data
+    localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false')
     
-    if (data.zakat_status.eligible) {
-      showNotice('Zakat Alert', `Your savings have reached the Nisab. Your Zakat due is ${currency} ${due}.`, 'info')
-    } else {
-      showNotice('Zakat Update', `Your savings have reached the Nisab. Keep tracking your savings to know when your Zakat becomes due!`, 'info')
+    if (data.features) {
+      appStatusStore.setFeatures(data.features)
     }
+    
+    // Check Migration status
+    checkMigration()
+    
+    // Check Gender
+    if (!data.gender) {
+      showGenderModal.value = true
+    } else if (!isValidEmail(data.email)) {
+      // Check Email
+      showEmailModal.value = true
+      // If the email is clearly invalid (like a membership number or nonsense), clear it for them to type fresh
+      emailForm.value.email = '' 
+    } else if (appStatusStore.setTransactionPinEnabled && !data.kpis.has_pin) {
+      // Check PIN
+      showPinModal.value = true
+    }
+
+    // Show Zakat alert if reached nisab but not yet paid (or simply reached nisab)
+    if (appStatusStore.features['zakat-enabled'] && data.zakat_status?.reached_nisab) {
+      const due = formatMoney(data.zakat_status.zakat_due)
+      const nisab = formatMoney(data.zakat_status.nisab)
+      
+      if (data.zakat_status.eligible) {
+        showNotice('Zakat Alert', `Your savings have reached the Nisab. Your Zakat due is ${currency} ${due}.`, 'info')
+      } else {
+        showNotice('Zakat Update', `Your savings have reached the Nisab. Keep tracking your savings to know when your Zakat becomes due!`, 'info')
+      }
+    }
+  } catch (e) {
+  } finally {
+    refreshing.value = false
   }
 }
 

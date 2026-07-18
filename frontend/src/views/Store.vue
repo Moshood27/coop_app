@@ -357,7 +357,14 @@
 
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Wallet Balance</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Wallet Balance</span>
+                      <button @click="loadWallet" :disabled="refreshingBalance" class="p-1 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" :class="{'animate-spin': refreshingBalance}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                    </div>
                     <span :class="hasInsufficient ? 'text-rose-600' : 'text-emerald-700'" class="text-xs font-bold">₦ {{ money(walletBalance) }}</span>
                   </div>
                   
@@ -550,6 +557,7 @@ const totalItems = ref(0)
 const vendor = ref(null)
 const isAdmin = ref(false)
 const walletBalance = ref(0)
+const refreshingBalance = ref(false)
 const eligData = ref(null)
 
 const showCart = ref(false)
@@ -614,9 +622,13 @@ const loadCategories = async () => {
 
 const loadWallet = async () => {
   try {
+    refreshingBalance.value = true
     const { data } = await axios.get('/api/wallet')
     walletBalance.value = Number(data?.balance || 0)
-  } catch (_) {}
+  } catch (_) {
+  } finally {
+    refreshingBalance.value = false
+  }
 }
 
 const loadStoreEligibility = async () => {
