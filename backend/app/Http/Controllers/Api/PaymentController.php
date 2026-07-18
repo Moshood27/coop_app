@@ -20,7 +20,12 @@ class PaymentController extends Controller
 {
     public function getSchemes()
     {
-        return response()->json(Scheme::where('active', true)->orderBy('name')->get());
+        $options = Scheme::getSortedOptions(activeOnly: true);
+        $schemes = Scheme::where('active', true)->whereIn('id', array_keys($options))->get()->sortBy(function($scheme) use ($options) {
+            return array_search($scheme->id, array_keys($options));
+        })->values();
+
+        return response()->json($schemes);
     }
 
     public function initiate(Request $request)

@@ -221,7 +221,7 @@ class WalletTransactionResource extends Resource
                     }),
                 SelectFilter::make('scheme_id')
                     ->label('Passbook Record (Scheme)')
-                    ->options(fn() => Scheme::pluck('name', 'id')->toArray())
+                    ->options(fn() => Scheme::getSortedOptions())
                     ->query(function (Builder $query, array $data) {
                         if (empty($data['value'])) return $query;
                         $schemeId = (int) $data['value'];

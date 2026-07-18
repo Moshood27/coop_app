@@ -115,20 +115,7 @@ class ContributionResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('scheme_id')
                                             ->label('Scheme')
-                                            ->options(function () {
-                                                $allSchemes = Scheme::where('active', true)->get();
-                                                $shares = $allSchemes->first(fn($s) => $s->name === 'Shares' || Str::contains(strtolower($s->name), 'share'));
-                                                $savings = $allSchemes->first(fn($s) => $s->name === 'Savings' || Str::contains(strtolower($s->name), 'saving'));
-
-                                                $options = $allSchemes->pluck('name', 'id')->toArray();
-
-                                                if ($shares && $savings) {
-                                                    $options = ['combined' => 'Shares & Savings (50/50 Split)'] + $options;
-                                                    unset($options[$shares->id]);
-                                                    unset($options[$savings->id]);
-                                                }
-                                                return $options;
-                                            })
+                                            ->options(fn() => Scheme::getSortedOptions(activeOnly: true, withCombined: true))
                                             ->searchable()
                                             ->required()
                                             ->reactive()
@@ -220,7 +207,7 @@ class ContributionResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('scheme_id')
                                     ->label('Scheme')
-                                    ->options(Scheme::withTrashed()->pluck('name', 'id'))
+                                    ->options(Scheme::getSortedOptions(withTrashed: true))
                                     ->searchable()
                                     ->required()
                                     ->reactive()
@@ -373,7 +360,7 @@ class ContributionResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('scheme_id')
                     ->label('Scheme')
-                    ->options(Scheme::withTrashed()->pluck('name', 'id'))
+                    ->options(Scheme::getSortedOptions(withTrashed: true))
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
