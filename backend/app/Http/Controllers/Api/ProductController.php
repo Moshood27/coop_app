@@ -17,11 +17,11 @@ class ProductController extends Controller
     {
         $perPage = (int) ($request->integer('per_page') ?: 12);
         $perPage = max(1, min(100, $perPage));
-        $search = trim((string) $request->get('q', ''));
-        $categoryId = (int) $request->get('category_id', 0);
-        $minPrice = $request->get('min_price');
-        $maxPrice = $request->get('max_price');
-        $sort = trim((string) $request->get('sort', 'newest'));
+        $search = trim((string) $request->input('q', ''));
+        $categoryId = (int) $request->input('category_id', 0);
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
+        $sort = trim((string) $request->input('sort', 'newest'));
 
         $query = Product::query()
             ->with(['category', 'vendor'])

@@ -16,7 +16,7 @@ class AdminVendorController extends Controller
 
     public function index(Request $request)
     {
-        $search = trim((string) $request->get('q', ''));
+        $search = trim((string) $request->input('q', ''));
         $query = Vendor::query()->with('owner:id,name,phone,email')->latest();
         if ($search !== '') {
             $query->where(function($q) use ($search) {

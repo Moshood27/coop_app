@@ -17,7 +17,7 @@ class PrintController extends Controller
 {
     public function passbook(Request $request, User $user)
     {
-        $year = (int) $request->get('year', now()->year);
+        $year = (int) $request->input('year', now()->year);
         $data = $this->getPassbookData($user, $year);
 
         $pdf = Pdf::loadView('pdfs.passbook', $data);
@@ -27,7 +27,7 @@ class PrintController extends Controller
 
     public function viewPassbook(Request $request, User $user)
     {
-        $year = (int) $request->get('year', now()->year);
+        $year = (int) $request->input('year', now()->year);
         $data = $this->getPassbookData($user, $year);
 
         return view('admin.passbook-view', $data);
@@ -101,7 +101,7 @@ class PrintController extends Controller
 
         $query = User::query()->with('branch');
 
-        if ($branchId = $request->get('branch_id')) {
+        if ($branchId = $request->input('branch_id')) {
             if (is_array($branchId)) {
                 $query->whereIn('branch_id', $branchId);
             } else {
@@ -109,7 +109,7 @@ class PrintController extends Controller
             }
         }
 
-        if ($search = $request->get('search')) {
+        if ($search = $request->input('search')) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('membership_number', 'like', "%{$search}%")

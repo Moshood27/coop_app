@@ -16,7 +16,7 @@ class GuarantorController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = $request->input('q');
         if (!$query || strlen($query) < 2) {
             return response()->json([]);
         }

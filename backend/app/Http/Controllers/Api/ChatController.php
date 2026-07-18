@@ -332,7 +332,7 @@ class ChatController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = $request->input('q');
         $user = Auth::user();
 
         $messages = ChatMessage::whereIn('chat_room_id', $user->chatRooms()->pluck('chat_rooms.id'))

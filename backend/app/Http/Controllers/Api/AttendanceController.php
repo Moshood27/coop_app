@@ -272,8 +272,8 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $query = $request->get('q');
-        $meetingId = $request->get('meeting_id');
+        $query = $request->input('q');
+        $meetingId = $request->input('meeting_id');
 
         if (strlen($query) < 2) {
              return response()->json([]);

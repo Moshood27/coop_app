@@ -15,7 +15,7 @@ class AdminProductController extends Controller
      */
     public function index(Request $request)
     {
-        $search = trim((string) $request->get('q', ''));
+        $search = trim((string) $request->input('q', ''));
         $query = Product::query()->orderByDesc('created_at');
         if ($search !== '') {
             $query->where('name', 'like', "%{$search}%");
