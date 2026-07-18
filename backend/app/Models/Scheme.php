@@ -35,7 +35,7 @@ class Scheme extends Model
         return $this->hasMany(Contribution::class);
     }
 
-    public static function getSortedOptions($activeOnly = false, $withTrashed = false, $withCombined = false)
+    public static function getSortedOptions($activeOnly = false, $withTrashed = false)
     {
         $query = static::query();
         if ($activeOnly) $query->where('active', true);
@@ -49,19 +49,13 @@ class Scheme extends Model
 
         if ($shares || $savings) {
             $top = [];
-            if ($withCombined && $shares && $savings) {
-                $top['combined'] = 'Shares & Savings (50/50 Split)';
+            if ($shares) {
+                $top[$shares->id] = $shares->name;
                 unset($options[$shares->id]);
+            }
+            if ($savings) {
+                $top[$savings->id] = $savings->name;
                 unset($options[$savings->id]);
-            } else {
-                if ($shares) {
-                    $top[$shares->id] = $shares->name;
-                    unset($options[$shares->id]);
-                }
-                if ($savings) {
-                    $top[$savings->id] = $savings->name;
-                    unset($options[$savings->id]);
-                }
             }
             $options = $top + $options;
         }
