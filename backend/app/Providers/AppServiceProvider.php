@@ -57,6 +57,95 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Google Drive Storage Driver
+        Storage::extend('google', function ($app, $config) {
+            if (empty($config['clientId']) || empty($config['clientSecret']) || empty($config['refreshToken'])) {
+                throw new \Exception('Google Drive storage driver is missing credentials. Please ensure GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, and GOOGLE_DRIVE_REFRESH_TOKEN are set in your .env file.');
+            }
+
+            $client = new \Google\Client();
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
+            $client->addScope(\Google\Service\Drive::DRIVE);
+            $client->setAccessType('offline');
+
+            $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
+
+            if (isset($token['error'])) {
+                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']) . '. Refresh Token used: ' . substr($config['refreshToken'], 0, 5) . '...');
+            }
+
+            if (!$client->getAccessToken()) {
+                throw new \Exception('Google Drive Authentication Error: Access token could not be retrieved.');
+            }
+
+            $service = new \Google\Service\Drive($client);
+
+            $options = [
+                'useDisplayPaths' => true,
+                'useHasDir' => true
+            ];
+
+            // If a folderId is provided, we use it as the root shared folder
+            // and we set the adapter root to null to avoid it trying to
+            // find a folder named as the ID.
+            $root = 'root';
+            if (!empty($config['folderId'])) {
+                $options['sharedFolderId'] = $config['folderId'];
+                $root = null;
+            }
+
+            if (!empty($config['teamDriveId']) && $config['teamDriveId'] !== 'null') {
+                $options['teamDriveId'] = $config['teamDriveId'];
+            }
+
+            $adapter = new class($service, $root, $options) extends \Masbug\Flysystem\GoogleDriveAdapter {
+                public function listContents(string $directory, bool $recursive): iterable
+                {
+                    try {
+                        $it = parent::listContents($directory, $recursive);
+                        foreach ($it as $item) {
+                            yield $item;
+                        }
+                    } catch (\Throwable $e) {
+                        // Return empty iterable
+                    }
+                }
+
+                public function getMetadata(string $path)
+                {
+                    try {
+                        return parent::getMetadata($path);
+                    } catch (\Throwable $e) {
+                        return false;
+                    }
+                }
+            };
+
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new \League\Flysystem\Filesystem($adapter),
+                $adapter,
+                $config
+            );
+        });
+
+        // Register Dropbox Storage Driver
+        Storage::extend('dropbox', function ($app, $config) {
+            if (empty($config['token'])) {
+                throw new \Exception('Dropbox storage driver is missing token. Please ensure DROPBOX_TOKEN is set in your .env file.');
+            }
+
+            $adapter = new \Spatie\FlysystemDropbox\DropboxAdapter(
+                new \Spatie\Dropbox\Client($config['token'])
+            );
+
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new \League\Flysystem\Filesystem($adapter),
+                $adapter,
+                $config
+            );
+        });
+
         // Define Feature Flags
         Feature::define('withdrawals-enabled', fn () => true);
         Feature::define('payment-provider-failover', fn () => false);
@@ -179,93 +268,5 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PermissionAttached::class, LogRoleChange::class);
         Event::listen(PermissionDetached::class, LogRoleChange::class);
 
-        // Register Google Drive Storage Driver
-        Storage::extend('google', function ($app, $config) {
-            if (empty($config['clientId']) || empty($config['clientSecret']) || empty($config['refreshToken'])) {
-                throw new \Exception('Google Drive storage driver is missing credentials. Please ensure GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, and GOOGLE_DRIVE_REFRESH_TOKEN are set in your .env file.');
-            }
-
-            $client = new \Google\Client();
-            $client->setClientId($config['clientId']);
-            $client->setClientSecret($config['clientSecret']);
-            $client->addScope(\Google\Service\Drive::DRIVE);
-            $client->setAccessType('offline');
-
-            $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
-
-            if (isset($token['error'])) {
-                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']) . '. Refresh Token used: ' . substr($config['refreshToken'], 0, 5) . '...');
-            }
-
-            if (!$client->getAccessToken()) {
-                throw new \Exception('Google Drive Authentication Error: Access token could not be retrieved.');
-            }
-
-            $service = new \Google\Service\Drive($client);
-
-            $options = [
-                'useDisplayPaths' => true,
-                'useHasDir' => true
-            ];
-
-            // If a folderId is provided, we use it as the root shared folder
-            // and we set the adapter root to null to avoid it trying to
-            // find a folder named as the ID.
-            $root = 'root';
-            if (!empty($config['folderId'])) {
-                $options['sharedFolderId'] = $config['folderId'];
-                $root = null;
-            }
-
-            if (!empty($config['teamDriveId']) && $config['teamDriveId'] !== 'null') {
-                $options['teamDriveId'] = $config['teamDriveId'];
-            }
-
-            $adapter = new class($service, $root, $options) extends \Masbug\Flysystem\GoogleDriveAdapter {
-                public function listContents(string $directory, bool $recursive): iterable
-                {
-                    try {
-                        $it = parent::listContents($directory, $recursive);
-                        foreach ($it as $item) {
-                            yield $item;
-                        }
-                    } catch (\Throwable $e) {
-                        // Return empty iterable
-                    }
-                }
-
-                public function getMetadata(string $path)
-                {
-                    try {
-                        return parent::getMetadata($path);
-                    } catch (\Throwable $e) {
-                        return false;
-                    }
-                }
-            };
-
-            return new \Illuminate\Filesystem\FilesystemAdapter(
-                new \League\Flysystem\Filesystem($adapter),
-                $adapter,
-                $config
-            );
-        });
-
-        // Register Dropbox Storage Driver
-        Storage::extend('dropbox', function ($app, $config) {
-            if (empty($config['token'])) {
-                throw new \Exception('Dropbox storage driver is missing token. Please ensure DROPBOX_TOKEN is set in your .env file.');
-            }
-
-            $adapter = new \Spatie\FlysystemDropbox\DropboxAdapter(
-                new \Spatie\Dropbox\Client($config['token'])
-            );
-
-            return new \Illuminate\Filesystem\FilesystemAdapter(
-                new \League\Flysystem\Filesystem($adapter),
-                $adapter,
-                $config
-            );
-        });
     }
 }
