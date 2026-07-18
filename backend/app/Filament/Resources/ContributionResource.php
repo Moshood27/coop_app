@@ -116,11 +116,16 @@ class ContributionResource extends Resource
                                         Forms\Components\Select::make('scheme_id')
                                             ->label('Scheme')
                                             ->options(function () {
-                                                $options = Scheme::where('active', true)->pluck('name', 'id')->toArray();
-                                                $hasShares = Scheme::where('active', true)->where(fn($q) => $q->where('name', 'Shares')->orWhere('name', 'like', '%share%'))->exists();
-                                                $hasSavings = Scheme::where('active', true)->where(fn($q) => $q->where('name', 'Savings')->orWhere('name', 'like', '%saving%'))->exists();
-                                                if ($hasShares && $hasSavings) {
+                                                $allSchemes = Scheme::where('active', true)->get();
+                                                $shares = $allSchemes->first(fn($s) => $s->name === 'Shares' || Str::contains(strtolower($s->name), 'share'));
+                                                $savings = $allSchemes->first(fn($s) => $s->name === 'Savings' || Str::contains(strtolower($s->name), 'saving'));
+
+                                                $options = $allSchemes->pluck('name', 'id')->toArray();
+
+                                                if ($shares && $savings) {
                                                     $options['combined'] = 'Shares & Savings (50/50 Split)';
+                                                    unset($options[$shares->id]);
+                                                    unset($options[$savings->id]);
                                                 }
                                                 return $options;
                                             })
