@@ -136,11 +136,12 @@ class AppServiceProvider extends ServiceProvider
             DatabaseCheck::new(),
             DebugModeCheck::new(),
             EnvironmentCheck::new(),
-            QueueCheck::new(),
+            QueueCheck::new()->onQueue(['default', 'webhooks']),
             ScheduleCheck::new(),
             CacheCheck::new(),
             HorizonCheck::new(),
-            BackupsCheck::new(),
+            BackupsCheck::new()
+                ->addConfig('ATTAQWA', array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null])),
         ]);
 
         // Global API rate limiter

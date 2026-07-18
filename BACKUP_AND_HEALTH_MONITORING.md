@@ -100,6 +100,7 @@ BACKUP_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 ### Scheduling
 Health checks are scheduled in `backend/routes/console.php`:
 - `health:check`: Every 15 minutes.
+- `ScheduleCheckHeartbeatCommand`: Every minute (required for the Schedule health check).
 
 ---
 
