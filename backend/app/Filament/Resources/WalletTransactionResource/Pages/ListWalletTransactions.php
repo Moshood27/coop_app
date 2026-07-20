@@ -54,36 +54,31 @@ class ListWalletTransactions extends ListRecords
                     ->label('Custom Detailed Report')
                     ->icon('heroicon-m-document-magnifying-glass')
                     ->form($this->getReportForm())
-                    ->action(fn(array $data) => $this->downloadReport($data))
-                    ->keepModalOpen(),
+                    ->action(fn(array $data) => $this->downloadReport($data)),
 
                 Actions\Action::make('paystackCreditsReport')
                     ->label('Paystack Credits Only')
                     ->icon('heroicon-m-credit-card')
                     ->form($this->getReportForm(['source' => 'paystack']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['source' => 'paystack'])))
-                    ->keepModalOpen(),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['source' => 'paystack']))),
 
                 Actions\Action::make('passbookAllocationsReport')
                     ->label('Passbook Allocations')
                     ->icon('heroicon-m-book-open')
                     ->form($this->getReportForm(['purpose' => 'deposit']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'deposit'])))
-                    ->keepModalOpen(),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'deposit']))),
 
                 Actions\Action::make('loanRepaymentsReport')
                     ->label('Loan Repayment Allocations')
                     ->icon('heroicon-m-banknotes')
                     ->form($this->getReportForm(['purpose' => 'loan_repayment']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'loan_repayment'])))
-                    ->keepModalOpen(),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'loan_repayment']))),
 
                 Actions\Action::make('printReport')
                     ->label('PDF Summary Report')
                     ->icon('heroicon-m-printer')
                     ->form($this->getReportForm(['format' => 'pdf']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf'])))
-                    ->keepModalOpen(),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf']))),
             ])
             ->label('Reports & Exports')
             ->icon('heroicon-m-arrow-down-tray')
