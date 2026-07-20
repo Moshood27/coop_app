@@ -221,9 +221,10 @@ class QardHasanResource extends Resource
                 TextColumn::make('created_at')->label('Created')->since()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('user.membership_number')
                     ->label('Member #')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
                         if (auth()->user()->hasRole('super_admin')) {
@@ -309,7 +310,7 @@ class QardHasanResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',

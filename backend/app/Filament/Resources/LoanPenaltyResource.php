@@ -52,7 +52,7 @@ class LoanPenaltyResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query->leftJoin('users', 'loan_penalties.user_id', '=', 'users.id')
                             ->orderBy('users.surname', $direction)
