@@ -124,7 +124,7 @@
         <table>
             <tr>
                 <td>
-                    <div class="logo-text">COOPERATIVE</div>
+                    <div class="logo-text">AT-TAQWA</div>
                     <div style="font-size: 10px; color: #6b7280;">Digital Wallet Management System</div>
                 </td>
                 <td>
