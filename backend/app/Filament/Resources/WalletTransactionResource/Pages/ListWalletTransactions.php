@@ -16,6 +16,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ListRecords;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ListWalletTransactions extends ListRecords
 {
@@ -53,31 +54,36 @@ class ListWalletTransactions extends ListRecords
                     ->label('Custom Detailed Report')
                     ->icon('heroicon-m-document-magnifying-glass')
                     ->form($this->getReportForm())
-                    ->action(fn(array $data) => $this->downloadReport($data)),
+                    ->action(fn(array $data) => $this->downloadReport($data))
+                    ->keepModalOpen(),
 
                 Actions\Action::make('paystackCreditsReport')
                     ->label('Paystack Credits Only')
                     ->icon('heroicon-m-credit-card')
                     ->form($this->getReportForm(['source' => 'paystack']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['source' => 'paystack']))),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['source' => 'paystack'])))
+                    ->keepModalOpen(),
 
                 Actions\Action::make('passbookAllocationsReport')
                     ->label('Passbook Allocations')
                     ->icon('heroicon-m-book-open')
                     ->form($this->getReportForm(['purpose' => 'deposit']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'deposit']))),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'deposit'])))
+                    ->keepModalOpen(),
 
                 Actions\Action::make('loanRepaymentsReport')
                     ->label('Loan Repayment Allocations')
                     ->icon('heroicon-m-banknotes')
                     ->form($this->getReportForm(['purpose' => 'loan_repayment']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'loan_repayment']))),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['purpose' => 'loan_repayment'])))
+                    ->keepModalOpen(),
 
                 Actions\Action::make('printReport')
                     ->label('PDF Summary Report')
                     ->icon('heroicon-m-printer')
                     ->form($this->getReportForm(['format' => 'pdf']))
-                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf']))),
+                    ->action(fn(array $data) => $this->downloadReport(array_merge($data, ['format' => 'pdf'])))
+                    ->keepModalOpen(),
             ])
             ->label('Reports & Exports')
             ->icon('heroicon-m-arrow-down-tray')
@@ -171,11 +177,23 @@ class ListWalletTransactions extends ListRecords
         $format = $data['format'] ?? 'xlsx';
 
         if ($format === 'pdf') {
-            return Excel::download(
-                new WalletTransactionReportExport($data),
-                $filename . '.pdf',
-                \Maatwebsite\Excel\Excel::DOMPDF
-            );
+            $export = new WalletTransactionReportExport($data);
+            $reportData = $export->collection();
+
+            // Calculate totals for fintech look
+            $totalCredit = $reportData->where('type', 'CREDIT')->sum('amount');
+            $totalDebit = $reportData->where('type', 'DEBIT')->sum('amount');
+
+            $pdf = Pdf::loadView('pdfs.wallet_transactions_report', [
+                'reportData' => $reportData,
+                'filters' => $data,
+                'totalCredit' => $totalCredit,
+                'totalDebit' => $totalDebit,
+                'branch' => isset($data['branch_id']) ? Branch::find($data['branch_id'])?->name : 'All Branches',
+                'generatedBy' => $user->full_name,
+            ])->setPaper('a4', 'landscape');
+
+            return response()->streamDownload(fn () => print($pdf->output()), $filename . '.pdf');
         }
 
         return Excel::download(
