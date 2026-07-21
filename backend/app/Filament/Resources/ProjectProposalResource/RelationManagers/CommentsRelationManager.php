@@ -22,7 +22,7 @@ class CommentsRelationManager extends RelationManager
                     ->label('User')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->preload()
                     ->required(),
                 Forms\Components\Textarea::make('comment')
@@ -38,7 +38,7 @@ class CommentsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('user.full_name')
                     ->label('User')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('comment')->limit(50),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),

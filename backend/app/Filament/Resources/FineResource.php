@@ -70,7 +70,7 @@ class FineResource extends Resource
                 Tables\Columns\TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['name', 'surname', 'other_names'])
+                    ->searchable(['name', 'surname', 'other_names', 'membership_number'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('meeting.name')
                     ->label('Meeting')
@@ -109,7 +109,7 @@ class FineResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
             ])
             ->actions([
                 Tables\Actions\Action::make('markAsPaid')

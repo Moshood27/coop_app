@@ -37,7 +37,7 @@ class StoreOrderResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('status')
@@ -167,7 +167,7 @@ class StoreOrderResource extends Resource
                 TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('total_amount')->label('Total')->money('ngn', true)->sortable(),
                 TextColumn::make('status')

@@ -60,7 +60,7 @@ class MigrationDiscrepancyResource extends Resource
             ->columns([
                 TextColumn::make('full_name')
                     ->label('Member')
-                    ->searchable(['name', 'surname', 'other_names'])
+                    ->searchable(['name', 'surname', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('membership_number')
                     ->label('Member ID')

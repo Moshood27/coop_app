@@ -23,7 +23,7 @@ class PayoutsRelationManager extends RelationManager
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->disabled(),
                 Forms\Components\TextInput::make('amount')
                     ->numeric()
@@ -41,7 +41,7 @@ class PayoutsRelationManager extends RelationManager
                 TextColumn::make('created_at')->dateTime()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('amount')->money('ngn', true)->sortable(),
             ])
             ->filters([

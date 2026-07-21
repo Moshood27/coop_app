@@ -30,7 +30,7 @@ class SavingsGoalResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('title')
@@ -83,7 +83,7 @@ class SavingsGoalResource extends Resource
                 TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('title')->wrap()->limit(40)->searchable(),
                 TextColumn::make('target_amount')->label('Target')->money('ngn', true)->sortable(),

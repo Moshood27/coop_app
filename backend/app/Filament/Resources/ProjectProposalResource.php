@@ -29,7 +29,7 @@ class ProjectProposalResource extends Resource
                     ->label('Proposer')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('title')
@@ -88,7 +88,7 @@ class ProjectProposalResource extends Resource
             ->columns([
                 TextColumn::make('user.full_name')
                     ->label('Proposer')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('status')->badge()

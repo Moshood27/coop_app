@@ -339,7 +339,7 @@ class ContributionResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('user.membership_number')
                     ->label('Member #')
                     ->toggleable(isToggledHiddenByDefault: true)

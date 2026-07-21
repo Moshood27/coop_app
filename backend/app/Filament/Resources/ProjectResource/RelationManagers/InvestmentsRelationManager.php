@@ -19,7 +19,7 @@ class InvestmentsRelationManager extends RelationManager
                 TextColumn::make('created_at')->dateTime()->since()->label('Time')->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('amount')->money('ngn', true)->sortable(),
                 TextColumn::make('units')->label('Units')->sortable(),

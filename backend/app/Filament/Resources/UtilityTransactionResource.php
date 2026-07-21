@@ -33,7 +33,7 @@ class UtilityTransactionResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('type')
@@ -101,7 +101,7 @@ class UtilityTransactionResource extends Resource
                 TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('type')->badge()->sortable(),
                 TextColumn::make('network')->searchable(),

@@ -47,7 +47,7 @@ class AttendanceExcuseResource extends Resource
                 Tables\Columns\TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('meeting.name')
                     ->label('Meeting')

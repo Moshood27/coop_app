@@ -30,7 +30,7 @@ class ShariahAuditLogResource extends Resource
                     ->label('Member/User')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->disabled(),
                 Forms\Components\TextInput::make('action')
                     ->disabled(),
@@ -70,7 +70,7 @@ class ShariahAuditLogResource extends Resource
                 TextColumn::make('user.surname')
                     ->label('Member/User')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('action')
                     ->searchable()

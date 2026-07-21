@@ -38,7 +38,7 @@ class VendorResource extends Resource
                             ->label('Owner')
                             ->relationship('owner', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->preload()
                             ->required(),
                         Forms\Components\TextInput::make('phone')
@@ -92,7 +92,7 @@ class VendorResource extends Resource
                 }),
                 TextColumn::make('owner.full_name')
                     ->label('Owner')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('phone')->searchable(),
                 IconColumn::make('is_approved')->boolean()->label('Approved')->sortable(),

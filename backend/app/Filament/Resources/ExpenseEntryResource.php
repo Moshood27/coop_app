@@ -276,7 +276,7 @@ class ExpenseEntryResource extends Resource
                 ImageColumn::make('receipt_path')->label('Receipt')->circular()->toggleable(),
                 TextColumn::make('creator.full_name')
                     ->label('Entered By')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')->since()->label('Created')->toggleable(isToggledHiddenByDefault: true),
             ])

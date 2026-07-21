@@ -63,7 +63,7 @@ class QardHasanResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {

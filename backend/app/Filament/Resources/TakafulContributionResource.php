@@ -39,7 +39,7 @@ class TakafulContributionResource extends Resource
                 TextColumn::make('user.surname')
                     ->label('Member')
                     ->formatStateUsing(fn ($record) => $record->user?->full_name ?? '-')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('user.membership_number')
                     ->label('Member #')
@@ -96,7 +96,7 @@ class TakafulContributionResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names']),
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                     ])
                     ->query(function (Builder $query, array $data) {
                         if (!empty($data['user_id'])) {
@@ -120,7 +120,7 @@ class TakafulContributionResource extends Resource
                             ->label('Only Member (optional)')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names']),
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                         Forms\Components\Toggle::make('dry_run')
                             ->label('Dry-run (no writes)')
                             ->default(false),

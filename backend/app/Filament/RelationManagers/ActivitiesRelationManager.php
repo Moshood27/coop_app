@@ -42,7 +42,7 @@ class ActivitiesRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('causer.full_name')
                     ->label('Admin/User')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Action'),
             ])

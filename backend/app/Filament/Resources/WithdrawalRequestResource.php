@@ -81,7 +81,7 @@ class WithdrawalRequestResource extends Resource
                 TextColumn::make('created_at')->label('Requested')->since()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('user.membership_number')
                     ->label('Member #')
                     ->toggleable(isToggledHiddenByDefault: true)

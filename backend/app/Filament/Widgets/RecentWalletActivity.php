@@ -31,7 +31,7 @@ class RecentWalletActivity extends BaseWidget
                 TextColumn::make('user.full_name')
                     ->label('Member')
                     ->description(fn ($record) => $record->user?->membership_number)
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('type')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

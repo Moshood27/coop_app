@@ -42,7 +42,7 @@ class CharityEntryResource extends Resource
                 Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->placeholder('General / Anonymous if null'),
                 Forms\Components\TextInput::make('source')
                     ->required()
@@ -94,7 +94,7 @@ class CharityEntryResource extends Resource
                 TextColumn::make('created_at')->dateTime()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 TextColumn::make('source')->searchable(),
                 TextColumn::make('amount')
                     ->money('ngn', true)
@@ -131,7 +131,7 @@ class CharityEntryResource extends Resource
                                              ->orderBy('surname');
                             })
                             ->getOptionLabelFromRecordUsing(fn (User $record) => $record->full_name . ($record->badges()->where('badge_type', 'zakat_needy')->exists() ? ' ⭐ (Zakat Eligible)' : ''))
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->helperText('Select the member receiving this disbursement. Starred members are verified Zakat eligible.'),
                         Select::make('source')
                             ->options([

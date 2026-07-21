@@ -96,7 +96,7 @@ class TakafulPoolEntryResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names']),
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                     ])
                     ->query(function (Builder $query, array $data) {
                         if (! empty($data['user_id'])) {
@@ -128,7 +128,7 @@ class TakafulPoolEntryResource extends Resource
                             ->label('Related Member (optional)')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names']),
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                     ])
                     ->action(function (array $data) {
                         $direction = $data['direction'];

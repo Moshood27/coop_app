@@ -28,7 +28,7 @@ class GoalBookingResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->preload()
                     ->required(),
                 Forms\Components\Select::make('savings_goal_id')
@@ -55,7 +55,7 @@ class GoalBookingResource extends Resource
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('goal.title')->label('Goal')->sortable()->searchable()->wrap()->limit(30),
                 TextColumn::make('partner_name')->sortable()->searchable()->wrap()->limit(30),

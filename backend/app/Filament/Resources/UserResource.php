@@ -480,7 +480,7 @@ class UserResource extends Resource
                     ]),
                 TextColumn::make('full_name')
                     ->label('Name')
-                    ->searchable(['name', 'surname', 'other_names'])
+                    ->searchable(['name', 'surname', 'other_names', 'membership_number'])
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query
                             ->orderBy("surname", $direction)

@@ -42,7 +42,7 @@ class WalletTransactionResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->required()
                             ->reactive()
                             ->helperText(function (Forms\Get $get) {
@@ -123,7 +123,7 @@ class WalletTransactionResource extends Resource
                 TextColumn::make('created_at')->label('Time')->dateTime()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('user.branch.name')
                     ->label('Branch')
@@ -189,7 +189,7 @@ class WalletTransactionResource extends Resource
                     ->label('Member')
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                    ->searchable(['surname', 'name', 'other_names']),
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
                     ->relationship('user.branch', 'name')

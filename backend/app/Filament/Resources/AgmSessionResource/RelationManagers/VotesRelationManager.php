@@ -29,7 +29,7 @@ class VotesRelationManager extends RelationManager
                 TextColumn::make('candidate.name')->label('Candidate')->searchable()->sortable(),
                 TextColumn::make('user.full_name')
                     ->label('Voter')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 TextColumn::make('created_at')->since()->label('Voted At'),
             ])

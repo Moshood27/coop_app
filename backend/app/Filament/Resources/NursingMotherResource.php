@@ -52,7 +52,7 @@ class NursingMotherResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(query: function (Builder $query, string $direction): Builder {
                         return $query
                             ->orderBy("surname", $direction)

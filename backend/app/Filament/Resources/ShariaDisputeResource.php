@@ -32,7 +32,7 @@ class ShariaDisputeResource extends Resource
                             ->label('Member')
                             ->relationship('user', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
-                            ->searchable(['surname', 'name', 'other_names'])
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                             ->disabled(),
                         Forms\Components\Select::make('store_order_id')
                             ->relationship('order', 'reference')
@@ -106,7 +106,7 @@ class ShariaDisputeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('user.full_name')
                     ->label('Member')
-                    ->searchable(['surname', 'name', 'other_names'])
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.reference')
                     ->label('Order Ref')
