@@ -35,6 +35,8 @@ use Spatie\Health\Checks\Checks\ScheduleCheck;
 use Spatie\Health\Checks\Checks\CacheCheck;
 use Spatie\Health\Checks\Checks\HorizonCheck;
 use Spatie\Health\Checks\Checks\BackupsCheck;
+use Illuminate\Support\Facades\Bus;
+use App\Jobs\Middleware\HandleResendQuota;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -268,5 +270,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PermissionAttached::class, LogRoleChange::class);
         Event::listen(PermissionDetached::class, LogRoleChange::class);
 
+        // Handle Resend quota and rate limits globally for all queued jobs
+        Bus::pipeThrough([
+            HandleResendQuota::class,
+        ]);
     }
 }
