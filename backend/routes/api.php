@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\SavingsGroupController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\BiometricController;
 use App\Http\Controllers\Api\MeetingApologyController;
+use App\Http\Controllers\Api\UssdController;
 
 Route::get('/health', function () {
     return response()
@@ -113,6 +114,7 @@ Route::post('/webhooks/paystack', [WebhookController::class, 'handlePaystack']);
 Route::post('/webhooks/flutterwave', [WebhookController::class, 'handleFlutterwave']);
 Route::post('/webhooks/monnify', [WebhookController::class, 'handleMonnify']);
 Route::post('/webhooks/opay', [WebhookController::class, 'handleOpay']);
+Route::post('/ussd/callback', [UssdController::class, 'handleCallback']);
 
 // VTpass webhook (public) - accept GET (VTpass URL verification) and POST (real callbacks)
 Route::match(['get', 'post'], '/vtu/webhook', [\App\Http\Controllers\Api\UtilityController::class, 'handleWebhook']);
