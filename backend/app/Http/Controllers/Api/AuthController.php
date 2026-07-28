@@ -147,12 +147,36 @@ class AuthController extends Controller
         }
 
         $tokenName = $request->boolean('remember') ? 'remember_token' : 'mobile_token';
-        $token = $user->createToken($tokenName)->plainTextToken;
+        $tokenResult = $user->createToken($tokenName);
 
-        return response()->json([
-            'token' => $token,
+        // Bind token to current IP and User Agent for extra security
+        $tokenResult->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])->save();
+
+        $token = $tokenResult->plainTextToken;
+
+        $response = response()->json([
+            'token' => $token, // Keep for backward compatibility/mobile
             'user' => $user,
         ]);
+
+        // Secure HttpOnly cookie for web clients
+        $minutes = $request->boolean('remember') ? 43200 : 120; // 30 days vs 2 hours
+        $response->withCookie(cookie(
+            'token',
+            $token,
+            $minutes,
+            '/',
+            null,
+            $request->isSecure(),
+            true, // httpOnly
+            false,
+            'Strict'
+        ));
+
+        return $response;
     }
 
     public function logout(Request $request)
@@ -163,7 +187,9 @@ class AuthController extends Controller
         // Fire logout event to log activity and clear last_activity_at via listener
         event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        return response()->json(['message' => 'Logged out successfully.'])
+            ->withoutCookie('token')
+            ->withoutCookie('admin_token');
     }
 
     /**
@@ -343,7 +369,7 @@ class AuthController extends Controller
 
         // Update password and clear token
         if ($isApplicant) {
-            $user->password_hash = \Illuminate\Support\Facades\Crypt::encryptString($data['password']);
+            $user->password_hash = $data['password']; // hashed by cast
         } else {
             $user->password = $data['password']; // hashed by cast
         }

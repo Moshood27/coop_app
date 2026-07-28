@@ -240,7 +240,12 @@ onMounted(async () => {
 })
 
 const afterLogin = async (token, user) => {
-  localStorage.setItem('token', token)
+  // Store token in localStorage ONLY for mobile apps (Capacitor)
+  // Web clients use secure HttpOnly cookies.
+  if (window.Capacitor && window.Capacitor.getPlatform() !== 'web') {
+    localStorage.setItem('token', token)
+  }
+  
   appStatusStore.isPinVerified = false
   if (user) {
     localStorage.setItem('user', JSON.stringify(user))

@@ -28,7 +28,12 @@ class AdminAuthController extends Controller
             'is_admin' => true,
         ]);
 
-        $token = $user->createToken('admin_token')->plainTextToken;
+        $tokenResult = $user->createToken('admin_token');
+        $tokenResult->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])->save();
+        $token = $tokenResult->plainTextToken;
 
         return response()->json([
             'token' => $token,
@@ -52,12 +57,91 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('admin_token')->plainTextToken;
+        // Check for 2FA requirement
+        if ($user->hasConfirmedTwoFactor()) {
+            return response()->json([
+                'two_factor_required' => true,
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $tokenResult = $user->createToken('admin_token');
+        $tokenResult->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])->save();
+        $token = $tokenResult->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => $user,
+        ])->withCookie(cookie(
+            'admin_token',
+            $token,
+            120, // 2 hours
+            '/',
+            null,
+            $request->isSecure(),
+            true, // httpOnly
+            false,
+            'Strict'
+        ));
+    }
+
+    /**
+     * Verify 2FA code and complete login
+     */
+    public function verifyTwoFactor(Request $request)
+    {
+        $data = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'code' => ['required', 'string'],
         ]);
+
+        $user = User::findOrFail($data['user_id']);
+
+        if (!$user->is_admin || !$user->hasConfirmedTwoFactor()) {
+            return response()->json(['message' => 'Invalid request'], 400);
+        }
+
+        try {
+            // Retrieve the secret from the BreezySession
+            $secret = decrypt($user->twoFactorSecret);
+            // Get the authenticator engine from Breezy
+            $plugin = filament()->getPanel('admin')->getPlugin('filament-breezy');
+            $engine = $plugin->getEngine();
+
+            if (!$engine->verifyKey($secret, $data['code'])) {
+                return response()->json([
+                    'message' => 'The provided two-factor authentication code was invalid.'
+                ], 422);
+            }
+        } catch (\Throwable $e) {
+            \Log::error("2FA verification failed for admin {$user->id}: " . $e->getMessage());
+            return response()->json(['message' => 'Authentication failed. Please try again.'], 500);
+        }
+
+        $tokenResult = $user->createToken('admin_token');
+        $tokenResult->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])->save();
+        $token = $tokenResult->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user' => $user,
+        ])->withCookie(cookie(
+            'admin_token',
+            $token,
+            120, // 2 hours
+            '/',
+            null,
+            $request->isSecure(),
+            true, // httpOnly
+            false,
+            'Strict'
+        ));
     }
 
     // Request a password reset link for admin by email

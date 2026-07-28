@@ -14,6 +14,11 @@ return [
         'include_shares' => env('COOP_ZAKAT_INCLUDE_SHARES', false),
     ],
     'admin_ip_whitelist' => array_filter(array_map('trim', explode(',', env('ADMIN_IP_WHITELIST', '')))),
+    'service_ip_whitelist' => [
+        'termii' => array_filter(array_map('trim', explode(',', env('TERMII_IP_WHITELIST', '199.187.120.90,199.187.120.91,199.187.120.92,199.187.120.93,35.176.196.236,35.176.63.15,35.176.32.253')))),
+        'vtpass' => array_filter(array_map('trim', explode(',', env('VTPASS_IP_WHITELIST', '198.54.116.126,198.54.116.127,198.54.116.128,198.54.116.129')))),
+        'clubkonnect' => array_filter(array_map('trim', explode(',', env('CLUBKONNECT_IP_WHITELIST', '')))),
+    ],
     'low_stock_threshold' => env('COOP_LOW_STOCK_THRESHOLD', 5),
     'legacy' => [
         'inactivity_months' => env('COOP_LEGACY_INACTIVITY_MONTHS', 6),
@@ -61,5 +66,12 @@ return [
     'biometric' => [
         'enabled' => env('BIOMETRIC_SCANNER_ENABLED', true),
         'scanner_url' => env('BIOMETRIC_SCANNER_URL', 'http://localhost:8080/biometric/scan'),
+    ],
+    'security' => [
+        'session_binding' => [
+            'enabled' => env('SESSION_BINDING_ENABLED', true),
+            'verify_ip' => env('SESSION_BINDING_VERIFY_IP', true),
+            'verify_ua' => env('SESSION_BINDING_VERIFY_UA', true),
+        ],
     ],
 ];

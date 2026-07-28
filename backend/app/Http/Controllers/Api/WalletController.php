@@ -679,10 +679,26 @@ class WalletController extends Controller
             'branch_id' => 'nullable|integer|exists:branches,id',
             'amount' => 'required|numeric|min:1',
             'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
+            'otp' => 'nullable|string|size:6',
             'note' => 'nullable|string|max:120',
         ]);
 
         $sender = $request->user();
+
+        // MFA / High-value check
+        $threshold = config('cooperative.approvals.high_value_withdrawal_threshold', 500000);
+        if ($validated['amount'] >= $threshold) {
+            if (empty($validated['otp'])) {
+                return response()->json([
+                    'message' => 'High-value transfer requires OTP authorization.',
+                    'mfa_required' => true,
+                    'transaction_type' => 'p2p_transfer'
+                ], 403);
+            }
+            if (!$this->verifyOtp($sender, 'p2p_transfer', $validated['otp'])) {
+                return response()->json(['message' => 'Invalid or expired OTP code'], 403);
+            }
+        }
 
         if (Setting::get('transaction_pin_enabled', true) && empty($sender->transaction_pin_hash)) {
             return response()->json(['message' => 'Transaction PIN not set'], 409);

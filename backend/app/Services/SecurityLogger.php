@@ -32,6 +32,19 @@ class SecurityLogger
     }
 
     /**
+     * Log a velocity alert (too many attempts).
+     */
+    public static function logVelocityAlert(string $type, string $identity, int $count = 0): void
+    {
+        self::logSuspiciousAction("Velocity Alert: Too many {$type} attempts", [
+            'identity' => $identity,
+            'count' => $count,
+            'severity' => 'critical',
+            'type' => 'velocity_limit'
+        ]);
+    }
+
+    /**
      * Log an unauthorized access attempt.
      */
     public static function logUnauthorizedAccess(string $resource, array $metadata = []): void

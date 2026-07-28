@@ -15,10 +15,10 @@ class OpayService
 
     public function __construct()
     {
-        $this->merchantId = config('services.opay.merchant_id');
-        $this->publicKey = config('services.opay.public_key');
-        $this->secretKey = config('services.opay.secret_key');
-        $this->baseUrl = rtrim(config('services.opay.base_url'), '/');
+        $this->merchantId = (string) \App\Services\Security\SecretManager::get('OPAY_MERCHANT_ID', config('services.opay.merchant_id'));
+        $this->publicKey = (string) \App\Services\Security\SecretManager::get('OPAY_PUBLIC_KEY', config('services.opay.public_key'));
+        $this->secretKey = (string) \App\Services\Security\SecretManager::opaySecret();
+        $this->baseUrl = rtrim((string) config('services.opay.base_url'), '/');
     }
 
     /**

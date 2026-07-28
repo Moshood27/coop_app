@@ -18,7 +18,7 @@ class FlutterwaveDvaService
      */
     public function createVirtualAccount(User $user, ?string $bvn = null, bool $force = false): array
     {
-        $secret = config('services.flutterwave.secret_key');
+        $secret = \App\Services\Security\SecretManager::flutterwaveSecret();
         if (!$secret) {
             return ['success' => false, 'data' => null, 'message' => 'Payment provider not configured'];
         }
@@ -143,7 +143,7 @@ class FlutterwaveDvaService
             return ['success' => true, 'message' => 'BVN validated (Mock)'];
         }
 
-        $secret = config('services.flutterwave.secret_key');
+        $secret = \App\Services\Security\SecretManager::flutterwaveSecret();
         try {
             $response = Http::withToken($secret)
                 ->acceptJson()

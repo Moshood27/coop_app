@@ -35,7 +35,7 @@ class WebhookController extends Controller
     public function handlePaystack(Request $request)
     {
         $signature = $request->header('x-paystack-signature');
-        $secret = config('services.paystack.secret_key');
+        $secret = \App\Services\Security\SecretManager::paystackSecret();
 
         if (! $signature || ($signature !== hash_hmac('sha512', $request->getContent(), (string) $secret))) {
             return response()->json(['message' => 'Invalid Signature'], 400);
@@ -633,7 +633,7 @@ class WebhookController extends Controller
     {
         // Verify webhook signature using FLW_SECRET_HASH
         $signature = $request->header('verif-hash');
-        $secretHash = config('services.flutterwave.secret_hash');
+        $secretHash = \App\Services\Security\SecretManager::flutterwaveHash();
 
         if (!$secretHash || !$signature || !hash_equals((string)$secretHash, (string)$signature)) {
             Log::warning('Flutterwave webhook signature verification failed', [
@@ -656,7 +656,7 @@ class WebhookController extends Controller
         }
 
         // Verify with Flutterwave for extra safety
-        $secret = config('services.flutterwave.secret_key');
+        $secret = \App\Services\Security\SecretManager::flutterwaveSecret();
         if (!$secret) {
             Log::warning('Flutterwave secret key is not set');
             return response()->json(['message' => 'Payment provider not configured'], 500);
@@ -1070,7 +1070,7 @@ class WebhookController extends Controller
     public function handleMonnify(Request $request)
     {
         $signature = $request->header('x-monnify-signature');
-        $secret = config('services.monnify.secret_key');
+        $secret = \App\Services\Security\SecretManager::monnifySecret();
 
         if (!$signature || ($signature !== hash_hmac('sha512', $request->getContent(), (string)$secret))) {
             Log::warning('Monnify webhook signature verification failed', [
@@ -1265,7 +1265,7 @@ class WebhookController extends Controller
             $signature = substr($signature, 7);
         }
 
-        $secret = config('services.opay.secret_key');
+        $secret = \App\Services\Security\SecretManager::opaySecret();
 
         $computed = hash_hmac('sha512', $request->getContent(), (string)$secret);
 
@@ -1276,7 +1276,7 @@ class WebhookController extends Controller
                 'computed' => $computed,
                 'ip' => $request->ip(),
             ]);
-            // return response()->json(['message' => 'Invalid Signature'], 400);
+            return response()->json(['message' => 'Invalid Signature'], 400);
         }
 
         $payload = $request->all();

@@ -108,6 +108,27 @@ class MemberApplication extends Model
         'submitted_at' => 'datetime',
         'finalized_at' => 'datetime',
         'last_otp_sent_at' => 'datetime',
+
+        // Encrypted PII
+        'phone' => 'encrypted',
+        'secondary_phone' => 'encrypted',
+        'address' => 'encrypted',
+        'residential_address' => 'encrypted',
+        'permanent_address' => 'encrypted',
+        'business_address' => 'encrypted',
+        'nok_name' => 'encrypted',
+        'nok_address' => 'encrypted',
+        'nok_phone' => 'encrypted',
+        'guarantor_name' => 'encrypted',
+        'guarantor_address' => 'encrypted',
+        'guarantor_phone' => 'encrypted',
+        'mosque_address' => 'encrypted',
+        'imam_phone' => 'encrypted',
+        'spouse_father_name' => 'encrypted',
+        'spouse_father_address' => 'encrypted',
+        'spouse_father_business_address' => 'encrypted',
+        'spouse_father_phone' => 'encrypted',
+        'password_hash' => 'hashed',
     ];
 
     public function getFullNameAttribute(): string

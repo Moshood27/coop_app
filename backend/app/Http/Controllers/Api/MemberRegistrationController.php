@@ -85,7 +85,7 @@ class MemberRegistrationController extends Controller
             $existing->fill(array_merge($data, [
                 'fcm_token' => $data['fcm_token'] ?? $existing->fcm_token,
                 'device_token' => $data['device_token'] ?? $existing->device_token,
-                'password_hash' => Crypt::encryptString($data['password']), // store encrypted; will hash once on User model
+                'password_hash' => $data['password'], // hashed by model cast
                 'submitted_at' => now(),
             ]));
             $existing->save();
@@ -103,7 +103,7 @@ class MemberRegistrationController extends Controller
             'token' => $token,
             'fcm_token' => $data['fcm_token'] ?? null,
             'device_token' => $data['device_token'] ?? null,
-            'password_hash' => Crypt::encryptString($data['password']), // store encrypted; will hash once on User model
+            'password_hash' => $data['password'], // hashed by model cast
             'submitted_at' => now(),
         ]));
 
@@ -550,13 +550,8 @@ class MemberRegistrationController extends Controller
         $user->admission_date = now();
         $user->admission_officer_name = 'System/KYC';
 
-        // Decrypt the stored application password and let the User model hash it once
-        try {
-            $plain = Crypt::decryptString($app->password_hash);
-        } catch (\Throwable $e) {
-            return response()->json(['message' => 'Could not finalize: invalid stored password. Please restart registration.'], 500);
-        }
-        $user->password = $plain;
+        // Copy the hashed password directly to the User model
+        $user->password = $app->password_hash;
         $user->passport_path = $app->passport_path; // keep uploaded path
         $user->id_card_path = $app->id_card_path;
         $user->proof_of_address_path = $app->proof_of_address_path;

@@ -15,10 +15,10 @@ class MonnifyService
 
     public function __construct()
     {
-        $this->apiKey = config('services.monnify.api_key');
-        $this->secretKey = config('services.monnify.secret_key');
-        $this->contractCode = config('services.monnify.contract_code');
-        $this->baseUrl = rtrim(config('services.monnify.base_url'), '/');
+        $this->apiKey = (string) \App\Services\Security\SecretManager::get('MONNIFY_API_KEY', config('services.monnify.api_key'));
+        $this->secretKey = (string) \App\Services\Security\SecretManager::monnifySecret();
+        $this->contractCode = (string) config('services.monnify.contract_code');
+        $this->baseUrl = rtrim((string) config('services.monnify.base_url'), '/');
     }
 
     /**
