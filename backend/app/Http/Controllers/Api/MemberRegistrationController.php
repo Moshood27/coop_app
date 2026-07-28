@@ -433,7 +433,7 @@ class MemberRegistrationController extends Controller
         }
         // Prevent duplicate BVN usage across different accounts
         $bvn = $data['bvn'];
-        if (User::where('bvn', $bvn)->exists()) {
+        if (User::whereBlindIndex('bvn', $bvn)->exists()) {
             return response()->json(['message' => 'This BVN is already associated with an existing member. If you believe this is an error, please contact support.'], 422);
         }
 

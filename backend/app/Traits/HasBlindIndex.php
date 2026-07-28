@@ -26,10 +26,11 @@ trait HasBlindIndex
     protected static function bootHasBlindIndex(): void
     {
         static::saving(function ($model) {
-            if ($model->isDirty('phone')) {
+            // Only attempt to set blind index if the attribute exists (even if null)
+            if (array_key_exists('phone', $model->getAttributes()) && $model->isDirty('phone')) {
                 $model->phone_bindex = static::generateBlindIndex($model->phone, 'phone');
             }
-            if ($model->isDirty('bvn')) {
+            if (array_key_exists('bvn', $model->getAttributes()) && $model->isDirty('bvn')) {
                 $model->bvn_bindex = static::generateBlindIndex($model->bvn, 'bvn');
             }
         });
