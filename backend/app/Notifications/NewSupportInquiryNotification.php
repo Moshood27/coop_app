@@ -26,7 +26,7 @@ class NewSupportInquiryNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $channels = ['database'];
-        if ((bool)($notifiable->notify_email ?? true) && !empty($notifiable->email)) {
+        if ((bool)($notifiable->notify_email ?? true) && !empty($notifiable->email) && filter_var($notifiable->email, FILTER_VALIDATE_EMAIL)) {
             $channels[] = 'mail';
         }
         if (!empty($notifiable->fcm_token) || !empty($notifiable->device_token)) {

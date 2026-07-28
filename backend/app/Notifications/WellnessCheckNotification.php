@@ -18,7 +18,11 @@ class WellnessCheckNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email) && filter_var($notifiable->email, FILTER_VALIDATE_EMAIL)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
     }
 
     /**

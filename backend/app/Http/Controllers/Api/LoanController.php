@@ -363,10 +363,11 @@ class LoanController extends Controller
 
             // Emails
             try {
-                if (!empty($q->user?->email)) {
-                    Mail::to($q->user->email)->send(new LoanDisbursedUser($q, $credit));
+                if ($email = SecurityUtils::filterEmail($q->user?->email)) {
+                    Mail::to($email)->send(new LoanDisbursedUser($q, $credit));
                 }
                 $adminEmails = User::query()->where('is_admin', true)->whereNotNull('email')->pluck('email')->all();
+                $adminEmails = SecurityUtils::filterEmail($adminEmails);
                 if (!empty($adminEmails)) {
                     Mail::to($adminEmails)->send(new LoanDisbursedAdminNotification($q, $credit));
                 }
@@ -454,6 +455,7 @@ class LoanController extends Controller
                         }
                     }
                 }
+                $adminEmails = SecurityUtils::filterEmail($adminEmails);
                 if (!empty($adminEmails)) {
                     Mail::to($adminEmails)->send(new LoanRequestedAdminNotification($q));
                 }
@@ -635,8 +637,8 @@ class LoanController extends Controller
 
                 // Best-effort: email receipt to user (do not block on failure)
                 try {
-                    if (!empty($user->email)) {
-                        Mail::to($user->email)->send(new RepaymentReceiptUser($q, $rep));
+                    if ($email = SecurityUtils::filterEmail($user->email)) {
+                        Mail::to($email)->send(new RepaymentReceiptUser($q, $rep));
                     }
                 } catch (\Throwable $e) {
                     Log::warning('Failed to send repayment receipt email (wallet path)', [

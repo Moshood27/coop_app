@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NursingMotherAdminNotification;
 use App\Models\User;
+use App\Support\SecurityUtils;
 
 class ProfileController extends Controller
 {
@@ -624,6 +625,7 @@ class ProfileController extends Controller
                 ->pluck('email')
                 ->all();
 
+            $adminEmails = SecurityUtils::filterEmail($adminEmails);
             if (!empty($adminEmails)) {
                 Mail::to($adminEmails)->send(new NursingMotherAdminNotification($user));
             }

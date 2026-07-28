@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Support\SecurityUtils;
 
 class ListMemberApplications extends ListRecords
 {
@@ -46,12 +47,20 @@ class ListMemberApplications extends ListRecords
                 ])
                 ->action(function (array $data) {
                     try {
-                        Mail::to($data['email'])->send(new MemberInvitation($data['name'], $data['message']));
-                        Notification::make()
-                            ->title('Invitation Sent')
-                            ->body("An invitation has been sent to {$data['email']}.")
-                            ->success()
-                            ->send();
+                        if ($email = SecurityUtils::filterEmail($data['email'])) {
+                            Mail::to($email)->send(new MemberInvitation($data['name'], $data['message']));
+                            Notification::make()
+                                ->title('Invitation Sent')
+                                ->body("An invitation has been sent to {$email}.")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Invalid Email')
+                                ->body('The provided email address is invalid.')
+                                ->danger()
+                                ->send();
+                        }
                     } catch (\Exception $e) {
                         Log::error('Failed to send invitation email', ['error' => $e->getMessage()]);
                         Notification::make()

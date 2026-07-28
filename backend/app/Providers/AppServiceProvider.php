@@ -71,16 +71,6 @@ class AppServiceProvider extends ServiceProvider
             $client->addScope(\Google\Service\Drive::DRIVE);
             $client->setAccessType('offline');
 
-            $token = $client->fetchAccessTokenWithRefreshToken($config['refreshToken']);
-
-            if (isset($token['error'])) {
-                throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']) . '. Refresh Token used: ' . substr($config['refreshToken'], 0, 5) . '...');
-            }
-
-            if (!$client->getAccessToken()) {
-                throw new \Exception('Google Drive Authentication Error: Access token could not be retrieved.');
-            }
-
             $service = new \Google\Service\Drive($client);
 
             $options = [
@@ -101,23 +91,70 @@ class AppServiceProvider extends ServiceProvider
                 $options['teamDriveId'] = $config['teamDriveId'];
             }
 
-            $adapter = new class($service, $root, $options) extends \Masbug\Flysystem\GoogleDriveAdapter {
+            $adapter = new class($service, $root, $options, $client, $config['refreshToken']) extends \Masbug\Flysystem\GoogleDriveAdapter {
+                private $googleClient;
+                private $refreshToken;
+                private $authenticated = false;
+
+                public function __construct($service, $root, $options, $googleClient, $refreshToken)
+                {
+                    parent::__construct($service, $root, $options);
+                    $this->googleClient = $googleClient;
+                    $this->refreshToken = $refreshToken;
+                }
+
+                private function ensureAuthenticated()
+                {
+                    if (!$this->authenticated) {
+                        $token = $this->googleClient->fetchAccessTokenWithRefreshToken($this->refreshToken);
+                        if (isset($token['error'])) {
+                            throw new \Exception('Google Drive Authentication Error: ' . ($token['error_description'] ?? $token['error']) . '. Refresh Token used: ' . substr($this->refreshToken, 0, 5) . '...');
+                        }
+                        $this->authenticated = true;
+                    }
+                }
+
                 public function listContents(string $directory, bool $recursive): iterable
                 {
                     try {
+                        $this->ensureAuthenticated();
                         $it = parent::listContents($directory, $recursive);
                         foreach ($it as $item) {
                             yield $item;
                         }
                     } catch (\Throwable $e) {
                         // Return empty iterable
+                        return [];
                     }
                 }
 
                 public function getMetadata(string $path)
                 {
                     try {
+                        $this->ensureAuthenticated();
                         return parent::getMetadata($path);
+                    } catch (\Throwable $e) {
+                        return false;
+                    }
+                }
+
+                public function lastModified(string $path): \League\Flysystem\FileAttributes
+                {
+                    $this->ensureAuthenticated();
+                    return parent::lastModified($path);
+                }
+
+                public function fileSize(string $path): \League\Flysystem\FileAttributes
+                {
+                    $this->ensureAuthenticated();
+                    return parent::fileSize($path);
+                }
+
+                public function fileExists(string $path): bool
+                {
+                    try {
+                        $this->ensureAuthenticated();
+                        return parent::fileExists($path);
                     } catch (\Throwable $e) {
                         return false;
                     }
@@ -234,11 +271,17 @@ class AppServiceProvider extends ServiceProvider
         ];
 
         foreach (array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null]) as $disk) {
-            $checks[] = BackupsCheck::new()
-                ->onDisk($disk)
-                ->locatedAt('ATTAQWA')
-                ->name('Backups: ' . ucfirst($disk))
-                ->youngestBackShouldHaveBeenMadeBefore(now()->subDay());
+            try {
+                $checks[] = BackupsCheck::new()
+                    ->onDisk($disk)
+                    ->locatedAt('ATTAQWA')
+                    ->name('Backups: ' . ucfirst($disk))
+                    ->youngestBackShouldHaveBeenMadeBefore(now()->subDay());
+            } catch (\Throwable $e) {
+                // Prevent health check registration from crashing the entire application boot process
+                // This is critical for requests like broadcasting auth or API calls that don't need these disks
+                report($e);
+            }
         }
 
         Health::checks($checks);

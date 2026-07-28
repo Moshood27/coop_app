@@ -56,4 +56,30 @@ class SecurityUtils
 
         return $default ?? config('app.url');
     }
+
+    /**
+     * Filter and validate email addresses.
+     * Useful for Resend API which is strict about format.
+     *
+     * @param string|array|null $emails
+     * @return array|string|null
+     */
+    public static function filterEmail($emails)
+    {
+        if (empty($emails)) {
+            return is_array($emails) ? [] : null;
+        }
+
+        if (is_string($emails)) {
+            return filter_var($emails, FILTER_VALIDATE_EMAIL) ? $emails : null;
+        }
+
+        if (is_array($emails)) {
+            return array_values(array_filter($emails, function ($email) {
+                return !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL);
+            }));
+        }
+
+        return $emails;
+    }
 }

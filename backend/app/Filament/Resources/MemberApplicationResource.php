@@ -11,6 +11,7 @@ use App\Mail\NewMemberWelcome;
 use App\Mail\MemberApplicationRejected;
 use App\Mail\MemberApplicationInterviewInvitation;
 use App\Services\SmsService;
+use App\Support\SecurityUtils;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -320,13 +321,15 @@ class MemberApplicationResource extends Resource
                     ->action(function (MemberApplication $record, array $data) {
                         // Send Email
                         try {
-                            Mail::to($record->email)->send(new MemberApplicationInterviewInvitation(
-                                name: $record->name,
-                                meetingType: $data['meeting_type'],
-                                meetingDateTime: \Carbon\Carbon::parse($data['meeting_date_time'])->format('M d, Y h:i A'),
-                                meetingLocationOrLink: $data['location_or_link'],
-                                customMessage: $data['custom_message'] ?? null
-                            ));
+                            if ($email = SecurityUtils::filterEmail($record->email)) {
+                                Mail::to($email)->send(new MemberApplicationInterviewInvitation(
+                                    name: $record->name,
+                                    meetingType: $data['meeting_type'],
+                                    meetingDateTime: \Carbon\Carbon::parse($data['meeting_date_time'])->format('M d, Y h:i A'),
+                                    meetingLocationOrLink: $data['location_or_link'],
+                                    customMessage: $data['custom_message'] ?? null
+                                ));
+                            }
                         } catch (\Exception $e) {
                             Log::error('Failed to send interview invitation email', ['error' => $e->getMessage()]);
                         }
@@ -456,7 +459,9 @@ class MemberApplicationResource extends Resource
 
                         // Send welcome email
                         try {
-                            Mail::to($user->email)->send(new NewMemberWelcome($user));
+                            if ($email = SecurityUtils::filterEmail($user->email)) {
+                                Mail::to($email)->send(new NewMemberWelcome($user));
+                            }
                         } catch (\Exception $e) {
                             Log::error('Failed to send welcome email', ['error' => $e->getMessage()]);
                         }
@@ -493,7 +498,9 @@ class MemberApplicationResource extends Resource
 
                         // Send rejection email
                         try {
-                            Mail::to($record->email)->send(new MemberApplicationRejected($record, $data['reason']));
+                            if ($email = SecurityUtils::filterEmail($record->email)) {
+                                Mail::to($email)->send(new MemberApplicationRejected($record, $data['reason']));
+                            }
                         } catch (\Exception $e) {
                             Log::error('Failed to send rejection email', ['error' => $e->getMessage()]);
                         }

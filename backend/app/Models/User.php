@@ -430,7 +430,7 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
                 'database',
             ]));
 
-            $useMail = in_array('mail', $resolved, true) && (bool) ($this->notify_email ?? true) && !empty($this->email);
+            $useMail = in_array('mail', $resolved, true) && (bool) ($this->notify_email ?? true) && !empty($this->email) && filter_var($this->email, FILTER_VALIDATE_EMAIL);
             $useDb = in_array('database', $resolved, true);
 
             // Use Laravel notification for database/email (disable push here as we handle it manually below)
@@ -461,6 +461,15 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         } catch (\Throwable $e) {
             // swallow all errors
         }
+    }
+
+    public function routeNotificationForMail($notification)
+    {
+        $email = trim($this->email ?? '');
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $email;
+        }
+        return null;
     }
 
     public function branch()

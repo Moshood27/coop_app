@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Notifications\PaymentNotification;
+use App\Support\SecurityUtils;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contribution;
@@ -71,8 +72,8 @@ class WebhookController extends Controller
                 }
 
                 try {
-                    if (!empty($user->email)) {
-                        Mail::to($user->email)->send(new PaymentStatusMail(
+                    if ($email = SecurityUtils::filterEmail($user->email)) {
+                        Mail::to($email)->send(new PaymentStatusMail(
                             status: 'failed',
                             title: 'Payment Failed',
                             message: 'Your payment attempt was not successful. ' . $reason,
@@ -297,8 +298,8 @@ class WebhookController extends Controller
                     try {
                         $loanRep->refresh();
                         $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
-                        if ($loan && $loan->user && !empty($loan->user->email)) {
-                            Mail::to($loan->user->email)->send(new RepaymentReceiptUser($loan, $loanRep));
+                        if ($loan && $loan->user && ($email = SecurityUtils::filterEmail($loan->user->email))) {
+                            Mail::to($email)->send(new RepaymentReceiptUser($loan, $loanRep));
                         }
                     } catch (\Throwable $e) {
                         Log::warning('Failed to send repayment receipt email (paystack webhook)', [
@@ -719,8 +720,8 @@ class WebhookController extends Controller
                             app('sentry')->captureMessage('Payment Failure: Flutterwave ' . $reason, \Sentry\Severity::error());
                         }
 
-                        if (!empty($user->email)) {
-                            Mail::to($user->email)->send(new PaymentStatusMail(
+                        if ($email = SecurityUtils::filterEmail($user->email)) {
+                            Mail::to($email)->send(new PaymentStatusMail(
                                 status: 'failed',
                                 title: 'Payment Failed',
                                 message: 'Your payment attempt was not successful. ' . $reason,
@@ -795,8 +796,8 @@ class WebhookController extends Controller
             try {
                 $loanRep->refresh();
                 $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
-                if ($loan && $loan->user && !empty($loan->user->email)) {
-                    Mail::to($loan->user->email)->send(new RepaymentReceiptUser($loan, $loanRep));
+                if ($loan && $loan->user && ($email = SecurityUtils::filterEmail($loan->user->email))) {
+                    Mail::to($email)->send(new RepaymentReceiptUser($loan, $loanRep));
                 }
             } catch (\Throwable $e) {
                 Log::warning('Failed to send repayment receipt email (flutterwave path)', [

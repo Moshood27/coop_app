@@ -6,6 +6,7 @@ use App\Filament\Resources\UserResource;
 use App\Mail\NewMemberAdminNotification;
 use App\Mail\NewMemberWelcome;
 use App\Models\User as UserModel;
+use App\Support\SecurityUtils;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -20,9 +21,9 @@ class CreateUser extends CreateRecord
 
         DB::afterCommit(function () use ($user) {
             // Send welcome email to the new member if they have an email
-            if (!empty($user->email)) {
+            if ($email = SecurityUtils::filterEmail($user->email)) {
                 try {
-                    Mail::to($user->email)->send(new NewMemberWelcome($user));
+                    Mail::to($email)->send(new NewMemberWelcome($user));
                 } catch (\Throwable $e) {
                     // Swallow email errors to avoid blocking the admin action
                 }
@@ -36,6 +37,7 @@ class CreateUser extends CreateRecord
                     ->pluck('email')
                     ->all();
 
+                $adminEmails = SecurityUtils::filterEmail($adminEmails);
                 if (!empty($adminEmails)) {
                     Mail::to($adminEmails)->send(new NewMemberAdminNotification($user));
                 }

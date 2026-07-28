@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\LoanRequestedAdminNotification;
+use App\Support\SecurityUtils;
 use Filament\Notifications\Notification;
 
 class CreateQardHasan extends CreateRecord
@@ -147,6 +148,7 @@ class CreateQardHasan extends CreateRecord
                     }
                 }
             }
+            $adminEmails = SecurityUtils::filterEmail($adminEmails);
             if (!empty($adminEmails)) {
                 Mail::to($adminEmails)->send(new LoanRequestedAdminNotification($loan));
             }

@@ -20,7 +20,7 @@ class LoanPaymentReminder extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $channels = ['database'];
-        if (!empty($notifiable->email) && (bool) ($notifiable->notify_email ?? true)) {
+        if (!empty($notifiable->email) && (bool) ($notifiable->notify_email ?? true) && filter_var($notifiable->email, FILTER_VALIDATE_EMAIL)) {
             $channels[] = 'mail';
         }
         if ($notifiable->fcm_token || $notifiable->device_token) {

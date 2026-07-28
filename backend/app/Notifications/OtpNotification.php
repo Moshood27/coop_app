@@ -34,7 +34,7 @@ class OtpNotification extends Notification
             $channels[] = SmsChannel::class;
         }
 
-        if (in_array('email', $requestedChannels) || in_array('all', $requestedChannels)) {
+        if ((in_array('email', $requestedChannels) || in_array('all', $requestedChannels)) && !empty($notifiable->email) && filter_var($notifiable->email, FILTER_VALIDATE_EMAIL)) {
             $channels[] = 'mail';
         }
 

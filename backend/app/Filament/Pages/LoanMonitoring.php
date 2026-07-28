@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Mail\DefaultLoanReminder;
 use App\Models\User;
+use App\Support\SecurityUtils;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Mail;
@@ -152,7 +153,12 @@ class LoanMonitoring extends Page
             return;
         }
 
-        Mail::to($user->email)->queue(new DefaultLoanReminder($user, $loansData, $totalOutstanding));
+        if ($email = SecurityUtils::filterEmail($user->email)) {
+            Mail::to($email)->queue(new DefaultLoanReminder($user, $loansData, $totalOutstanding));
+        } else {
+            Notification::make()->danger()->title('Invalid email')->body('The member email address is invalid.')->send();
+            return;
+        }
 
         // Best-effort push notification to the member
         try {

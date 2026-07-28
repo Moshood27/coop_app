@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\DefaultLoanReminder;
 use App\Models\User;
+use App\Support\SecurityUtils;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -92,9 +93,13 @@ class SendDefaultLoanReminders extends Command
                 continue;
             }
 
-            Mail::to($user->email)->send(new DefaultLoanReminder($user, $loansData, $totalOutstanding));
-            $countEmails++;
-            $this->info(sprintf('Sent reminder to %s <%s> | Loans: %d | Outstanding: %.2f', $user->full_name, $user->email, count($loansData), $totalOutstanding));
+            if ($email = SecurityUtils::filterEmail($user->email)) {
+                Mail::to($email)->send(new DefaultLoanReminder($user, $loansData, $totalOutstanding));
+                $countEmails++;
+                $this->info(sprintf('Sent reminder to %s <%s> | Loans: %d | Outstanding: %.2f', $user->full_name, $email, count($loansData), $totalOutstanding));
+            } else {
+                $this->warn(sprintf('Skipped %s - Invalid email address: %s', $user->full_name, $user->email));
+            }
         }
 
         $this->info(sprintf('Completed. Defaulters checked: %d, Flagged: %d, Emails sent: %d', $countUsers, $countFlagged, $countEmails));

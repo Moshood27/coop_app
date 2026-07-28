@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Models\ShariahAuditLog as ShariahAudit;
 use App\Models\User;
 use App\Support\DurationHelper;
+use App\Support\SecurityUtils;
 use App\Models\WalletTransaction;
 use App\Notifications\LoanAgreementRejectedNotification;
 use App\Notifications\LoanAgreementVerifiedNotification;
@@ -895,8 +896,8 @@ class QardHasanResource extends Resource
                         $record->loadMissing('user');
 
                         // Send email to member if email exists
-                        if (! empty($record->user?->email)) {
-                            Mail::to($record->user->email)->send(new LoanDisbursedUser($record, $credit));
+                        if ($email = SecurityUtils::filterEmail($record->user?->email)) {
+                            Mail::to($email)->send(new LoanDisbursedUser($record, $credit));
                         }
 
                         // Notify relevant admins
@@ -904,6 +905,7 @@ class QardHasanResource extends Resource
                             ->whereNotNull('email')
                             ->pluck('email')
                             ->all();
+                        $adminEmails = SecurityUtils::filterEmail($adminEmails);
                         if (! empty($adminEmails)) {
                             Mail::to($adminEmails)->send(new LoanDisbursedAdminNotification($record, $credit));
                         }

@@ -23,6 +23,7 @@ use App\Services\AttendanceService;
 use App\Services\PushService;
 use App\Services\SmsService;
 use App\Services\TakafulService;
+use App\Support\SecurityUtils;
 use App\Services\AdministrativeChargeService;
 use App\Notifications\WellnessCheckNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -1176,7 +1177,9 @@ class UserResource extends Resource
 
                         // Send welcome email
                         try {
-                            Mail::to($record->email)->send(new NewMemberWelcome($record));
+                            if ($email = SecurityUtils::filterEmail($record->email)) {
+                                Mail::to($email)->send(new NewMemberWelcome($record));
+                            }
                             $record->notifyMember(
                                 "Membership Approved",
                                 "Assalāmu ‘alaykum {$record->name}, your membership has been approved. You can now log in to the app.",
@@ -1225,7 +1228,9 @@ class UserResource extends Resource
 
                         // Send rejection email
                         try {
-                            Mail::to($record->email)->send(new MemberApplicationRejected($application ?? $record, $data['reason']));
+                            if ($email = SecurityUtils::filterEmail($record->email)) {
+                                Mail::to($email)->send(new MemberApplicationRejected($application ?? $record, $data['reason']));
+                            }
                             $record->notifyMember(
                                 "Membership Application Rejected",
                                 "Regrettably, your membership application has been rejected. Reason: " . $data['reason'],
