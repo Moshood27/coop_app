@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -110,24 +111,24 @@ class MemberApplication extends Model
         'last_otp_sent_at' => 'datetime',
 
         // Encrypted PII
-        'phone' => 'encrypted',
-        'secondary_phone' => 'encrypted',
-        'address' => 'encrypted',
-        'residential_address' => 'encrypted',
-        'permanent_address' => 'encrypted',
-        'business_address' => 'encrypted',
-        'nok_name' => 'encrypted',
-        'nok_address' => 'encrypted',
-        'nok_phone' => 'encrypted',
-        'guarantor_name' => 'encrypted',
-        'guarantor_address' => 'encrypted',
-        'guarantor_phone' => 'encrypted',
-        'mosque_address' => 'encrypted',
-        'imam_phone' => 'encrypted',
-        'spouse_father_name' => 'encrypted',
-        'spouse_father_address' => 'encrypted',
-        'spouse_father_business_address' => 'encrypted',
-        'spouse_father_phone' => 'encrypted',
+        'phone' => SafeEncrypted::class,
+        'secondary_phone' => SafeEncrypted::class,
+        'address' => SafeEncrypted::class,
+        'residential_address' => SafeEncrypted::class,
+        'permanent_address' => SafeEncrypted::class,
+        'business_address' => SafeEncrypted::class,
+        'nok_name' => SafeEncrypted::class,
+        'nok_address' => SafeEncrypted::class,
+        'nok_phone' => SafeEncrypted::class,
+        'guarantor_name' => SafeEncrypted::class,
+        'guarantor_address' => SafeEncrypted::class,
+        'guarantor_phone' => SafeEncrypted::class,
+        'mosque_address' => SafeEncrypted::class,
+        'imam_phone' => SafeEncrypted::class,
+        'spouse_father_name' => SafeEncrypted::class,
+        'spouse_father_address' => SafeEncrypted::class,
+        'spouse_father_business_address' => SafeEncrypted::class,
+        'spouse_father_phone' => SafeEncrypted::class,
         'password_hash' => 'hashed',
     ];
 
