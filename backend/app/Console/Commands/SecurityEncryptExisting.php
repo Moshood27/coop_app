@@ -94,6 +94,18 @@ class SecurityEncryptExisting extends Command
                     }
                 }
 
+                // Also ensure blind indexes are populated even if already encrypted
+                if (method_exists($record, 'generateBlindIndex')) {
+                    if (in_array('phone', $fields) && empty($record->phone_bindex) && !empty($record->phone)) {
+                        $record->phone_bindex = $record->generateBlindIndex($record->phone, 'phone');
+                        $needsSave = true;
+                    }
+                    if (in_array('bvn', $fields) && empty($record->bvn_bindex) && !empty($record->bvn)) {
+                        $record->bvn_bindex = $record->generateBlindIndex($record->bvn, 'bvn');
+                        $needsSave = true;
+                    }
+                }
+
                 if ($needsSave) {
                     $record->save();
                 }

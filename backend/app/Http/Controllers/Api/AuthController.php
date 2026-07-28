@@ -129,7 +129,7 @@ class AuthController extends Controller
         $user = User::where('branch_id', $validated['branch_id'])
             ->where(function ($query) use ($validated) {
                 $query->where('membership_number', $validated['membership_number'])
-                    ->orWhere('phone', $validated['membership_number']);
+                    ->orWhereBlindIndex('phone', $validated['membership_number']);
             })
             ->first();
 
@@ -150,10 +150,17 @@ class AuthController extends Controller
         $tokenResult = $user->createToken($tokenName);
 
         // Bind token to current IP and User Agent for extra security
-        $tokenResult->accessToken->forceFill([
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ])->save();
+        try {
+            $tokenResult->accessToken->forceFill([
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Gracefully handle if migration 'add_ip_and_user_agent_to_personal_access_tokens' wasn't run yet
+            if (!str_contains($e->getMessage(), 'ip_address')) {
+                throw $e;
+            }
+        }
 
         $token = $tokenResult->plainTextToken;
 
@@ -218,16 +225,16 @@ class AuthController extends Controller
                 if ($user) $isApplicant = true;
             }
         } elseif (!empty($data['phone'])) {
-            $user = User::where('phone', $data['phone'])->first();
+            $user = User::whereBlindIndex('phone', $data['phone'])->first();
             if (!$user) {
-                $user = \App\Models\MemberApplication::where('phone', $data['phone'])->whereNull('finalized_at')->first();
+                $user = \App\Models\MemberApplication::whereBlindIndex('phone', $data['phone'])->whereNull('finalized_at')->first();
                 if ($user) $isApplicant = true;
             }
         } elseif (!empty($data['branch_id']) && !empty($data['membership_number'])) {
             $user = User::where('branch_id', $data['branch_id'])
                 ->where(function ($query) use ($data) {
                     $query->where('membership_number', $data['membership_number'])
-                        ->orWhere('phone', $data['membership_number']);
+                        ->orWhereBlindIndex('phone', $data['membership_number']);
                 })
                 ->first();
         }
@@ -329,16 +336,16 @@ class AuthController extends Controller
                 if ($user) $isApplicant = true;
             }
         } elseif (!empty($data['phone'])) {
-            $user = User::where('phone', $data['phone'])->first();
+            $user = User::whereBlindIndex('phone', $data['phone'])->first();
             if (!$user) {
-                $user = \App\Models\MemberApplication::where('phone', $data['phone'])->whereNull('finalized_at')->first();
+                $user = \App\Models\MemberApplication::whereBlindIndex('phone', $data['phone'])->whereNull('finalized_at')->first();
                 if ($user) $isApplicant = true;
             }
         } elseif (!empty($data['branch_id']) && !empty($data['membership_number'])) {
             $user = User::where('branch_id', $data['branch_id'])
                 ->where(function ($query) use ($data) {
                     $query->where('membership_number', $data['membership_number'])
-                        ->orWhere('phone', $data['membership_number']);
+                        ->orWhereBlindIndex('phone', $data['membership_number']);
                 })
                 ->first();
         }

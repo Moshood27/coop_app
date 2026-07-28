@@ -235,7 +235,7 @@ class SavingsGroupController extends Controller
             'identifier' => 'required|string', // phone or membership number
         ]);
 
-        $recipient = User::where('phone', $validated['identifier'])
+        $recipient = User::whereBlindIndex('phone', $validated['identifier'])
             ->orWhere('membership_number', $validated['identifier'])
             ->first();
 

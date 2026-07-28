@@ -33,6 +33,11 @@ axios.interceptors.response.use(
     // Note: 403 is also used by the API for business logic errors (e.g., invalid PIN).
     // Do NOT auto-logout on 403 to avoid redirecting members during normal error flows.
     if (status === 401 || status === 423) {
+      // Don't auto-redirect if we're already trying to login
+      if (error.config?.url?.endsWith('/api/login')) {
+        return Promise.reject(error)
+      }
+
       // Clear both member and admin tokens to be safe
       const hadMember = !!localStorage.getItem('token')
       const hadAdmin = !!localStorage.getItem('admin_token')

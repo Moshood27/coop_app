@@ -25,10 +25,12 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity; // Clean Namespace
 use Spatie\Permission\Traits\HasRoles;
 
+use App\Traits\HasBlindIndex;
+
 class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication;
+    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication, HasBlindIndex;
 
     public function getActivitylogOptions(): LogOptions
     {

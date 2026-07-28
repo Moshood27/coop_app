@@ -41,9 +41,9 @@ class UssdController extends Controller
         $normalizedPhone = $smsService->normalizeMsisdn($msisdn);
 
         // Try to find user by normalized phone or as stored in DB
-        $user = User::where('phone', $normalizedPhone)
-            ->orWhere('phone', '0' . substr($normalizedPhone, 3))
-            ->orWhere('phone', $msisdn)
+        $user = User::whereBlindIndex('phone', $normalizedPhone)
+            ->orWhereBlindIndex('phone', '0' . substr($normalizedPhone, 3))
+            ->orWhereBlindIndex('phone', $msisdn)
             ->first();
 
         if (!$user) {

@@ -11,9 +11,11 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+use App\Traits\HasBlindIndex;
+
 class MemberApplication extends Model
 {
-    use HasFactory, Notifiable, LogsActivity;
+    use HasFactory, Notifiable, LogsActivity, HasBlindIndex;
 
     public function getActivitylogOptions(): LogOptions
     {

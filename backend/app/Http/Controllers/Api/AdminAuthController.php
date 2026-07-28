@@ -29,10 +29,14 @@ class AdminAuthController extends Controller
         ]);
 
         $tokenResult = $user->createToken('admin_token');
-        $tokenResult->accessToken->forceFill([
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ])->save();
+        try {
+            $tokenResult->accessToken->forceFill([
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
+        }
         $token = $tokenResult->plainTextToken;
 
         return response()->json([
@@ -66,10 +70,14 @@ class AdminAuthController extends Controller
         }
 
         $tokenResult = $user->createToken('admin_token');
-        $tokenResult->accessToken->forceFill([
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ])->save();
+        try {
+            $tokenResult->accessToken->forceFill([
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
+        }
         $token = $tokenResult->plainTextToken;
 
         return response()->json([
@@ -122,10 +130,14 @@ class AdminAuthController extends Controller
         }
 
         $tokenResult = $user->createToken('admin_token');
-        $tokenResult->accessToken->forceFill([
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ])->save();
+        try {
+            $tokenResult->accessToken->forceFill([
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
+        }
         $token = $tokenResult->plainTextToken;
 
         return response()->json([
