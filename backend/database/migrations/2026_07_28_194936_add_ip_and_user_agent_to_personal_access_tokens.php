@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('personal_access_tokens', function (Blueprint $table) {
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
+            //
         });
     }
 
@@ -23,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('personal_access_tokens', function (Blueprint $table) {
-            $table->dropColumn(['ip_address', 'user_agent']);
+            //
         });
     }
 };

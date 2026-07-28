@@ -304,7 +304,7 @@ class AttendanceController extends Controller
                     ->orWhere('name', 'like', "%{$query}%")
                     ->orWhere('other_names', 'like', "%{$query}%")
                     ->orWhere('membership_number', 'like', "%{$query}%")
-                    ->orWhereBlindIndex('phone', $query);
+                    ->orWhere('phone', 'like', "%{$query}%");
             })
             ->when($meetingId, function($q) use ($meetingId) {
                 $q->withExists(['attendanceRecords as is_present' => function($q) use ($meetingId) {

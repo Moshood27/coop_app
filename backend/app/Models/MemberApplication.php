@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,11 +10,9 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-use App\Traits\HasBlindIndex;
-
 class MemberApplication extends Model
 {
-    use HasFactory, Notifiable, LogsActivity, HasBlindIndex;
+    use HasFactory, Notifiable, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -111,27 +108,6 @@ class MemberApplication extends Model
         'submitted_at' => 'datetime',
         'finalized_at' => 'datetime',
         'last_otp_sent_at' => 'datetime',
-
-        // Encrypted PII
-        'phone' => SafeEncrypted::class,
-        'secondary_phone' => SafeEncrypted::class,
-        'address' => SafeEncrypted::class,
-        'residential_address' => SafeEncrypted::class,
-        'permanent_address' => SafeEncrypted::class,
-        'business_address' => SafeEncrypted::class,
-        'nok_name' => SafeEncrypted::class,
-        'nok_address' => SafeEncrypted::class,
-        'nok_phone' => SafeEncrypted::class,
-        'guarantor_name' => SafeEncrypted::class,
-        'guarantor_address' => SafeEncrypted::class,
-        'guarantor_phone' => SafeEncrypted::class,
-        'mosque_address' => SafeEncrypted::class,
-        'imam_phone' => SafeEncrypted::class,
-        'spouse_father_name' => SafeEncrypted::class,
-        'spouse_father_address' => SafeEncrypted::class,
-        'spouse_father_business_address' => SafeEncrypted::class,
-        'spouse_father_phone' => SafeEncrypted::class,
-        'password_hash' => 'hashed',
     ];
 
     public function getFullNameAttribute(): string

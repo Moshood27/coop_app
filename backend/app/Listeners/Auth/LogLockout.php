@@ -20,17 +20,11 @@ class LogLockout
      */
     public function handle(Lockout $event): void
     {
-        $identity = $event->request->membership_number
-            ?? ($event->request->email
-            ?? ($event->request->phone ?? 'unknown'));
-
-        \App\Services\SecurityLogger::logVelocityAlert('login', (string) $identity);
-
         activity('security')
             ->withProperties([
                 'ip' => $this->request->ip(),
                 'user_agent' => $this->request->userAgent(),
-                'identity' => $identity,
+                'email' => $event->request->email ?? ($event->request->phone ?? 'unknown'),
             ])
             ->log('User account locked out due to multiple failed attempts');
     }

@@ -11,9 +11,8 @@ const base = import.meta?.env?.BASE_URL || '/'
 // Apply a reasonable default timeout; can be overridden via VITE_HTTP_TIMEOUT (ms)
 const timeout = Number(import.meta?.env?.VITE_HTTP_TIMEOUT || 30000)
 axios.defaults.timeout = isNaN(timeout) ? 30000 : timeout
-axios.defaults.withCredentials = true
 
-// Attach token automatically if present (primarily for mobile/Capacitor)
+// Attach token automatically if present
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token')
   if (token) {
@@ -33,11 +32,6 @@ axios.interceptors.response.use(
     // Note: 403 is also used by the API for business logic errors (e.g., invalid PIN).
     // Do NOT auto-logout on 403 to avoid redirecting members during normal error flows.
     if (status === 401 || status === 423) {
-      // Don't auto-redirect if we're already trying to login
-      if (error.config?.url?.endsWith('/api/login')) {
-        return Promise.reject(error)
-      }
-
       // Clear both member and admin tokens to be safe
       const hadMember = !!localStorage.getItem('token')
       const hadAdmin = !!localStorage.getItem('admin_token')

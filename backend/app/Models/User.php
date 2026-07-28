@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Casts\SafeEncrypted;
 use App\Models\Scheme;
 use App\Models\Setting;
 use Carbon\Carbon;
@@ -25,12 +24,10 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity; // Clean Namespace
 use Spatie\Permission\Traits\HasRoles;
 
-use App\Traits\HasBlindIndex;
-
 class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication, HasBlindIndex;
+    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -189,26 +186,6 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             'is_defaulter' => 'boolean',
             'is_distant' => 'boolean',
             'balance' => 'decimal:2',
-            'phone' => SafeEncrypted::class,
-            'secondary_phone' => SafeEncrypted::class,
-            'address' => SafeEncrypted::class,
-            'residential_address' => SafeEncrypted::class,
-            'permanent_address' => SafeEncrypted::class,
-            'business_address' => SafeEncrypted::class,
-            'nok_name' => SafeEncrypted::class,
-            'nok_address' => SafeEncrypted::class,
-            'nok_phone' => SafeEncrypted::class,
-            'guarantor_name' => SafeEncrypted::class,
-            'guarantor_address' => SafeEncrypted::class,
-            'guarantor_phone' => SafeEncrypted::class,
-            'mosque_address' => SafeEncrypted::class,
-            'imam_phone' => SafeEncrypted::class,
-            'spouse_father_name' => SafeEncrypted::class,
-            'spouse_father_address' => SafeEncrypted::class,
-            'spouse_father_business_address' => SafeEncrypted::class,
-            'spouse_father_phone' => SafeEncrypted::class,
-            'bvn' => SafeEncrypted::class,
-            'account_number' => SafeEncrypted::class,
             'outstanding_fines' => 'decimal:2',
             'ordinary_savings' => 'decimal:2',
             'special_savings_balance' => 'decimal:2',

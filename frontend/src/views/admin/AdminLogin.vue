@@ -97,12 +97,7 @@ const handleLogin = async () => {
   error.value = ''
   try {
     const { data } = await axios.post('/api/admin/login', form.value)
-    
-    // Store token in localStorage ONLY for mobile apps (Capacitor)
-    if (window.Capacitor && window.Capacitor.getPlatform() !== 'web') {
-      localStorage.setItem('admin_token', data.token)
-    }
-    
+    localStorage.setItem('admin_token', data.token)
     localStorage.setItem('is_admin', 'true')
     
     // Redirect to mobile admin portal instead of full Filament panel

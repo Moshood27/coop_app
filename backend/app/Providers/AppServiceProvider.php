@@ -59,8 +59,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->overrideSecrets();
-
         // Register Google Drive Storage Driver
         Storage::extend('google', function ($app, $config) {
             if (empty($config['clientId']) || empty($config['clientSecret']) || empty($config['refreshToken'])) {
@@ -318,38 +316,6 @@ class AppServiceProvider extends ServiceProvider
         // Handle Resend quota and rate limits globally for all queued jobs
         Bus::pipeThrough([
             HandleResendQuota::class,
-        ]);
-    }
-
-    /**
-     * Override configuration secrets using SecretManager.
-     * This ensures that even if old code uses config(), it gets the protected value.
-     */
-    protected function overrideSecrets(): void
-    {
-        $sm = \App\Services\Security\SecretManager::class;
-
-        config([
-            'services.paystack.secret_key' => $sm::paystackSecret(),
-            'services.flutterwave.secret_key' => $sm::flutterwaveSecret(),
-            'services.flutterwave.secret_hash' => $sm::flutterwaveHash(),
-            'services.monnify.secret_key' => $sm::monnifySecret(),
-            'services.monnify.api_key' => $sm::get('MONNIFY_API_KEY', config('services.monnify.api_key')),
-            'services.opay.secret_key' => $sm::opaySecret(),
-            'services.opay.merchant_id' => $sm::get('OPAY_MERCHANT_ID', config('services.opay.merchant_id')),
-            'services.opay.public_key' => $sm::get('OPAY_PUBLIC_KEY', config('services.opay.public_key')),
-            'sms.api_key' => $sm::termiiKey(),
-            'services.vtu.api_key' => $sm::vtpassKey(),
-            'services.vtu.secret_key' => $sm::vtpassSecret(),
-            'services.vtu.clubkonnect.api_key' => $sm::clubkonnectKey(),
-            'services.google.maps_api_key' => $sm::googleMapsKey(),
-            'database.redis.default.password' => $sm::redisPassword(),
-            'database.redis.cache.password' => $sm::redisPassword(),
-            'resend.api_key' => $sm::resendApiKey(),
-            'services.dojah.secret' => $sm::dojahSecret(),
-            'filesystems.disks.google.clientSecret' => $sm::googleDriveSecret(),
-            'backup.backup.password' => $sm::backupPassword(),
-            'reverb.apps.0.secret' => $sm::reverbSecret(),
         ]);
     }
 }

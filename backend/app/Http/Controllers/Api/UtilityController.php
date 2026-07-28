@@ -18,16 +18,6 @@ class UtilityController extends Controller
 {
     public function handleWebhook(Request $request)
     {
-        // IP Whitelisting for VTU providers
-        $vtpassIps = config('cooperative.service_ip_whitelist.vtpass', []);
-        $clubkonnectIps = config('cooperative.service_ip_whitelist.clubkonnect', []);
-        $allowedIps = array_unique(array_merge($vtpassIps, $clubkonnectIps));
-
-        if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps) && !app()->environment('local')) {
-            Log::warning("Unauthorized VTU Webhook IP: " . $request->ip());
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized source'], 403);
-        }
-
         // Log entire webhook for diagnostics
         Log::info('VTU Webhook Received', ['payload' => $request->all()]);
 

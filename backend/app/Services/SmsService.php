@@ -66,7 +66,7 @@ class SmsService
 
     protected function sendViaTermii(string $to, string $message): bool
     {
-        $apiKey = (string) \App\Services\Security\SecretManager::termiiKey();
+        $apiKey = (string) config('sms.api_key');
         $sender = (string) config('sms.sender', 'ATTAQWA');
         $base = rtrim((string) config('sms.base_url', 'https://v3.api.termii.com'), '/');
         if (!$apiKey) {

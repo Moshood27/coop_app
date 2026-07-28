@@ -102,12 +102,7 @@ const handleRegister = async () => {
   success.value = ''
   try {
     const { data } = await axios.post('/api/admin/register', form.value)
-    
-    // Store token in localStorage ONLY for mobile apps (Capacitor)
-    if (window.Capacitor && window.Capacitor.getPlatform() !== 'web') {
-      localStorage.setItem('admin_token', data.token)
-    }
-    
+    localStorage.setItem('admin_token', data.token)
     // Optionally redirect straight to Filament
     const origin = import.meta?.env?.VITE_BACKEND_ORIGIN || ''
     window.location.href = `${origin}/admin`

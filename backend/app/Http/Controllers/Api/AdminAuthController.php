@@ -28,16 +28,7 @@ class AdminAuthController extends Controller
             'is_admin' => true,
         ]);
 
-        $tokenResult = $user->createToken('admin_token');
-        try {
-            $tokenResult->accessToken->forceFill([
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ])->save();
-        } catch (\Illuminate\Database\QueryException $e) {
-            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
-        }
-        $token = $tokenResult->plainTextToken;
+        $token = $user->createToken('admin_token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
@@ -69,31 +60,12 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        $tokenResult = $user->createToken('admin_token');
-        try {
-            $tokenResult->accessToken->forceFill([
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ])->save();
-        } catch (\Illuminate\Database\QueryException $e) {
-            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
-        }
-        $token = $tokenResult->plainTextToken;
+        $token = $user->createToken('admin_token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ])->withCookie(cookie(
-            'admin_token',
-            $token,
-            120, // 2 hours
-            '/',
-            null,
-            $request->isSecure(),
-            true, // httpOnly
-            false,
-            'Strict'
-        ));
+        ]);
     }
 
     /**
@@ -129,31 +101,12 @@ class AdminAuthController extends Controller
             return response()->json(['message' => 'Authentication failed. Please try again.'], 500);
         }
 
-        $tokenResult = $user->createToken('admin_token');
-        try {
-            $tokenResult->accessToken->forceFill([
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ])->save();
-        } catch (\Illuminate\Database\QueryException $e) {
-            if (!str_contains($e->getMessage(), 'ip_address')) throw $e;
-        }
-        $token = $tokenResult->plainTextToken;
+        $token = $user->createToken('admin_token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ])->withCookie(cookie(
-            'admin_token',
-            $token,
-            120, // 2 hours
-            '/',
-            null,
-            $request->isSecure(),
-            true, // httpOnly
-            false,
-            'Strict'
-        ));
+        ]);
     }
 
     // Request a password reset link for admin by email

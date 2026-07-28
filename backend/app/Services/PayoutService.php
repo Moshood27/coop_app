@@ -20,7 +20,7 @@ class PayoutService
      */
     public static function sendToBank(string $accountNumber, string $bankCode, float $amount, string $reference, string $reason = 'Payout'): array
     {
-        $secretKey = \App\Services\Security\SecretManager::paystackSecret();
+        $secretKey = config('services.paystack.secret_key');
         if (empty($secretKey)) {
             throw new Exception('Paystack secret key is not configured.');
         }
@@ -75,7 +75,7 @@ class PayoutService
      */
     public static function resolveAccountNumber(string $accountNumber, string $bankCode): ?string
     {
-        $secretKey = \App\Services\Security\SecretManager::paystackSecret();
+        $secretKey = config('services.paystack.secret_key');
         if (empty($secretKey)) {
             throw new Exception('Paystack secret key is not configured.');
         }

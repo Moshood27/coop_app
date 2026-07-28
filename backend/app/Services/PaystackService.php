@@ -12,7 +12,7 @@ class PaystackService
 
     public function __construct()
     {
-        $this->secret = (string) \App\Services\Security\SecretManager::paystackSecret();
+        $this->secret = (string) config('services.paystack.secret_key');
     }
 
     /**

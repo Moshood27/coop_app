@@ -21,13 +21,6 @@ class UssdController extends Controller
 
     public function handleCallback(Request $request)
     {
-        // IP Whitelisting for Termii
-        $allowedIps = config('cooperative.service_ip_whitelist.termii', []);
-        if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps) && !app()->environment('local')) {
-            Log::warning("Unauthorized USSD Callback IP: " . $request->ip());
-            return response()->json(['message' => 'Unauthorized source', 'type' => 'release'], 403);
-        }
-
         // Termii USSD payload: msisdn, sessionId, userInput, serviceCode
         $msisdn = $request->input('msisdn');
         $sessionId = $request->input('sessionId');
@@ -41,9 +34,9 @@ class UssdController extends Controller
         $normalizedPhone = $smsService->normalizeMsisdn($msisdn);
 
         // Try to find user by normalized phone or as stored in DB
-        $user = User::whereBlindIndex('phone', $normalizedPhone)
-            ->orWhereBlindIndex('phone', '0' . substr($normalizedPhone, 3))
-            ->orWhereBlindIndex('phone', $msisdn)
+        $user = User::where('phone', $normalizedPhone)
+            ->orWhere('phone', '0' . substr($normalizedPhone, 3))
+            ->orWhere('phone', $msisdn)
             ->first();
 
         if (!$user) {

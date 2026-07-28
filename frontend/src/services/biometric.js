@@ -198,12 +198,7 @@ export async function quickLoginViaBiometric() {
     }
 
     const { data } = await axios.post('/api/login', payload)
-    
-    // Store token in localStorage ONLY for mobile apps (Capacitor)
-    if (window.Capacitor && window.Capacitor.getPlatform() !== 'web') {
-      localStorage.setItem('token', data.token)
-    }
-    
+    localStorage.setItem('token', data.token)
     // also remember branch id for potential fallback flows
     localStorage.setItem('biometric_branch_id', String(creds.branch_id))
 

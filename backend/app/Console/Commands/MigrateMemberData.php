@@ -230,7 +230,7 @@ EOD;
 
         $user = null;
         if ($phone) {
-            $user = User::whereBlindIndex('phone', $phone)->first();
+            $user = User::where('phone', $phone)->first();
         }
 
         if (!$user && $cardNo && $cardNo !== '-' && $cardNo !== '') {

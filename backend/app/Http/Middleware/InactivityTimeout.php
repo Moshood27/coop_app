@@ -33,43 +33,6 @@ class InactivityTimeout
             $token = $user->currentAccessToken();
 
             if ($token) {
-                // 1. Session Binding Verification (IP and User Agent)
-                if (config('cooperative.security.session_binding.enabled', true)) {
-                    $ipMismatch = config('cooperative.security.session_binding.verify_ip', true)
-                        && $token->ip_address
-                        && $request->ip() !== $token->ip_address;
-
-                    $uaMismatch = config('cooperative.security.session_binding.verify_ua', true)
-                        && $token->user_agent
-                        && $request->userAgent() !== $token->user_agent;
-
-                    if ($ipMismatch || $uaMismatch) {
-                        $reason = $ipMismatch ? 'IP mismatch' : 'User Agent mismatch';
-
-                        \App\Services\SecurityLogger::logSuspiciousAction(
-                            "Session hijacking attempt? Binding failure: {$reason}",
-                            [
-                                'reason' => $reason,
-                                'token_id' => $token->id,
-                                'token_name' => $token->name,
-                                'expected_ip' => $token->ip_address,
-                                'actual_ip' => $request->ip(),
-                                'expected_ua' => substr($token->user_agent, 0, 150),
-                                'actual_ua' => substr($request->userAgent(), 0, 150),
-                            ],
-                            $user
-                        );
-
-                        $token->delete();
-                        event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
-
-                        return response()->json([
-                            'message' => 'Session binding invalid. Please login again.',
-                            'binding_error' => true,
-                        ], 401);
-                    }
-                }
-
                 $lastUsed = $token->last_used_at ?? $token->created_at; // fallback to creation time
 
                 // Enforce inactivity timeout only if it's NOT a 'remember_token'
