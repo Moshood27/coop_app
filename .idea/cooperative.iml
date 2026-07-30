@@ -337,7 +337,19 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/graham-campbell/guzzle-factory" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/dropbox-api" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/flysystem-dropbox" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/node_modules_old" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/storage/framework/cache/data/74" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/android/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/android/app/build" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/android/app/src/main/assets/public" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/android/capacitor-cordova-android-plugins" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/ios/App/App/public" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/ios/capacitor-cordova-ios-plugins" />
     </content>
+    <content url="file://$MODULE_DIR$/frontend/node_modules" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="leaflet" level="application" />

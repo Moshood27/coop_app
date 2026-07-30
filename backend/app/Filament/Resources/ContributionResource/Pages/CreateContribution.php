@@ -5,9 +5,11 @@ namespace App\Filament\Resources\ContributionResource\Pages;
 use App\Filament\Resources\ContributionResource;
 use App\Models\Contribution;
 use App\Models\ShariahAuditLog as ShariahAudit;
+use App\Mail\ContributionCreatedNotification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class CreateContribution extends CreateRecord
@@ -126,8 +128,9 @@ class CreateContribution extends CreateRecord
         }
 
         $firstRecord = null;
+        $createdContributions = [];
 
-        DB::transaction(function () use ($normalizedItems, $userId, $status, $paidAt, &$firstRecord) {
+        DB::transaction(function () use ($normalizedItems, $userId, $status, $paidAt, &$firstRecord, &$createdContributions) {
             foreach ($normalizedItems as $item) {
                 $row = [
                     'user_id' => $userId,
@@ -151,6 +154,8 @@ class CreateContribution extends CreateRecord
                 }
 
                 $created = Contribution::create($row);
+                $created->load('scheme');
+                $createdContributions[] = $created;
 
                 ShariahAudit::log(auth()->user(), 'manual_contribution_created', [
                     'contribution_id' => $created->id,
@@ -165,6 +170,18 @@ class CreateContribution extends CreateRecord
                 }
             }
         });
+
+        if ($status === 'success' && !empty($createdContributions)) {
+            $user = \App\Models\User::find($userId);
+            if ($user && $user->email) {
+                try {
+                    Mail::to($user->email)->send(new ContributionCreatedNotification($user, $createdContributions, $user->getTotalBalance()));
+                } catch (\Exception $e) {
+                    // Log error but don't fail the request
+                    report($e);
+                }
+            }
+        }
 
         // As CreateRecord expects a Model, return the first one created.
         return $firstRecord ?? static::getModel()::create($data);

@@ -1054,6 +1054,40 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         }
     }
 
+    public function getTotalBalance(): float
+    {
+        $balanceColumns = [
+            'balance',
+            'ordinary_savings',
+            'special_savings_balance',
+            'shares_capital',
+            'building_balance',
+            'development_fund_balance',
+            'agm_balance',
+            'loan_repayment_balance',
+            'fine_balance',
+            'welfare_balance',
+            'lateness_balance',
+            'stationery_balance',
+            'loan_form_balance',
+            'others_balance',
+            'id_card_balance',
+            'emergency_balance',
+            'entrance_balance',
+            'h_savings_balance',
+            'investment_balance',
+            'group_savings_balance',
+            'takaful_balance',
+        ];
+
+        $total = 0.0;
+        foreach ($balanceColumns as $column) {
+            $total += (float) ($this->{$column} ?? 0.0);
+        }
+
+        return round($total, 2);
+    }
+
     /**
      * Check if the user is currently in the nursing mother grace period.
      * (Grace period of X months after baby birth or explicit grace until date).
