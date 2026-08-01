@@ -27,11 +27,11 @@ class SecurityHeaders
         // Do not override headers if already set upstream (e.g., reverse proxy)
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
             "img-src 'self' data: https: blob:",
-            "connect-src 'self' https: wss:",
+            "connect-src 'self' https: wss: https://*.paystack.co https://*.flutterwave.com https://*.monnify.com https://*.sentry.io https://*.googleapis.com",
             "frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com",
             "object-src 'none'",
             "base-uri 'self'",
@@ -43,6 +43,7 @@ class SecurityHeaders
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
             'X-XSS-Protection' => '1; mode=block',
             'Content-Security-Policy' => implode('; ', $csp),
+            'Content-Security-Policy-Report-Only' => implode('; ', $csp),
             // A conservative Permissions-Policy to reduce surface area; extend as needed for your app
             'Permissions-Policy' => "accelerometer=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
             // Helps isolate browsing context (good default for SPAs and APIs)
@@ -50,9 +51,7 @@ class SecurityHeaders
         ];
 
         foreach ($headers as $key => $value) {
-            if (!$response->headers->has($key)) {
-                $response->headers->set($key, $value);
-            }
+            $response->headers->set($key, $value);
         }
 
         // Only send HSTS when the original request is HTTPS
