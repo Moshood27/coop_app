@@ -27,12 +27,12 @@ class SecurityHeaders
         // Do not override headers if already set upstream (e.g., reverse proxy)
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com https://embed.tawk.to https://*.tawk.to",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net https://*.tawk.to",
-            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data: https://*.tawk.to",
-            "img-src 'self' data: https: blob: https://*.tawk.to",
-            "connect-src 'self' https: wss: https://*.paystack.co https://*.paystack.com https://*.flutterwave.com https://*.monnify.com https://*.sentry.io https://*.googleapis.com https://*.tawk.to wss://*.tawk.to",
-            "frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com https://*.paystack.com https://*.tawk.to",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
+            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
+            "img-src 'self' data: https: blob:",
+            "connect-src 'self' https: wss:",
+            "frame-src 'self' https://js.paystack.co https://checkout.flutterwave.com https://*.monnify.com",
             "object-src 'none'",
             "base-uri 'self'",
         ];
@@ -43,7 +43,6 @@ class SecurityHeaders
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
             'X-XSS-Protection' => '1; mode=block',
             'Content-Security-Policy' => implode('; ', $csp),
-            'Content-Security-Policy-Report-Only' => implode('; ', $csp),
             // A conservative Permissions-Policy to reduce surface area; extend as needed for your app
             'Permissions-Policy' => "accelerometer=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
             // Helps isolate browsing context (good default for SPAs and APIs)

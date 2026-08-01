@@ -193,8 +193,8 @@ router.beforeEach(async (to) => {
     }
   }
 
-  const token = localStorage.getItem('token') || (!isNative && localStorage.getItem('user') ? 'true' : null)
-  const adminToken = localStorage.getItem('admin_token') || (!isNative && localStorage.getItem('is_admin') === 'true' ? 'true' : null)
+  const token = localStorage.getItem('token')
+  const adminToken = localStorage.getItem('admin_token')
   const isAdmin = localStorage.getItem('is_admin') === 'true'
   const appStatusStore = useAppStatusStore()
 
@@ -204,7 +204,7 @@ router.beforeEach(async (to) => {
     const isAdminRoute = to.path?.startsWith('/admin')
     const isOnboarding = to.name === 'onboarding'
     const skip = !!to.meta?.skipOnboarding
-    const isAuthed = !!token
+    const isAuthed = !!localStorage.getItem('token')
     if (!hasSeen && !isAdminRoute && !isOnboarding && !skip && !isAuthed && appStatusStore.onboardingSwiperEnabled) {
       return { name: 'onboarding', query: { redirect: to.fullPath } }
     }

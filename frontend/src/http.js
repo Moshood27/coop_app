@@ -6,7 +6,6 @@ import axios from 'axios'
 //   e.g. http://localhost or http://10.0.2.2 (Android emulator), without trailing slash.
 const origin = import.meta?.env?.VITE_API_URL || ''
 axios.defaults.baseURL = origin
-axios.defaults.withCredentials = true
 const base = import.meta?.env?.BASE_URL || '/'
 
 // Apply a reasonable default timeout; can be overridden via VITE_HTTP_TIMEOUT (ms)
@@ -38,8 +37,6 @@ axios.interceptors.response.use(
       const hadAdmin = !!localStorage.getItem('admin_token')
       localStorage.removeItem('token')
       localStorage.removeItem('admin_token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('user_id')
       localStorage.removeItem('is_admin')
 
       // Try to redirect to the appropriate login screen

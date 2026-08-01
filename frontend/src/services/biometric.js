@@ -198,13 +198,7 @@ export async function quickLoginViaBiometric() {
     }
 
     const { data } = await axios.post('/api/login', payload)
-    
-    if (Capacitor.isNativePlatform()) {
-      localStorage.setItem('token', data.token)
-    } else {
-      localStorage.removeItem('token')
-    }
-    
+    localStorage.setItem('token', data.token)
     // also remember branch id for potential fallback flows
     localStorage.setItem('biometric_branch_id', String(creds.branch_id))
 

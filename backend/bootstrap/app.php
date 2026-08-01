@@ -36,11 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\BypassCache::class,
         ]);
-        $middleware->prependToGroup('api', [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \App\Http\Middleware\QueryTokenToBearer::class,
-            \App\Http\Middleware\CookieTokenToBearer::class,
-        ]);
+        $middleware->prependToGroup('api', [\App\Http\Middleware\QueryTokenToBearer::class]);
         $middleware->appendToGroup('api', [
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\TrackUserActivity::class,

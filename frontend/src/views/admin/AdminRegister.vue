@@ -81,8 +81,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from '../../http.js'
-import { Capacitor } from '@capacitor/core'
+import axios from 'axios'
 import SupportContacts from '../../components/SupportContacts.vue'
 
 const showSupportModal = ref(false)
@@ -103,13 +102,7 @@ const handleRegister = async () => {
   success.value = ''
   try {
     const { data } = await axios.post('/api/admin/register', form.value)
-    
-    if (Capacitor.isNativePlatform()) {
-      localStorage.setItem('admin_token', data.token)
-    } else {
-      localStorage.removeItem('admin_token')
-    }
-    
+    localStorage.setItem('admin_token', data.token)
     // Optionally redirect straight to Filament
     const origin = import.meta?.env?.VITE_BACKEND_ORIGIN || ''
     window.location.href = `${origin}/admin`
