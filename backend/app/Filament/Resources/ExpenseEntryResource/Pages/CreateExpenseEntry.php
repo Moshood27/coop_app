@@ -41,6 +41,8 @@ class CreateExpenseEntry extends CreateRecord
                                ->whereHas('roles', fn($r) => $r->where('name', 'super_admin'));
                         });
                 });
+            }, function($q) {
+                $q->whereNull('branch_id');
             })->get();
 
         $notification = new \App\Notifications\GeneralNotification(

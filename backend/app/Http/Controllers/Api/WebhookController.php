@@ -626,6 +626,8 @@ class WebhookController extends Controller
                                            ->whereHas('roles', fn($r) => $r->where('name', 'super_admin'));
                                     });
                             });
+                        }, function($q) {
+                            $q->whereNull('branch_id');
                         })->get();
                         foreach ($treasurers as $treasurer) {
                             $treasurer->notify($notification);

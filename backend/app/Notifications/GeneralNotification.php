@@ -45,9 +45,14 @@ class GeneralNotification extends Notification implements ShouldQueue
      */
     public function toPush(object $notifiable): array
     {
+        $body = $this->message;
+        if (!empty($this->data['note']) && !str_contains($this->message, (string) $this->data['note'])) {
+            $body .= "\nNote: " . $this->data['note'];
+        }
+
         return [
             'title' => $this->title,
-            'body' => $this->message,
+            'body' => $body,
             'data' => array_merge(['type' => 'general'], $this->data),
         ];
     }
@@ -62,7 +67,7 @@ class GeneralNotification extends Notification implements ShouldQueue
             ->greeting('Assalāmu ‘alaykum '.$notifiable->name.',')
             ->line($this->message);
 
-        if (!empty($this->data['note'])) {
+        if (!empty($this->data['note']) && !str_contains($this->message, (string) $this->data['note'])) {
             $mail->line('Note: ' . $this->data['note']);
         }
 

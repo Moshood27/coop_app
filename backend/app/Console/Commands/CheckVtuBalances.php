@@ -67,7 +67,10 @@ class CheckVtuBalances extends Command
 
         // Notify admins via Push (and SMS best-effort)
         try {
-            $admins = User::query()->where('is_admin', true)->get(['id','name','phone','device_token','fcm_token']);
+            $admins = User::whereHas('roles', function($q) {
+                $q->where('name', 'super_admin');
+            })->whereNull('branch_id')->get(['id','name','phone','device_token','fcm_token']);
+
             foreach ($admins as $a) {
                 $token = $a->fcm_token ?: $a->device_token;
                 if (!empty($token)) {

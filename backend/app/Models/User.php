@@ -453,7 +453,11 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
                 $token = $this->fcm_token ?: ($this->device_token ?? null);
                 if (!empty($token)) {
                     try {
-                        app(\App\Services\PushService::class)->send($token, $title, $message, $data ?? [], $this);
+                        $pushBody = $message;
+                        if (!empty($data['note']) && !str_contains($message, (string) $data['note'])) {
+                            $pushBody .= "\nNote: " . $data['note'];
+                        }
+                        app(\App\Services\PushService::class)->send($token, $title, $pushBody, $data ?? [], $this);
                     } catch (\Throwable $e) {
                     }
                 }
@@ -610,8 +614,9 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
                         ->whereHas('roles', fn ($r) => $r->where('name', 'super_admin'));
                   });
             } else {
-                // If member has no branch, all super admins are authorized
-                $q->whereHas('roles', fn ($sq) => $sq->where('name', 'super_admin'));
+                // If member has no branch, only global super admins (no branch_id) are authorized
+                $q->whereNull('branch_id')
+                  ->whereHas('roles', fn ($sq) => $sq->where('name', 'super_admin'));
             }
         })->get();
     }

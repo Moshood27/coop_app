@@ -35,6 +35,9 @@ class ShariaDisputeNotification extends Notification implements ShouldQueue
         if (!empty($notifiable->email) && filter_var($notifiable->email, FILTER_VALIDATE_EMAIL)) {
             $channels[] = 'mail';
         }
+        if (!empty($notifiable->fcm_token) || !empty($notifiable->device_token)) {
+            $channels[] = \App\Channels\PushChannel::class;
+        }
         return $channels;
     }
 
@@ -64,6 +67,30 @@ class ShariaDisputeNotification extends Notification implements ShouldQueue
             ->line('Outcome: ' . ($this->dispute->outcome_details ?? 'Under review'))
             ->action('View Details', url('/sharia-board/history'))
             ->line('Jazākumullāhu khayran for your patience.');
+    }
+
+    /**
+     * Get the push representation of the notification.
+     */
+    public function toPush(object $notifiable): array
+    {
+        $orderRef = $notifiable->id === $this->dispute->user_id ? 'your order' : 'order #' . $this->dispute->order?->reference;
+
+        if ($this->type === 'created') {
+            $body = "A new Sharia dispute has been raised for " . $orderRef . ". Reason: " . $this->dispute->reason;
+        } else {
+            $body = "Update to Sharia dispute for " . $orderRef . ". Status: " . strtoupper($this->dispute->status);
+        }
+
+        return [
+            'title' => $this->type === 'created' ? 'New Sharia Dispute' : 'Sharia Dispute Updated',
+            'body' => $body,
+            'data' => [
+                'type' => 'sharia_dispute',
+                'dispute_id' => $this->dispute->id,
+                'status' => $this->dispute->status,
+            ],
+        ];
     }
 
     /**
