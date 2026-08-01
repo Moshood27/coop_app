@@ -602,9 +602,15 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
 
         return $query->where(function ($q) {
             if ($this->branch_id) {
+                // Return admins of the same branch (including branch-bound super admins)
+                // AND global super admins (those with no branch_id)
                 $q->where('branch_id', $this->branch_id)
-                  ->orWhereHas('roles', fn ($sq) => $sq->where('name', 'super_admin'));
+                  ->orWhere(function ($sq) {
+                      $sq->whereNull('branch_id')
+                        ->whereHas('roles', fn ($r) => $r->where('name', 'super_admin'));
+                  });
             } else {
+                // If member has no branch, all super admins are authorized
                 $q->whereHas('roles', fn ($sq) => $sq->where('name', 'super_admin'));
             }
         })->get();

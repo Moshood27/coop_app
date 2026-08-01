@@ -839,6 +839,9 @@ class UserResource extends Resource
                                     $msg .= ". An outstanding administrative charge of ₦" . number_format($adminChargeDeducted, 2) . " was also deducted.";
                                 }
                                 $msg .= ". New balance: ₦" . number_format($newBalance, 2);
+                                if (!empty($data['note'])) {
+                                    $msg .= ". Note: " . $data['note'];
+                                }
 
                                 $record->notifyMember(
                                     'Wallet Credited',
@@ -916,6 +919,9 @@ class UserResource extends Resource
                                     $msg .= ". An outstanding administrative charge of ₦" . number_format($adminChargeDeducted, 2) . " was also deducted.";
                                 }
                                 $msg .= ". New balance: ₦" . number_format($newBalance, 2);
+                                if (!empty($data['note'])) {
+                                    $msg .= ". Note: " . $data['note'];
+                                }
 
                                 $record->notifyMember(
                                     'Wallet Debited',
@@ -1074,9 +1080,14 @@ class UserResource extends Resource
                                     'contribution_id' => $contribution->id,
                                 ]);
 
+                                $msg = "Your {$scheme->name} has been debited with ₦" . number_format($amount, 2) . " for " . str_replace('_', ' ', $reason) . ".";
+                                if (!empty($note)) {
+                                    $msg .= " Note: " . $note;
+                                }
+
                                 $record->notifyMember(
                                     'Scheme Debited',
-                                    "Your {$scheme->name} has been debited with ₦" . number_format($amount, 2) . " for " . str_replace('_', ' ', $reason) . ".",
+                                    $msg,
                                     [
                                         'type' => 'scheme_debit',
                                         'scheme' => $scheme->name,

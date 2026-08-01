@@ -117,10 +117,18 @@ class ChatController extends Controller
         ]);
 
         if ($request->type === 'private') {
-            // Find a staff member to join the chat
+            // Find a staff member to join the chat (prefer same branch)
+            $branchId = Auth::user()->branch_id;
             $staff = User::whereHas('roles', function ($query) {
                 $query->whereIn('name', ['staff', 'admin', 'super_admin', 'Branch Manager', 'Clerk']);
-            })->first() ?: User::where('is_admin', true)->first();
+            })
+            ->when($branchId, function ($q) use ($branchId) {
+                $q->where(function ($sub) use ($branchId) {
+                    $sub->where('branch_id', $branchId)
+                        ->orWhereNull('branch_id');
+                });
+            })
+            ->first() ?: User::where('is_admin', true)->first();
             if ($staff && $staff->id !== Auth::id()) {
                 ChatRoomMember::create([
                     'chat_room_id' => $room->id,

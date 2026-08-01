@@ -615,8 +615,17 @@ class WebhookController extends Controller
 
                         if ($expense->creator) { $expense->creator->notify($notification); }
 
+                        $branchId = $expense->creator?->branch_id;
                         $treasurers = \App\Models\User::whereHas('roles', function($q) {
                             $q->whereIn('name', ['Treasurer', 'super_admin']);
+                        })->when($branchId, function($q) use ($branchId) {
+                            $q->where(function($sub) use ($branchId) {
+                                $sub->where('branch_id', $branchId)
+                                    ->orWhere(function($sq) {
+                                        $sq->whereNull('branch_id')
+                                           ->whereHas('roles', fn($r) => $r->where('name', 'super_admin'));
+                                    });
+                            });
                         })->get();
                         foreach ($treasurers as $treasurer) {
                             $treasurer->notify($notification);

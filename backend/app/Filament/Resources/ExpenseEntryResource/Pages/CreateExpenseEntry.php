@@ -31,7 +31,17 @@ class CreateExpenseEntry extends CreateRecord
             return;
         }
 
-        $admins = \App\Models\User::role($existingRoles)->get();
+        $branchId = $record->creator?->branch_id;
+        $admins = \App\Models\User::role($existingRoles)
+            ->when($branchId, function($q) use ($branchId) {
+                $q->where(function($sub) use ($branchId) {
+                    $sub->where('branch_id', $branchId)
+                        ->orWhere(function($sq) {
+                            $sq->whereNull('branch_id')
+                               ->whereHas('roles', fn($r) => $r->where('name', 'super_admin'));
+                        });
+                });
+            })->get();
 
         $notification = new \App\Notifications\GeneralNotification(
             title: 'New Expense Awaiting Approval',
