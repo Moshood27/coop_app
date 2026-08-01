@@ -850,6 +850,7 @@ class UserResource extends Resource
                                         'maintenance_charge' => (float) $maintenanceCharge,
                                         'admin_charge_deducted' => (float) $adminChargeDeducted,
                                         'balance' => (float) $newBalance,
+                                        'note' => $data['note'] ?? null,
                                     ]
                                 );
                             });
@@ -926,6 +927,7 @@ class UserResource extends Resource
                                         'maintenance_charge' => (float) $maintenanceCharge,
                                         'admin_charge_deducted' => (float) $adminChargeDeducted,
                                         'balance' => (float) $newBalance,
+                                        'note' => $data['note'] ?? null,
                                     ]
                                 );
                             });
@@ -1080,6 +1082,7 @@ class UserResource extends Resource
                                         'scheme' => $scheme->name,
                                         'amount' => $amount,
                                         'reason' => $reason,
+                                        'note' => $note,
                                     ]
                                 );
                             });

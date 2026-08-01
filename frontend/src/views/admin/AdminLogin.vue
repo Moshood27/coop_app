@@ -77,7 +77,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from '../../http.js'
+import { Capacitor } from '@capacitor/core'
 import brand from '../../brand'
 import SupportContacts from '../../components/SupportContacts.vue'
 
@@ -97,7 +98,13 @@ const handleLogin = async () => {
   error.value = ''
   try {
     const { data } = await axios.post('/api/admin/login', form.value)
-    localStorage.setItem('admin_token', data.token)
+    
+    if (Capacitor.isNativePlatform()) {
+      localStorage.setItem('admin_token', data.token)
+    } else {
+      localStorage.removeItem('admin_token')
+    }
+    
     localStorage.setItem('is_admin', 'true')
     
     // Redirect to mobile admin portal instead of full Filament panel

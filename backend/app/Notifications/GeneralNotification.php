@@ -62,6 +62,10 @@ class GeneralNotification extends Notification implements ShouldQueue
             ->greeting('Assalāmu ‘alaykum '.$notifiable->name.',')
             ->line($this->message);
 
+        if (!empty($this->data['note'])) {
+            $mail->line('Note: ' . $this->data['note']);
+        }
+
         // Add CTA if route provided
         $route = $this->data['route'] ?? null;
         if (is_string($route) && !empty($route)) {

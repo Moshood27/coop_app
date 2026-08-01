@@ -240,7 +240,11 @@ onMounted(async () => {
 })
 
 const afterLogin = async (token, user) => {
-  localStorage.setItem('token', token)
+  if (Capacitor.isNativePlatform()) {
+    localStorage.setItem('token', token)
+  } else {
+    localStorage.removeItem('token')
+  }
   appStatusStore.isPinVerified = false
   if (user) {
     localStorage.setItem('user', JSON.stringify(user))

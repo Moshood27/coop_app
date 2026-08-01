@@ -30,10 +30,12 @@ class AdminAuthController extends Controller
 
         $token = $user->createToken('admin_token')->plainTextToken;
 
+        $cookie = cookie('admin_token', $token, 43200, '/', null, true, true, false, 'Lax');
+
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ], 201);
+        ], 201)->withCookie($cookie);
     }
 
     // Admin login with email + password
@@ -62,10 +64,12 @@ class AdminAuthController extends Controller
 
         $token = $user->createToken('admin_token')->plainTextToken;
 
+        $cookie = cookie('admin_token', $token, 43200, '/', null, true, true, false, 'Lax');
+
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ]);
+        ])->withCookie($cookie);
     }
 
     /**
@@ -103,10 +107,12 @@ class AdminAuthController extends Controller
 
         $token = $user->createToken('admin_token')->plainTextToken;
 
+        $cookie = cookie('admin_token', $token, 43200, '/', null, true, true, false, 'Lax');
+
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ]);
+        ])->withCookie($cookie);
     }
 
     // Request a password reset link for admin by email
