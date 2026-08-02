@@ -27,6 +27,7 @@ class TakafulContribution extends Model
         'reference',
         'meta',
         'ledger_journal_id',
+        'created_at',
     ];
 
     protected $casts = [

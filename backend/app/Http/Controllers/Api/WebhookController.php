@@ -1138,7 +1138,10 @@ class WebhookController extends Controller
 
             DB::transaction(function () use ($contributions) {
                 foreach ($contributions as $contrib) {
-                    $contrib->update(['status' => 'success']);
+                    $contrib->update([
+                        'status' => 'success',
+                        'paid_at' => now(),
+                    ]);
                 }
             });
 
@@ -1338,7 +1341,10 @@ class WebhookController extends Controller
 
             DB::transaction(function () use ($contributions) {
                 foreach ($contributions as $contrib) {
-                    $contrib->update(['status' => 'success']);
+                    $contrib->update([
+                        'status' => 'success',
+                        'paid_at' => now(),
+                    ]);
                 }
             });
 
