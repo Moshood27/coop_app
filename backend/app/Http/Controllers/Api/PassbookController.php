@@ -23,9 +23,6 @@ class PassbookController extends Controller
                       });
             })
             ->where('status', 'success')
-            ->whereHas('scheme', function($query) {
-                $query->where('active', true);
-            })
             ->get();
 
         $bfContributions = $user->contributions()
@@ -36,12 +33,10 @@ class PassbookController extends Controller
                       });
             })
             ->where('status', 'success')
-            ->whereHas('scheme', function($query) {
-                $query->where('active', true);
-            })
             ->get();
 
-        $schemes = Scheme::where('active', true)->orderBy('name')->get();
+        $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
+        $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
 
         $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
             $row = [
@@ -52,13 +47,13 @@ class PassbookController extends Controller
             ];
 
             foreach ($bfContributions as $con) {
-                if ($con->scheme_id === $scheme->id) {
+                if ($con->scheme_id == $scheme->id) {
                     $row['bf'] += (float) $con->amount;
                 }
             }
 
             foreach ($yearContributions as $con) {
-                if ($con->scheme_id === $scheme->id) {
+                if ($con->scheme_id == $scheme->id) {
                     $date = $con->paid_at ?? $con->created_at;
                     $month = $date->month;
                     $row['months'][$month] += (float) $con->amount;

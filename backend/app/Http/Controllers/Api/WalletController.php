@@ -380,7 +380,7 @@ class WalletController extends Controller
 
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.scheme_id' => 'required|exists:schemes,id',
+            'items.*.scheme_id' => 'required|exists:schemes,id,active,1',
             'items.*.project_id' => 'nullable|integer|exists:projects,id',
             'items.*.savings_group_id' => 'nullable|integer|exists:savings_groups,id',
             'items.*.units' => 'nullable|integer|min:1',
@@ -544,7 +544,7 @@ class WalletController extends Controller
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.scheme_id' => 'required|exists:schemes,id',
+            'items.*.scheme_id' => 'required|exists:schemes,id,active,1',
             'items.*.project_id' => 'nullable|exists:projects,id',
             'items.*.savings_group_id' => 'nullable|exists:savings_groups,id',
             'items.*.amount' => 'required|numeric|min:0.01',

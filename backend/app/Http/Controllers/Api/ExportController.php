@@ -39,9 +39,6 @@ class ExportController extends Controller
             $contributions = $user->contributions()
                 ->with('scheme')
                 ->where('status', 'success')
-                ->whereHas('scheme', function($query) {
-                    $query->where('active', true);
-                })
                 ->when($year > 0, function ($q) use ($year) {
                     $q->where(function($query) use ($year) {
                         $query->whereYear('paid_at', $year)
@@ -63,9 +60,6 @@ class ExportController extends Controller
                           });
                 })
                 ->where('status', 'success')
-                ->whereHas('scheme', function($query) {
-                    $query->where('active', true);
-                })
                 ->get();
             $bfContributions = $user->contributions()
                 ->where(function($query) use ($startOfYear) {
@@ -75,12 +69,10 @@ class ExportController extends Controller
                           });
                 })
                 ->where('status', 'success')
-                ->whereHas('scheme', function($query) {
-                    $query->where('active', true);
-                })
                 ->get();
 
-            $schemes = Scheme::where('active', true)->orderBy('name')->get();
+            $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
+            $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
             $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
                 $row = [
                     'scheme_name' => $scheme->name,
@@ -89,12 +81,12 @@ class ExportController extends Controller
                     'total' => 0.0,
                 ];
                 foreach ($bfContributions as $con) {
-                    if ($con->scheme_id === $scheme->id) {
+                    if ($con->scheme_id == $scheme->id) {
                         $row['bf'] += (float) $con->amount;
                     }
                 }
                 foreach ($yearContributions as $con) {
-                    if ($con->scheme_id === $scheme->id) {
+                    if ($con->scheme_id == $scheme->id) {
                         $date = $con->paid_at ?? $con->created_at;
                         $month = $date->month;
                         $row['months'][$month] += (float) $con->amount;
@@ -139,9 +131,6 @@ class ExportController extends Controller
                           ->orWhere(function($q2) use ($year) {
                               $q2->whereNull('paid_at')->whereYear('created_at', $year);
                           });
-                })
-                ->whereHas('scheme', function($query) {
-                    $query->where('active', true);
                 })
                 ->orderByRaw('COALESCE(paid_at, created_at)')
                 ->get();

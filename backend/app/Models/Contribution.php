@@ -23,6 +23,8 @@ class Contribution extends Model
     }
 
     protected $casts = [
+        'user_id' => 'integer',
+        'scheme_id' => 'integer',
         'amount' => 'decimal:2',
         'units' => 'decimal:6',
         'paid_at' => 'datetime',
