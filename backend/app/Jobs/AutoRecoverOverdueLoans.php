@@ -37,6 +37,11 @@ class AutoRecoverOverdueLoans implements ShouldQueue
      */
     public function handle(): void
     {
+        // Check if auto-recovery is enabled globally
+        if (! (bool) \App\Models\Setting::get('auto_overdue_recovery_enabled', true)) {
+            return;
+        }
+
         try {
             $user = User::find($this->userId);
             if (!$user) return;

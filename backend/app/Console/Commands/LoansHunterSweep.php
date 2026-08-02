@@ -15,6 +15,11 @@ class LoansHunterSweep extends Command
 
     public function handle(): int
     {
+        if (! (bool) \App\Models\Setting::get('auto_overdue_recovery_enabled', true)) {
+            $this->warn('Automatic overdue loan recovery is currently disabled in app settings.');
+            return self::SUCCESS;
+        }
+
         $dry = (bool) $this->option('dry-run');
         $countUsers = 0;
 

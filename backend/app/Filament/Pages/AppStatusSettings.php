@@ -37,6 +37,7 @@ class AppStatusSettings extends Page
             'system_announcement' => Setting::get('system_announcement', config('cooperative.system_announcement')),
             'play_store_url' => Setting::get('play_store_url', config('cooperative.play_store_url')),
             'loan_credit_score_enabled' => (bool) Setting::get('loan_credit_score_enabled', true),
+            'auto_overdue_recovery_enabled' => (bool) Setting::get('auto_overdue_recovery_enabled', true),
             'required_loan_meetings' => (int) Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8)),
             'nursing_mother_grace_period_months' => (int) Setting::get('nursing_mother_grace_period_months', 3),
             'wallet_maintenance_charge_percentage' => Setting::get('wallet_maintenance_charge_percentage', config('cooperative.wallet.maintenance_charge.percentage')),
@@ -194,6 +195,10 @@ class AppStatusSettings extends Page
                         Toggle::make('loan_credit_score_enabled')
                             ->label('Enable Credit Score for Loans')
                             ->helperText('If disabled, the Coop credit score will not be used to determine loan eligibility boost or guarantor requirements.')
+                            ->default(true),
+                        Toggle::make('auto_overdue_recovery_enabled')
+                            ->label('Enable Automatic Overdue Loan Recovery')
+                            ->helperText('Automatically recover overdue loan installments when a member funds their wallet or during the hourly sweep.')
                             ->default(true),
                         TextInput::make('required_loan_meetings')
                             ->label('Required Meeting Attendance')
