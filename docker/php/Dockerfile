@@ -14,7 +14,7 @@ RUN apk add --no-cache \
     mysql-client \
     curl \
     libxml2-dev \
-    readline-dev \
+    libedit-dev \
     ncurses-dev
 
 # 2. Configure and install PHP extensions
@@ -27,7 +27,6 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         zip \
         intl \
         pcntl \
-        posix \
         readline \
     && docker-php-ext-enable opcache
 
