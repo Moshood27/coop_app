@@ -13,7 +13,9 @@ RUN apk add --no-cache \
     icu-libs \
     mysql-client \
     curl \
-    libxml2-dev
+    libxml2-dev \
+    readline-dev \
+    ncurses-dev
 
 # 2. Configure and install PHP extensions
 # Cleaned up redundancy and added pcntl for Laravel Reverb
@@ -26,6 +28,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         intl \
         pcntl \
         posix \
+        readline \
     && docker-php-ext-enable opcache
 
 # 3. Install Composer
