@@ -85,6 +85,10 @@ class ExportController extends Controller
                         $row['bf'] += (float) $con->amount;
                     }
                 }
+
+                // Initialize total with BF to make it cumulative
+                $row['total'] = $row['bf'];
+
                 foreach ($yearContributions as $con) {
                     if ($con->scheme_id == $scheme->id) {
                         $date = $con->paid_at ?? $con->created_at;

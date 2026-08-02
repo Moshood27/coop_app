@@ -1553,7 +1553,16 @@ class AccountingReportService
         $fromDate = $from ? Carbon::parse($from)->startOfDay() : null;
         $toDate = $to ? Carbon::parse($to)->endOfDay() : null;
 
-        $schemes = \App\Models\Scheme::where('active', true)->get();
+        // Include active schemes and any inactive schemes that have contributions in the period
+        $periodSchemeIds = \App\Models\Contribution::whereIn('status', ['success', 'paid', 'completed'])
+            ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
+            ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
+            ->distinct()
+            ->pluck('scheme_id');
+
+        $schemes = \App\Models\Scheme::where('active', true)
+            ->orWhereIn('id', $periodSchemeIds)
+            ->get();
 
         $branches = \App\Models\Branch::when($branchId, fn($q) => $q->where('id', $branchId))
             ->with(['users.contributions' => function ($query) use ($fromDate, $toDate) {

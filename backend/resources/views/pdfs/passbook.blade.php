@@ -62,10 +62,20 @@
             @endforeach
         </tbody>
         <tfoot>
+            @php
+                $monthlyTotals = array_fill(1, 12, 0);
+                foreach($matrix as $row) {
+                    foreach($row['months'] as $m => $val) {
+                        $monthlyTotals[$m] += $val;
+                    }
+                }
+            @endphp
             <tr>
                 <td><strong>GRAND TOTAL</strong></td>
                 <td class="center">{{ number_format($bf_total, 2) }}</td>
-                <td colspan="12"></td>
+                @foreach($monthlyTotals as $mTotal)
+                    <td class="center">{{ $mTotal > 0 ? number_format($mTotal, 0) : '-' }}</td>
+                @endforeach
                 <td class="right">{{ number_format($grand_total, 2) }}</td>
             </tr>
         </tfoot>

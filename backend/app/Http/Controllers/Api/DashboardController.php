@@ -98,9 +98,6 @@ class DashboardController extends Controller
         if (Schema::hasTable('contributions')) {
             $totalContributions = (float) $user->contributions()
                 ->where('status', 'success')
-                ->whereHas('scheme', function($query) {
-                    $query->where('active', true);
-                })
                 ->sum('amount');
         }
 

@@ -55,11 +55,35 @@ class Contribution extends Model
             if ($model->status === 'success' && empty($model->paid_at)) {
                 $model->paid_at = now();
             }
+
+            // Auto-infer category based on scheme if not explicitly provided
+            if (empty($model->category) && $model->scheme_id) {
+                $scheme = $model->scheme ?: Scheme::find($model->scheme_id);
+                $schemeName = $scheme?->name;
+
+                if ($schemeName === 'Loan Repayment') {
+                    $model->category = 'loan_repayment';
+                } elseif ($schemeName === 'Fine') {
+                    $model->category = 'fine';
+                }
+            }
         });
 
         static::updating(function (self $model) {
             if ($model->isDirty('status') && $model->status === 'success' && empty($model->paid_at)) {
                 $model->paid_at = now();
+            }
+
+            // Auto-infer category if scheme changed or category is missing
+            if ($model->isDirty('scheme_id') || (empty($model->category) && $model->scheme_id)) {
+                $scheme = $model->scheme ?: Scheme::find($model->scheme_id);
+                $schemeName = $scheme?->name;
+
+                if ($schemeName === 'Loan Repayment') {
+                    $model->category = 'loan_repayment';
+                } elseif ($schemeName === 'Fine') {
+                    $model->category = 'fine';
+                }
             }
         });
 

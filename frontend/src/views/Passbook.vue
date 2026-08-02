@@ -17,7 +17,7 @@
       <div v-if="!isLoading" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-6 text-white shadow-xl">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest">Yearly Cumulative (₦)</p>
+            <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest">Total Account Balance (₦)</p>
             <p class="text-3xl font-extrabold tracking-tight mt-1">{{ Number(grandTotal).toLocaleString() }}</p>
           </div>
           <div class="bg-white/10 rounded-xl px-3 py-2 text-xs">
@@ -62,6 +62,20 @@
                 </td>
               </tr>
             </tbody>
+            <tfoot class="text-[11px] bg-slate-50 font-black border-t-2 border-slate-200">
+              <tr>
+                <td class="p-3 sticky left-0 bg-slate-50 z-10 border-r border-slate-100">GRAND TOTAL</td>
+                <td class="p-3 text-center border-r border-slate-50 text-slate-900">
+                  {{ Number(bfTotal).toLocaleString() }}
+                </td>
+                <td v-for="mIdx in 12" :key="mIdx" class="p-3 text-center border-r border-slate-50 text-slate-900">
+                  {{ monthlyTotals[mIdx] > 0 ? Number(monthlyTotals[mIdx]).toLocaleString() : '-' }}
+                </td>
+                <td class="p-3 text-center text-emerald-700 bg-emerald-50">
+                  {{ Number(grandTotal).toLocaleString() }}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -103,6 +117,7 @@ const years = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date(
 const selectedYear = ref(new Date().getFullYear())
 const matrix = ref([])
 const grandTotal = ref(0)
+const bfTotal = ref(0)
 const agmAmount = ref(0)
 const agmPaid = ref(false)
 const dividendAmount = ref(null)
@@ -112,6 +127,16 @@ const loadError = ref('')
 // Only show the AGM card if backend provided data (amount > 0) or payment status is true
 const showAgm = computed(() => Number(agmAmount.value) > 0 || Boolean(agmPaid.value))
 
+const monthlyTotals = computed(() => {
+  const totals = Array(13).fill(0)
+  matrix.value.forEach(row => {
+    for (let m = 1; m <= 12; m++) {
+      totals[m] += Number(row.months[m] || 0)
+    }
+  })
+  return totals
+})
+
 const fetchPassbook = async () => {
   const token = localStorage.getItem('token')
   isLoading.value = true
@@ -120,6 +145,7 @@ const fetchPassbook = async () => {
     const { data } = await axios.get(`/api/passbook/${selectedYear.value}`, { headers: { Authorization: `Bearer ${token}` } })
     matrix.value = data.matrix
     grandTotal.value = data.grand_total
+    bfTotal.value = data.bf_total || 0
 
     // Optional fields for AGM fee tracking; dynamic per year with sensible fallbacks
     const amountKey = `agm_fee_${selectedYear.value}_amount`

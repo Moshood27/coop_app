@@ -46,9 +46,6 @@ class PrintController extends Controller
                       });
             })
             ->where('status', 'success')
-            ->whereHas('scheme', function($query) {
-                $query->where('active', true);
-            })
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -60,12 +57,10 @@ class PrintController extends Controller
                       });
             })
             ->where('status', 'success')
-            ->whereHas('scheme', function($query) {
-                $query->where('active', true);
-            })
             ->get();
 
-        $schemes = Scheme::where('active', true)->orderBy('name')->get();
+        $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
+        $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
 
         $matrix = $schemes->map(function ($scheme) use ($contributions, $bfContributions) {
             $row = [
@@ -76,13 +71,16 @@ class PrintController extends Controller
             ];
 
             foreach ($bfContributions as $con) {
-                if ($con->scheme_id === $scheme->id) {
+                if ($con->scheme_id == $scheme->id) {
                     $row['bf'] += (float) $con->amount;
                 }
             }
 
+            // Initialize total with BF to make it cumulative
+            $row['total'] = $row['bf'];
+
             foreach ($contributions as $con) {
-                if ($con->scheme_id === $scheme->id) {
+                if ($con->scheme_id == $scheme->id) {
                     $date = $con->paid_at ?? $con->created_at;
                     $month = $date->month;
                     $row['months'][$month] += (float) $con->amount;

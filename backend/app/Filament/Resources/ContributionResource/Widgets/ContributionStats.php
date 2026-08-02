@@ -38,7 +38,9 @@ class ContributionStats extends BaseWidget
             ->descriptionIcon('heroicon-m-banknotes')
             ->color('primary');
 
+        $schemeIdsWithData = $totals->keys();
         $schemes = Scheme::where('active', true)
+            ->orWhereIn('id', $schemeIdsWithData)
             ->orderBy('name')
             ->get();
 
