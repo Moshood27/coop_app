@@ -20,7 +20,7 @@ RUN apk add --no-cache \
 # 2. Configure and install PHP extensions
 # Cleaned up redundancy and added pcntl for Laravel Reverb
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-configure readline --with-readline \
+    && docker-php-ext-configure readline --with-readline --without-libedit \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         bcmath \
