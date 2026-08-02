@@ -28,19 +28,13 @@ Run composer inside the app container to install the new Excel and PDF libraries
 docker exec -it attaqwa-app composer install --optimize-autoloader --no-dev
 ```
 
-### Step C: Rebuild Docker Container (If Dockerfile changed)
-If you have pulled changes to the `docker/` directory (like the recent Tinker fix), you must rebuild the image:
-```bash
-docker compose -f docker-compose.pro.yml up --build -d
-```
-
-### Step D: Run Database Migrations
+### Step C: Run Database Migrations
 Apply the new fields to the `users` table. This is safe and will not affect existing user data:
 ```bash
 docker exec -it attaqwa-app php artisan migrate --force
 ```
 
-### Step E: Rebuild Frontend Assets
+### Step D: Rebuild Frontend Assets
 The frontend changes (modals, reporting) need to be compiled:
 ```bash
 cd frontend
@@ -50,13 +44,13 @@ cd ..
 ```
 *Note: Ensure your `proxy` container is serving the updated `frontend/dist` directory.*
 
-### Step F: Clear Caches & Publish Assets
+### Step E: Clear Caches & Publish Assets
 ```bash
 docker exec -it attaqwa-app php artisan optimize
 docker exec -it attaqwa-app php artisan filament:assets
 ```
 
-### Step G: Clear Filament-Specific Caches (Important)
+### Step F: Clear Filament-Specific Caches (Important)
 If you encounter `RouteNotFoundException` or the new page is missing from the sidebar, run:
 ```bash
 docker exec -it attaqwa-app php artisan route:clear
@@ -93,15 +87,7 @@ docker exec -it attaqwa-app php artisan view:clear
 - This means `composer install` didn't run or failed. Re-run Step B.
 
 ### "Column 'migrated_at' not found"
-- This means migrations weren't run. Re-run Step D.
-
-### "Unable to run Tinker" (Interactive Shell)
-- Ensure you use the `-it` flags (interactive and TTY).
-- To run Tinker on the VPS:
-  ```bash
-  docker exec -it attaqwa-app php artisan tinker
-  ```
-- If Tinker fails with a "readline" or "PsySH" error, ensure you have rebuilt the container (Step C).
+- This means migrations weren't run. Re-run Step C.
 
 ### GD Library Errors
 - The production `Dockerfile` already includes the `gd` extension. If you are using a custom PHP environment, ensure `php-gd` and `php-zip` are installed and enabled.
