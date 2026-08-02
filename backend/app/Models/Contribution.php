@@ -41,6 +41,7 @@ class Contribution extends Model
         'qard_hasan_id',
         'ledger_journal_id',
         'paid_at',
+        'created_at',
     ];
 
     protected static function booted(): void
@@ -48,6 +49,15 @@ class Contribution extends Model
         static::creating(function (self $model) {
             if (empty($model->reference)) {
                 $model->reference = self::generateReference();
+            }
+            if ($model->status === 'success' && empty($model->paid_at)) {
+                $model->paid_at = now();
+            }
+        });
+
+        static::updating(function (self $model) {
+            if ($model->isDirty('status') && $model->status === 'success' && empty($model->paid_at)) {
+                $model->paid_at = now();
             }
         });
 

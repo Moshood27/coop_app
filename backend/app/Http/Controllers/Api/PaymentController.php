@@ -390,6 +390,7 @@ class PaymentController extends Controller
         foreach ($userContribs as $contribution) {
             if ($contribution->status !== 'success') {
                 $contribution->status = 'success';
+                $contribution->paid_at = now();
                 $contribution->save();
             }
         }

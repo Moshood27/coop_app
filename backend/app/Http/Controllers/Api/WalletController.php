@@ -480,6 +480,7 @@ class WalletController extends Controller
                     'reference' => $reference,
                     'status' => 'success',
                     'category' => $item['category'] ?? 'deposit',
+                    'paid_at' => now(),
                 ];
                 if (!empty($item['project_id'])) {
                     $row['project_id'] = (int) $item['project_id'];
@@ -629,6 +630,7 @@ class WalletController extends Controller
                     'reference' => $reference . '_' . $idx,
                     'status' => 'success',
                     'category' => $item['category'] ?? 'deposit',
+                    'paid_at' => now(),
                 ];
                 if (!empty($item['project_id'])) {
                     $row['project_id'] = (int) $item['project_id'];

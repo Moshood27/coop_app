@@ -519,6 +519,7 @@ class WebhookController extends Controller
 
             foreach ($contributions as $contribution) {
                 $contribution->status = 'success';
+                $contribution->paid_at = now();
                 $contribution->save();
 
                 // If this is Zakat or Zakat Al-Fitr, record it in the Charity Ledger and move to Fund
@@ -865,6 +866,7 @@ class WebhookController extends Controller
 
             foreach ($contributions as $contribution) {
                 $contribution->status = 'success';
+                $contribution->paid_at = now();
                 $contribution->save();
 
                 // If this is Zakat or Zakat Al-Fitr, record it in the Charity Ledger and move to Fund

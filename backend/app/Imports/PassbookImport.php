@@ -87,6 +87,7 @@ class PassbookImport implements OnEachRow, WithHeadingRow, WithValidation, WithC
                         'amount' => $amount,
                         'status' => 'success',
                         'reference' => 'MIG-REC-' . strtoupper(substr($schemeName, 0, 3)) . '-' . Str::random(6),
+                        'paid_at' => $createdDate,
                         'created_at' => $createdDate,
                     ]);
 

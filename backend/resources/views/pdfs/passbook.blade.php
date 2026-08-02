@@ -87,7 +87,7 @@
             @forelse($contributions as $c)
                 @php $amt = (float) $c->amount; $total += $amt; @endphp
                 <tr>
-                    <td>{{ optional($c->created_at)->format('Y-m-d H:i') }}</td>
+                    <td>{{ optional($c->paid_at ?? $c->created_at)->format('Y-m-d H:i') }}</td>
                     <td>{{ optional($c->scheme)->name ?? '—' }}</td>
                     <td>{{ $c->reference }}</td>
                     <td class="right">{{ $c->units ? number_format((float)$c->units, 4).(str_contains(strtolower(optional($c->scheme)->name), 'gold') ? 'g' : '') : '—' }}</td>

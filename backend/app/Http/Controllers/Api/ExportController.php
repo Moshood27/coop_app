@@ -43,22 +43,37 @@ class ExportController extends Controller
                     $query->where('active', true);
                 })
                 ->when($year > 0, function ($q) use ($year) {
-                    $q->whereYear('created_at', $year);
+                    $q->where(function($query) use ($year) {
+                        $query->whereYear('paid_at', $year)
+                              ->orWhere(function($q2) use ($year) {
+                                  $q2->whereNull('paid_at')->whereYear('created_at', $year);
+                              });
+                    });
                 })
-                ->orderBy('created_at')
+                ->orderByRaw('COALESCE(paid_at, created_at)')
                 ->get();
 
             // Build Matrix data for the PDF (matching the UI)
             $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
             $yearContributions = $user->contributions()
-                ->whereYear('created_at', $year)
+                ->where(function($query) use ($year) {
+                    $query->whereYear('paid_at', $year)
+                          ->orWhere(function($q2) use ($year) {
+                              $q2->whereNull('paid_at')->whereYear('created_at', $year);
+                          });
+                })
                 ->where('status', 'success')
                 ->whereHas('scheme', function($query) {
                     $query->where('active', true);
                 })
                 ->get();
             $bfContributions = $user->contributions()
-                ->where('created_at', '<', $startOfYear)
+                ->where(function($query) use ($startOfYear) {
+                    $query->where('paid_at', '<', $startOfYear)
+                          ->orWhere(function($q2) use ($startOfYear) {
+                              $q2->whereNull('paid_at')->where('created_at', '<', $startOfYear);
+                          });
+                })
                 ->where('status', 'success')
                 ->whereHas('scheme', function($query) {
                     $query->where('active', true);
@@ -80,7 +95,8 @@ class ExportController extends Controller
                 }
                 foreach ($yearContributions as $con) {
                     if ($con->scheme_id === $scheme->id) {
-                        $month = $con->created_at->month;
+                        $date = $con->paid_at ?? $con->created_at;
+                        $month = $date->month;
                         $row['months'][$month] += (float) $con->amount;
                         $row['total'] += (float) $con->amount;
                     }
@@ -118,11 +134,16 @@ class ExportController extends Controller
             $contributions = $user->contributions()
                 ->with('scheme')
                 ->where('status', 'success')
-                ->whereYear('created_at', $year)
+                ->where(function($query) use ($year) {
+                    $query->whereYear('paid_at', $year)
+                          ->orWhere(function($q2) use ($year) {
+                              $q2->whereNull('paid_at')->whereYear('created_at', $year);
+                          });
+                })
                 ->whereHas('scheme', function($query) {
                     $query->where('active', true);
                 })
-                ->orderBy('created_at')
+                ->orderByRaw('COALESCE(paid_at, created_at)')
                 ->get();
 
             $filename = $this->sanitizeFilename('Passbook_' . $year . '_' . $user->membership_number . '.csv');
@@ -136,7 +157,7 @@ class ExportController extends Controller
                 fputcsv($file, ['Date', 'Scheme', 'Reference', 'Amount'], ",", "\"", "\\");
                 foreach ($contributions as $c) {
                     fputcsv($file, [
-                        $c->created_at->format('d-m-Y H:i'),
+                        optional($c->paid_at ?? $c->created_at)->format('d-m-Y H:i'),
                         optional($c->scheme)->name ?? '-',
                         $c->reference,
                         number_format((float)$c->amount, 2, '.', ''),

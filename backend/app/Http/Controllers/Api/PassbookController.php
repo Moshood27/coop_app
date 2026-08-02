@@ -16,7 +16,12 @@ class PassbookController extends Controller
         $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
 
         $yearContributions = $user->contributions()
-            ->whereYear('created_at', $year)
+            ->where(function($query) use ($year) {
+                $query->whereYear('paid_at', $year)
+                      ->orWhere(function($q) use ($year) {
+                          $q->whereNull('paid_at')->whereYear('created_at', $year);
+                      });
+            })
             ->where('status', 'success')
             ->whereHas('scheme', function($query) {
                 $query->where('active', true);
@@ -24,7 +29,12 @@ class PassbookController extends Controller
             ->get();
 
         $bfContributions = $user->contributions()
-            ->where('created_at', '<', $startOfYear)
+            ->where(function($query) use ($startOfYear) {
+                $query->where('paid_at', '<', $startOfYear)
+                      ->orWhere(function($q) use ($startOfYear) {
+                          $q->whereNull('paid_at')->where('created_at', '<', $startOfYear);
+                      });
+            })
             ->where('status', 'success')
             ->whereHas('scheme', function($query) {
                 $query->where('active', true);
@@ -49,7 +59,8 @@ class PassbookController extends Controller
 
             foreach ($yearContributions as $con) {
                 if ($con->scheme_id === $scheme->id) {
-                    $month = $con->created_at->month;
+                    $date = $con->paid_at ?? $con->created_at;
+                    $month = $date->month;
                     $row['months'][$month] += (float) $con->amount;
                     $row['total'] += (float) $con->amount;
                 }
