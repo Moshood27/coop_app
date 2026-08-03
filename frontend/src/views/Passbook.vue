@@ -112,7 +112,7 @@ import { ref, onMounted, computed, onUnmounted } from 'vue'
 import axios from '../http.js'
 import { getEcho } from '../realtime/echo'
 
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const months = ref(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
 const years = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1]
 const selectedYear = ref(new Date().getFullYear())
 const matrix = ref([])
@@ -144,6 +144,9 @@ const fetchPassbook = async () => {
   try {
     const { data } = await axios.get(`/api/passbook/${selectedYear.value}`, { headers: { Authorization: `Bearer ${token}` } })
     matrix.value = data.matrix
+    if (data.month_labels) {
+      months.value = data.month_labels
+    }
     grandTotal.value = data.grand_total
     bfTotal.value = data.bf_total || 0
 

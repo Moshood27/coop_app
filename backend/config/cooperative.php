@@ -49,6 +49,7 @@ return [
             ['name' => 'Honorarium to Officers', 'percent' => 10],
         ],
     ],
+    'financial_year_start_month' => env('COOP_FINANCIAL_YEAR_START_MONTH', 1),
     'timezone' => env('COOP_TIMEZONE', 'Africa/Lagos'),
     'mobile_min_version' => env('MOBILE_MIN_VERSION', '1.0.0'),
     'mobile_current_version' => env('MOBILE_CURRENT_VERSION', '1.0.0'),

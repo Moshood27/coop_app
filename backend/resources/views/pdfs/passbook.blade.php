@@ -43,7 +43,7 @@
             <tr>
                 <th>Scheme</th>
                 <th class="center">BF</th>
-                @foreach(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as $m)
+                @foreach($month_labels as $m)
                     <th class="center">{{ $m }}</th>
                 @endforeach
                 <th class="right">Total</th>

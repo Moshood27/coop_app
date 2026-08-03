@@ -40,6 +40,7 @@ class AppStatusSettings extends Page
             'auto_overdue_recovery_enabled' => (bool) Setting::get('auto_overdue_recovery_enabled', true),
             'required_loan_meetings' => (int) Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8)),
             'nursing_mother_grace_period_months' => (int) Setting::get('nursing_mother_grace_period_months', 3),
+            'financial_year_start_month' => (int) Setting::get('financial_year_start_month', config('cooperative.financial_year_start_month', 1)),
             'wallet_maintenance_charge_percentage' => Setting::get('wallet_maintenance_charge_percentage', config('cooperative.wallet.maintenance_charge.percentage')),
             'wallet_maintenance_charge_max' => Setting::get('wallet_maintenance_charge_max', config('cooperative.wallet.maintenance_charge.max_amount')),
             'gateway_paystack_enabled' => (bool) Setting::get('gateway_paystack_enabled', true),
@@ -114,6 +115,29 @@ class AppStatusSettings extends Page
     {
         return $form
             ->schema([
+                Section::make('Financial Settings')
+                    ->description('Manage financial year and accounting settings.')
+                    ->schema([
+                        Select::make('financial_year_start_month')
+                            ->label('Financial Year Start Month')
+                            ->options([
+                                1 => 'January',
+                                2 => 'February',
+                                3 => 'March',
+                                4 => 'April',
+                                5 => 'May',
+                                6 => 'June',
+                                7 => 'July',
+                                8 => 'August',
+                                9 => 'September',
+                                10 => 'October',
+                                11 => 'November',
+                                12 => 'December',
+                            ])
+                            ->required()
+                            ->default(1)
+                            ->helperText('The month when the new financial year begins. This affects Brought Forward (BF) calculations.'),
+                    ]),
                 Section::make('Monthly Fees')
                     ->description('Manage monthly sitting and meeting fees.')
                     ->schema([

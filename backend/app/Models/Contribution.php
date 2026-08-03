@@ -49,6 +49,9 @@ class Contribution extends Model
     protected static function booted(): void
     {
         static::creating(function (self $model) {
+            if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at ?? now())) {
+                throw new \Exception("Cannot create contribution for a closed month.");
+            }
             if (empty($model->reference)) {
                 $model->reference = self::generateReference();
             }
@@ -70,6 +73,12 @@ class Contribution extends Model
         });
 
         static::updating(function (self $model) {
+            if (MonthClosing::isDateClosed($model->getOriginal('paid_at') ?? $model->getOriginal('created_at'))) {
+                throw new \Exception("Cannot update contribution in a closed month.");
+            }
+            if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at)) {
+                throw new \Exception("Cannot move contribution to a closed month.");
+            }
             if ($model->isDirty('status') && $model->status === 'success' && empty($model->paid_at)) {
                 $model->paid_at = now();
             }
@@ -84,6 +93,12 @@ class Contribution extends Model
                 } elseif ($schemeName === 'Fine') {
                     $model->category = 'fine';
                 }
+            }
+        });
+
+        static::deleting(function (self $model) {
+            if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at)) {
+                throw new \Exception("Cannot delete contribution in a closed month.");
             }
         });
 

@@ -10,6 +10,7 @@ use App\Models\StoreOrder;
 use App\Models\WalletTransaction;
 use App\Services\AccountingReportService;
 use App\Models\Scheme;
+use App\Services\PassbookService;
 use App\Services\ZakatService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -18,10 +19,12 @@ use Illuminate\Support\Carbon;
 class ExportController extends Controller
 {
     protected $zakatService;
+    protected $passbookService;
 
-    public function __construct(ZakatService $zakatService)
+    public function __construct(ZakatService $zakatService, PassbookService $passbookService)
     {
         $this->zakatService = $zakatService;
+        $this->passbookService = $passbookService;
     }
 
     public function downloadPassbook(Request $request)
@@ -36,78 +39,17 @@ class ExportController extends Controller
             // Allow optional year filter to reduce payload size (defaults to current year)
             $year = (int) $request->integer('year', now()->year);
 
-            $contributions = $user->contributions()
-                ->with('scheme')
-                ->where('status', 'success')
-                ->when($year > 0, function ($q) use ($year) {
-                    $q->where(function($query) use ($year) {
-                        $query->whereYear('paid_at', $year)
-                              ->orWhere(function($q2) use ($year) {
-                                  $q2->whereNull('paid_at')->whereYear('created_at', $year);
-                              });
-                    });
-                })
-                ->orderByRaw('COALESCE(paid_at, created_at)')
-                ->get();
-
-            // Build Matrix data for the PDF (matching the UI)
-            $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
-            $yearContributions = $user->contributions()
-                ->where(function($query) use ($year) {
-                    $query->whereYear('paid_at', $year)
-                          ->orWhere(function($q2) use ($year) {
-                              $q2->whereNull('paid_at')->whereYear('created_at', $year);
-                          });
-                })
-                ->where('status', 'success')
-                ->get();
-            $bfContributions = $user->contributions()
-                ->where(function($query) use ($startOfYear) {
-                    $query->where('paid_at', '<', $startOfYear)
-                          ->orWhere(function($q2) use ($startOfYear) {
-                              $q2->whereNull('paid_at')->where('created_at', '<', $startOfYear);
-                          });
-                })
-                ->where('status', 'success')
-                ->get();
-
-            $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
-            $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
-            $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
-                $row = [
-                    'scheme_name' => $scheme->name,
-                    'months' => array_fill(1, 12, 0),
-                    'bf' => 0.0,
-                    'total' => 0.0,
-                ];
-                foreach ($bfContributions as $con) {
-                    if ($con->scheme_id == $scheme->id) {
-                        $row['bf'] += (float) $con->amount;
-                    }
-                }
-
-                // Initialize total with BF to make it cumulative
-                $row['total'] = $row['bf'];
-
-                foreach ($yearContributions as $con) {
-                    if ($con->scheme_id == $scheme->id) {
-                        $date = $con->paid_at ?? $con->created_at;
-                        $month = $date->month;
-                        $row['months'][$month] += (float) $con->amount;
-                        $row['total'] += (float) $con->amount;
-                    }
-                }
-                return $row;
-            });
+            $passbookData = $this->passbookService->getPassbookData($user, $year);
 
             $data = [
                 'user' => $user,
                 'branch' => optional($user->branch)->name,
                 'year' => $year,
-                'contributions' => $contributions,
-                'matrix' => $matrix,
-                'grand_total' => $matrix->sum('total'),
-                'bf_total' => $matrix->sum('bf'),
+                'contributions' => $passbookData['year_contributions'],
+                'matrix' => $passbookData['matrix'],
+                'month_labels' => $passbookData['month_labels'],
+                'grand_total' => $passbookData['grand_total'],
+                'bf_total' => $passbookData['bf_total'],
             ];
 
             $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => false])->loadView('pdfs.passbook', $data);
@@ -127,17 +69,7 @@ class ExportController extends Controller
 
         try {
             $year = (int) $request->integer('year', now()->year);
-            $contributions = $user->contributions()
-                ->with('scheme')
-                ->where('status', 'success')
-                ->where(function($query) use ($year) {
-                    $query->whereYear('paid_at', $year)
-                          ->orWhere(function($q2) use ($year) {
-                              $q2->whereNull('paid_at')->whereYear('created_at', $year);
-                          });
-                })
-                ->orderByRaw('COALESCE(paid_at, created_at)')
-                ->get();
+            $passbookData = $this->passbookService->getPassbookData($user, $year);
 
             $filename = $this->sanitizeFilename('Passbook_' . $year . '_' . $user->membership_number . '.csv');
             $headers = [
@@ -145,17 +77,37 @@ class ExportController extends Controller
                 'Content-Disposition' => "attachment; filename=\"$filename\"",
             ];
 
-            $callback = function () use ($contributions) {
+            $callback = function () use ($passbookData) {
                 $file = fopen('php://output', 'w');
-                fputcsv($file, ['Date', 'Scheme', 'Reference', 'Amount'], ",", "\"", "\\");
-                foreach ($contributions as $c) {
-                    fputcsv($file, [
-                        optional($c->paid_at ?? $c->created_at)->format('d-m-Y H:i'),
-                        optional($c->scheme)->name ?? '-',
-                        $c->reference,
-                        number_format((float)$c->amount, 2, '.', ''),
-                    ], ",", "\"", "\\");
+
+                // Header
+                $header = array_merge(['Scheme', 'BF'], $passbookData['month_labels'], ['Total']);
+                fputcsv($file, $header);
+
+                foreach ($passbookData['matrix'] as $row) {
+                    $months = [];
+                    for ($i = 1; $i <= 12; $i++) {
+                        $months[] = number_format((float) ($row->months[$i] ?? 0), 2, '.', '');
+                    }
+                    fputcsv($file, array_merge(
+                        [$row->scheme_name, number_format((float) $row->bf, 2, '.', '')],
+                        $months,
+                        [number_format((float) $row->total, 2, '.', '')]
+                    ));
                 }
+
+                // Grand Total
+                $grandTotalRow = ['GRAND TOTAL', number_format((float) $passbookData['bf_total'], 2, '.', '')];
+                for ($i = 1; $i <= 12; $i++) {
+                    $monthlyTotal = 0;
+                    foreach ($passbookData['matrix'] as $row) {
+                        $monthlyTotal += (float) ($row->months[$i] ?? 0);
+                    }
+                    $grandTotalRow[] = number_format($monthlyTotal, 2, '.', '');
+                }
+                $grandTotalRow[] = number_format((float) $passbookData['grand_total'], 2, '.', '');
+                fputcsv($file, $grandTotalRow);
+
                 fclose($file);
             };
 
