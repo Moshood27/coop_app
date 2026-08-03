@@ -9,12 +9,19 @@ use App\Models\Scheme;
 use App\Models\User;
 use App\Models\UtilityTransaction;
 use App\Models\WalletTransaction;
+use App\Services\PassbookService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class PrintController extends Controller
 {
+    protected $passbookService;
+
+    public function __construct(PassbookService $passbookService)
+    {
+        $this->passbookService = $passbookService;
+    }
     public function passbook(Request $request, User $user)
     {
         $year = (int) $request->input('year', now()->year);
@@ -35,70 +42,17 @@ class PrintController extends Controller
 
     private function getPassbookData(User $user, int $year): array
     {
-        $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
-
-        $contributions = $user->contributions()
-            ->with('scheme')
-            ->where(function($query) use ($year) {
-                $query->whereYear('paid_at', $year)
-                      ->orWhere(function($q) use ($year) {
-                          $q->whereNull('paid_at')->whereYear('created_at', $year);
-                      });
-            })
-            ->where('status', 'success')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $bfContributions = $user->contributions()
-            ->where(function($query) use ($startOfYear) {
-                $query->where('paid_at', '<', $startOfYear)
-                      ->orWhere(function($q) use ($startOfYear) {
-                          $q->whereNull('paid_at')->where('created_at', '<', $startOfYear);
-                      });
-            })
-            ->where('status', 'success')
-            ->get();
-
-        $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
-        $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
-
-        $matrix = $schemes->map(function ($scheme) use ($contributions, $bfContributions) {
-            $row = [
-                'scheme_name' => $scheme->name,
-                'months' => array_fill(1, 12, 0.0),
-                'bf' => 0.0,
-                'total' => 0.0,
-            ];
-
-            foreach ($bfContributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $row['bf'] += (float) $con->amount;
-                }
-            }
-
-            // Initialize total with BF to make it cumulative
-            $row['total'] = $row['bf'];
-
-            foreach ($contributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $date = $con->paid_at ?? $con->created_at;
-                    $month = $date->month;
-                    $row['months'][$month] += (float) $con->amount;
-                    $row['total'] += (float) $con->amount;
-                }
-            }
-
-            return $row;
-        });
+        $passbookData = $this->passbookService->getPassbookData($user, $year);
 
         return [
             'user' => $user,
             'year' => $year,
-            'contributions' => $contributions,
+            'contributions' => $passbookData['year_contributions'],
             'branch' => $user->branch?->name,
-            'matrix' => $matrix,
-            'grand_total' => $matrix->sum('total'),
-            'bf_total' => $matrix->sum('bf'),
+            'matrix' => $passbookData['matrix'],
+            'month_labels' => $passbookData['month_labels'],
+            'grand_total' => $passbookData['grand_total'],
+            'bf_total' => $passbookData['bf_total'],
         ];
     }
 

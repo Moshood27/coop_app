@@ -22,6 +22,13 @@ class AdminMemberController extends Controller
     /**
      * List members, optionally filtered by branch if the admin is branch-bound.
      */
+    protected $passbookService;
+
+    public function __construct(PassbookService $passbookService)
+    {
+        $this->passbookService = $passbookService;
+    }
+
     public function index(Request $request)
     {
         $admin = $request->user();
@@ -79,59 +86,7 @@ class AdminMemberController extends Controller
     {
         $this->authorizeAdminAccess($request->user(), $user);
 
-        $startOfYear = Carbon::create($year, 1, 1, 0, 0, 0);
-
-        $yearContributions = $user->contributions()
-            ->where(function($query) use ($year) {
-                $query->whereYear('paid_at', $year)
-                      ->orWhere(function($q) use ($year) {
-                          $q->whereNull('paid_at')->whereYear('created_at', $year);
-                      });
-            })
-            ->where('status', 'success')
-            ->get();
-
-        $bfContributions = $user->contributions()
-            ->where(function($query) use ($startOfYear) {
-                $query->where('paid_at', '<', $startOfYear)
-                      ->orWhere(function($q) use ($startOfYear) {
-                          $q->whereNull('paid_at')->where('created_at', '<', $startOfYear);
-                      });
-            })
-            ->where('status', 'success')
-            ->get();
-
-        $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
-        $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
-
-        $matrix = $schemes->map(function ($scheme) use ($yearContributions, $bfContributions) {
-            $row = [
-                'scheme_id' => $scheme->id,
-                'scheme_name' => $scheme->name,
-                'months' => array_fill(1, 12, 0),
-                'bf' => 0.0,
-                'total' => 0.0,
-            ];
-
-            foreach ($bfContributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $row['bf'] += (float) $con->amount;
-                }
-            }
-
-            $row['total'] = $row['bf'];
-
-            foreach ($yearContributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $date = $con->paid_at ?? $con->created_at;
-                    $month = $date->month;
-                    $row['months'][$month] += (float) $con->amount;
-                    $row['total'] += (float) $con->amount;
-                }
-            }
-
-            return $row;
-        });
+        $passbookData = $this->passbookService->getPassbookData($user, $year);
 
         return response()->json([
             'user' => [
@@ -140,9 +95,10 @@ class AdminMemberController extends Controller
                 'membership_number' => $user->membership_number,
             ],
             'year' => $year,
-            'matrix' => $matrix,
-            'grand_total' => $matrix->sum('total'),
-            'bf_total' => $matrix->sum('bf'),
+            'matrix' => $passbookData['matrix'],
+            'month_labels' => $passbookData['month_labels'],
+            'grand_total' => $passbookData['grand_total'],
+            'bf_total' => $passbookData['bf_total'],
         ]);
     }
 

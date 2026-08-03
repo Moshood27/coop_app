@@ -36,7 +36,7 @@
                             <tr class="bg-gray-900 text-white uppercase">
                                 <th class="p-2 border border-gray-700">Scheme</th>
                                 <th class="p-2 border border-gray-700 text-center">BF</th>
-                                @foreach(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as $m)
+                                @foreach($month_labels as $m)
                                     <th class="p-2 border border-gray-700 text-center">{{ $m }}</th>
                                 @endforeach
                                 <th class="p-2 border border-gray-700 text-right">Total</th>

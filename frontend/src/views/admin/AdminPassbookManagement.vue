@@ -40,7 +40,7 @@
                class="p-3 rounded-2xl text-center"
                :class="amount > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'"
           >
-            <p class="text-[8px] font-bold uppercase tracking-tighter">{{ monthNames[month-1] }}</p>
+            <p class="text-[8px] font-bold uppercase tracking-tighter">{{ monthLabels[month-1] }}</p>
             <p class="text-[10px] font-black">{{ formatMoney(amount) }}</p>
           </div>
         </div>
@@ -169,6 +169,7 @@ import axios from '../../http'
 const route = useRoute()
 const user = ref(null)
 const matrix = ref([])
+const monthLabels = ref(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 const contributions = ref([])
 const pagination = ref({ current_page: 1, next_page_url: null })
 const grandTotal = ref(0)
@@ -177,22 +178,6 @@ const selectedYear = ref(new Date().getFullYear())
 const years = computed(() => {
   const current = new Date().getFullYear()
   return [current, current - 1, current - 2, current - 3]
-})
-
-const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-const showAddModal = ref(false)
-const submitting = ref(false)
-const editingCon = ref(null)
-const schemes = ref([])
-const form = ref({
-  scheme_id: null,
-  amount: 0,
-  paid_at: new Date().toISOString().split('T')[0],
-  method: 'transfer',
-  note: '',
-  split_50_50: false,
-  status: 'success'
 })
 
 const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
@@ -204,6 +189,7 @@ const fetchPassbook = async () => {
     user.value = data.user
     matrix.value = data.matrix
     grandTotal.value = data.grand_total
+    if (data.month_labels) monthLabels.value = data.month_labels
   } catch (e) {
     console.error('Failed to fetch passbook', e)
   } finally {
