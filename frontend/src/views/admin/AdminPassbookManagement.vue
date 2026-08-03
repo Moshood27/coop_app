@@ -1,0 +1,186 @@
+<template>
+  <div class="min-h-screen bg-slate-50 pb-32">
+    <header class="p-6 bg-white border-b sticky top-0 z-20 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button @click="$router.push(`/admin/members/${$route.params.id}`)" class="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-500">
+          <span class="i-mdi-chevron-left text-xl"></span>
+        </button>
+        <div>
+          <h1 class="text-xl font-black text-slate-800 tracking-tight">Passbook</h1>
+          <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{{ user?.full_name }}</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <select v-model="selectedYear" @change="fetchPassbook" class="bg-slate-100 border-none rounded-xl text-xs font-black px-3 py-2 outline-none">
+          <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+        </select>
+        <button @click="showAddModal = true" class="w-10 h-10 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+          <span class="i-mdi-plus text-xl"></span>
+        </button>
+      </div>
+    </header>
+
+    <div v-if="loading" class="flex flex-col items-center py-20 space-y-4">
+      <div class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Passbook...</p>
+    </div>
+
+    <div v-else class="p-6 space-y-6 max-w-lg mx-auto">
+      <div v-for="row in matrix" :key="row.scheme_id" class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div class="p-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="text-sm font-black text-slate-800">{{ row.scheme_name }}</h3>
+          <p class="text-xs font-black text-emerald-600">Total: ₦{{ formatMoney(row.total) }}</p>
+        </div>
+        <div class="p-4 grid grid-cols-4 gap-2">
+          <div class="p-3 bg-slate-50 rounded-2xl text-center">
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">B/F</p>
+            <p class="text-[10px] font-black text-slate-600">{{ formatMoney(row.bf) }}</p>
+          </div>
+          <div v-for="(amount, month) in row.months" :key="month" 
+               class="p-3 rounded-2xl text-center"
+               :class="amount > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'"
+          >
+            <p class="text-[8px] font-bold uppercase tracking-tighter">{{ monthNames[month-1] }}</p>
+            <p class="text-[10px] font-black">{{ formatMoney(amount) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-200 text-center">
+        <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Grand Total ({{ selectedYear }})</p>
+        <p class="text-3xl font-black">₦{{ formatMoney(grandTotal) }}</p>
+      </div>
+    </div>
+
+    <!-- Add Contribution Modal -->
+    <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showAddModal = false"></div>
+      <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300">
+        <div class="text-center">
+          <h3 class="text-xl font-black text-slate-800 tracking-tight">Add Contribution</h3>
+          <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manual distribution</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Select Scheme</label>
+            <select v-model="form.scheme_id" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+              <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Amount (₦)</label>
+            <input v-model="form.amount" type="number" step="0.01" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Date Paid</label>
+              <input v-model="form.paid_at" type="date" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+            </div>
+            <div>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Method</label>
+              <select v-model="form.method" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                <option value="cash">Cash</option>
+                <option value="transfer">Transfer</option>
+                <option value="pos">POS</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Note (Optional)</label>
+            <textarea v-model="form.note" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button @click="showAddModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+          <button @click="submitContribution" :disabled="submitting" class="flex-1 bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50">
+            {{ submitting ? 'Saving...' : 'Save Entry' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from '../../http'
+
+const route = useRoute()
+const user = ref(null)
+const matrix = ref([])
+const grandTotal = ref(0)
+const loading = ref(true)
+const selectedYear = ref(new Date().getFullYear())
+const years = computed(() => {
+  const current = new Date().getFullYear()
+  return [current, current - 1, current - 2, current - 3]
+})
+
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+const showAddModal = ref(false)
+const submitting = ref(false)
+const schemes = ref([])
+const form = ref({
+  scheme_id: null,
+  amount: 0,
+  paid_at: new Date().toISOString().split('T')[0],
+  method: 'transfer',
+  note: ''
+})
+
+const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
+
+const fetchPassbook = async () => {
+  loading.value = true
+  try {
+    const { data } = await axios.get(`/api/admin/members/${route.params.id}/passbook/${selectedYear.value}`)
+    user.value = data.user
+    matrix.value = data.matrix
+    grandTotal.value = data.grand_total
+  } catch (e) {
+    console.error('Failed to fetch passbook', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchSchemes = async () => {
+  try {
+    const { data } = await axios.get('/api/schemes')
+    schemes.value = data
+    if (data.length > 0) form.value.scheme_id = data[0].id
+  } catch (e) {
+    console.error('Failed to fetch schemes', e)
+  }
+}
+
+const submitContribution = async () => {
+  if (!form.value.scheme_id || form.value.amount <= 0) return
+  
+  submitting.value = true
+  try {
+    await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, form.value)
+    showAddModal.value = false
+    form.value.amount = 0
+    form.value.note = ''
+    fetchPassbook()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to save contribution')
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(() => {
+  fetchPassbook()
+  fetchSchemes()
+})
+</script>

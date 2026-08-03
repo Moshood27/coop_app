@@ -476,6 +476,16 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/vendor
     Route::post('/settlements/{id}/reject', [AdminVendorController::class, 'rejectSettlement']);
 });
 
+Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/members')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'index']);
+    Route::get('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
+    Route::get('/{user}/passbook/{year}', [\App\Http\Controllers\Api\AdminMemberController::class, 'passbook']);
+    Route::post('/{user}/distribute-funds', [\App\Http\Controllers\Api\AdminMemberController::class, 'distributeFunds']);
+    Route::post('/{user}/allocate-wallet', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
+    Route::get('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);
+    Route::post('/loans/{loan}/repay', [\App\Http\Controllers\Api\AdminMemberController::class, 'loanRepayment']);
+});
+
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/products')->group(function () {
     Route::get('/', [AdminProductController::class, 'index']);
     Route::post('/{id}/image', [AdminProductController::class, 'uploadImage']);

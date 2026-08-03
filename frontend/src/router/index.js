@@ -67,6 +67,11 @@ const AdminProducts = () => import('../views/admin/AdminProducts.vue')
 const AdminVendors = () => import('../views/admin/AdminVendors.vue')
 const AdminTakaful = () => import('../views/admin/AdminTakaful.vue')
 const AdminDashboard = () => import('../views/admin/AdminDashboard.vue')
+const AdminMemberList = () => import('../views/admin/AdminMemberList.vue')
+const AdminMemberDetail = () => import('../views/admin/AdminMemberDetail.vue')
+const AdminPassbookManagement = () => import('../views/admin/AdminPassbookManagement.vue')
+const AdminWalletManagement = () => import('../views/admin/AdminWalletManagement.vue')
+const AdminLoanManagement = () => import('../views/admin/AdminLoanManagement.vue')
 
 const routes = [
   { path: '/', name: 'landing', component: Landing, meta: { guest: true, skipOnboarding: true } },
@@ -150,6 +155,11 @@ const routes = [
   { path: '/admin/vendors', name: 'admin.vendors', component: AdminVendors, meta: { requiresAdmin: true } },
   { path: '/admin/takaful', name: 'admin.takaful', component: AdminTakaful, meta: { requiresAdmin: true } },
   { path: '/admin/portal', name: 'admin.portal', component: AdminDashboard, meta: { requiresAdmin: true } },
+  { path: '/admin/members', name: 'admin.members', component: AdminMemberList, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id', name: 'admin.members.show', component: AdminMemberDetail, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/passbook', name: 'admin.members.passbook', component: AdminPassbookManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/wallet', name: 'admin.members.wallet', component: AdminWalletManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/loans', name: 'admin.members.loans', component: AdminLoanManagement, meta: { requiresAdmin: true } },
   { path: '/admin', redirect: '/admin/portal' },
 ]
 

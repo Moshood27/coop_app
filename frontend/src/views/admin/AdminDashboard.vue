@@ -111,6 +111,17 @@
       <section class="space-y-4">
         <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Mobile Management</h3>
         <div class="grid grid-cols-2 gap-4">
+          <button v-if="canManageMembers" @click="$router.push('/admin/members')" class="col-span-2 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-4 active:scale-95 transition-all text-left">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
+              <span class="i-mdi-account-group"></span>
+            </div>
+            <div>
+              <p class="text-sm font-black text-slate-700 uppercase tracking-wider">Member Management</p>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Wallet, Passbook & Loans</p>
+            </div>
+            <span class="ml-auto i-mdi-chevron-right text-slate-300 text-xl"></span>
+          </button>
+
           <button @click="$router.push('/admin/vendors')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
             <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-storefront"></span>
@@ -178,18 +189,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from '../../http'
 
 const stats = ref(null)
+const user = ref(null)
 const liquidity = ref(null)
 const vtu_balances = ref({})
 const recent_users = ref([])
 const loading = ref(true)
 
+const isBranchSuperAdmin = computed(() => {
+  if (!user.value) return false
+  const roles = user.value.roles || []
+  const isSuper = roles.some(r => r.name === 'super_admin')
+  return isSuper && !!user.value.branch_id
+})
+
+const isGlobalSuperAdmin = computed(() => {
+  if (!user.value) return false
+  const roles = user.value.roles || []
+  return roles.some(r => r.name === 'super_admin') && !user.value.branch_id
+})
+
+const canManageMembers = computed(() => isBranchSuperAdmin.value || isGlobalSuperAdmin.value)
+
 const load = async () => {
   try {
     const { data } = await axios.get('/api/admin/dashboard')
+    user.value = data.user
     stats.value = data.stats
     liquidity.value = data.liquidity
     vtu_balances.value = data.vtu_balances || {}

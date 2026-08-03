@@ -29,6 +29,9 @@ class WalletTransactionObserver
             // Auto-process pending administrative charges if it was a credit (wallet funding)
             if ($isCredit && $tx->user) {
                 app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($tx->user);
+
+                // Auto-recover overdue loans if enabled
+                \App\Jobs\AutoRecoverOverdueLoans::dispatch($tx->user_id)->delay(now()->addSeconds(5));
             }
         } catch (\Exception $e) {
             \Log::error("Failed to record wallet transaction in ledger: " . $e->getMessage());
