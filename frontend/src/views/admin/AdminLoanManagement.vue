@@ -29,9 +29,19 @@
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Loan ID: QH-{{ loan.id }}</p>
             <p class="text-sm font-black text-slate-800">{{ formatDate(loan.created_at) }}</p>
           </div>
-          <span class="px-3 py-1 text-[8px] font-black rounded-full uppercase tracking-widest" :class="statusClass(loan.status)">
-            {{ loan.status }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 text-[8px] font-black rounded-full uppercase tracking-widest" :class="statusClass(loan.status)">
+              {{ loan.status }}
+            </span>
+            <div class="flex gap-1">
+              <button @click="editLoan(loan)" class="w-7 h-7 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600">
+                <span class="i-mdi-pencil text-xs"></span>
+              </button>
+              <button @click="confirmDeleteLoan(loan)" class="w-7 h-7 bg-slate-50 text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-50">
+                <span class="i-mdi-trash-can text-xs"></span>
+              </button>
+            </div>
+          </div>
         </div>
         
         <div class="p-6 bg-slate-50/30 grid grid-cols-2 gap-6">
@@ -64,12 +74,22 @@
             <span :class="loan.showRepayments ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"></span>
           </button>
           <div v-if="loan.showRepayments" class="px-6 pb-6 space-y-3">
-            <div v-for="rep in loan.repayments" :key="rep.id" class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div v-for="rep in loan.repayments" :key="rep.id" class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 group">
               <div>
                 <p class="text-[10px] font-black text-slate-800">₦{{ formatMoney(rep.amount) }}</p>
                 <p class="text-[8px] font-bold text-slate-400 uppercase">{{ rep.payment_method }} • {{ formatDate(rep.paid_at) }}</p>
               </div>
-              <span class="i-mdi-check-circle text-emerald-500 text-lg"></span>
+              <div class="flex items-center gap-2">
+                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button @click="editRepayment(loan, rep)" class="w-6 h-6 bg-white text-slate-400 rounded-lg flex items-center justify-center hover:text-emerald-600 shadow-sm">
+                    <span class="i-mdi-pencil text-[10px]"></span>
+                  </button>
+                  <button @click="confirmDeleteRepayment(rep)" class="w-6 h-6 bg-white text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-50 shadow-sm">
+                    <span class="i-mdi-trash-can text-[10px]"></span>
+                  </button>
+                </div>
+                <span class="i-mdi-check-circle text-emerald-500 text-lg"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -81,7 +101,7 @@
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showRepayModal = false"></div>
       <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300">
         <div class="text-center">
-          <h3 class="text-xl font-black text-slate-800 tracking-tight">Record Repayment</h3>
+          <h3 class="text-xl font-black text-slate-800 tracking-tight">{{ editingRep ? 'Edit' : 'Record' }} Repayment</h3>
           <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Loan QH-{{ selectedLoan?.id }}</p>
         </div>
 
@@ -115,9 +135,49 @@
         </div>
 
         <div class="flex gap-3 pt-4">
-          <button @click="showRepayModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+          <button @click="closeRepayModal" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
           <button @click="submitRepayment" :disabled="submitting" class="flex-1 bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50">
             {{ submitting ? 'Saving...' : 'Confirm' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Edit Loan Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showEditModal = false"></div>
+      <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300">
+        <div class="text-center">
+          <h3 class="text-xl font-black text-slate-800 tracking-tight">Edit Loan</h3>
+          <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Loan QH-{{ selectedLoan?.id }}</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Principal Amount (₦)</label>
+            <input v-model="loanForm.principal_amount" type="number" step="0.01" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Status</label>
+            <select v-model="loanForm.status" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="defaulted">Defaulted</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Notes</label>
+            <textarea v-model="loanForm.notes" rows="3" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button @click="showEditModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+          <button @click="submitLoanUpdate" :disabled="submitting" class="flex-1 bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50">
+            {{ submitting ? 'Updating...' : 'Save Changes' }}
           </button>
         </div>
       </div>
@@ -136,13 +196,20 @@ const loans = ref([])
 const loading = ref(true)
 
 const showRepayModal = ref(false)
+const showEditModal = ref(false)
 const selectedLoan = ref(null)
+const editingRep = ref(null)
 const submitting = ref(false)
 const repayForm = ref({
   amount: 0,
   method: 'cash',
   paid_at: new Date().toISOString().split('T')[0],
   note: ''
+})
+const loanForm = ref({
+  principal_amount: 0,
+  status: 'pending',
+  notes: ''
 })
 
 const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
@@ -177,15 +244,91 @@ const fetchData = async () => {
 const openRepayModal = (loan) => {
   selectedLoan.value = loan
   repayForm.value.amount = loan.principal_amount - loan.paid_amount
+  editingRep.value = null
   showRepayModal.value = true
+}
+
+const editRepayment = (loan, rep) => {
+  selectedLoan.value = loan
+  editingRep.value = rep
+  repayForm.value = {
+    amount: rep.amount,
+    method: rep.payment_method,
+    paid_at: new Date(rep.paid_at || rep.created_at).toISOString().split('T')[0],
+    note: rep.notes
+  }
+  showRepayModal.value = true
+}
+
+const closeRepayModal = () => {
+  showRepayModal.value = false
+  editingRep.value = null
+  repayForm.value = {
+    amount: 0,
+    method: 'cash',
+    paid_at: new Date().toISOString().split('T')[0],
+    note: ''
+  }
+}
+
+const confirmDeleteRepayment = async (rep) => {
+  if (!confirm('Are you sure you want to delete this repayment record? This will adjust the loan balance.')) return
+  try {
+    await axios.delete(`/api/admin/members/loan-repayments/${rep.id}`)
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to delete repayment')
+  }
+}
+
+const editLoan = (loan) => {
+  selectedLoan.value = loan
+  loanForm.value = {
+    principal_amount: loan.principal_amount,
+    status: loan.status,
+    notes: loan.notes
+  }
+  showEditModal.value = true
+}
+
+const confirmDeleteLoan = async (loan) => {
+  if (!confirm('Are you sure you want to delete this loan? All repayment records will also be removed.')) return
+  try {
+    await axios.delete(`/api/admin/members/loans/${loan.id}`)
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to delete loan')
+  }
+}
+
+const submitLoanUpdate = async () => {
+  submitting.value = true
+  try {
+    await axios.patch(`/api/admin/members/loans/${selectedLoan.value.id}`, loanForm.value)
+    showEditModal.value = false
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to update loan')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const submitRepayment = async () => {
   if (repayForm.value.amount <= 0) return
   submitting.value = true
   try {
-    await axios.post(`/api/admin/members/loans/${selectedLoan.value.id}/repay`, repayForm.value)
-    showRepayModal.value = false
+    if (editingRep.value) {
+      await axios.patch(`/api/admin/members/loan-repayments/${editingRep.value.id}`, {
+        amount: repayForm.value.amount,
+        payment_method: repayForm.value.method,
+        paid_at: repayForm.value.paid_at,
+        notes: repayForm.value.note
+      })
+    } else {
+      await axios.post(`/api/admin/members/loans/${selectedLoan.value.id}/repay`, repayForm.value)
+    }
+    closeRepayModal()
     fetchData()
   } catch (e) {
     alert(e.response?.data?.message || 'Failed to record repayment')

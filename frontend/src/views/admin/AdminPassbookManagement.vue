@@ -46,9 +46,49 @@
         </div>
       </div>
 
-      <div class="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-200 text-center">
+        <div class="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-200 text-center">
         <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Grand Total ({{ selectedYear }})</p>
         <p class="text-3xl font-black">₦{{ formatMoney(grandTotal) }}</p>
+      </div>
+
+      <!-- Recent Contributions -->
+      <div class="space-y-4 pt-4">
+        <div class="flex items-center justify-between px-4">
+          <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Recent History</h3>
+          <button @click="fetchContributions" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Refresh</button>
+        </div>
+        
+        <div class="space-y-3">
+          <div v-for="con in contributions" :key="con.id" class="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                <span class="i-mdi-cash-multiple text-xl"></span>
+              </div>
+              <div>
+                <p class="text-xs font-black text-slate-800">{{ con.scheme?.name }}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(con.paid_at || con.created_at).toLocaleDateString() }} • {{ con.payment_method }}</p>
+              </div>
+            </div>
+            <div class="text-right flex items-center gap-4">
+              <div>
+                <p class="text-sm font-black text-slate-800">₦{{ formatMoney(con.amount) }}</p>
+                <p class="text-[8px] font-bold uppercase tracking-tighter" :class="con.status === 'success' ? 'text-emerald-500' : 'text-amber-500'">{{ con.status }}</p>
+              </div>
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button @click="editContribution(con)" class="w-8 h-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600">
+                  <span class="i-mdi-pencil text-sm"></span>
+                </button>
+                <button @click="confirmDeleteContribution(con)" class="w-8 h-8 bg-slate-50 text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-50">
+                  <span class="i-mdi-trash-can text-sm"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="pagination.next_page_url" class="text-center pt-2">
+          <button @click="loadMoreContributions" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-emerald-600 transition-colors">Load More History</button>
+        </div>
       </div>
     </div>
 
@@ -57,12 +97,17 @@
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showAddModal = false"></div>
       <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300">
         <div class="text-center">
-          <h3 class="text-xl font-black text-slate-800 tracking-tight">Add Contribution</h3>
-          <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manual distribution</p>
+          <h3 class="text-xl font-black text-slate-800 tracking-tight">{{ editingCon ? 'Edit' : 'Add' }} Contribution</h3>
+          <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Manual entry</p>
         </div>
 
         <div class="space-y-4">
-          <div>
+          <div v-if="!editingCon" class="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
+            <label class="text-xs font-black text-slate-600 uppercase tracking-wider">Split 50/50 Savings/Shares</label>
+            <input v-model="form.split_50_50" type="checkbox" class="w-5 h-5 accent-emerald-600" />
+          </div>
+
+          <div v-if="!form.split_50_50">
             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Select Scheme</label>
             <select v-model="form.scheme_id" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
               <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
@@ -90,6 +135,15 @@
             </div>
           </div>
 
+          <div v-if="editingCon">
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Status</label>
+            <select v-model="form.status" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+              <option value="pending">Pending</option>
+              <option value="success">Success</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
           <div>
             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Note (Optional)</label>
             <textarea v-model="form.note" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
@@ -97,7 +151,7 @@
         </div>
 
         <div class="flex gap-3 pt-4">
-          <button @click="showAddModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+          <button @click="closeModal" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
           <button @click="submitContribution" :disabled="submitting" class="flex-1 bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50">
             {{ submitting ? 'Saving...' : 'Save Entry' }}
           </button>
@@ -115,6 +169,8 @@ import axios from '../../http'
 const route = useRoute()
 const user = ref(null)
 const matrix = ref([])
+const contributions = ref([])
+const pagination = ref({ current_page: 1, next_page_url: null })
 const grandTotal = ref(0)
 const loading = ref(true)
 const selectedYear = ref(new Date().getFullYear())
@@ -127,13 +183,16 @@ const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep
 
 const showAddModal = ref(false)
 const submitting = ref(false)
+const editingCon = ref(null)
 const schemes = ref([])
 const form = ref({
   scheme_id: null,
   amount: 0,
   paid_at: new Date().toISOString().split('T')[0],
   method: 'transfer',
-  note: ''
+  note: '',
+  split_50_50: false,
+  status: 'success'
 })
 
 const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
@@ -152,6 +211,29 @@ const fetchPassbook = async () => {
   }
 }
 
+const fetchContributions = async (page = 1) => {
+  try {
+    const { data } = await axios.get(`/api/admin/members/${route.params.id}/contributions?page=${page}`)
+    if (page === 1) {
+      contributions.value = data.data
+    } else {
+      contributions.value = [...contributions.value, ...data.data]
+    }
+    pagination.value = {
+      current_page: data.current_page,
+      next_page_url: data.next_page_url
+    }
+  } catch (e) {
+    console.error('Failed to fetch contributions', e)
+  }
+}
+
+const loadMoreContributions = () => {
+  if (pagination.value.next_page_url) {
+    fetchContributions(pagination.value.current_page + 1)
+  }
+}
+
 const fetchSchemes = async () => {
   try {
     const { data } = await axios.get('/api/schemes')
@@ -162,16 +244,68 @@ const fetchSchemes = async () => {
   }
 }
 
+const editContribution = (con) => {
+  editingCon.value = con
+  form.value = {
+    scheme_id: con.scheme_id,
+    amount: con.amount,
+    paid_at: new Date(con.paid_at || con.created_at).toISOString().split('T')[0],
+    method: con.payment_method,
+    note: con.notes,
+    split_50_50: false,
+    status: con.status
+  }
+  showAddModal.value = true
+}
+
+const closeModal = () => {
+  showAddModal.value = false
+  editingCon.value = null
+  form.value = {
+    scheme_id: schemes.value.length > 0 ? schemes.value[0].id : null,
+    amount: 0,
+    paid_at: new Date().toISOString().split('T')[0],
+    method: 'transfer',
+    note: '',
+    split_50_50: false,
+    status: 'success'
+  }
+}
+
+const confirmDeleteContribution = async (con) => {
+  if (!confirm('Are you sure you want to delete this contribution? This action cannot be undone and will affect the member balances.')) return
+  
+  try {
+    await axios.delete(`/api/admin/members/contributions/${con.id}`)
+    fetchPassbook()
+    fetchContributions()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to delete contribution')
+  }
+}
+
 const submitContribution = async () => {
-  if (!form.value.scheme_id || form.value.amount <= 0) return
+  if (!form.value.split_50_50 && !form.value.scheme_id) return
+  if (form.value.amount <= 0) return
   
   submitting.value = true
   try {
-    await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, form.value)
-    showAddModal.value = false
-    form.value.amount = 0
-    form.value.note = ''
+    if (editingCon.value) {
+      await axios.patch(`/api/admin/members/contributions/${editingCon.value.id}`, {
+        scheme_id: form.value.scheme_id,
+        amount: form.value.amount,
+        paid_at: form.value.paid_at,
+        payment_method: form.value.method,
+        notes: form.value.note,
+        status: form.value.status
+      })
+    } else {
+      await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, form.value)
+    }
+    
+    closeModal()
     fetchPassbook()
+    fetchContributions()
   } catch (e) {
     alert(e.response?.data?.message || 'Failed to save contribution')
   } finally {
@@ -181,6 +315,7 @@ const submitContribution = async () => {
 
 onMounted(() => {
   fetchPassbook()
+  fetchContributions()
   fetchSchemes()
 })
 </script>

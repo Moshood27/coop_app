@@ -45,7 +45,15 @@
         </div>
         <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Savings</p>
-          <p class="text-lg font-black text-slate-800">₦{{ formatMoney(total_balance) }}</p>
+          <p class="text-lg font-black text-slate-800">₦{{ formatMoney(total_savings) }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Shares</p>
+          <p class="text-lg font-black text-slate-800">₦{{ formatMoney(total_shares) }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grand Total</p>
+          <p class="text-lg font-black text-emerald-600">₦{{ formatMoney(total_balance) }}</p>
         </div>
         <div class="col-span-2 bg-rose-50 p-6 rounded-[2rem] border border-rose-100/50 shadow-sm">
           <p class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1">Outstanding Loans</p>
@@ -104,6 +112,8 @@ import axios from '../../http'
 const route = useRoute()
 const user = ref(null)
 const balance = ref(0)
+const total_savings = ref(0)
+const total_shares = ref(0)
 const total_balance = ref(0)
 const outstanding_loans = ref(0)
 const loading = ref(true)
@@ -118,6 +128,8 @@ const fetchData = async () => {
     const { data } = await axios.get(`/api/admin/members/${route.params.id}`)
     user.value = data.user
     balance.value = data.balance
+    total_savings.value = data.total_savings
+    total_shares.value = data.total_shares
     total_balance.value = data.total_balance
     outstanding_loans.value = data.outstanding_loans
   } catch (e) {

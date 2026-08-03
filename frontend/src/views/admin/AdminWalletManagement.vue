@@ -65,6 +65,95 @@
           </button>
         </div>
       </div>
+
+      <!-- Recent Transactions -->
+      <div class="space-y-4 pt-4">
+        <div class="flex items-center justify-between px-4">
+          <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Transaction History</h3>
+          <button @click="fetchTransactions" class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Refresh</button>
+        </div>
+        
+        <div class="space-y-3">
+          <div v-for="tx in transactions" :key="tx.id" class="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="tx.type === 'credit' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                <span :class="tx.type === 'credit' ? 'i-mdi-arrow-down-bold' : 'i-mdi-arrow-up-bold'" class="text-xl"></span>
+              </div>
+              <div>
+                <p class="text-xs font-black text-slate-800">{{ tx.description || 'Wallet Transaction' }}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.status }}</p>
+              </div>
+            </div>
+            <div class="text-right flex items-center gap-4">
+              <div>
+                <p class="text-sm font-black" :class="tx.type === 'credit' ? 'text-emerald-600' : 'text-slate-800'">
+                  {{ tx.type === 'credit' ? '+' : '-' }}₦{{ formatMoney(tx.amount) }}
+                </p>
+              </div>
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button @click="editTransaction(tx)" class="w-8 h-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-amber-50 hover:text-amber-600">
+                  <span class="i-mdi-pencil text-sm"></span>
+                </button>
+                <button @click="confirmDeleteTransaction(tx)" class="w-8 h-8 bg-slate-50 text-rose-400 rounded-lg flex items-center justify-center hover:bg-rose-50">
+                  <span class="i-mdi-trash-can text-sm"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="pagination.next_page_url" class="text-center pt-2">
+          <button @click="loadMoreTransactions" class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-amber-600 transition-colors">Load More History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showEditModal = false"></div>
+      <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300">
+        <div class="text-center">
+          <h3 class="text-xl font-black text-slate-800 tracking-tight">Edit Transaction</h3>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Ref: #{{ editingTx?.id }}</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Amount (₦)</label>
+            <input v-model="editForm.amount" type="number" step="0.01" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Type</label>
+              <select v-model="editForm.type" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+                <option value="credit">Credit</option>
+                <option value="debit">Debit</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Status</label>
+              <select v-model="editForm.status" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+                <option value="pending">Pending</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Description</label>
+            <textarea v-model="editForm.description" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all"></textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button @click="showEditModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+          <button @click="submitEditTransaction" :disabled="submitting" class="flex-1 bg-amber-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all disabled:opacity-50">
+            {{ submitting ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -81,7 +170,18 @@ const balance = ref(0)
 const loading = ref(true)
 const schemes = ref([])
 const allocations = ref([{ scheme_id: null, amount: 0 }])
+const transactions = ref([])
+const pagination = ref({ current_page: 1, next_page_url: null })
 const submitting = ref(false)
+
+const showEditModal = ref(false)
+const editingTx = ref(null)
+const editForm = ref({
+  amount: 0,
+  type: 'credit',
+  status: 'success',
+  description: ''
+})
 
 const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
 
@@ -100,10 +200,69 @@ const fetchData = async () => {
     balance.value = userRes.data.balance
     schemes.value = schemeRes.data
     if (schemes.value.length > 0) allocations.value[0].scheme_id = schemes.value[0].id
+    
+    fetchTransactions()
   } catch (e) {
     console.error('Failed to fetch data', e)
   } finally {
     loading.value = false
+  }
+}
+
+const fetchTransactions = async (page = 1) => {
+  try {
+    const { data } = await axios.get(`/api/admin/members/${route.params.id}/wallet-transactions?page=${page}`)
+    if (page === 1) {
+      transactions.value = data.data
+    } else {
+      transactions.value = [...transactions.value, ...data.data]
+    }
+    pagination.value = {
+      current_page: data.current_page,
+      next_page_url: data.next_page_url
+    }
+  } catch (e) {
+    console.error('Failed to fetch transactions', e)
+  }
+}
+
+const loadMoreTransactions = () => {
+  if (pagination.value.next_page_url) {
+    fetchTransactions(pagination.value.current_page + 1)
+  }
+}
+
+const editTransaction = (tx) => {
+  editingTx.value = tx
+  editForm.value = {
+    amount: tx.amount,
+    type: tx.type,
+    status: tx.status,
+    description: tx.description
+  }
+  showEditModal.value = true
+}
+
+const confirmDeleteTransaction = async (tx) => {
+  if (!confirm('Are you sure you want to delete this transaction? This will NOT automatically revert balance changes.')) return
+  try {
+    await axios.delete(`/api/admin/members/wallet-transactions/${tx.id}`)
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to delete transaction')
+  }
+}
+
+const submitEditTransaction = async () => {
+  submitting.value = true
+  try {
+    await axios.patch(`/api/admin/members/wallet-transactions/${editingTx.value.id}`, editForm.value)
+    showEditModal.value = false
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to update transaction')
+  } finally {
+    submitting.value = false
   }
 }
 

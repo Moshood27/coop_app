@@ -480,10 +480,26 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     Route::get('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'index']);
     Route::get('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
     Route::get('/{user}/passbook/{year}', [\App\Http\Controllers\Api\AdminMemberController::class, 'passbook']);
+    Route::get('/{user}/contributions', [\App\Http\Controllers\Api\AdminMemberController::class, 'contributions']);
     Route::post('/{user}/distribute-funds', [\App\Http\Controllers\Api\AdminMemberController::class, 'distributeFunds']);
     Route::post('/{user}/allocate-wallet', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
     Route::get('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);
+    Route::get('/{user}/wallet-transactions', [\App\Http\Controllers\Api\AdminMemberController::class, 'walletTransactions']);
+
+    // Contribution CRUD
+    Route::patch('/contributions/{contribution}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateContribution']);
+    Route::delete('/contributions/{contribution}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteContribution']);
+
+    // Wallet CRUD
+    Route::patch('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateWalletTransaction']);
+    Route::delete('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteWalletTransaction']);
+
+    // Loan CRUD & Repayment
+    Route::patch('/loans/{loan}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateLoan']);
+    Route::delete('/loans/{loan}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteLoan']);
     Route::post('/loans/{loan}/repay', [\App\Http\Controllers\Api\AdminMemberController::class, 'loanRepayment']);
+    Route::patch('/loan-repayments/{repayment}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateLoanRepayment']);
+    Route::delete('/loan-repayments/{repayment}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteLoanRepayment']);
 });
 
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/products')->group(function () {
