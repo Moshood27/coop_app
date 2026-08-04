@@ -87,9 +87,11 @@ class JuniorCooperativeController extends Controller
                 'type' => 'debit',
                 'amount' => $request->amount,
                 'reference' => $reference,
-                'description' => "Deposit to Junior account: {$account->child_name}",
                 'source' => 'junior_cooperative',
-                'meta' => ['junior_account_id' => $account->id]
+                'meta' => [
+                    'junior_account_id' => $account->id,
+                    'description' => "Deposit to Junior account: {$account->child_name}"
+                ]
             ]);
         });
 
@@ -130,9 +132,11 @@ class JuniorCooperativeController extends Controller
                 'type' => 'credit',
                 'amount' => $request->amount,
                 'reference' => $reference,
-                'description' => "Withdrawal from Junior account: {$account->child_name}",
                 'source' => 'junior_cooperative',
-                'meta' => ['junior_account_id' => $account->id]
+                'meta' => [
+                    'junior_account_id' => $account->id,
+                    'description' => "Withdrawal from Junior account: {$account->child_name}"
+                ]
             ]);
         });
 

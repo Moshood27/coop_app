@@ -385,12 +385,14 @@ class ZakatController extends Controller
 
                 // Create Wallet Transaction for deduction
                 $user->walletTransactions()->create([
-                    'amount' => -$amount,
+                    'amount' => $amount,
                     'type' => 'debit',
-                    'category' => 'contribution',
-                    'description' => "Payment for {$type}",
                     'reference' => strtoupper($type) . '_' . now()->format('YmdHis') . '_' . bin2hex(random_bytes(2)),
-                    'status' => 'success',
+                    'source' => 'contribution',
+                    'meta' => [
+                        'type' => $type,
+                        'description' => "Payment for {$type}"
+                    ]
                 ]);
 
                 // Create Contribution record

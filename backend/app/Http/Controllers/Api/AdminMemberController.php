@@ -256,10 +256,14 @@ class AdminMemberController extends Controller
                 $user->walletTransactions()->create([
                     'amount' => $alloc['amount'],
                     'type' => 'debit',
-                    'action' => 'allocation',
-                    'status' => 'success',
-                    'description' => "Allocation to {$scheme->name} (by Admin)",
-                    'metadata' => ['admin_id' => $request->user()->id]
+                    'reference' => 'ALC-' . strtoupper(Str::random(12)),
+                    'source' => 'wallet_allocation',
+                    'meta' => [
+                        'scheme_id' => $scheme->id,
+                        'scheme_name' => $scheme->name,
+                        'admin_id' => $request->user()->id,
+                        'description' => "Allocation to {$scheme->name} (by Admin)"
+                    ]
                 ]);
 
                 // 3. Create contribution record
@@ -417,8 +421,8 @@ class AdminMemberController extends Controller
         $data = $request->validate([
             'amount' => 'required|numeric',
             'type' => 'required|string|in:credit,debit',
-            'status' => 'required|string',
-            'description' => 'nullable|string',
+            'reference' => 'required|string|unique:wallet_transactions,reference,' . $transaction->id,
+            'source' => 'nullable|string',
         ]);
 
         $transaction->update($data);
@@ -465,10 +469,13 @@ class AdminMemberController extends Controller
                 $loan->user->walletTransactions()->create([
                     'amount' => $amount,
                     'type' => 'debit',
-                    'action' => 'loan_repayment',
-                    'status' => 'success',
-                    'description' => "Loan Repayment for QH-{$loan->id} (by Admin)",
-                    'metadata' => ['admin_id' => $request->user()->id]
+                    'reference' => 'LRP-' . strtoupper(Str::random(12)),
+                    'source' => 'loan_repayment',
+                    'meta' => [
+                        'loan_id' => $loan->id,
+                        'admin_id' => $request->user()->id,
+                        'description' => "Loan Repayment for QH-{$loan->id} (by Admin)"
+                    ]
                 ]);
             }
 

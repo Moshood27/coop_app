@@ -72,9 +72,17 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function (User $user) {
-            $emails = array_map('trim', explode(',', env('TELESCOPE_EMAILS', 'admin@attaqwa.com')));
-            return in_array($user->email, $emails);
+        Gate::define('viewTelescope', function ($user) {
+            if (!$user instanceof \App\Models\User) {
+                return false;
+            }
+
+            if ($user->isAdmin()) {
+                return true;
+            }
+
+            $emails = config('telescope.emails', []);
+            return in_array($user->email, array_map('trim', $emails));
         });
     }
 }
