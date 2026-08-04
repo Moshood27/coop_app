@@ -59,6 +59,14 @@
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paid</p>
             <p class="text-sm font-black text-emerald-600">₦{{ formatMoney(loan.paid_amount) }}</p>
           </div>
+          <div v-if="loan.repayment_start_date">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Repayment Start</p>
+            <p class="text-sm font-black text-slate-800">{{ formatDate(loan.repayment_start_date) }}</p>
+          </div>
+          <div v-if="loan.description" class="col-span-2">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Description</p>
+            <p class="text-xs font-medium text-slate-600">{{ loan.description }}</p>
+          </div>
           <div class="col-span-2">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-center">Repayment Progress</p>
             <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
@@ -175,8 +183,12 @@
           </div>
 
           <div>
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Notes</label>
-            <textarea v-model="loanForm.notes" rows="3" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Description</label>
+            <textarea v-model="loanForm.description" rows="3" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Repayment Start Date</label>
+            <input v-model="loanForm.repayment_start_date" type="date" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
           </div>
         </div>
 
@@ -218,7 +230,8 @@ const repayForm = ref({
 const loanForm = ref({
   principal_amount: 0,
   status: 'pending',
-  notes: ''
+  description: '',
+  repayment_start_date: ''
 })
 
 const formatMoney = (val) => new Intl.NumberFormat().format(val || 0)
@@ -300,7 +313,8 @@ const editLoan = (loan) => {
   loanForm.value = {
     principal_amount: loan.principal_amount,
     status: loan.status,
-    notes: loan.notes
+    description: loan.description,
+    repayment_start_date: loan.repayment_start_date ? new Date(loan.repayment_start_date).toISOString().split('T')[0] : ''
   }
   showEditModal.value = true
 }

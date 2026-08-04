@@ -143,6 +143,10 @@
               </div>
             </div>
             <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Repayment Start Date</label>
+              <input v-model="loanForm.repayment_start_date" type="date" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Description/Note</label>
               <textarea v-model="loanForm.description" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]" placeholder="Reason for loan..."></textarea>
             </div>
@@ -186,7 +190,8 @@ const loanForm = ref({
   amount: '',
   total_installments: 10,
   interval: 'monthly',
-  description: ''
+  description: '',
+  repayment_start_date: ''
 })
 
 const handleCreateLoan = async () => {

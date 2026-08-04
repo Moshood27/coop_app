@@ -94,13 +94,23 @@ class QardHasan extends Model
         }
 
         $interval = strtolower((string) $this->interval ?: 'monthly');
-        $start = $startAt ?: ($this->received_at ?: ($this->approved_at ?: ($this->created_at ?: now())));
-        $start = ($start instanceof Carbon) ? $start->copy() : Carbon::parse((string) $start);
+        $useExplicitStart = false;
+        if ($startAt) {
+            $start = $startAt->copy();
+        } elseif ($this->repayment_start_date) {
+            $start = $this->repayment_start_date->copy();
+            $useExplicitStart = true;
+        } else {
+            $start = ($this->received_at ?: ($this->approved_at ?: ($this->created_at ?: now())));
+            $start = ($start instanceof Carbon) ? $start->copy() : Carbon::parse((string) $start);
+        }
 
         $items = [];
         $cursor = $start->copy();
         for ($i = 0; $i < $total; $i++) {
-            $cursor = $this->addInterval($cursor, $interval); // move by one interval each time
+            if ($i > 0 || !$useExplicitStart) {
+                $cursor = $this->addInterval($cursor, $interval); // move by one interval each time
+            }
             $items[] = [
                 'index' => $i + 1,
                 'due_at' => $cursor->copy(),
@@ -134,6 +144,23 @@ class QardHasan extends Model
             'quarterly' => $d->addQuarter(),
             'yearly' => $d->addYear(),
             default => $d->addMonth(), // monthly fallback
+        };
+    }
+
+    /**
+     * Subtract interval (daily|weekly|monthly) from a Carbon date and return a cloned instance.
+     */
+    public function subInterval(Carbon $date, string $interval): Carbon
+    {
+        $d = $date->copy();
+        $key = strtolower(trim($interval));
+
+        return match ($key) {
+            'daily' => $d->subDay(),
+            'weekly' => $d->subWeek(),
+            'quarterly' => $d->subQuarter(),
+            'yearly' => $d->subYear(),
+            default => $d->subMonth(), // monthly fallback
         };
     }
 
@@ -240,6 +267,7 @@ class QardHasan extends Model
     protected $fillable = [
         'user_id',
         'qard_id_string',
+        'description',
         'principal_amount',
         'total_installments',
         'per_installment',
@@ -253,6 +281,8 @@ class QardHasan extends Model
         'approved_by',
         'approved_at',
         'received_at',
+        'disbursed_at',
+        'repayment_start_date',
         'defaulted_at',
         'agreement_template',
         'signed_agreement',
@@ -270,6 +300,8 @@ class QardHasan extends Model
         'paid_amount' => 'float',
         'approved_at' => 'datetime',
         'received_at' => 'datetime',
+        'disbursed_at' => 'datetime',
+        'repayment_start_date' => 'datetime',
         'defaulted_at' => 'datetime',
         'agreement_uploaded_at' => 'datetime',
         'agreement_verified_at' => 'datetime',

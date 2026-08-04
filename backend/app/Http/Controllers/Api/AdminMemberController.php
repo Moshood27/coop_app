@@ -311,7 +311,8 @@ class AdminMemberController extends Controller
         $data = $request->validate([
             'principal_amount' => 'required|numeric|min:0',
             'status' => 'required|string',
-            'notes' => 'nullable|string',
+            'description' => 'nullable|string',
+            'repayment_start_date' => 'nullable|date',
         ]);
 
         $loan->update($data);
@@ -590,6 +591,7 @@ class AdminMemberController extends Controller
             'total_installments' => ['required', 'integer', 'min:1'],
             'interval' => ['required', 'in:daily,weekly,monthly'],
             'description' => ['nullable', 'string'],
+            'repayment_start_date' => ['nullable', 'date'],
         ]);
 
         if ($user->hasActiveLoan()) {
@@ -607,6 +609,7 @@ class AdminMemberController extends Controller
             'interval' => $data['interval'],
             'status' => 'active',
             'description' => $data['description'] ?? 'Admin created loan',
+            'repayment_start_date' => $data['repayment_start_date'] ?? null,
             'disbursed_at' => now(),
             'approved_at' => now(),
             'approved_by' => $request->user()->id,
