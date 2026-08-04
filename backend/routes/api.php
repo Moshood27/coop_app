@@ -478,7 +478,10 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/vendor
 
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/members')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'store']);
     Route::get('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
+    Route::delete('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'destroy']);
+    Route::post('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'createLoan']);
     Route::get('/{user}/passbook/{year}', [\App\Http\Controllers\Api\AdminMemberController::class, 'passbook']);
     Route::get('/{user}/contributions', [\App\Http\Controllers\Api\AdminMemberController::class, 'contributions']);
     Route::post('/{user}/distribute-funds', [\App\Http\Controllers\Api\AdminMemberController::class, 'distributeFunds']);

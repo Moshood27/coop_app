@@ -99,9 +99,66 @@
             </div>
             <span class="ml-auto i-mdi-chevron-right text-slate-300"></span>
           </button>
+
+          <button @click="showLoanModal = true" class="w-full bg-emerald-600 p-5 rounded-[2rem] border border-emerald-500 shadow-lg shadow-emerald-100 flex items-center gap-4 active:scale-[0.98] transition-all text-left text-white">
+            <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center text-2xl">
+              <span class="i-mdi-plus-circle"></span>
+            </div>
+            <div>
+              <p class="text-sm font-black">Create New Loan</p>
+              <p class="text-[10px] text-white/70 font-bold uppercase tracking-wider">Issue new Qard Hasan loan</p>
+            </div>
+            <span class="ml-auto i-mdi-chevron-right text-white/50"></span>
+          </button>
         </div>
       </div>
     </div>
+
+    <!-- Create Loan Modal -->
+    <transition name="fade">
+      <div v-if="showLoanModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <div class="absolute inset-0 bg-black/40" @click="showLoanModal = false"></div>
+        <div class="relative w-full sm:max-w-md bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+          <div class="p-6 border-b border-slate-50 flex items-center justify-between">
+            <h3 class="text-lg font-black text-slate-800 tracking-tight">Create New Loan</h3>
+            <button @click="showLoanModal = false" class="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">✕</button>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Loan Amount (₦)</label>
+              <input v-model="loanForm.amount" type="number" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g. 50000" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Installments</label>
+                <input v-model="loanForm.total_installments" type="number" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g. 10" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Interval</label>
+                <select v-model="loanForm.interval" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 appearance-none">
+                  <option value="monthly">Monthly</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="daily">Daily</option>
+                </select>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Description/Note</label>
+              <textarea v-model="loanForm.description" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]" placeholder="Reason for loan..."></textarea>
+            </div>
+          </div>
+          <div class="p-6 border-t border-slate-50">
+            <button 
+              @click="handleCreateLoan" 
+              :disabled="creatingLoan"
+              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {{ creatingLoan ? 'Creating Loan...' : 'Disburse Loan' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -110,6 +167,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../../http'
 import getImageUrl from '../../utils/image'
+import { useModal } from '../../composables/useModal'
+
+const { alert } = useModal()
 
 const route = useRoute()
 const user = ref(null)
@@ -119,6 +179,35 @@ const total_shares = ref(0)
 const total_balance = ref(0)
 const outstanding_loans = ref(0)
 const loading = ref(true)
+
+const showLoanModal = ref(false)
+const creatingLoan = ref(false)
+const loanForm = ref({
+  amount: '',
+  total_installments: 10,
+  interval: 'monthly',
+  description: ''
+})
+
+const handleCreateLoan = async () => {
+  if (!loanForm.value.amount || !loanForm.value.total_installments) {
+    alert('Please enter amount and installments.')
+    return
+  }
+
+  creatingLoan.value = true
+  try {
+    await axios.post(`/api/admin/members/${route.params.id}/loans`, loanForm.value)
+    alert('Loan created and disbursed successfully.', 'Success')
+    showLoanModal.value = false
+    fetchData()
+  } catch (e) {
+    const msg = e.response?.data?.message || 'Failed to create loan.'
+    alert(msg, 'Error')
+  } finally {
+    creatingLoan.value = false
+  }
+}
 
 const formatMoney = (val) => {
   return new Intl.NumberFormat().format(val || 0)
@@ -145,3 +234,10 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+</style>

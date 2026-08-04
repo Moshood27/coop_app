@@ -499,6 +499,130 @@ class AdminMemberController extends Controller
     }
 
     /**
+     * Create a new member profile.
+     */
+    public function store(Request $request)
+    {
+        $admin = $request->user();
+        if (!$admin->hasRole('super_admin') && !$admin->branch_id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'surname' => ['required', 'string', 'max:255'],
+            'other_names' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'gender' => ['required', 'in:male,female'],
+            'branch_id' => ['required', 'exists:branches,id'],
+            'password' => ['required', 'string', 'min:8'],
+            'address' => ['nullable', 'string'],
+        ]);
+
+        // If admin is branch-bound, force the branch_id
+        if ($admin->branch_id) {
+            $data['branch_id'] = $admin->branch_id;
+        }
+
+        $membership = User::generateMembershipNumber((int) $data['branch_id']);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'surname' => $data['surname'],
+            'other_names' => $data['other_names'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'gender' => $data['gender'],
+            'branch_id' => $data['branch_id'],
+            'address' => $data['address'],
+            'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
+            'membership_number' => $membership,
+            'is_admin' => false,
+            'approval_status' => 'approved', // Admin created members are approved by default
+        ]);
+
+        return response()->json([
+            'message' => 'Member created successfully.',
+            'user' => $user,
+        ], 201);
+    }
+
+    /**
+     * Delete a member profile.
+     */
+    public function destroy(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        // Check if member has active loans or balance
+        if ($user->hasActiveLoan()) {
+            return response()->json(['message' => 'Cannot delete member with active loans.'], 422);
+        }
+
+        if ($user->getTotalBalance() > 0.01) {
+            return response()->json(['message' => 'Cannot delete member with outstanding balance.'], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+            // Delete related records if necessary, or just rely on cascade if configured.
+            $user->delete();
+            DB::commit();
+
+            return response()->json(['message' => 'Member deleted successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Member deletion failed: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete member.'], 500);
+        }
+    }
+
+    /**
+     * Create a loan for a member.
+     */
+    public function createLoan(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'total_installments' => ['required', 'integer', 'min:1'],
+            'interval' => ['required', 'in:daily,weekly,monthly'],
+            'description' => ['nullable', 'string'],
+        ]);
+
+        if ($user->hasActiveLoan()) {
+            return response()->json(['message' => 'Member already has an active loan.'], 422);
+        }
+
+        $perInstallment = round($data['amount'] / $data['total_installments'], 2);
+
+        $loan = QardHasan::create([
+            'user_id' => $user->id,
+            'qard_id_string' => 'ADM-' . strtoupper(Str::random(8)),
+            'principal_amount' => $data['amount'],
+            'total_installments' => $data['total_installments'],
+            'per_installment' => $perInstallment,
+            'interval' => $data['interval'],
+            'status' => 'active',
+            'description' => $data['description'] ?? 'Admin created loan',
+            'disbursed_at' => now(),
+            'approved_at' => now(),
+            'approved_by' => $request->user()->id,
+            'received_at' => now(),
+        ]);
+
+        // Log the action
+        Log::info("Admin {$request->user()->id} created loan for member {$user->id}", ['amount' => $data['amount']]);
+
+        return response()->json([
+            'message' => 'Loan created successfully.',
+            'loan' => $loan,
+        ], 201);
+    }
+
+    /**
      * Authorize admin access to member data.
      */
     protected function authorizeAdminAccess(User $admin, User $member)
