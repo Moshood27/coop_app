@@ -107,8 +107,7 @@ class MemberApplicationResource extends Resource
                                             ->label('Guarantor Signature')
                                             ->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Religious Information & Imam\'s Attestation')
@@ -124,8 +123,7 @@ class MemberApplicationResource extends Resource
                                             ->label('Imam Signature')
                                             ->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                     ])->columns(3),
                             ]),
 
@@ -141,24 +139,20 @@ class MemberApplicationResource extends Resource
                                             ->label('Consent Signature')
                                             ->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Documents')
                                     ->schema([
                                         Forms\Components\FileUpload::make('passport_path')->label('Passport')->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                         Forms\Components\FileUpload::make('id_card_path')->label('ID Card')
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                         Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
                                             ->helperText('Capture raw template string from USB scanner service.')
@@ -215,13 +209,11 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\Textarea::make('officer_recommendation')->rows(3)->columnSpanFull(),
                                         Forms\Components\FileUpload::make('president_signature_path')->label('President\'s Signature')->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                         Forms\Components\DateTimePicker::make('president_signed_at'),
                                         Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General\'s Signature')->image()
                                             ->disk('local')
-                                            ->visibility('private')
-                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                            ->visibility('private'),
                                         Forms\Components\DateTimePicker::make('secretary_general_signed_at'),
                                     ])->columns(2),
                             ]),
