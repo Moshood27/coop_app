@@ -37,7 +37,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
             }
 
             $emails = config('horizon.emails', []);
-            return in_array($user->email, array_map('trim', $emails));
+            return in_array($user->email, $emails);
         });
     }
     /**
