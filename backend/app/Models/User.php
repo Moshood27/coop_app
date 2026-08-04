@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Laragear\WebAuthn\WebAuthnAuthentication;
 use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
@@ -379,7 +380,30 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
     protected $appends = [
         'full_name',
         'permission_names',
+        'passport_url',
     ];
+
+    public function getPassportUrlAttribute(): ?string
+    {
+        if (!$this->passport_path) {
+            return null;
+        }
+
+        $path = ltrim((string) $this->passport_path, '/');
+        if (is_file(public_path($path))) {
+            return asset($path);
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, 8);
+        }
+
+        try {
+            return Storage::disk('public')->url($path);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 
     public function getFullNameAttribute(): string
     {

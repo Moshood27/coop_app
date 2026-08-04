@@ -93,6 +93,7 @@ class AdminMemberController extends Controller
                 'id' => $user->id,
                 'full_name' => $user->full_name,
                 'membership_number' => $user->membership_number,
+                'passport_url' => $user->passport_url,
             ],
             'year' => $year,
             'matrix' => $passbookData['matrix'],

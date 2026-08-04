@@ -35,8 +35,9 @@
           class="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between active:scale-[0.98] active:bg-slate-50 transition-all cursor-pointer"
         >
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-lg">
-              {{ member.name.charAt(0) }}
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-lg overflow-hidden">
+              <img v-if="member.passport_url" :src="getImageUrl(member.passport_url)" class="w-full h-full object-cover" />
+              <span v-else>{{ member.name.charAt(0) }}</span>
             </div>
             <div>
               <p class="text-sm font-black text-slate-800">{{ member.surname }} {{ member.name }}</p>
@@ -82,6 +83,7 @@
 import { ref, onMounted } from 'vue'
 import axios from '../../http'
 import { debounce } from 'lodash'
+import getImageUrl from '../../utils/image'
 
 const members = ref([])
 const loading = ref(false)

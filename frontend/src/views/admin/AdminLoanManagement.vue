@@ -4,9 +4,15 @@
       <button @click="$router.push(`/admin/members/${$route.params.id}`)" class="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-500">
         <span class="i-mdi-chevron-left text-xl"></span>
       </button>
-      <div>
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">Loan Management</h1>
-        <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{{ user?.full_name }}</p>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-black text-sm overflow-hidden">
+          <img v-if="user?.passport_url" :src="getImageUrl(user.passport_url)" class="w-full h-full object-cover" />
+          <span v-else>{{ user?.full_name?.charAt(0) }}</span>
+        </div>
+        <div>
+          <h1 class="text-base font-black text-slate-800 tracking-tight leading-none">Loan Management</h1>
+          <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em] mt-1">{{ user?.full_name }}</p>
+        </div>
       </div>
     </header>
 
@@ -190,6 +196,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../../http'
 import { useModal } from '../../composables/useModal'
+import getImageUrl from '../../utils/image'
 
 const route = useRoute()
 const { confirm, alert } = useModal()

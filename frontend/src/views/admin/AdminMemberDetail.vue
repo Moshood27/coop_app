@@ -22,8 +22,9 @@
       <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <div class="relative flex items-center gap-6">
-          <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-[2rem] flex items-center justify-center font-black text-3xl">
-            {{ user.name.charAt(0) }}
+          <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-[2rem] flex items-center justify-center font-black text-3xl overflow-hidden">
+            <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" class="w-full h-full object-cover" />
+            <span v-else>{{ user.name.charAt(0) }}</span>
           </div>
           <div>
             <h2 class="text-xl font-black text-slate-800 leading-tight">{{ user.surname }} {{ user.name }}</h2>
@@ -108,6 +109,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../../http'
+import getImageUrl from '../../utils/image'
 
 const route = useRoute()
 const user = ref(null)

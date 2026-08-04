@@ -172,8 +172,9 @@
         <div class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
           <div v-for="u in recent_users" :key="u.id" class="p-4 flex items-center justify-between border-b border-slate-50 last:border-0">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                {{ u.full_name.charAt(0) }}
+              <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
+                <img v-if="u.passport_url" :src="getImageUrl(u.passport_url)" class="w-full h-full object-cover" />
+                <span v-else>{{ u.full_name.charAt(0) }}</span>
               </div>
               <div>
                 <p class="text-sm font-bold text-slate-800">{{ u.full_name }}</p>
@@ -191,6 +192,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from '../../http'
+import getImageUrl from '../../utils/image'
 
 const stats = ref(null)
 const user = ref(null)
