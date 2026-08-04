@@ -32,6 +32,11 @@ class InactivityTimeout
         if ($user && method_exists($user, 'currentAccessToken')) {
             $token = $user->currentAccessToken();
 
+            // Skip for TransientToken (session-based auth) as it doesn't have timestamps
+            if ($token instanceof \Laravel\Sanctum\TransientToken) {
+                return $next($request);
+            }
+
             if ($token) {
                 $lastUsed = $token->last_used_at ?? $token->created_at; // fallback to creation time
 

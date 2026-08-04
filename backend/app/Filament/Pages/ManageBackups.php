@@ -119,6 +119,7 @@ class ManageBackups extends Page implements HasTable
     {
         return new EloquentCollection(
             BackupDestinationFactory::createFromArray(app(Config::class))
+                ->filter(fn (BackupDestination $backupDestination) => $backupDestination->diskName() === 'local')
                 ->flatMap(function (BackupDestination $backupDestination) {
                     return $backupDestination->backups()
                         ->map(function ($backup) use ($backupDestination) {

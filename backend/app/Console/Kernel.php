@@ -66,11 +66,6 @@ class Kernel extends ConsoleKernel
         // Audit attendance every hour (will only process meetings marked as completed)
         $schedule->command('app:audit-attendance')->hourly();
 
-        // Automated daily backups of MySQL database to an external location (like AWS S3 or Dropbox)
-        // Cleanup old backups daily at midnight
-        $schedule->command('backup:clean')->dailyAt('00:00');
-        // Run database and application files backup daily at 01:00
-        $schedule->command('backup:run')->dailyAt('01:00');
 
         // Expire sensitive chat files every 48 hours (checked daily)
         $schedule->command('chat:expire-sensitive-files')->daily();
