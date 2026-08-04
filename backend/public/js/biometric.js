@@ -63,5 +63,40 @@ window.biometricScanner = {
                 alert('Scanner URL Updated to: ' + newUrl);
             }
         }
+    },
+
+    /**
+     * Helper for Filament suffix actions to avoid HTML escaping issues in PHP strings.
+     * @param {Object} wire - The Livewire object ($wire)
+     * @param {string} field - The field to set (e.g. 'data.biometric_template')
+     * @param {HTMLElement} element - The element that was clicked ($el)
+     */
+    async scanAndSet(wire, field, element) {
+        if (element) element.classList.add("animate-pulse");
+
+        try {
+            const template = await this.captureTemplate();
+            wire.set(field, template);
+
+            if (window.FilamentNotification) {
+                new FilamentNotification()
+                    .title("Biometric Captured")
+                    .success()
+                    .send();
+            }
+        } catch (err) {
+            if (window.FilamentNotification) {
+                new FilamentNotification()
+                    .title("Scanner Error")
+                    .body(err.message)
+                    .danger()
+                    .persistent()
+                    .send();
+            } else {
+                alert("Scanner Error: " + err.message);
+            }
+        } finally {
+            if (element) element.classList.remove("animate-pulse");
+        }
     }
 };

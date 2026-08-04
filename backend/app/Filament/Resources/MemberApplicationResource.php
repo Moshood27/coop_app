@@ -165,26 +165,7 @@ class MemberApplicationResource extends Resource
                                                     ->color('primary')
                                                     ->action(function () {})
                                                     ->extraAttributes([
-                                                        'x-on:click' => '
-                                                            $el.classList.add("animate-pulse");
-                                                            window.biometricScanner.captureTemplate()
-                                                                .then(template => {
-                                                                    $wire.set("data.biometric_template", template);
-                                                                    new FilamentNotification()
-                                                                        .title("Biometric Captured")
-                                                                        .success()
-                                                                        .send();
-                                                                })
-                                                                .catch(err => {
-                                                                    new FilamentNotification()
-                                                                        .title("Scanner Error")
-                                                                        .body(err.message)
-                                                                        .danger()
-                                                                        .persistent()
-                                                                        .send();
-                                                                })
-                                                                .finally(() => $el.classList.remove("animate-pulse"));
-                                                        ',
+                                                        'x-on:click' => 'window.biometricScanner.scanAndSet($wire, "data.biometric_template", $el)',
                                                         'x-on:contextmenu.prevent' => 'window.biometricScanner.showConfigModal()',
                                                         'title' => 'Left click to scan. Right click for settings.'
                                                     ])
