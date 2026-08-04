@@ -149,21 +149,41 @@ class AuthController extends Controller
         $tokenName = $request->boolean('remember') ? 'remember_token' : 'mobile_token';
         $token = $user->createToken($tokenName)->plainTextToken;
 
-        return response()->json([
+        $response = response()->json([
             'token' => $token,
             'user' => $user,
         ]);
+
+        // Attach HttpOnly cookie for security (mitigate XSS)
+        // Lifetime: 30 days if remember, otherwise 2 hours (120 mins)
+        $minutes = $request->boolean('remember') ? 43200 : 120;
+
+        return $response->cookie(
+            'auth_token',
+            $token,
+            $minutes,
+            '/',
+            null,
+            true, // secure
+            true, // httpOnly
+            false, // raw
+            'Lax' // sameSite
+        );
     }
 
     public function logout(Request $request)
     {
         $user = $request->user();
-        $user->currentAccessToken()->delete();
+        if ($user) {
+            $user->currentAccessToken()->delete();
+            // Fire logout event to log activity and clear last_activity_at via listener
+            event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
+        }
 
-        // Fire logout event to log activity and clear last_activity_at via listener
-        event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
+        $response = response()->json(['message' => 'Logged out successfully.']);
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        // Clear the auth_token cookie
+        return $response->cookie(cookie()->forget('auth_token'));
     }
 
     /**

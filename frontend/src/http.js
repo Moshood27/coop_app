@@ -11,6 +11,7 @@ const base = import.meta?.env?.BASE_URL || '/'
 // Apply a reasonable default timeout; can be overridden via VITE_HTTP_TIMEOUT (ms)
 const timeout = Number(import.meta?.env?.VITE_HTTP_TIMEOUT || 30000)
 axios.defaults.timeout = isNaN(timeout) ? 30000 : timeout
+axios.defaults.withCredentials = true
 
 // Attach token automatically if present
 axios.interceptors.request.use((config) => {

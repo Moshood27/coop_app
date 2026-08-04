@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QardHasanController;
+use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PaymentController;
@@ -329,6 +330,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/reports/dividend/{year}', [ReportsController::class, 'dividend']);
 
     // PDF export
+    Route::get('/documents/{path}', [DocumentController::class, 'serveMember'])->where('path', '.*')->name('member.documents.serve');
     Route::get('/download-passbook', [ExportController::class, 'downloadPassbook'])->name('download-passbook');
     Route::get('/download-passbook-csv', [ExportController::class, 'downloadPassbookCsv'])->name('download-passbook-csv');
     Route::get('/download-statement', [ExportController::class, 'downloadStatement'])->name('download-statement');
@@ -427,18 +429,20 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     });
 });
 
-// Existing Qard Hasan prototype endpoints (kept)
-Route::prefix('qard-hasan')->group(function () {
-    Route::get('/', [QardHasanController::class, 'index']);
-    Route::post('/', [QardHasanController::class, 'store']);
-    Route::post('/{id}/repay', [QardHasanController::class, 'repay']);
-});
 
 
 
 // Admin reports endpoints
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+
+    Route::prefix('qard-hasan')->group(function () {
+        Route::get('/', [QardHasanController::class, 'index']);
+        Route::post('/', [QardHasanController::class, 'store']);
+        Route::post('/{id}/repay', [QardHasanController::class, 'repay']);
+    });
+
+    Route::get('/documents/{path}', [DocumentController::class, 'serve'])->where('path', '.*')->name('admin.documents.serve');
 
     Route::prefix('reports')->group(function () {
         Route::get('/branch-performance', [AdminReportsController::class, 'branchPerformance']);

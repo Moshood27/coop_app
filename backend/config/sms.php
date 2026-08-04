@@ -12,6 +12,7 @@ return [
 
     // Termii-specific
     'api_key' => env('SMS_API_KEY', ''),
+    'secret_key' => env('SMS_SECRET_KEY', ''),
     'base_url' => env('SMS_BASE_URL', 'https://v3.api.termii.com'),
     'channel' => env('SMS_CHANNEL', 'dnd'),
 

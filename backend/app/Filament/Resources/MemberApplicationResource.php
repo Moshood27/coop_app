@@ -105,7 +105,10 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\Textarea::make('guarantor_address')->rows(2),
                                         Forms\Components\FileUpload::make('guarantor_signature_path')
                                             ->label('Guarantor Signature')
-                                            ->image(),
+                                            ->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Religious Information & Imam\'s Attestation')
@@ -119,7 +122,10 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\DateTimePicker::make('imam_approved_at'),
                                         Forms\Components\FileUpload::make('imam_signature_path')
                                             ->label('Imam Signature')
-                                            ->image(),
+                                            ->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                     ])->columns(3),
                             ]),
 
@@ -133,14 +139,26 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\Textarea::make('spouse_father_business_address')->label('Business Address')->rows(2),
                                         Forms\Components\FileUpload::make('spouse_father_consent_signature_path')
                                             ->label('Consent Signature')
-                                            ->image(),
+                                            ->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Documents')
                                     ->schema([
-                                        Forms\Components\FileUpload::make('passport_path')->label('Passport')->image(),
-                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card'),
-                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address'),
+                                        Forms\Components\FileUpload::make('passport_path')->label('Passport')->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card')
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
+                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
                                             ->helperText('Capture raw template string from USB scanner service.')
@@ -195,9 +213,15 @@ class MemberApplicationResource extends Resource
                                                 'rejected' => 'Rejected',
                                             ]),
                                         Forms\Components\Textarea::make('officer_recommendation')->rows(3)->columnSpanFull(),
-                                        Forms\Components\FileUpload::make('president_signature_path')->label('President\'s Signature')->image(),
+                                        Forms\Components\FileUpload::make('president_signature_path')->label('President\'s Signature')->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                         Forms\Components\DateTimePicker::make('president_signed_at'),
-                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General\'s Signature')->image(),
+                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General\'s Signature')->image()
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            ->getUploadedFileUrlUsing(fn ($file) => route('admin.documents.serve', ['path' => $file])),
                                         Forms\Components\DateTimePicker::make('secretary_general_signed_at'),
                                     ])->columns(2),
                             ]),
@@ -215,7 +239,8 @@ class MemberApplicationResource extends Resource
                 Tables\Columns\ImageColumn::make('passport_path')
                     ->label('Photo')
                     ->circular()
-                    ->disk('public_root')
+                    ->disk('local')
+                    ->visibility('private')
                     ->getStateUsing(function ($record) {
                         if (empty($record->passport_path)) {
                             return null;
@@ -227,18 +252,7 @@ class MemberApplicationResource extends Resource
                             return $raw;
                         }
 
-                        $path = ltrim($raw, '/');
-
-                        if (is_file(public_path($path))) {
-                            return $path;
-                        }
-
-                        if (str_starts_with($path, 'storage/')) {
-                            $storagePath = substr($path, strlen('storage/'));
-                            return Storage::disk('public')->url($storagePath);
-                        }
-
-                        return Storage::disk('public')->url($path);
+                        return route('admin.documents.serve', ['path' => $raw]);
                     })
                     ->size(40)
                     ->extraImgAttributes([

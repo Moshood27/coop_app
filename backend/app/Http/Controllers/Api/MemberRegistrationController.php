@@ -145,7 +145,7 @@ class MemberRegistrationController extends Controller
 
         $app = MemberApplication::where('token', $request->input('token'))->firstOrFail();
 
-        $baseDir = public_path('upload/apps/'.$app->token);
+        $baseDir = storage_path('app/private/upload/apps/'.$app->token);
         if (!is_dir($baseDir)) @mkdir($baseDir, 0755, true);
 
         $updated = [];

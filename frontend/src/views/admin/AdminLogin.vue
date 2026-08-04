@@ -77,7 +77,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from '../../http.js'
 import brand from '../../brand'
 import SupportContacts from '../../components/SupportContacts.vue'
 
@@ -96,6 +96,13 @@ const handleLogin = async () => {
   loading.value = true
   error.value = ''
   try {
+    // Initialize CSRF protection for Sanctum
+    try {
+      await axios.get('/sanctum/csrf-cookie')
+    } catch (csrfErr) {
+      console.warn('CSRF initialization failed', csrfErr)
+    }
+
     const { data } = await axios.post('/api/admin/login', form.value)
     localStorage.setItem('admin_token', data.token)
     localStorage.setItem('is_admin', 'true')

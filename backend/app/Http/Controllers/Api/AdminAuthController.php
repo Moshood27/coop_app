@@ -33,7 +33,17 @@ class AdminAuthController extends Controller
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ], 201);
+        ], 201)->cookie(
+            'auth_token',
+            $token,
+            120, // 2 hours
+            '/',
+            null,
+            true, // secure
+            true, // httpOnly
+            false, // raw
+            'Lax' // sameSite
+        );
     }
 
     // Admin login with email + password
@@ -65,7 +75,17 @@ class AdminAuthController extends Controller
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ]);
+        ])->cookie(
+            'auth_token',
+            $token,
+            120,
+            '/',
+            null,
+            true,
+            true,
+            false,
+            'Lax'
+        );
     }
 
     /**
@@ -106,7 +126,17 @@ class AdminAuthController extends Controller
         return response()->json([
             'token' => $token,
             'user' => $user,
-        ]);
+        ])->cookie(
+            'auth_token',
+            $token,
+            120,
+            '/',
+            null,
+            true,
+            true,
+            false,
+            'Lax'
+        );
     }
 
     // Request a password reset link for admin by email

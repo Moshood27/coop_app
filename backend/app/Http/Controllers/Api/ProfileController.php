@@ -106,6 +106,8 @@ class ProfileController extends Controller
             $path = ltrim((string) $user->passport_path, '/');
             if (is_file(public_path($path))) {
                 $passportUrl = asset($path);
+            } elseif (Storage::disk('local')->exists($path)) {
+                $passportUrl = route('member.documents.serve', ['path' => $path], true);
             } else {
                 $storagePath = $path;
                 if (str_starts_with($storagePath, 'storage/')) {
@@ -199,7 +201,11 @@ class ProfileController extends Controller
             'baby_birth_date' => $user->baby_birth_date ? $user->baby_birth_date->toDateString() : null,
             'nursing_mother_status' => $user->nursing_mother_status,
             'nursing_mother_grace_until' => $user->nursing_mother_grace_until ? $user->nursing_mother_grace_until->toDateTimeString() : null,
-            'nursing_mother_proof_url' => $user->nursing_mother_proof_path ? Storage::disk('public')->url($user->nursing_mother_proof_path) : null,
+            'nursing_mother_proof_url' => $user->nursing_mother_proof_path ? (
+                Storage::disk('local')->exists($user->nursing_mother_proof_path)
+                ? route('member.documents.serve', ['path' => $user->nursing_mother_proof_path], true)
+                : Storage::disk('public')->url($user->nursing_mother_proof_path)
+            ) : null,
             'is_in_nursing_mother_grace' => $user->isInNursingMotherGracePeriod(),
             'occupation' => $user->occupation,
             'secondary_phone' => $user->secondary_phone,
@@ -241,42 +247,39 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-
-        $data = $request->validate([
+        $request->validate([
             'passport' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'], // 10MB
         ]);
 
         $file = $request->file('passport');
 
-        // Ensure upload directory exists under public/upload for direct serving
-        $destDir = public_path('upload');
-        if (!is_dir($destDir)) {
-            @mkdir($destDir, 0755, true);
-        }
-
-        // Create a deterministic-ish filename: user-<id>-<timestamp>.<ext>
+        // Create a filename
         $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $filename = 'user-' . $user->id . '-' . time() . '.' . $ext;
+        $filename = 'passports/user-' . $user->id . '-' . time() . '.' . $ext;
 
-        // Move file to public/upload
-        $file->move($destDir, $filename);
+        // Store in private storage (local disk root is storage/app/private)
+        $path = $file->storeAs('', $filename, 'local');
 
-        // Optionally remove previous public upload if it was in public/upload
+        // Optionally remove previous passport if it was in local or public
         if (!empty($user->passport_path)) {
-            $oldPath = public_path($user->passport_path);
-            if (str_starts_with($user->passport_path, 'upload/') && is_file($oldPath)) {
-                @unlink($oldPath);
+            // Remove from local if exists
+            if (Storage::disk('local')->exists($user->passport_path)) {
+                Storage::disk('local')->delete($user->passport_path);
+            }
+            // Remove from public if exists
+            $oldPublic = public_path($user->passport_path);
+            if (str_contains($user->passport_path, 'upload/') && is_file($oldPublic)) {
+                @unlink($oldPublic);
             }
         }
 
-        $relativePath = 'upload/' . $filename;
-        $user->passport_path = $relativePath;
+        $user->passport_path = $path;
         $user->save();
 
         return response()->json([
             'message' => 'Passport uploaded successfully.',
-            'passport_url' => '/' . ltrim($relativePath, '/'),
-            'passport_path' => $relativePath,
+            'passport_url' => route('member.documents.serve', ['path' => $path], true),
+            'passport_path' => $path,
         ]);
     }
 
@@ -609,7 +612,8 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('proof')) {
-            $path = $request->file('proof')->store('nursing_mother_proofs', 'public');
+            // Store in private storage
+            $path = $request->file('proof')->store('nursing_mother_proofs', 'local');
             $user->nursing_mother_proof_path = $path;
         }
 

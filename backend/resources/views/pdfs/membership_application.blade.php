@@ -49,6 +49,14 @@
                 }
             }
 
+            // 3.5. Check storage/app/private/
+            if (!$absolutePath) {
+                $privatePath = storage_path('app/private/' . $path);
+                if (file_exists($privatePath)) {
+                    $absolutePath = $privatePath;
+                }
+            }
+
             // 4. Try to resolve if it's a "storage/..." URL path (common for Filament)
             if (!$absolutePath && str_starts_with($path, 'storage/')) {
                 $trimmedPath = substr($path, 8);

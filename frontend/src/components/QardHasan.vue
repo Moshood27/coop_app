@@ -12,7 +12,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await axios.get('/api/qard-hasan')
+    const { data } = await axios.get('/api/admin/qard-hasan')
     list.value = data
   } catch (e) {
     error.value = e?.response?.data?.message || e.message
@@ -25,7 +25,7 @@ async function createQard() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await axios.post('/api/qard-hasan', form.value)
+    const { data } = await axios.post('/api/admin/qard-hasan', form.value)
     list.value.unshift(data)
   } catch (e) {
     error.value = e?.response?.data?.message || e.message
@@ -39,7 +39,7 @@ async function repay() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await axios.post(`/api/qard-hasan/${repayForm.value.id}/repay`, { amount: repayForm.value.amount })
+    const { data } = await axios.post(`/api/admin/qard-hasan/${repayForm.value.id}/repay`, { amount: repayForm.value.amount })
     const idx = list.value.findIndex(x => x.id === data.qard.id)
     if (idx !== -1) list.value[idx] = data.qard
   } catch (e) {
