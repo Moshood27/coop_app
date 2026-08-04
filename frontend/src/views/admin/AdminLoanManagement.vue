@@ -189,8 +189,10 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../../http'
+import { useModal } from '../../composables/useModal'
 
 const route = useRoute()
+const { confirm, alert } = useModal()
 const user = ref(null)
 const loans = ref([])
 const loading = ref(true)
@@ -272,12 +274,17 @@ const closeRepayModal = () => {
 }
 
 const confirmDeleteRepayment = async (rep) => {
-  if (!confirm('Are you sure you want to delete this repayment record? This will adjust the loan balance.')) return
+  const ok = await confirm('Are you sure you want to delete this repayment record? This will adjust the loan balance.', {
+    title: 'Delete Repayment',
+    confirmText: 'Delete',
+    cancelText: 'Cancel'
+  })
+  if (!ok) return
   try {
     await axios.delete(`/api/admin/members/loan-repayments/${rep.id}`)
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to delete repayment')
+    alert(e.response?.data?.message || 'Failed to delete repayment', 'Error')
   }
 }
 
@@ -292,12 +299,17 @@ const editLoan = (loan) => {
 }
 
 const confirmDeleteLoan = async (loan) => {
-  if (!confirm('Are you sure you want to delete this loan? All repayment records will also be removed.')) return
+  const ok = await confirm('Are you sure you want to delete this loan? All repayment records will also be removed.', {
+    title: 'Delete Loan',
+    confirmText: 'Delete',
+    cancelText: 'Cancel'
+  })
+  if (!ok) return
   try {
     await axios.delete(`/api/admin/members/loans/${loan.id}`)
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to delete loan')
+    alert(e.response?.data?.message || 'Failed to delete loan', 'Error')
   }
 }
 
@@ -305,10 +317,11 @@ const submitLoanUpdate = async () => {
   submitting.value = true
   try {
     await axios.patch(`/api/admin/members/loans/${selectedLoan.value.id}`, loanForm.value)
+    alert('Loan details updated successfully', 'Success')
     showEditModal.value = false
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to update loan')
+    alert(e.response?.data?.message || 'Failed to update loan', 'Error')
   } finally {
     submitting.value = false
   }
@@ -325,13 +338,15 @@ const submitRepayment = async () => {
         paid_at: repayForm.value.paid_at,
         notes: repayForm.value.note
       })
+      alert('Repayment record updated successfully', 'Success')
     } else {
       await axios.post(`/api/admin/members/loans/${selectedLoan.value.id}/repay`, repayForm.value)
+      alert('Repayment recorded successfully', 'Success')
     }
     closeRepayModal()
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to record repayment')
+    alert(e.response?.data?.message || 'Failed to record repayment', 'Error')
   } finally {
     submitting.value = false
   }

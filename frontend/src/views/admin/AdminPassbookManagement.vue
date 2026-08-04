@@ -165,8 +165,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../../http'
+import { useModal } from '../../composables/useModal'
 
 const route = useRoute()
+const { confirm, alert } = useModal()
 const user = ref(null)
 const matrix = ref([])
 const monthLabels = ref(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
@@ -259,14 +261,19 @@ const closeModal = () => {
 }
 
 const confirmDeleteContribution = async (con) => {
-  if (!confirm('Are you sure you want to delete this contribution? This action cannot be undone and will affect the member balances.')) return
+  const ok = await confirm('Are you sure you want to delete this contribution? This action cannot be undone and will affect the member balances.', {
+    title: 'Delete Contribution',
+    confirmText: 'Delete',
+    cancelText: 'Cancel'
+  })
+  if (!ok) return
   
   try {
     await axios.delete(`/api/admin/members/contributions/${con.id}`)
     fetchPassbook()
     fetchContributions()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to delete contribution')
+    alert(e.response?.data?.message || 'Failed to delete contribution', 'Error')
   }
 }
 
@@ -285,15 +292,17 @@ const submitContribution = async () => {
         notes: form.value.note,
         status: form.value.status
       })
+      alert('Contribution updated successfully', 'Success')
     } else {
       await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, form.value)
+      alert('Contribution recorded successfully', 'Success')
     }
     
     closeModal()
     fetchPassbook()
     fetchContributions()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to save contribution')
+    alert(e.response?.data?.message || 'Failed to save contribution', 'Error')
   } finally {
     submitting.value = false
   }

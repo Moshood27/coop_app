@@ -162,9 +162,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '../../http'
+import { useModal } from '../../composables/useModal'
 
 const route = useRoute()
 const router = useRouter()
+const { confirm, alert } = useModal()
 const user = ref(null)
 const balance = ref(0)
 const loading = ref(true)
@@ -244,12 +246,17 @@ const editTransaction = (tx) => {
 }
 
 const confirmDeleteTransaction = async (tx) => {
-  if (!confirm('Are you sure you want to delete this transaction? This will NOT automatically revert balance changes.')) return
+  const ok = await confirm('Are you sure you want to delete this transaction? This will NOT automatically revert balance changes.', {
+    title: 'Delete Transaction',
+    confirmText: 'Delete',
+    cancelText: 'Cancel'
+  })
+  if (!ok) return
   try {
     await axios.delete(`/api/admin/members/wallet-transactions/${tx.id}`)
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to delete transaction')
+    alert(e.response?.data?.message || 'Failed to delete transaction', 'Error')
   }
 }
 
@@ -257,10 +264,11 @@ const submitEditTransaction = async () => {
   submitting.value = true
   try {
     await axios.patch(`/api/admin/members/wallet-transactions/${editingTx.value.id}`, editForm.value)
+    alert('Transaction updated successfully', 'Success')
     showEditModal.value = false
     fetchData()
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to update transaction')
+    alert(e.response?.data?.message || 'Failed to update transaction', 'Error')
   } finally {
     submitting.value = false
   }
@@ -283,10 +291,10 @@ const submitAllocation = async () => {
     await axios.post(`/api/admin/members/${route.params.id}/allocate-wallet`, {
       allocations: allocations.value
     })
-    alert('Wallet funds allocated successfully')
+    alert('Wallet funds allocated successfully', 'Success')
     router.push(`/admin/members/${route.params.id}`)
   } catch (e) {
-    alert(e.response?.data?.message || 'Failed to allocate wallet funds')
+    alert(e.response?.data?.message || 'Failed to allocate wallet funds', 'Error')
   } finally {
     submitting.value = false
   }
