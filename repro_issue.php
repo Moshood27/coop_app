@@ -69,10 +69,17 @@ namespace {
             throw new \ErrorException($errstr);
         });
 
+        echo "Testing Inactivity Middleware...\n";
         $middleware->handle($request, function($req) {
             return new \Symfony\Component\HttpFoundation\Response("OK");
         });
-        echo "Success: No error thrown\n";
+        echo "Middleware Success: No error thrown\n";
+
+        echo "\nTesting AuthController@logout...\n";
+        $controller = new \App\Http\Controllers\Api\AuthController();
+        $controller->logout($request);
+        echo "Logout Success: No error thrown\n";
+
     } catch (\ErrorException $e) {
         echo "Caught error: " . $e->getMessage() . "\n";
     } catch (\Throwable $e) {

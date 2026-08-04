@@ -45,7 +45,7 @@ class ViewMemberApplication extends ViewRecord
                                 ->color('primary')
                                 ->action(function () {})
                                 ->extraAttributes([
-                                    'x-on:click' => 'window.biometricScanner.scanAndSet($wire, "data.biometric_template", $el)',
+                                    'x-on:click' => "window.biometricScanner.scanAndSet(\$wire, 'data.biometric_template', \$el)",
                                     'x-on:contextmenu.prevent' => 'window.biometricScanner.showConfigModal()',
                                     'title' => 'Left click to scan. Right click for settings.'
                                 ])
