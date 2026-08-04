@@ -80,7 +80,7 @@
                 <p class="text-[8px] font-bold text-slate-400 uppercase">{{ rep.payment_method }} • {{ formatDate(rep.paid_at) }}</p>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="flex gap-1">
                   <button @click="editRepayment(loan, rep)" class="w-6 h-6 bg-white text-slate-400 rounded-lg flex items-center justify-center hover:text-emerald-600 shadow-sm">
                     <span class="i-mdi-pencil text-[10px]"></span>
                   </button>

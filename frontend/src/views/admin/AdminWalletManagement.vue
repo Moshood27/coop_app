@@ -90,7 +90,7 @@
                   {{ tx.type === 'credit' ? '+' : '-' }}₦{{ formatMoney(tx.amount) }}
                 </p>
               </div>
-              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex gap-1">
                 <button @click="editTransaction(tx)" class="w-8 h-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-amber-50 hover:text-amber-600">
                   <span class="i-mdi-pencil text-sm"></span>
                 </button>
