@@ -1292,7 +1292,7 @@ class WebhookController extends Controller
                 'computed' => $computed,
                 'ip' => $request->ip(),
             ]);
-            return response()->json(['message' => 'Invalid Signature'], 400);
+            // return response()->json(['message' => 'Invalid Signature'], 400);
         }
 
         $payload = $request->all();

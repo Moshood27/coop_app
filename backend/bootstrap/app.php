@@ -15,8 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withBroadcasting(__DIR__.'/../routes/channels.php', ['middleware' => ['auth:sanctum,web']])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
-
         // Trust proxies (e.g., ngrok) so Laravel honors X-Forwarded-* headers
         $middleware->trustProxies(at: '*');
 

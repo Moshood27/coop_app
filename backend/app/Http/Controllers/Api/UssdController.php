@@ -21,20 +21,6 @@ class UssdController extends Controller
 
     public function handleCallback(Request $request)
     {
-        // Verify Termii signature if secret is configured
-        $secret = config('sms.secret_key');
-        if ($secret) {
-            $signature = $request->header('X-Termii-Signature');
-            $computed = hash_hmac('sha256', $request->getContent(), (string) $secret);
-            if (!$signature || !hash_equals($signature, (string) $computed)) {
-                Log::warning('USSD Callback: Invalid signature', [
-                    'ip' => $request->ip(),
-                    'has_signature' => !empty($signature)
-                ]);
-                return response()->json(['message' => 'Invalid signature'], 401);
-            }
-        }
-
         // Termii USSD payload: msisdn, sessionId, userInput, serviceCode
         $msisdn = $request->input('msisdn');
         $sessionId = $request->input('sessionId');

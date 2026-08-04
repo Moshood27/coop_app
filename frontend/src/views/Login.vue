@@ -267,13 +267,6 @@ const handleLogin = async () => {
   loading.value = true
   error.value = ''
   try {
-    // Initialize CSRF protection for Sanctum
-    try {
-      await axios.get('/sanctum/csrf-cookie')
-    } catch (csrfErr) {
-      console.warn('CSRF initialization failed', csrfErr)
-    }
-
     const { data } = await axios.post('/api/login', form.value)
 
     // If user opted in and biometrics are supported, store membership + branch + password

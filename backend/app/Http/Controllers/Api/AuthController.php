@@ -175,10 +175,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
-            $token = $user->currentAccessToken();
-            if ($token && method_exists($token, 'delete')) {
-                $token->delete();
-            }
+            $user->currentAccessToken()->delete();
             // Fire logout event to log activity and clear last_activity_at via listener
             event(new \Illuminate\Auth\Events\Logout('sanctum', $user));
         }

@@ -33,8 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/') . '/api/admin/documents',
-            'serve' => false,
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],

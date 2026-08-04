@@ -37,7 +37,6 @@ use Spatie\Health\Checks\Checks\HorizonCheck;
 use Spatie\Health\Checks\Checks\BackupsCheck;
 use Illuminate\Support\Facades\Bus;
 use App\Jobs\Middleware\HandleResendQuota;
-use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -313,14 +312,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RoleDetached::class, LogRoleChange::class);
         Event::listen(PermissionAttached::class, LogRoleChange::class);
         Event::listen(PermissionDetached::class, LogRoleChange::class);
-
-        // Enhance activity logs with IP and User Agent globally
-        Activity::saving(function (Activity $activity) {
-            $activity->properties = $activity->properties->merge([
-                'ip' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-        });
 
         // Handle Resend quota and rate limits globally for all queued jobs
         Bus::pipeThrough([

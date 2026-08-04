@@ -103,8 +103,40 @@ class UserResource extends Resource
                                         Forms\Components\FileUpload::make('passport_path')
                                             ->label('Passport / Profile Photo')
                                             ->image()
-                                            ->disk('local')
-                                            ->visibility('private')
+                                            ->disk('public_root')
+                                            ->directory('upload')
+                                            ->visibility('public')
+                                            ->fetchFileInformation(false)
+                                            ->getUploadedFileUsing(function (BaseFileUpload $component, string $file, string|array|null $storedFileNames) {
+                                                $raw = (string) $file;
+                                                $path = ltrim($raw, '/');
+                                                $wasStoragePrefixed = false;
+                                                if (str_starts_with($path, 'storage/')) {
+                                                    $path = substr($path, strlen('storage/'));
+                                                    $wasStoragePrefixed = true;
+                                                }
+
+                                                $url = null;
+                                                $publicFull = public_path($path);
+                                                if (is_file($publicFull)) {
+                                                    $url = '/'.ltrim($path, '/');
+                                                } else {
+                                                    $url = $wasStoragePrefixed
+                                                        ? ('/storage/'.ltrim($path, '/'))
+                                                        : Storage::disk('public')->url($path);
+
+                                                    if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+                                                        // Keep full URL
+                                                    }
+                                                }
+
+                                                return [
+                                                    'name' => basename($path),
+                                                    'size' => 0,
+                                                    'type' => null,
+                                                    'url' => $url,
+                                                ];
+                                            })
                                             ->imageEditor()
                                             ->downloadable()
                                             ->openable(),
@@ -154,12 +186,8 @@ class UserResource extends Resource
                                         Forms\Components\Toggle::make('is_defaulter')
                                             ->label('Defaulter')
                                             ->helperText('Restricts certain features for the member'),
-                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
-                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card')->image()->disk('public_root')->directory('upload'),
+                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')->image()->disk('public_root')->directory('upload'),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
                                             ->helperText('Capture raw template string from USB scanner service.')
@@ -172,7 +200,26 @@ class UserResource extends Resource
                                                     ->color('primary')
                                                     ->action(function () {})
                                                     ->extraAttributes([
-                                                        'x-on:click' => "window.biometricScanner.scanAndSet(\$wire, 'data.biometric_template', \$el)",
+                                                        'x-on:click' => '
+                                                            $el.classList.add("animate-pulse");
+                                                            window.biometricScanner.captureTemplate()
+                                                                .then(template => {
+                                                                    $wire.set("data.biometric_template", template);
+                                                                    new FilamentNotification()
+                                                                        .title("Biometric Captured")
+                                                                        .success()
+                                                                        .send();
+                                                                })
+                                                                .catch(err => {
+                                                                    new FilamentNotification()
+                                                                        .title("Scanner Error")
+                                                                        .body(err.message)
+                                                                        .danger()
+                                                                        .persistent()
+                                                                        .send();
+                                                                })
+                                                                .finally(() => $el.classList.remove("animate-pulse"));
+                                                        ',
                                                         'x-on:contextmenu.prevent' => 'window.biometricScanner.showConfigModal()',
                                                         'title' => 'Left click to scan. Right click for settings.'
                                                     ])
@@ -306,11 +353,7 @@ class UserResource extends Resource
                                         Forms\Components\TextInput::make('guarantor_phone'),
                                         Forms\Components\TextInput::make('guarantor_occupation'),
                                         Forms\Components\Textarea::make('guarantor_address')->rows(2),
-                                        Forms\Components\FileUpload::make('guarantor_signature_path')
-                                            ->label('Guarantor Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('guarantor_signature_path')->label('Guarantor Signature')->image()->disk('public_root')->directory('upload'),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Religious Information & Imam\'s Attestation')
@@ -322,11 +365,7 @@ class UserResource extends Resource
                                         Forms\Components\Textarea::make('mosque_address')->rows(2),
                                         Forms\Components\Toggle::make('imam_approval_status')->label('Imam\'s Approval Status'),
                                         Forms\Components\DateTimePicker::make('imam_approved_at'),
-                                        Forms\Components\FileUpload::make('imam_signature_path')
-                                            ->label('Imam Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('imam_signature_path')->label('Imam Signature')->image()->disk('public_root')->directory('upload'),
                                     ])->columns(3),
                             ]),
 
@@ -338,11 +377,7 @@ class UserResource extends Resource
                                         Forms\Components\TextInput::make('spouse_father_phone')->label('Father/Spouse Phone'),
                                         Forms\Components\Textarea::make('spouse_father_address')->label('Residential Address')->rows(2),
                                         Forms\Components\Textarea::make('spouse_father_business_address')->label('Business Address')->rows(2),
-                                        Forms\Components\FileUpload::make('spouse_father_consent_signature_path')
-                                            ->label('Consent Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('spouse_father_consent_signature_path')->label('Consent Signature')->image()->disk('public_root')->directory('upload'),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Nursing Mother Grace (Admin Verified)')
@@ -359,8 +394,8 @@ class UserResource extends Resource
                                             ->helperText('Approved members are exempt from attendance fines until this date.'),
                                         Forms\Components\FileUpload::make('nursing_mother_proof_path')
                                             ->label('Medical Proof / Scan')
-                                            ->disk('local')
-                                            ->visibility('private')
+                                            ->disk('public')
+                                            ->directory('nursing_mother_proofs')
                                             ->downloadable()
                                             ->openable()
                                             ->columnSpanFull(),
@@ -387,13 +422,9 @@ class UserResource extends Resource
                                             ])
                                             ->required()
                                             ->default('approved'),
-                                        Forms\Components\FileUpload::make('president_signature_path')->label('President Signature')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('president_signature_path')->label('President Signature')->image()->disk('public_root')->directory('upload'),
                                         Forms\Components\DateTimePicker::make('president_signed_at'),
-                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General Signature')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General Signature')->image()->disk('public_root')->directory('upload'),
                                         Forms\Components\DateTimePicker::make('secretary_general_signed_at'),
                                     ])->columns(3),
                             ]),
@@ -411,8 +442,7 @@ class UserResource extends Resource
                 ImageColumn::make('passport_path')
                     ->label('Photo')
                     ->circular()
-                    ->disk('local')
-                    ->visibility('private')
+                    ->disk('public_root')
                     ->getStateUsing(function ($record) {
                         if (empty($record->passport_path)) {
                             return null;
@@ -425,7 +455,21 @@ class UserResource extends Resource
                             return $raw;
                         }
 
-                        return route('admin.documents.serve', ['path' => $raw]);
+                        $path = ltrim($raw, '/');
+
+                        // If it exists in public/, return it as-is (relative to public_root disk)
+                        if (is_file(public_path($path))) {
+                            return $path;
+                        }
+
+                        // If it starts with storage/, we need to resolve it via the public disk
+                        if (str_starts_with($path, 'storage/')) {
+                            $storagePath = substr($path, strlen('storage/'));
+                            return Storage::disk('public')->url($storagePath);
+                        }
+
+                        // Fallback to public disk URL
+                        return Storage::disk('public')->url($path);
                     })
                     ->size(40)
                     ->extraImgAttributes([

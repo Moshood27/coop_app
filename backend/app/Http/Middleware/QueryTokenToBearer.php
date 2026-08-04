@@ -16,13 +16,13 @@ class QueryTokenToBearer
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check for token in query parameter or auth_token cookie
-        $token = $request->query('token');
-        if (!$token && $request->hasCookie('auth_token')) {
-            $token = $request->cookie('auth_token');
-        }
+        // If the 'token' query parameter exists, use it as the Bearer token for authentication.
+        // We also force the 'Accept' header to 'application/json' to ensure that if
+        // authentication fails, the framework returns a JSON 401 response instead of
+        // redirecting to a login page (which causes "Unauthenticated" text messages in browsers).
+        if ($request->filled('token')) {
+            $token = $request->query('token');
 
-        if ($token) {
             if (!$request->bearerToken()) {
                  $request->headers->set('Authorization', 'Bearer ' . $token);
             }

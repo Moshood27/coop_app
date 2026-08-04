@@ -105,9 +105,7 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\Textarea::make('guarantor_address')->rows(2),
                                         Forms\Components\FileUpload::make('guarantor_signature_path')
                                             ->label('Guarantor Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                            ->image(),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Religious Information & Imam\'s Attestation')
@@ -121,9 +119,7 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\DateTimePicker::make('imam_approved_at'),
                                         Forms\Components\FileUpload::make('imam_signature_path')
                                             ->label('Imam Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                            ->image(),
                                     ])->columns(3),
                             ]),
 
@@ -137,22 +133,14 @@ class MemberApplicationResource extends Resource
                                         Forms\Components\Textarea::make('spouse_father_business_address')->label('Business Address')->rows(2),
                                         Forms\Components\FileUpload::make('spouse_father_consent_signature_path')
                                             ->label('Consent Signature')
-                                            ->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                            ->image(),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Documents')
                                     ->schema([
-                                        Forms\Components\FileUpload::make('passport_path')->label('Passport')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
-                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card')
-                                            ->disk('local')
-                                            ->visibility('private'),
-                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address')
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('passport_path')->label('Passport')->image(),
+                                        Forms\Components\FileUpload::make('id_card_path')->label('ID Card'),
+                                        Forms\Components\FileUpload::make('proof_of_address_path')->label('Proof of Address'),
                                         Forms\Components\TextInput::make('biometric_template')
                                             ->label('Fingerprint Template (USB Scanner)')
                                             ->helperText('Capture raw template string from USB scanner service.')
@@ -165,7 +153,26 @@ class MemberApplicationResource extends Resource
                                                     ->color('primary')
                                                     ->action(function () {})
                                                     ->extraAttributes([
-                                                        'x-on:click' => "window.biometricScanner.scanAndSet(\$wire, 'data.biometric_template', \$el)",
+                                                        'x-on:click' => '
+                                                            $el.classList.add("animate-pulse");
+                                                            window.biometricScanner.captureTemplate()
+                                                                .then(template => {
+                                                                    $wire.set("data.biometric_template", template);
+                                                                    new FilamentNotification()
+                                                                        .title("Biometric Captured")
+                                                                        .success()
+                                                                        .send();
+                                                                })
+                                                                .catch(err => {
+                                                                    new FilamentNotification()
+                                                                        .title("Scanner Error")
+                                                                        .body(err.message)
+                                                                        .danger()
+                                                                        .persistent()
+                                                                        .send();
+                                                                })
+                                                                .finally(() => $el.classList.remove("animate-pulse"));
+                                                        ',
                                                         'x-on:contextmenu.prevent' => 'window.biometricScanner.showConfigModal()',
                                                         'title' => 'Left click to scan. Right click for settings.'
                                                     ])
@@ -188,13 +195,9 @@ class MemberApplicationResource extends Resource
                                                 'rejected' => 'Rejected',
                                             ]),
                                         Forms\Components\Textarea::make('officer_recommendation')->rows(3)->columnSpanFull(),
-                                        Forms\Components\FileUpload::make('president_signature_path')->label('President\'s Signature')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('president_signature_path')->label('President\'s Signature')->image(),
                                         Forms\Components\DateTimePicker::make('president_signed_at'),
-                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General\'s Signature')->image()
-                                            ->disk('local')
-                                            ->visibility('private'),
+                                        Forms\Components\FileUpload::make('secretary_general_signature_path')->label('Secretary General\'s Signature')->image(),
                                         Forms\Components\DateTimePicker::make('secretary_general_signed_at'),
                                     ])->columns(2),
                             ]),
@@ -212,8 +215,7 @@ class MemberApplicationResource extends Resource
                 Tables\Columns\ImageColumn::make('passport_path')
                     ->label('Photo')
                     ->circular()
-                    ->disk('local')
-                    ->visibility('private')
+                    ->disk('public_root')
                     ->getStateUsing(function ($record) {
                         if (empty($record->passport_path)) {
                             return null;
@@ -225,7 +227,18 @@ class MemberApplicationResource extends Resource
                             return $raw;
                         }
 
-                        return route('admin.documents.serve', ['path' => $raw]);
+                        $path = ltrim($raw, '/');
+
+                        if (is_file(public_path($path))) {
+                            return $path;
+                        }
+
+                        if (str_starts_with($path, 'storage/')) {
+                            $storagePath = substr($path, strlen('storage/'));
+                            return Storage::disk('public')->url($storagePath);
+                        }
+
+                        return Storage::disk('public')->url($path);
                     })
                     ->size(40)
                     ->extraImgAttributes([
