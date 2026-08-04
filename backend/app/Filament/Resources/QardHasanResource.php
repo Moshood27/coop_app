@@ -153,6 +153,13 @@ class QardHasanResource extends Resource
                         'weekly' => 'Weekly',
                         'monthly' => 'Monthly',
                     ])->required(),
+                Forms\Components\Textarea::make('description')
+                    ->label('Purpose/Description')
+                    ->maxLength(500)
+                    ->columnSpanFull(),
+                Forms\Components\DatePicker::make('repayment_start_date')
+                    ->label('Repayment Start Date')
+                    ->helperText('The date when the first installment is due.'),
                 Forms\Components\TextInput::make('admin_fee_flat')
                     ->label('Admin Fee (Flat)')
                     ->numeric()
@@ -268,6 +275,8 @@ class QardHasanResource extends Resource
                 TextColumn::make('approvedBy.full_name')->label('Approved By')->formatStateUsing(fn ($state) => $state ?: '-')->toggleable(),
                 TextColumn::make('approved_at')->label('Approved At')->dateTime()->sortable()->toggleable(),
                 TextColumn::make('received_at')->label('Received At')->dateTime()->sortable()->toggleable(),
+                TextColumn::make('disbursed_at')->label('Disbursed At')->dateTime()->sortable()->toggleable(),
+                TextColumn::make('repayment_start_date')->label('Repayment Start')->date()->sortable()->toggleable(),
                 TextColumn::make('defaulted_at')->label('Defaulted At')->dateTime()->sortable()->toggleable(),
                 TextColumn::make('status')
                     ->badge()
@@ -1115,7 +1124,10 @@ class QardHasanResource extends Resource
                                 'cancelled', 'rejected' => 'danger',
                                 default => 'gray',
                             }),
+                        TextEntry::make('description')->label('Purpose/Description')->columnSpanFull(),
                         TextEntry::make('received_at')->label('Date Received')->dateTime(),
+                        TextEntry::make('disbursed_at')->label('Date Disbursed')->dateTime(),
+                        TextEntry::make('repayment_start_date')->label('Repayment Start')->date(),
                         TextEntry::make('defaulted_at')->label('Date Defaulted')->dateTime()->placeholder('Not in default'),
                         TextEntry::make('overdue_amount')
                             ->label('Current Overdue Amount')

@@ -27,6 +27,8 @@ class QardHasanController extends Controller
             'interval' => ['nullable', 'string'],
             'admin_fee_flat' => ['nullable', 'numeric', 'min:0'],
             'admin_fee_pct' => ['nullable', 'numeric', 'min:0', 'max:2'], // cap to 2% by policy
+            'description' => ['nullable', 'string'],
+            'repayment_start_date' => ['nullable', 'date'],
         ]);
 
         $perInstallment = round($data['principal_amount'] / $data['total_installments'], 2);
@@ -42,6 +44,11 @@ class QardHasanController extends Controller
             'admin_fee_pct' => $data['admin_fee_pct'] ?? 0,
             'paid_amount' => 0,
             'status' => 'active',
+            'description' => $data['description'] ?? null,
+            'repayment_start_date' => $data['repayment_start_date'] ?? null,
+            'disbursed_at' => now(),
+            'received_at' => now(),
+            'approved_at' => now(),
         ]);
 
         ShariahAudit::log(null, 'create_qard_hasan', $q->toArray());

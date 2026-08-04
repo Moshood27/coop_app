@@ -326,6 +326,9 @@ class LoanController extends Controller
             'paid_amount' => 0,
             'meeting_attendance_count' => $user->meetingAttendanceCount(),
             'status' => $instant ? 'active' : 'pending', // Instant approval activates immediately
+            'disbursed_at' => $instant ? now() : null,
+            'received_at' => $instant ? now() : null,
+            'approved_at' => $instant ? now() : null,
         ]);
 
         if ($instant) {
