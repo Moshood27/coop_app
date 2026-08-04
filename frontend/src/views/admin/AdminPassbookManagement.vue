@@ -177,6 +177,19 @@ const pagination = ref({ current_page: 1, next_page_url: null })
 const grandTotal = ref(0)
 const loading = ref(true)
 const selectedYear = ref(new Date().getFullYear())
+const schemes = ref([])
+const showAddModal = ref(false)
+const submitting = ref(false)
+const editingCon = ref(null)
+const form = ref({
+  scheme_id: null,
+  amount: 0,
+  paid_at: new Date().toISOString().split('T')[0],
+  method: 'transfer',
+  note: '',
+  split_50_50: false,
+  status: 'success'
+})
 const years = computed(() => {
   const current = new Date().getFullYear()
   return [current, current - 1, current - 2, current - 3]
