@@ -289,6 +289,17 @@ EOD;
         $dateOfLoan = $this->parseDate($parts[6]);
         $expiryDate = $this->parseDate($parts[7]);
 
+        // Check for duplicate loan
+        $existingLoan = QardHasan::where('user_id', $user->id)
+            ->where('principal_amount', $principal)
+            ->where('received_at', $dateOfLoan)
+            ->first();
+
+        if ($existingLoan) {
+            $this->line("  Duplicate loan found for user {$user->name} with amount ₦" . number_format($principal, 2) . ". Skipping.");
+            return;
+        }
+
         $installments = 12;
         if ($dateOfLoan && $expiryDate) {
             $installments = (int) $dateOfLoan->diffInMonths($expiryDate);

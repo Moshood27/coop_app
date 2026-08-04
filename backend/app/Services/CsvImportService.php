@@ -171,6 +171,15 @@ class CsvImportService
                 $loan = QardHasan::where('qard_id_string', $qardString)->first();
             }
 
+            if (!$loan) {
+                // Avoid double entry by checking for existing loan with same principal, user and status
+                $loan = QardHasan::where('user_id', $user->id)
+                    ->where('principal_amount', $principal)
+                    ->where('status', $status)
+                    ->where('paid_amount', $paidAmount)
+                    ->first();
+            }
+
             $perInstallment = $this->toFloat($row['per_installment'] ?? null);
             if (is_null($perInstallment)) {
                 $perInstallment = round(((float)$principal) / max($totalInstallments, 1), 2);

@@ -4,17 +4,74 @@ use App\Imports\LoansImport;
 use App\Models\User;
 use App\Models\QardHasan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-// Override DB settings for local run outside Docker
-config(['database.connections.mysql.host' => 'localhost']);
-config(['database.connections.mysql.port' => '33060']);
-config(['database.connections.mysql.database' => 'coop_attaqwa']);
-config(['database.connections.mysql.username' => 'sail_attaqwa']);
-config(['database.connections.mysql.password' => 'pass_attaqwa']);
+// Use SQLite for testing
+config(['database.default' => 'sqlite']);
+config(['database.connections.sqlite' => [
+    'driver' => 'sqlite',
+    'database' => ':memory:',
+    'prefix' => '',
+]]);
+
+// Run migrations
+Schema::create('users', function ($table) {
+    $table->id();
+    $table->string('name');
+    $table->string('email')->unique();
+    $table->string('membership_number')->unique()->nullable();
+    $table->string('password');
+    $table->unsignedBigInteger('branch_id')->nullable();
+    $table->string('approval_status')->default('pending');
+    $table->timestamps();
+});
+
+Schema::create('qard_hasans', function ($table) {
+    $table->id();
+    $table->unsignedBigInteger('user_id');
+    $table->string('qard_id_string')->unique();
+    $table->decimal('principal_amount', 15, 2);
+    $table->decimal('paid_amount', 15, 2)->default(0);
+    $table->integer('total_installments');
+    $table->decimal('per_installment', 15, 2);
+    $table->string('interval');
+    $table->string('status');
+    $table->dateTime('approved_at')->nullable();
+    $table->dateTime('received_at')->nullable();
+    $table->dateTime('defaulted_at')->nullable();
+    $table->timestamps();
+});
+
+Schema::create('breezy_sessions', function ($table) {
+    $table->id();
+    $table->string('authenticatable_type');
+    $table->unsignedBigInteger('authenticatable_id');
+    $table->timestamps();
+});
+
+Schema::create('activity_log', function ($table) {
+    $table->id();
+    $table->string('log_name')->nullable();
+    $table->text('description');
+    $table->nullableMorphs('subject');
+    $table->nullableMorphs('causer');
+    $table->json('properties')->nullable();
+    $table->uuid('batch_uuid')->nullable();
+    $table->string('event')->nullable();
+    $table->timestamps();
+    $table->index('log_name');
+});
+
+Schema::create('settings', function ($table) {
+    $table->id();
+    $table->string('key')->unique();
+    $table->text('value')->nullable();
+    $table->timestamps();
+});
 
 // Create a test user
 $membershipNo = 'TEST_DUP_001';

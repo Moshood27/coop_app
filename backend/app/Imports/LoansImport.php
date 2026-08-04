@@ -60,6 +60,17 @@ class LoansImport implements ToModel, WithHeadingRow, WithValidation, WithChunkR
         $receivedAt = $this->parseExcelDate($row['received_at'], $this->migrationDate);
         $defaultedAt = $this->parseExcelDate($row['defaulted_at']);
 
+        // Check for duplicate loan to avoid double entry from csv file
+        $existingLoan = QardHasan::where('user_id', $user->id)
+            ->where('principal_amount', $originalAmount)
+            ->where('received_at', $receivedAt)
+            ->first();
+
+        if ($existingLoan) {
+            \Illuminate\Support\Facades\Log::info("Duplicate loan found for user_id: {$user->id}, amount: {$originalAmount}, received_at: {$receivedAt}. Skipping.");
+            return null;
+        }
+
         // Enforce max duration rules
         $allowedDuration = DurationHelper::getLoanDuration($originalAmount, $receivedAt);
         if ($totalInstallments > $allowedDuration) {

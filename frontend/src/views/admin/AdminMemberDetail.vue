@@ -28,7 +28,7 @@
           </div>
           <div>
             <h2 class="text-xl font-black text-slate-800 leading-tight">{{ user.surname }} {{ user.name }}</h2>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">{{ user.membership_number }}</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Membership NO: {{ user.membership_number }}</p>
             <div class="flex items-center gap-2">
               <span class="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-lg uppercase tracking-wider">
                 {{ user.branch?.name }}

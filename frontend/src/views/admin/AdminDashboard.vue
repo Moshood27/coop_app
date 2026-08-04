@@ -178,7 +178,7 @@
               </div>
               <div>
                 <p class="text-sm font-bold text-slate-800">{{ u.full_name }}</p>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ u.membership_id }}</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Membership NO: {{ u.membership_id }}</p>
               </div>
             </div>
             <p class="text-[10px] text-slate-400">{{ formatDate(u.created_at) }}</p>
