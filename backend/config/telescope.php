@@ -49,7 +49,7 @@ return [
     | Telescope Authorized Emails
     |--------------------------------------------------------------------------
     */
-    'emails' => explode(',', env('TELESCOPE_EMAILS', 'admin@attaqwa.com')),
+    'emails' => array_map('trim', explode(',', env('TELESCOPE_EMAILS', 'admin@attaqwa.com'))),
 
     /*
     |--------------------------------------------------------------------------
