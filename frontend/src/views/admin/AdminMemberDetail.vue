@@ -52,10 +52,10 @@
           <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Shares</p>
           <p class="text-lg font-black text-slate-800">₦{{ formatMoney(total_shares) }}</p>
         </div>
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grand Total</p>
-          <p class="text-lg font-black text-emerald-600">₦{{ formatMoney(total_balance) }}</p>
-        </div>
+<!--        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">-->
+<!--          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grand Total</p>-->
+<!--          <p class="text-lg font-black text-emerald-600">₦{{ formatMoney(total_balance) }}</p>-->
+<!--        </div>-->
         <div class="col-span-2 bg-rose-50 p-6 rounded-[2rem] border border-rose-100/50 shadow-sm">
           <p class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1">Outstanding Loans</p>
           <p class="text-lg font-black text-rose-600">₦{{ formatMoney(outstanding_loans) }}</p>
