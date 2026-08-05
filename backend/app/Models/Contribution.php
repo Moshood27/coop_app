@@ -167,9 +167,11 @@ class Contribution extends Model
                                 QardHasanRepayment::create([
                                     'qard_hasan_id' => $q->id,
                                     'amount' => $applied,
+                                    'payment_method' => $model->payment_method,
                                     'reference' => $model->reference,
                                     'status' => 'success',
                                     'paid_at' => $model->paid_at ?? now(),
+                                    'notes' => $model->notes,
                                 ]);
 
                                 $q->paid_amount = $before + $applied;
@@ -280,9 +282,11 @@ class Contribution extends Model
                                         QardHasanRepayment::create([
                                             'qard_hasan_id' => $q->id,
                                             'amount' => $applied,
+                                            'payment_method' => $model->payment_method,
                                             'reference' => $model->reference,
                                             'status' => 'success',
                                             'paid_at' => $model->paid_at ?? now(),
+                                            'notes' => $model->notes,
                                         ]);
 
                                         $q->paid_amount = $before + $applied;

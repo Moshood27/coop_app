@@ -270,6 +270,7 @@ class UssdController extends Controller
                 $rep = QardHasanRepayment::create([
                     'qard_hasan_id' => $loan->id,
                     'amount' => $amount,
+                    'payment_method' => 'ussd',
                     'reference' => $reference,
                     'status' => 'success',
                     'paid_at' => now(),

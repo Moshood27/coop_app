@@ -277,9 +277,11 @@ class TakafulService
                 QardHasanRepayment::create([
                     'qard_hasan_id' => $locked->id,
                     'amount' => $stillRemaining,
+                    'payment_method' => 'takaful',
                     'reference' => $reference,
                     'status' => 'success',
                     'paid_at' => now(),
+                    'notes' => 'Settled via Takaful pool: ' . $reason,
                 ]);
 
                 // Update loan

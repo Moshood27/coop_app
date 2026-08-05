@@ -1058,9 +1058,11 @@ class UserResource extends Resource
                                     QardHasanRepayment::create([
                                         'qard_hasan_id' => $loan->id,
                                         'amount' => $amount,
+                                        'payment_method' => 'scheme_debit',
                                         'reference' => 'SCHEME-DEBIT-' . $contribution->id,
                                         'status' => 'success',
                                         'paid_at' => now(),
+                                        'notes' => 'Settled via scheme debit: ' . $note,
                                     ]);
 
                                     $loan->paid_amount = (float) $loan->paid_amount + $amount;

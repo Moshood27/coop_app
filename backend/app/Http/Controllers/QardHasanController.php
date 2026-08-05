@@ -68,9 +68,11 @@ class QardHasanController extends Controller
             $rep = QardHasanRepayment::create([
                 'qard_hasan_id' => $q->id,
                 'amount' => $data['amount'],
+                'payment_method' => 'manual',
                 'reference' => 'REF-'.Str::upper(Str::random(10)),
                 'status' => 'success', // prototype: mark success immediately
                 'paid_at' => now(),
+                'notes' => 'Manual repayment via QardHasanController',
             ]);
 
             $q->paid_amount = (float)$q->paid_amount + (float)$data['amount'];

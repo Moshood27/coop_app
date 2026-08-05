@@ -274,6 +274,7 @@ class WebhookController extends Controller
                         $loan = QardHasan::lockForUpdate()->find($loanRep->qard_hasan_id);
                         if ($loan) {
                             $loanRep->status = 'success';
+                            $loanRep->payment_method = 'paystack';
                             $loanRep->paid_at = now();
                             $loanRep->save();
 
@@ -285,6 +286,7 @@ class WebhookController extends Controller
                         } else {
                             // If loan missing, mark repayment as success to avoid repeated retries (but log)
                             $loanRep->status = 'success';
+                            $loanRep->payment_method = 'paystack';
                             $loanRep->paid_at = now();
                             $loanRep->save();
                             Log::warning('Loan not found when finalizing loan repayment from Paystack', [
@@ -785,6 +787,7 @@ class WebhookController extends Controller
                 $loan = QardHasan::lockForUpdate()->find($loanRep->qard_hasan_id);
                 if ($loan) {
                     $loanRep->status = 'success';
+                    $loanRep->payment_method = 'flutterwave';
                     $loanRep->paid_at = now();
                     $loanRep->save();
 
@@ -795,6 +798,7 @@ class WebhookController extends Controller
                     $loan->save();
                 } else {
                     $loanRep->status = 'success';
+                    $loanRep->payment_method = 'flutterwave';
                     $loanRep->paid_at = now();
                     $loanRep->save();
                     Log::warning('Loan not found when finalizing loan repayment from Flutterwave', [

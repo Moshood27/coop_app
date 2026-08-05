@@ -44,9 +44,11 @@ Contribution::where('status', 'success')
                     QardHasanRepayment::create([
                         'qard_hasan_id' => $q->id,
                         'amount' => $applied,
+                        'payment_method' => $c->payment_method ?? 'contribution',
                         'reference' => $c->reference,
                         'status' => 'success',
                         'paid_at' => $c->paid_at ?? $c->created_at,
+                        'notes' => 'Restored via repair script from contribution: ' . $c->id,
                     ]);
                     echo "Fixed: Created repayment for Contribution #{$c->id} (User: {$user->id}, Ref: {$c->reference})\n";
                 }

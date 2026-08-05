@@ -611,6 +611,7 @@ class LoanController extends Controller
                 $rep = QardHasanRepayment::create([
                     'qard_hasan_id' => $q->id,
                     'amount' => $appliedAmount,
+                    'payment_method' => 'wallet',
                     'reference' => $reference,
                     'status' => 'success',
                     'paid_at' => now(),
@@ -711,6 +712,7 @@ class LoanController extends Controller
                 $rep = QardHasanRepayment::create([
                     'qard_hasan_id' => $q->id,
                     'amount' => $appliedAmount,
+                    'payment_method' => 'monnify',
                     'reference' => $reference,
                     'status' => 'pending',
                 ]);
@@ -748,6 +750,7 @@ class LoanController extends Controller
                 $rep = QardHasanRepayment::create([
                     'qard_hasan_id' => $q->id,
                     'amount' => $appliedAmount,
+                    'payment_method' => 'opay',
                     'reference' => $reference,
                     'status' => 'pending',
                 ]);
@@ -830,6 +833,7 @@ class LoanController extends Controller
                 $rep = QardHasanRepayment::create([
                     'qard_hasan_id' => $q->id,
                     'amount' => $appliedAmount,
+                    'payment_method' => 'flutterwave',
                     'reference' => $reference, // match webhook tx_ref
                     'status' => 'pending',
                     'paid_at' => null,
@@ -919,6 +923,7 @@ class LoanController extends Controller
             $rep = QardHasanRepayment::create([
                 'qard_hasan_id' => $q->id,
                 'amount' => $appliedAmount,
+                'payment_method' => 'paystack',
                 'reference' => $dataPs['reference'] ?? $reference,
                 'status' => 'pending',
                 'paid_at' => null,

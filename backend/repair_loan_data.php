@@ -86,9 +86,11 @@ foreach ($repaymentContributions as $c) {
             QardHasanRepayment::create([
                 'qard_hasan_id' => $q->id,
                 'amount' => $c->amount,
+                'payment_method' => $c->payment_method ?? 'contribution',
                 'reference' => $c->reference,
                 'status' => 'success',
                 'paid_at' => $c->paid_at ?? $c->created_at,
+                'notes' => 'Restored via repair script from contribution: ' . $c->id,
             ]);
         } else {
             echo "  - Could not find a suitable loan for user {$c->user_id}\n";

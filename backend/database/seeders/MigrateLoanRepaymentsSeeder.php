@@ -71,9 +71,11 @@ class MigrateLoanRepaymentsSeeder extends Seeder
                     QardHasanRepayment::create([
                         'qard_hasan_id' => $loan->id,
                         'amount' => $amount,
+                        'payment_method' => 'migration',
                         'reference' => $reference,
                         'status' => 'success',
                         'paid_at' => $paidAt,
+                        'notes' => 'Legacy repayment migrated from investment_record_details',
                     ]);
 
                     // Update loan paid amount and status

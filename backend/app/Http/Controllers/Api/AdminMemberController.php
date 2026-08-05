@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Scheme;
 use App\Models\Contribution;
 use App\Models\QardHasan;
-use App\Models\LoanRepayment;
+use App\Models\QardHasanRepayment;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -335,7 +335,7 @@ class AdminMemberController extends Controller
     /**
      * Update a loan repayment.
      */
-    public function updateLoanRepayment(Request $request, LoanRepayment $repayment)
+    public function updateLoanRepayment(Request $request, QardHasanRepayment $repayment)
     {
         $this->authorizeAdminAccess($request->user(), $repayment->qardHasan->user);
 
@@ -365,7 +365,7 @@ class AdminMemberController extends Controller
     /**
      * Delete a loan repayment.
      */
-    public function deleteLoanRepayment(Request $request, LoanRepayment $repayment)
+    public function deleteLoanRepayment(Request $request, QardHasanRepayment $repayment)
     {
         $this->authorizeAdminAccess($request->user(), $repayment->qardHasan->user);
 

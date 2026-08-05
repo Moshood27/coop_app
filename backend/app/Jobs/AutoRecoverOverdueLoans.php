@@ -93,9 +93,11 @@ class AutoRecoverOverdueLoans implements ShouldQueue
                     QardHasanRepayment::create([
                         'qard_hasan_id' => $lockedLoan->id,
                         'amount' => $apply,
+                        'payment_method' => 'auto_recovery',
                         'reference' => $reference,
                         'status' => 'success',
                         'paid_at' => now(),
+                        'notes' => 'Automatic recovery of overdue loan from wallet.',
                     ]);
 
                     // Deduct wallet and record a debit transaction

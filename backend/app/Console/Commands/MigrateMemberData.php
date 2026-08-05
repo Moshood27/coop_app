@@ -329,9 +329,11 @@ EOD;
             \App\Models\QardHasanRepayment::create([
                 'qard_hasan_id' => $loan->id,
                 'amount' => $paid,
+                'payment_method' => 'migration',
                 'reference' => 'MIGRATION-' . Str::random(10),
                 'status' => 'success',
                 'paid_at' => $dateOfLoan,
+                'notes' => 'Imported via migration',
             ]);
         }
 
