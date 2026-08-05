@@ -520,6 +520,7 @@ class AdminMemberController extends Controller
             'branch_id' => ['required', 'exists:branches,id'],
             'password' => ['required', 'string', 'min:8'],
             'address' => ['nullable', 'string'],
+            'membership_number' => ['nullable', 'string', 'max:255', 'unique:users,membership_number'],
         ]);
 
         // If admin is branch-bound, force the branch_id
@@ -527,7 +528,7 @@ class AdminMemberController extends Controller
             $data['branch_id'] = $admin->branch_id;
         }
 
-        $membership = User::generateMembershipNumber((int) $data['branch_id']);
+        $membership = $data['membership_number'] ?? User::generateMembershipNumber((int) $data['branch_id']);
 
         $user = User::create([
             'name' => $data['name'],

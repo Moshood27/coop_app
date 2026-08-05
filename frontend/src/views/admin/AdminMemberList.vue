@@ -112,6 +112,10 @@
               <input v-model="newMember.other_names" type="text" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g. Quincy" />
             </div>
             <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Membership Number (Optional)</label>
+              <input v-model="newMember.membership_number" type="text" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Leave blank to auto-generate" />
+            </div>
+            <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
               <input v-model="newMember.email" type="email" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="john@example.com" />
             </div>
@@ -180,6 +184,7 @@ const newMember = ref({
   name: '',
   surname: '',
   other_names: '',
+  membership_number: '',
   email: '',
   phone: '',
   gender: 'male',
@@ -203,6 +208,7 @@ const openCreateModal = () => {
     name: '',
     surname: '',
     other_names: '',
+    membership_number: '',
     email: '',
     phone: '',
     gender: 'male',
