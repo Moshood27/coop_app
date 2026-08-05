@@ -1,0 +1,419 @@
+
+    Directory:
+    W:\home\moshiano\development\cooperative\backend\database\migrations
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+------         4/20/2026   1:54 PM            867 2026_04_20_140000_add_member_
+                                                  and_recipient_type_to_expense
+                                                  _entries.php
+------         3/16/2026   7:43 PM           1473 0001_01_01_000000_create_user
+                                                  s_table.php
+------         3/21/2026  10:56 AM           1309 2026_03_21_104700_create_goal
+                                                  _bookings_table.php
+------         4/13/2026  12:11 PM            878 2026_04_13_123000_add_admin_c
+                                                  harge_fields_to_users_table.p
+                                                  hp
+------         4/10/2026  10:28 PM           1091 2026_04_10_212748_add_legacy_
+                                                  fields_to_users_and_beneficia
+                                                  ries.php
+------          4/1/2026   7:49 PM           1559 2026_04_01_200500_add_bank_de
+                                                  tails_to_users.php
+------         7/15/2026   1:45 PM            641 2026_07_15_134300_add_icon_to
+                                                  _categories_table.php
+------         5/12/2026  11:54 AM            731 2026_05_10_180000_add_flutter
+                                                  wave_dva_fields_to_users.php
+------         3/16/2026   7:43 PM            830 2026_03_14_000110_create_qard
+                                                  _hasan_repayments_table.php
+------         4/19/2026  10:10 PM            651 2026_04_19_210953_add_device_
+                                                  uuid_to_attendance_records_ta
+                                                  ble.php
+------         4/10/2026   3:33 PM           1111 2026_04_10_160200_add_vendor_
+                                                  fields_to_store_order_items.p
+                                                  hp
+------         3/16/2026   7:43 PM           2555 2026_03_14_000200_create_coop
+                                                  _tables.php
+------         4/10/2026   4:05 PM            888 2026_04_10_150254_create_shar
+                                                  ia_board_members_table.php
+------         4/19/2026   8:47 PM           3005 2026_04_19_210000_add_cascade
+                                                  _to_user_foreign_keys.php
+------         4/21/2026   2:40 PM            751 2026_04_21_133923_add_special
+                                                  _savings_balance_to_users_tab
+                                                  le.php
+------          8/3/2026   7:01 PM            828 2026_08_03_160000_add_metadat
+                                                  a_to_contributions_table.php
+------         7/18/2026   6:18 PM            618 2026_07_18_183000_optimize_wa
+                                                  llet_transactions_index.php
+------         4/25/2026  11:13 AM           2678 2026_04_25_113000_ensure_preg
+                                                  nancy_and_excuse_columns_are_
+                                                  added.php
+------          7/8/2026  10:42 AM            653 2026_07_08_104000_add_is_dist
+                                                  ant_to_users_table.php
+------          4/3/2026   8:35 PM            916 2026_04_03_203600_create_taka
+                                                  ful_contributions_table.php
+------         4/12/2026   3:17 PM           1081 2026_04_12_000000_create_tran
+                                                  saction_approvals_table.php
+------         4/14/2026   1:58 PM           2128 2026_04_14_125839_add_legacy_
+                                                  balance_columns_to_users_tabl
+                                                  e.php
+------          4/3/2026   8:35 PM           2161 2026_04_03_202900_add_autosav
+                                                  e_fields_to_users.php
+------         4/11/2026   4:13 PM            935 2026_04_11_150951_create_savi
+                                                  ngs_group_members_table.php
+------         3/28/2026   3:51 PM           1022 2026_03_28_160500_add_voting_
+                                                  open_notified_at_to_agm_sessi
+                                                  ons_table.php
+------         4/25/2026  11:00 AM           3709 2026_04_24_205451_add_pregnan
+                                                  cy_and_excuse_to_attendance_s
+                                                  ystem.php
+------         3/21/2026   1:25 AM           1979 2026_03_21_011900_add_status_
+                                                  to_qard_hasan_guarantors_tabl
+                                                  e.php
+------         5/13/2026   2:20 PM           4823 2026_05_13_140000_move_virtua
+                                                  l_account_fields_to_separate_
+                                                  table.php
+------         4/13/2026   4:44 PM           3613 2026_04_13_134803_add_missing
+                                                  _profile_fields_to_users_tabl
+                                                  e.php
+------         4/10/2026   3:40 PM            802 2026_04_10_170100_create_proj
+                                                  ect_proposal_comments_table.p
+                                                  hp
+------         4/10/2026  10:27 PM            609 2026_04_10_212712_create_gold
+                                                  _schemes_seeder_migration.php
+------         4/11/2026   4:13 PM            685 2026_04_11_151252_add_group_s
+                                                  avings_scheme_to_schemes_tabl
+                                                  e.php
+------         7/17/2026   5:02 PM            658 2026_07_17_170000_add_paid_at
+                                                  _to_contributions_table.php
+------         5/15/2026   4:42 PM            697 2026_05_15_154203_add_descrip
+                                                  tion_to_features_table.php
+------         5/16/2026  11:24 AM            633 2026_05_16_102351_cleanup_per
+                                                  _user_feature_flags.php
+------         3/16/2026   7:43 PM           1812 0001_01_01_000002_create_jobs
+                                                  _table.php
+------         4/11/2026   4:13 PM            754 2026_04_11_151120_add_savings
+                                                  _group_id_to_contributions_ta
+                                                  ble.php
+------         3/29/2026   4:58 AM            675 2026_03_29_045500_add_transac
+                                                  tion_pin_to_users_table.php
+------         4/19/2026  10:17 PM           2144 2026_04_19_204000_enhance_exp
+                                                  ense_entries_table.php
+------          7/1/2026  12:36 PM            604 2026_07_01_130000_add_verifie
+                                                  d_biometrically_to_attendance
+                                                  _records.php
+------         7/28/2026  10:21 PM            564 2026_07_28_210539_add_blind_i
+                                                  ndex_to_users_and_application
+                                                  s.php
+------         4/30/2026   6:43 PM           3018 2026_04_30_185000_expand_ledg
+                                                  er_and_models.php
+------          4/6/2026  11:00 PM            293 2026_07_01_000000_create_weba
+                                                  uthn_credentials.php
+------         4/18/2026  12:59 PM            556 2026_04_18_110445_add_fine_pe
+                                                  nding_to_attendance_records_s
+                                                  tatus.php
+------         3/20/2026   7:49 PM           1735 2026_03_20_194800_fix_contrib
+                                                  utions_reference_index.php
+------         4/12/2026  10:55 PM           1748 2026_04_12_215521_migrate_mee
+                                                  ting_branches_to_pivot.php
+------         4/10/2026   3:25 PM            981 2026_04_10_142525_create_sada
+                                                  qah_contributions_table.php
+------         3/25/2026   9:24 AM           1743 2026_03_25_091500_add_indexes
+                                                  _to_transactions_tables.php
+------         5/13/2026   2:20 PM            548 2026_05_13_000000_add_monnify
+                                                  _fields_to_users.php
+------         7/13/2026  10:35 AM           1517 2026_07_13_103000_add_mark_at
+                                                  tendance_permission.php
+------         3/18/2026   3:20 PM           1460 2026_03_18_151800_add_indexes
+                                                  _to_contributions.php
+------         4/25/2026  11:55 AM            906 2026_04_25_115800_sync_pregna
+                                                  ncy_grace_status.php
+------         3/16/2026   7:43 PM           1731 2026_03_15_152500_add_paystac
+                                                  k_fields_to_users.php
+------         3/16/2026   7:43 PM           1008 2026_03_15_134800_create_pers
+                                                  onal_access_tokens_table.php
+------          4/6/2026   6:09 PM            771 2026_04_06_173000_add_stock_t
+                                                  o_products_table.php
+------         4/18/2026   1:10 PM            727 2026_04_18_120941_add_status_
+                                                  and_processed_at_to_charity_l
+                                                  edger_table.php
+------         4/13/2026   6:48 PM            625 2026_04_13_174823_create_sett
+                                                  ings_table.php
+------         3/28/2026  11:29 AM            954 2026_03_28_112400_create_fcm_
+                                                  tokens_table.php
+------         3/24/2026   6:01 PM           1119 2026_03_24_175600_create_stor
+                                                  e_order_items_table.php
+------         3/21/2026   1:30 AM            878 2026_03_21_012200_create_agm_
+                                                  votes_table.php
+------          4/3/2026   8:38 PM            669 2026_04_03_203700_add_takaful
+                                                  _flags_to_users.php
+------         7/14/2026  10:33 PM            762 2026_07_14_230000_add_marked_
+                                                  by_to_attendance_records.php
+------         3/31/2026  10:23 AM           1175 2026_03_31_101500_create_proj
+                                                  ect_profit_payouts.php
+------          4/3/2026   8:35 PM            739 2026_04_03_203500_create_taka
+                                                  ful_pool_entries_table.php
+------          5/7/2026  11:30 AM           1016 2026_05_07_102523_create_chat
+                                                  _rooms_table.php
+------         4/20/2026   1:59 PM            850 2026_04_20_125517_add_migrati
+                                                  on_dates_to_qard_hasans_table
+                                                  .php
+------         5/16/2026  11:36 PM            530 2026_05_16_090446_add_cached_
+                                                  wallet_totals_to_users_table.
+                                                  php
+------          7/1/2026   4:50 PM            948 2026_07_01_164800_add_biometr
+                                                  ic_template_to_users_table.ph
+                                                  p
+------          5/5/2026  12:04 PM            819 2026_05_05_110430_add_attachm
+                                                  ent_and_type_to_support_messa
+                                                  ges_table.php
+------          5/6/2026   3:04 PM            658 2026_05_06_140408_add_meeting
+                                                  _attendance_count_to_qard_has
+                                                  ans_table.php
+------          4/7/2026  12:17 PM            957 2026_04_07_111628_create_bree
+                                                  zy_sessions_table.php
+------         3/19/2026   2:12 PM            967 2026_03_19_140900_create_inco
+                                                  me_entries_table.php
+------         4/10/2026   3:32 PM           1356 2026_04_10_160000_create_vend
+                                                  ors_table.php
+------         3/16/2026   7:43 PM            867 0001_01_01_000001_create_cach
+                                                  e_table.php
+------         4/10/2026   7:44 PM            890 2026_04_10_193000_fixup_produ
+                                                  ct_and_vendor_approvals.php
+------          4/7/2026   3:06 PM            764 2026_04_07_140624_create_whit
+                                                  elisted_ips_table.php
+------          5/2/2026   2:56 PM            759 2026_05_02_135550_add_ledger_
+                                                  journal_id_to_takaful_contrib
+                                                  utions.php
+------         3/21/2026   1:12 AM           2180 2026_03_21_010500_create_prod
+                                                  ucts_table.php
+------         3/20/2026  11:41 AM            835 2026_03_20_113600_add_passpor
+                                                  t_path_to_users_table.php
+------          4/1/2026   7:17 PM            777 2026_04_01_191000_add_withdra
+                                                  wable_to_wallet_transactions.
+                                                  php
+------         3/17/2026   4:39 PM           1474 2026_03_17_163300_add_loan_gu
+                                                  arantors_and_defaulter_flag.p
+                                                  hp
+------         4/30/2026   6:13 PM           3865 2026_04_30_183000_create_doub
+                                                  le_entry_ledger_tables.php
+------          4/7/2026   3:39 PM            642 2026_04_07_154500_add_user_id
+                                                  _to_takaful_pool_entries_tabl
+                                                  e.php
+------          4/6/2026   2:01 PM           2067 2026_04_06_130157_create_tele
+                                                  scope_entries_table.php
+------          4/7/2026   6:12 PM           6523 2026_04_07_171200_create_perm
+                                                  ission_tables.php
+------         3/21/2026   1:43 AM            887 2026_03_21_012500_add_device_
+                                                  token_to_users.php
+------         3/16/2026   7:43 PM            707 2026_03_15_131500_add_is_admi
+                                                  n_to_users.php
+------         3/16/2026   7:43 PM           1227 2026_03_14_000100_create_qard
+                                                  _hasans_table.php
+------          5/7/2026   3:24 PM            607 2026_05_07_153000_create_chat
+                                                  _canned_responses_table.php
+------         5/16/2026  11:31 AM           1769 2026_05_16_103122_convert_fea
+                                                  ture_values_to_json.php
+------          5/8/2026   5:03 PM            683 2026_05_08_160319_add_activit
+                                                  y_fields_to_users_table.php
+------         3/16/2026   7:43 PM            660 2026_03_15_180100_create_noti
+                                                  fications_table.php
+------         4/13/2026   4:43 PM           6837 2026_04_13_131945_add_detaile
+                                                  d_fields_to_member_applicatio
+                                                  ns_and_users.php
+------         4/14/2026  10:29 AM            651 2026_04_14_092949_add_discrep
+                                                  ancy_reported_at_to_users_tab
+                                                  le.php
+------         4/11/2026   2:59 PM            972 2026_04_11_150000_add_approva
+                                                  l_fields_to_vendors.php
+------         4/27/2026   5:58 PM           1166 2026_04_27_165743_rename_preg
+                                                  nancy_columns_to_nursing_moth
+                                                  er.php
+------         4/10/2026   3:33 PM            658 2026_04_10_160100_add_vendor_
+                                                  id_to_products_table.php
+------         7/12/2026   8:07 PM            530 2026_07_12_185522_add_soft_de
+                                                  letes_to_users_table.php
+------         3/21/2026   1:30 AM            754 2026_03_21_012100_create_agm_
+                                                  candidates_table.php
+------          4/6/2026   5:56 PM            729 2026_04_06_165555_create_cate
+                                                  gories_table.php
+------         4/19/2026  10:47 PM           1106 2026_04_19_214716_add_latenes
+                                                  s_fine_to_attendance_records.
+                                                  php
+------          4/5/2026  11:26 PM            749 2026_04_05_222414_add_order_i
+                                                  d_to_utility_transactions_tab
+                                                  le.php
+------          4/9/2026   2:18 PM            834 2026_04_09_131750_add_notific
+                                                  ation_preferences_to_users_ta
+                                                  ble.php
+------         4/10/2026   3:40 PM            831 2026_04_10_170000_add_sharia_
+                                                  fields_to_project_proposals.p
+                                                  hp
+------         4/23/2026   1:21 PM            691 2026_04_23_133000_add_categor
+                                                  y_to_contributions.php
+------         3/24/2026   6:00 PM            988 2026_03_24_175500_create_stor
+                                                  e_orders_table.php
+------         4/10/2026   4:44 PM           1138 2026_04_10_190000_create_gami
+                                                  fication_tables.php
+------         4/11/2026   4:06 PM           1104 2026_04_11_170000_create_shar
+                                                  ia_disputes_table.php
+------          7/1/2026   5:05 PM            634 2026_07_01_171000_add_qard_ha
+                                                  san_id_to_contributions_table
+                                                  .php
+------         5/17/2026  12:35 PM            606 2026_05_17_123500_add_soft_de
+                                                  letes_to_schemes_table.php
+------          4/4/2026   4:31 PM           1191 2026_04_04_170000_add_attachm
+                                                  ents_to_projects.php
+------         7/15/2026  11:50 AM           1236 2026_07_15_000000_create_heal
+                                                  th_tables.php
+------         5/16/2026  11:41 PM            543 2026_05_15_174409_create_webh
+                                                  ook_calls_table.php
+------          8/3/2026   7:40 PM            713 2026_08_03_163000_create_mont
+                                                  h_closings_table.php
+------         3/21/2026   4:56 PM            940 2026_03_21_165300_add_address
+                                                  _to_users_table.php
+------         4/13/2026   5:18 PM           1277 2026_04_13_161737_update_atte
+                                                  ndance_system_remove_apology_
+                                                  add_reminder.php
+------         4/12/2026  10:51 PM            713 2026_04_12_215142_create_bran
+                                                  ch_meeting_table.php
+------         3/21/2026  12:25 AM            689 2026_03_20_213000_add_phone_t
+                                                  o_users_table.php
+------         3/21/2026  10:53 AM            987 2026_03_21_104600_create_savi
+                                                  ngs_goals_table.php
+------         4/13/2026  12:17 PM           2257 2026_04_12_220000_create_atte
+                                                  ndance_system_tables.php
+------         4/11/2026   5:52 PM           1027 2026_04_11_150824_create_savi
+                                                  ngs_groups_table.php
+------         4/11/2026   4:05 PM            745 2026_04_11_162000_add_zakat_t
+                                                  racking_to_users_table.php
+------          5/7/2026  11:30 AM           1027 2026_05_07_102652_create_chat
+                                                  _room_members_table.php
+------         3/21/2026   3:22 PM            903 2026_03_21_151900_add_fcm_tok
+                                                  en_to_users_table.php
+------         4/10/2026  10:40 PM            856 2026_04_10_214048_change_unit
+                                                  s_to_decimal_in_contributions
+                                                  _and_project_investments_tabl
+                                                  es.php
+------          4/5/2026   2:05 PM           1298 2026_04_01_203000_create_with
+                                                  drawal_requests.php
+------          4/7/2026   7:52 PM            720 2026_04_07_185247_add_coordin
+                                                  ates_to_branches_table.php
+------         4/22/2026  11:22 AM           1038 2026_04_22_102215_add_default
+                                                  ed_status_to_qard_hasans_tabl
+                                                  e.php
+------         5/15/2026   4:36 PM            699 2026_05_15_153603_create_feat
+                                                  ures_table.php
+------          4/7/2026  10:29 PM           1942 2026_04_07_222400_add_agreeme
+                                                  nt_rejection_reason_to_qard_h
+                                                  asans_table.php
+------         4/28/2026  12:13 PM           1287 2026_04_28_121500_create_loan
+                                                  _penalties_table.php
+------         3/21/2026   1:30 AM            695 2026_03_21_012000_create_agm_
+                                                  sessions_table.php
+------         4/19/2026  10:45 PM            626 2026_04_19_214533_add_missing
+                                                  _roles_for_expense_module.php
+------          4/6/2026   5:58 PM            705 2026_04_06_165747_add_categor
+                                                  y_id_to_products_table.php
+------         5/13/2026   2:46 PM            819 2026_05_13_150000_add_opay_fi
+                                                  elds_to_user_virtual_accounts
+                                                  .php
+------         4/18/2026  12:59 PM            561 2026_04_17_151236_create_admi
+                                                  nistrative_charges_table.php
+------          4/7/2026   2:15 PM            735 2026_04_07_131552_create_acti
+                                                  vity_log_table.php
+------         4/10/2026   3:25 PM           1067 2026_04_10_142349_create_sada
+                                                  qah_projects_table.php
+------         4/17/2026   5:46 PM           1048 2026_04_17_174500_add_user_id
+                                                  _to_member_applications_and_f
+                                                  ix_user_approval_default.php
+------         3/28/2026   6:28 PM           1326 2026_03_28_182500_add_bvn_and
+                                                  _verification_to_users.php
+------          5/7/2026  11:30 AM           1456 2026_05_07_102945_create_chat
+                                                  _messages_table.php
+------         3/16/2026   7:43 PM            694 2026_03_14_000120_create_char
+                                                  ity_ledger_table.php
+------         4/12/2026  10:23 PM            964 2026_04_12_221000_add_pending
+                                                  _fines_to_attendance_system.p
+                                                  hp
+------         3/18/2026   6:08 PM           1173 2026_03_18_180500_create_util
+                                                  ity_transactions_table.php
+------         4/10/2026   5:21 PM           1353 2026_04_10_153850_add_notific
+                                                  ation_tracking_to_shura_table
+                                                  s.php
+------         3/16/2026   7:43 PM            709 2026_03_15_124500_add_active_
+                                                  to_schemes_table.php
+------         4/10/2026   3:23 PM           1670 2026_04_10_153500_create_proj
+                                                  ect_proposals_table.php
+------         7/28/2026  10:21 PM            564 2026_07_28_194936_add_ip_and_
+                                                  user_agent_to_personal_access
+                                                  _tokens.php
+------         4/23/2026  11:28 AM           1032 2026_04_23_120000_increase_at
+                                                  tendance_radius.php
+------         4/30/2026   6:35 PM           4076 2026_04_30_184000_add_ledger_
+                                                  references_to_models.php
+------         5/16/2026   9:22 AM           2390 2026_05_16_080000_add_scaling
+                                                  _optimizations_columns.php
+------         4/10/2026   4:46 PM            883 2026_04_10_154630_create_juni
+                                                  or_accounts_table.php
+------         3/16/2026   7:43 PM            658 2026_03_14_000130_create_shar
+                                                  iah_audit_logs_table.php
+------         4/13/2026   3:52 PM           1141 2026_04_13_154000_add_imam_si
+                                                  gnature_and_missing_user_docs
+                                                  .php
+------         3/30/2026   1:21 PM           3414 2026_03_30_131500_create_proj
+                                                  ects_and_investments.php
+------         4/10/2026   7:44 PM           1232 2026_04_10_161000_add_approva
+                                                  l_to_products_table.php
+------          4/3/2026   8:02 PM            480 2026_03_31_103500_create_proj
+                                                  ect_profit_payouts.php
+------         4/19/2026   9:51 PM            816 2026_04_19_205116_add_payout_
+                                                  fields_to_expense_entries.php
+------         3/31/2026  10:47 PM            866 2026_03_31_223800_create_supp
+                                                  ort_messages_table.php
+------         4/10/2026   4:46 PM            914 2026_04_10_154509_create_bene
+                                                  ficiaries_table.php
+------         4/10/2026   3:23 PM            971 2026_04_10_153000_update_agm_
+                                                  voting_weighted.php
+------         4/10/2026  10:27 PM            583 2026_04_10_212550_add_gold_ba
+                                                  lance_to_users_table.php
+------          8/4/2026  11:40 PM            850 2026_08_04_224016_add_missing
+                                                  _fields_to_qard_hasans_table.
+                                                  php
+------         3/16/2026   7:43 PM            845 2026_03_15_153000_create_wall
+                                                  et_transactions_table.php
+------         4/23/2026   2:13 PM            646 2026_04_23_131305_add_grace_p
+                                                  eriod_to_meetings_table.php
+------         5/21/2026   5:36 PM            883 2026_05_21_163625_add_batch_u
+                                                  uid_to_activity_log_table.php
+------          4/6/2026  10:34 PM            994 2026_04_06_183439_add_agreeme
+                                                  nt_docs_to_qard_hasans_table.
+                                                  php
+------         4/14/2026   9:56 AM            727 2026_04_14_085625_add_migrati
+                                                  on_fields_to_users_table.php
+------         3/19/2026   2:14 PM            969 2026_03_19_141100_create_expe
+                                                  nse_entries_table.php
+------         4/10/2026   4:07 PM           1259 2026_04_10_170500_add_quorum_
+                                                  and_certificate_to_shura_tabl
+                                                  es.php
+------         4/17/2026   1:57 PM            668 2026_04_17_140000_add_push_to
+                                                  kens_to_member_applications_t
+                                                  able.php
+------         3/31/2026  12:12 PM           1704 2026_03_31_120900_create_memb
+                                                  er_applications_table.php
+------          4/1/2026   5:29 PM           1690 2026_04_01_180000_add_nudge_a
+                                                  nd_escalation_to_qard_hasan_g
+                                                  uarantors.php
+------         4/14/2026   6:34 PM            727 2026_04_14_173349_add_takaful
+                                                  _balance_to_users_table.php
+------         3/16/2026   7:43 PM           1993 2026_03_15_173700_update_memb
+                                                  ership_number_unique_index.ph
+                                                  p
+------          4/1/2026   4:18 PM           1120 2026_04_01_171500_add_admin_a
+                                                  pproval_and_rejection_to_qard
+                                                  _hasans.php
+------          4/4/2026   2:02 PM            694 2026_04_04_140500_add_takaful
+                                                  _policy_flags_to_users.php
+------         4/10/2026   4:59 PM           1961 2026_04_10_180000_update_proj
+                                                  ects_for_tracking_and_units.p
+                                                  hp
+------          7/6/2026   2:51 PM           1274 2026_07_06_145000_add_beacon_
+                                                  fields_to_meetings_table.php

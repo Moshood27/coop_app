@@ -22,9 +22,11 @@ class QardHasanRepayment extends Model
     protected $fillable = [
         'qard_hasan_id',
         'amount',
+        'payment_method',
         'reference',
         'status',
         'paid_at',
+        'notes',
         'ledger_journal_id',
     ];
 
@@ -34,6 +36,12 @@ class QardHasanRepayment extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $model) {
+            if (!$model->reference) {
+                $model->reference = 'LRP-' . strtoupper(\Illuminate\Support\Str::random(12));
+            }
+        });
+
         static::updated(function (self $model) {
             if ($model->status === 'success' && $model->wasChanged('status')) {
                 try {

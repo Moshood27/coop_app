@@ -484,6 +484,7 @@ class AdminMemberController extends Controller
             $loan->repayments()->create([
                 'amount' => $amount,
                 'payment_method' => $data['method'],
+                'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
                 'paid_at' => Carbon::parse($data['paid_at']),
                 'notes' => $data['note'],
                 'status' => 'success',
