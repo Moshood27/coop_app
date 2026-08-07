@@ -865,8 +865,8 @@ class QardHasanResource extends Resource
 
                         // Disburse within transaction
                         DB::transaction(function () use ($record, $credit, $withdrawable, $reference, $mode, $data) {
-                            // Only credit member wallet if NOT manual disbursement
-                            if ($mode !== 'manual') {
+                            // Only credit member wallet if NOT manual disbursement AND NOT automated cash-out (already sent to bank)
+                            if ($mode === 'internal') {
                                 $record->user->increment('balance', $credit);
 
                                 // Record wallet transaction with loan_disbursement source and withdrawable flag

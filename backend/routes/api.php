@@ -165,18 +165,18 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
 
     // Payments
     Route::get('/schemes', [PaymentController::class, 'getSchemes']);
-    Route::post('/initiate-payment', [PaymentController::class, 'initiate']);
+    Route::post('/initiate-payment', [PaymentController::class, 'initiate'])->middleware('throttle:10,1');
     Route::post('/verify-payment', [PaymentController::class, 'verify']);
 
     // Wallet
     Route::get('/wallet', [\App\Http\Controllers\Api\WalletController::class, 'getWallet']);
     Route::get('/wallet/transactions', [\App\Http\Controllers\Api\WalletController::class, 'transactions']);
     Route::get('/wallet/transactions/{id}/receipt', [ExportController::class, 'downloadWalletReceipt']);
-    Route::post('/wallet/topup/initiate', [\App\Http\Controllers\Api\WalletController::class, 'initiateTopup']);
+    Route::post('/wallet/topup/initiate', [\App\Http\Controllers\Api\WalletController::class, 'initiateTopup'])->middleware('throttle:10,1');
     Route::post('/wallet/allocate', [\App\Http\Controllers\Api\WalletController::class, 'allocateToSchemes']);
     Route::post('/wallet/allocate-special', [\App\Http\Controllers\Api\WalletController::class, 'allocateFromSpecialSavings']);
     Route::get('/wallet/transfer/resolve', [\App\Http\Controllers\Api\WalletController::class, 'resolveRecipient']);
-    Route::post('/wallet/transfer', [\App\Http\Controllers\Api\WalletController::class, 'transfer']);
+    Route::post('/wallet/transfer', [\App\Http\Controllers\Api\WalletController::class, 'transfer'])->middleware('throttle:10,1');
     Route::post('/wallet/withdraw', [\App\Http\Controllers\Api\WalletController::class, 'withdraw'])->middleware('throttle:5,1');
     Route::get('/wallet/withdrawals', [\App\Http\Controllers\Api\WalletController::class, 'withdrawals']);
     Route::post('/wallet/withdrawals/{id}/cancel', [\App\Http\Controllers\Api\WalletController::class, 'cancelWithdrawal'])->middleware('throttle:5,1');
@@ -185,7 +185,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     // Merchant Pay (QR)
     Route::get('/merchant/pay/qr', [MerchantPayController::class, 'generateQr']);
     Route::post('/merchant/pay/resolve', [MerchantPayController::class, 'resolve']);
-    Route::post('/merchant/pay', [MerchantPayController::class, 'pay']);
+    Route::post('/merchant/pay', [MerchantPayController::class, 'pay'])->middleware('throttle:10,1');
 
     // Projects (Pooled Investments)
     Route::get('/projects', [ProjectController::class, 'index']);

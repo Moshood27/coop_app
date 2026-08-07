@@ -259,6 +259,11 @@ class ChatController extends Controller
                 }
 
                 DB::transaction(function () use ($message, $payer, $amount) {
+                    // Update user balances
+                    $recipient = $message->user;
+                    $payer->decrement('balance', $amount);
+                    $recipient->increment('balance', $amount);
+
                     // Debit payer
                     WalletTransaction::create([
                         'user_id' => $payer->id,
@@ -275,7 +280,6 @@ class ChatController extends Controller
                     ]);
 
                     // Credit recipient
-                    $recipient = $message->user;
                     WalletTransaction::create([
                         'user_id' => $recipient->id,
                         'type' => 'credit',

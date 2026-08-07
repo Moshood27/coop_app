@@ -302,6 +302,44 @@ class Contribution extends Model
                         }
                     }
 
+                    // Special handling for Wallet Top-up category
+                    if ($model->category === 'wallet_topup') {
+                        try {
+                            $user = $model->user;
+                            $reference = $model->reference;
+
+                            // Idempotency: check if already credited in WalletTransaction
+                            if (!WalletTransaction::where('reference', $reference)->exists()) {
+                                // Calculate maintenance charge
+                                $fee = (float) Setting::get('wallet_topup_fee_fixed', 0);
+                                $percent = (float) Setting::get('wallet_topup_fee_percent', 0);
+                                $charge = round($fee + ($model->amount * ($percent / 100)), 2);
+                                $netAmount = round(max(0, $model->amount - $charge), 2);
+
+                                if ($netAmount > 0) {
+                                    DB::transaction(function () use ($user, $netAmount, $model, $charge, $reference) {
+                                        $user->increment('balance', $netAmount);
+                                        WalletTransaction::create([
+                                            'user_id' => $user->id,
+                                            'type' => 'credit',
+                                            'amount' => $netAmount,
+                                            'reference' => $reference,
+                                            'source' => $model->payment_method ?: 'payment_gateway',
+                                            'meta' => [
+                                                'contribution_id' => $model->id,
+                                                'original_amount' => $model->amount,
+                                                'maintenance_charge' => $charge,
+                                            ],
+                                            'withdrawable' => true,
+                                        ]);
+                                    });
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error("Failed to process wallet topup from contribution: " . $e->getMessage());
+                        }
+                    }
+
                     // Update Attaqwa Score
                     try {
                         app(\App\Services\AttaqwaScoreService::class)->calculateAndUpdateScore($model->user);

@@ -237,6 +237,16 @@ class WalletController extends Controller
 
         $reference = 'WALLET_TOPUP_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
+        // Pre-create pending contribution for tracking and verify-payment consistency
+        \App\Models\Contribution::create([
+            'user_id' => $user->id,
+            'amount' => (float)$validated['amount'],
+            'reference' => $reference,
+            'category' => 'wallet_topup',
+            'status' => 'pending',
+            'payment_method' => $gateway,
+        ]);
+
         if ($gateway === 'monnify') {
             $service = app(MonnifyService::class);
             $monnifyData = $service->initializeTransaction([
@@ -733,6 +743,14 @@ class WalletController extends Controller
         }
         if ($recipient->id === $sender->id) {
             return response()->json(['message' => 'You cannot transfer to yourself'], 422);
+        }
+
+        // Fintech Ready Check (KYC/DVA)
+        if (!$sender->virtualAccount()->exists()) {
+            return response()->json(['message' => 'You are not yet fintech-ready. Please complete your profile to enable transfers.'], 422);
+        }
+        if (!$recipient->virtualAccount()->exists()) {
+            return response()->json(['message' => 'Recipient is not yet fintech-ready (no virtual account assigned).'], 422);
         }
 
         if ((float)$sender->balance < $amount) {

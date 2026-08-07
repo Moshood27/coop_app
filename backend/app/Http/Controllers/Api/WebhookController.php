@@ -376,12 +376,23 @@ class WebhookController extends Controller
                 }
 
                 $topupUser = null;
-                if ($customerCode) {
-                    $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('paystack_customer_code', $customerCode))->first();
+
+                // Priority 1: Metadata User ID (Explicit attribution, e.g. for card/checkout payments)
+                if ($metaUserId && $vdChannel !== 'bank_transfer') {
+                    $topupUser = User::find($metaUserId);
                 }
+
+                // Priority 2: Receiver Bank Account (For Dedicated Virtual Account / DVA transfers)
                 if (! $topupUser && $receiverAccount) {
                     $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('dva_account_number', $receiverAccount))->first();
                 }
+
+                // Priority 3: Paystack Customer Code (Profile matching)
+                if (! $topupUser && $customerCode) {
+                    $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('paystack_customer_code', $customerCode))->first();
+                }
+
+                // Final Fallback: Metadata User ID (if not already tried or found)
                 if (! $topupUser && $metaUserId) {
                     $topupUser = User::find($metaUserId);
                 }
