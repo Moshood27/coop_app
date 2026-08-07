@@ -246,43 +246,52 @@ class AdminMemberController extends Controller
             return response()->json(['message' => 'Insufficient wallet balance.'], 422);
         }
 
-        DB::transaction(function () use ($user, $data, $request) {
+        $reference = 'WALLET_ALLOC_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+
+        DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested) {
+            $items = [];
             foreach ($data['allocations'] as $alloc) {
                 if ($alloc['amount'] <= 0) continue;
 
                 $scheme = Scheme::find($alloc['scheme_id']);
 
-                // 1. Deduct from wallet
-                $user->decrement('balance', $alloc['amount']);
-
-                // 2. Create wallet transaction record
-                $user->walletTransactions()->create([
-                    'amount' => $alloc['amount'],
-                    'type' => 'debit',
-                    'reference' => 'ALC-' . strtoupper(Str::random(12)),
-                    'source' => 'wallet_allocation',
-                    'meta' => [
-                        'scheme_id' => $scheme->id,
-                        'scheme_name' => $scheme->name,
-                        'admin_id' => $request->user()->id,
-                        'description' => "Allocation to {$scheme->name} (by Admin)"
-                    ]
-                ]);
-
-                // 3. Create contribution record
+                // 1. Create contribution record
                 $user->contributions()->create([
                     'scheme_id' => $scheme->id,
                     'amount' => $alloc['amount'],
                     'status' => 'success',
                     'paid_at' => now(),
                     'payment_method' => 'wallet',
-                    'reference' => 'ALC-'.strtoupper(Str::random(10)),
+                    'reference' => $reference,
                     'notes' => 'Allocated from wallet by Admin',
                 ]);
 
-                // 4. Sync scheme balance
+                // 2. Sync scheme balance
                 $user->syncSchemeBalance($scheme->name);
+
+                $items[] = [
+                    'scheme_id' => $scheme->id,
+                    'scheme_name' => $scheme->name,
+                    'amount' => $alloc['amount'],
+                    'category' => 'deposit',
+                ];
             }
+
+            // 3. Deduct from wallet total
+            $user->decrement('balance', $totalRequested);
+
+            // 4. Create wallet transaction record
+            $user->walletTransactions()->create([
+                'amount' => $totalRequested,
+                'type' => 'debit',
+                'reference' => $reference,
+                'source' => 'wallet_allocation',
+                'meta' => [
+                    'admin_id' => $request->user()->id,
+                    'description' => "Allocation to multiple schemes (by Admin)",
+                    'distribution' => $items,
+                ]
+            ]);
         });
 
         return response()->json(['message' => 'Wallet funds allocated successfully.']);

@@ -121,7 +121,8 @@ class PassbookService
                     }
                 }
 
-                if ($row['total'] > 0 || in_array($loan->status, ['active', 'defaulted'])) {
+                $hasMonthlyActivity = array_sum($row['months']) > 0;
+                if (in_array($loan->status, ['active', 'defaulted']) || $hasMonthlyActivity) {
                     $matrix->push($row);
                 }
             }
@@ -154,7 +155,7 @@ class PassbookService
                 }
             }
 
-            if ($unlinkedRow['total'] > 0) {
+            if (array_sum($unlinkedRow['months']) > 0) {
                 $matrix->push($unlinkedRow);
             }
         }
