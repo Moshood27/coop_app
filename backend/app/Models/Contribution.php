@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Setting;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
@@ -319,7 +322,7 @@ class Contribution extends Model
                                 if ($netAmount > 0) {
                                     DB::transaction(function () use ($user, $netAmount, $model, $charge, $reference) {
                                         $user->increment('balance', $netAmount);
-                                        WalletTransaction::create([
+                                        \App\Models\WalletTransaction::create([
                                             'user_id' => $user->id,
                                             'type' => 'credit',
                                             'amount' => $netAmount,

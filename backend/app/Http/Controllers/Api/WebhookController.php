@@ -339,7 +339,7 @@ class WebhookController extends Controller
 
                 // No pending contributions found for this reference.
                 // This could be a Dedicated Virtual Account (DVA) bank transfer top-up.
-                $vdChannel = $vd['channel'] ?? null; // e.g., "bank_transfer", "card"
+                $vdChannel = $vd['channel'] ?? ($vd['authorization']['channel'] ?? null); // e.g., "bank_transfer", "card", "bank"
                 $customerCode = $vd['customer']['customer_code'] ?? null;
                 $receiverAccount = $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null);
 
@@ -378,7 +378,7 @@ class WebhookController extends Controller
                 $topupUser = null;
 
                 // Priority 1: Metadata User ID (Explicit attribution, e.g. for card/checkout payments)
-                if ($metaUserId && $vdChannel !== 'bank_transfer') {
+                if ($metaUserId) {
                     $topupUser = User::find($metaUserId);
                 }
 
@@ -387,14 +387,9 @@ class WebhookController extends Controller
                     $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('dva_account_number', $receiverAccount))->first();
                 }
 
-                // Priority 3: Paystack Customer Code (Profile matching)
+                // Priority 3: Paystack Customer Code (Profile matching) - ONLY if no metadata or metadata user not found
                 if (! $topupUser && $customerCode) {
                     $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('paystack_customer_code', $customerCode))->first();
-                }
-
-                // Final Fallback: Metadata User ID (if not already tried or found)
-                if (! $topupUser && $metaUserId) {
-                    $topupUser = User::find($metaUserId);
                 }
 
                 if (! $topupUser) {
@@ -436,11 +431,13 @@ class WebhookController extends Controller
                 DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
                     // Persist Paystack customer code and authorization code for future lookups/charges
                     $vaData = [];
-                    if (empty($topupUser->paystack_customer_code) && !empty($customerCode)) {
+                    $existingVA = $topupUser->virtualAccount;
+
+                    if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($customerCode)) {
                         $vaData['paystack_customer_code'] = $customerCode;
                     }
                     $authCode = $vd['authorization']['authorization_code'] ?? null;
-                    if (empty($topupUser->paystack_authorization_code) && !empty($authCode)) {
+                    if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
                         $vaData['paystack_authorization_code'] = $authCode;
                     }
                     if (!empty($vaData)) {
@@ -514,12 +511,13 @@ class WebhookController extends Controller
             try {
                 if ($user) {
                     $vaData = [];
+                    $existingVA = $user->virtualAccount;
                     $custCode = $vd['customer']['customer_code'] ?? null;
-                    if (empty($user->paystack_customer_code) && !empty($custCode)) {
+                    if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($custCode)) {
                         $vaData['paystack_customer_code'] = $custCode;
                     }
                     $authCode = $vd['authorization']['authorization_code'] ?? null;
-                    if (empty($user->paystack_authorization_code) && !empty($authCode)) {
+                    if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
                         $vaData['paystack_authorization_code'] = $authCode;
                     }
                     if (!empty($vaData)) {

@@ -240,6 +240,7 @@ class WalletController extends Controller
         // Pre-create pending contribution for tracking and verify-payment consistency
         \App\Models\Contribution::create([
             'user_id' => $user->id,
+            'scheme_id' => 55, // Wallet Balance scheme
             'amount' => (float)$validated['amount'],
             'reference' => $reference,
             'category' => 'wallet_topup',
