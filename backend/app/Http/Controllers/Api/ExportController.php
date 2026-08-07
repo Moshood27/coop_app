@@ -87,12 +87,16 @@ class ExportController extends Controller
                 foreach ($passbookData['matrix'] as $row) {
                     $months = [];
                     for ($i = 1; $i <= 12; $i++) {
-                        $months[] = number_format((float) ($row->months[$i] ?? 0), 2, '.', '');
+                        $months[] = number_format((float) ($row['months'][$i] ?? 0), 2, '.', '');
+                    }
+                    $name = $row['scheme_name'];
+                    if ($row['is_exceptional'] ?? false) {
+                        $name .= ' (Exceptional)';
                     }
                     fputcsv($file, array_merge(
-                        [$row->scheme_name, number_format((float) $row->bf, 2, '.', '')],
+                        [$name, number_format((float) $row['bf'], 2, '.', '')],
                         $months,
-                        [number_format((float) $row->total, 2, '.', '')]
+                        [number_format((float) $row['total'], 2, '.', '')]
                     ));
                 }
 
@@ -101,7 +105,8 @@ class ExportController extends Controller
                 for ($i = 1; $i <= 12; $i++) {
                     $monthlyTotal = 0;
                     foreach ($passbookData['matrix'] as $row) {
-                        $monthlyTotal += (float) ($row->months[$i] ?? 0);
+                        if ($row['is_exceptional'] ?? false) continue;
+                        $monthlyTotal += (float) ($row['months'][$i] ?? 0);
                     }
                     $grandTotalRow[] = number_format($monthlyTotal, 2, '.', '');
                 }

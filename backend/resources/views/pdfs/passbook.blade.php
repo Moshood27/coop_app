@@ -51,8 +51,13 @@
         </thead>
         <tbody>
             @foreach($matrix as $row)
-                <tr>
-                    <td><strong>{{ $row['scheme_name'] }}</strong></td>
+                <tr @if($row['is_exceptional'] ?? false) style="background-color: #fffbeb;" @endif>
+                    <td>
+                        <strong>{{ $row['scheme_name'] }}</strong>
+                        @if($row['is_exceptional'] ?? false)
+                            <br/><span style="color: #d97706; font-size: 7px;">EXCEPTIONAL</span>
+                        @endif
+                    </td>
                     <td class="center">{{ $row['bf'] > 0 ? number_format($row['bf'], 0) : '-' }}</td>
                     @foreach($row['months'] as $val)
                         <td class="center">{{ $val > 0 ? number_format($val, 0) : '-' }}</td>
@@ -65,6 +70,7 @@
             @php
                 $monthlyTotals = array_fill(1, 12, 0);
                 foreach($matrix as $row) {
+                    if ($row['is_exceptional'] ?? false) continue;
                     foreach($row['months'] as $m => $val) {
                         $monthlyTotals[$m] += $val;
                     }

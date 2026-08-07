@@ -47,9 +47,12 @@
               </tr>
             </thead>
             <tbody class="text-[11px]">
-              <tr v-for="(row, idx) in matrix" :key="idx" class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="p-3 font-bold text-slate-700 sticky left-0 bg-white border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <tr v-for="(row, idx) in matrix" :key="idx" 
+                  :class="[row.is_exceptional ? 'bg-amber-50/30' : 'hover:bg-slate-50', 'border-b border-slate-100']">
+                <td class="p-3 font-bold text-slate-700 sticky left-0 border-r border-slate-100 shadow-[2px_0_5px_rgba(0,0,0,0.05)]"
+                    :class="row.is_exceptional ? 'bg-amber-50' : 'bg-white'">
                   {{ row.scheme_name }}
+                  <span v-if="row.is_exceptional" class="block text-[8px] text-amber-600 font-normal uppercase mt-0.5">Exceptional</span>
                 </td>
                 <td class="p-3 text-center border-r border-slate-50 text-slate-700 font-semibold">
                   {{ Number(row.bf ?? row.brought_forward ?? 0) > 0 ? Number(row.bf ?? row.brought_forward ?? 0).toLocaleString() : '-' }}
@@ -130,6 +133,7 @@ const showAgm = computed(() => Number(agmAmount.value) > 0 || Boolean(agmPaid.va
 const monthlyTotals = computed(() => {
   const totals = Array(13).fill(0)
   matrix.value.forEach(row => {
+    if (row.is_exceptional) return
     for (let m = 1; m <= 12; m++) {
       totals[m] += Number(row.months[m] || 0)
     }
