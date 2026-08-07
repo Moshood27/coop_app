@@ -158,16 +158,18 @@
     </div>
   </div>
 
-    <div class="fixed left-0 right-0 bottom-16 p-4 z-40">
-      <div class="card card-elevated p-4">
-        <div class="flex justify-between items-center mb-4">
-          <span class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Total Amount</span>
-          <span class="text-2xl font-black text-slate-900">₦ {{ Number(totalAmount).toLocaleString() }}</span>
-        </div>
+    <div class="fixed left-0 md:left-64 right-0 md:right-20 lg:right-28 bottom-16 md:bottom-8 z-40 pointer-events-none">
+      <div class="max-w-md mx-auto p-4 pointer-events-auto">
+        <div class="card card-elevated p-4">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Total Amount</span>
+            <span class="text-2xl font-black text-slate-900">₦ {{ Number(totalAmount).toLocaleString() }}</span>
+          </div>
 
-        <button @click="initiatePayment" :disabled="paymentList.length === 0 || loading" class="btn-primary w-full py-4 text-lg">
-          {{ loading ? 'Processing...' : (source !== 'gateway' ? 'Allocate Fund' : 'Make Payment') }}
-        </button>
+          <button @click="initiatePayment" :disabled="paymentList.length === 0 || loading" class="btn-primary w-full py-4 text-lg">
+            {{ loading ? 'Processing...' : (source !== 'gateway' ? 'Allocate Fund' : 'Make Payment') }}
+          </button>
+        </div>
       </div>
     </div>
 
