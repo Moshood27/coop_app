@@ -15,7 +15,7 @@
       <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
         <!-- Left Column: Primary Info & Warnings -->
         <div class="lg:col-span-7 space-y-4">
-      <div id="balance-card" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
+          <div id="balance-card" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
         <div class="flex items-center gap-2 mb-2 relative z-10">
           <p class="text-emerald-100 text-sm font-medium">Available Balance</p>
@@ -53,49 +53,6 @@
               + Fund Wallet
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- Wallet Transaction History -->
-      <div class="mt-4 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-        <div class="flex justify-between items-center mb-5 gap-2 flex-wrap">
-          <h3 class="font-bold text-slate-800 text-sm">Recent Transactions</h3>
-          <button @click="$router.push('/wallet')" class="text-emerald-700 text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition-colors">See All</button>
-        </div>
-        <div v-if="dashboardData.transactions && dashboardData.transactions.length" class="space-y-4">
-          <div v-for="tx in dashboardData.transactions.slice(0, 4)" :key="tx.id" class="flex items-center justify-between gap-3 group">
-            <div class="flex items-center gap-3 min-w-0">
-              <div :class="tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'"
-                   class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 transition-transform group-active:scale-90">
-                <svg v-if="tx.type === 'credit'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              </div>
-              <div class="min-w-0">
-                <p class="text-[13px] font-bold text-slate-800 truncate leading-none mb-1">{{ txTitle(tx) }}</p>
-                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-tighter leading-relaxed">
-                  {{ formatDate(tx.created_at) }} • {{ tx.reference.length > 15 ? tx.reference.substring(0, 12) + '...' : tx.reference }}
-                </p>
-              </div>
-            </div>
-            <div class="text-right shrink-0">
-              <p class="font-black text-[13px]" :class="tx.type === 'credit' ? 'text-emerald-700' : 'text-slate-800'">
-                {{ tx.type === 'credit' ? '+' : '-' }}{{ currency }} {{ hideBalances ? '***,***.**' : formatMoney(tx.amount) }}
-              </p>
-              <a :href="getReceiptDownloadUrl(tx)" target="_blank" class="text-emerald-700 text-[9px] font-black uppercase tracking-widest hover:underline">Receipt</a>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-4">
-          <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-          <p class="text-[10px] text-slate-400 font-medium">No transactions recorded yet.</p>
         </div>
       </div>
 
@@ -866,12 +823,6 @@ const switchTab = (tab) => {
 
 const formatMoney = (val) => Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-const getReceiptDownloadUrl = (tx) => {
-  const token = localStorage.getItem('token')
-  const baseUrl = axios.defaults.baseURL || ''
-  const id = tx.id
-  return `${baseUrl}/api/wallet/transactions/${id}/receipt?token=${encodeURIComponent(token)}`
-}
 const copy = async (text) => {
   try {
     await navigator.clipboard.writeText(String(text || ''))
