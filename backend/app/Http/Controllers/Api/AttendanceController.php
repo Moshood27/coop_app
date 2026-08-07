@@ -279,8 +279,7 @@ class AttendanceController extends Controller
              return response()->json([]);
         }
 
-        $userQuery = User::where('is_admin', false)
-            ->where('is_defaulter', false);
+        $userQuery = User::where('is_admin', false);
 
         $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
 
@@ -304,7 +303,9 @@ class AttendanceController extends Controller
                     ->orWhere('name', 'like', "%{$query}%")
                     ->orWhere('other_names', 'like', "%{$query}%")
                     ->orWhere('membership_number', 'like', "%{$query}%")
-                    ->orWhere('phone', 'like', "%{$query}%");
+                    ->orWhere('phone', 'like', "%{$query}%")
+                    ->orWhere(DB::raw("CONCAT(surname, ' ', name)"), 'like', "%{$query}%")
+                    ->orWhere(DB::raw("CONCAT(name, ' ', surname)"), 'like', "%{$query}%");
             })
             ->when($meetingId, function($q) use ($meetingId) {
                 $q->withExists(['attendanceRecords as is_present' => function($q) use ($meetingId) {
