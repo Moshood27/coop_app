@@ -41,15 +41,17 @@ class AdminMemberController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        if ($request->has('search')) {
-            $search = $request->search;
+        $search = $request->input('q') ?? $request->input('search');
+        if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('surname', 'like', "%{$search}%")
                   ->orWhere('other_names', 'like', "%{$search}%")
                   ->orWhere('membership_number', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere(DB::raw("CONCAT(surname, ' ', name)"), 'like', "%{$search}%")
+                  ->orWhere(DB::raw("CONCAT(name, ' ', surname)"), 'like', "%{$search}%");
             });
         }
 
