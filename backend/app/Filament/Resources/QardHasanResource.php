@@ -1093,7 +1093,8 @@ class QardHasanResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->action(fn (\Illuminate\Support\Collection $records) => $records->each->delete()),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function infolist(Infolist $infolist): Infolist
