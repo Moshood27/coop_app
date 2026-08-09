@@ -36,6 +36,9 @@ class AdminDashboardController extends Controller
             'unread_support' => SupportMessage::whereNull('read_at')
                 ->when($branchId, fn($q) => $q->whereHas('user', fn($uq) => $uq->where('branch_id', $branchId)))
                 ->count(),
+            'defaulters_count' => User::where('is_defaulter', true)
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->count(),
         ];
 
         // VTU Balances

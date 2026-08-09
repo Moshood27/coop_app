@@ -86,6 +86,19 @@
             </div>
             <button @click="openFilament('support-messages')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider">Open</button>
           </div>
+
+          <div v-if="stats.defaulters_count > 0" class="bg-rose-50 border border-rose-100 p-4 rounded-3xl flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center text-rose-600 shadow-sm">
+                <span class="i-mdi-alert-circle-outline text-xl"></span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">{{ stats.defaulters_count }} Defaulters</p>
+                <p class="text-[10px] text-rose-700 font-bold uppercase">Loan repayment overdue</p>
+              </div>
+            </div>
+            <button @click="$router.push('/admin/members?defaulters=1')" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider">View All</button>
+          </div>
         </div>
       </section>
 

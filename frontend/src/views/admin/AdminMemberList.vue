@@ -22,6 +22,14 @@
             class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-[2rem] shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm font-medium"
           />
         </div>
+        <button 
+          @click="toggleDefaultersFilter" 
+          class="w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-colors shadow-lg flex-shrink-0"
+          :class="showDefaultersOnly ? 'bg-rose-600 text-white shadow-rose-100' : 'bg-white text-slate-400 border border-slate-100 shadow-slate-100'"
+          title="Filter Defaulters"
+        >
+          <span class="i-mdi-alert-circle-outline text-2xl"></span>
+        </button>
         <button @click="openCreateModal" class="w-14 h-14 bg-emerald-600 rounded-[1.5rem] flex items-center justify-center text-white hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100 flex-shrink-0" title="Add New Member">
           <span class="i-mdi-plus text-2xl"></span>
         </button>
@@ -45,7 +53,10 @@
               <span v-else>{{ member.name.charAt(0) }}</span>
             </div>
             <div>
-              <p class="text-sm font-black text-slate-800">{{ member.surname }} {{ member.name }}</p>
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-black text-slate-800">{{ member.surname }} {{ member.name }}</p>
+                <span v-if="member.is_defaulter" class="px-1.5 py-0.5 bg-rose-100 text-rose-600 text-[8px] font-black uppercase rounded-md tracking-tighter">Defaulter</span>
+              </div>
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Membership NO: {{ member.membership_number }}</p>
               <p class="text-[10px] font-bold text-emerald-600">{{ member.branch?.name }}</p>
             </div>
@@ -164,6 +175,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from '../../http'
 import { debounce } from 'lodash'
 import getImageUrl from '../../utils/image'
@@ -176,6 +188,12 @@ const loading = ref(false)
 const searchQuery = ref('')
 const currentPage = ref(1)
 const lastPage = ref(1)
+const showDefaultersOnly = ref(false)
+
+const toggleDefaultersFilter = () => {
+  showDefaultersOnly.value = !showDefaultersOnly.value
+  fetchMembers(1)
+}
 
 const showCreateModal = ref(false)
 const creating = ref(false)
@@ -261,12 +279,14 @@ const confirmDeleteMember = async (member) => {
 const fetchMembers = async (page = 1) => {
   loading.value = true
   try {
-    const { data } = await axios.get('/api/admin/members', {
-      params: {
-        page,
-        search: searchQuery.value
-      }
-    })
+    const params = {
+      page,
+      search: searchQuery.value
+    }
+    if (showDefaultersOnly.value) {
+      params.defaulters = 1
+    }
+    const { data } = await axios.get('/api/admin/members', { params })
     members.value = data.data
     currentPage.value = data.current_page
     lastPage.value = data.last_page
@@ -281,7 +301,12 @@ const handleSearch = debounce(() => {
   fetchMembers(1)
 }, 500)
 
+const route = useRoute()
+
 onMounted(() => {
+  if (route.query.defaulters) {
+    showDefaultersOnly.value = true
+  }
   fetchMembers()
   fetchBranches()
 })

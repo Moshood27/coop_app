@@ -55,6 +55,10 @@ class AdminMemberController extends Controller
             });
         }
 
+        if ($request->has('defaulters')) {
+            $query->where('is_defaulter', true);
+        }
+
         $members = $query->with('branch')
             ->orderBy('name')
             ->paginate(20);
@@ -358,7 +362,21 @@ class AdminMemberController extends Controller
         ]);
 
         $loan = $repayment->qardHasan;
+        $oldRef = $repayment->reference;
         $repayment->update($data);
+
+        // Update corresponding contribution if it exists
+        $contribution = Contribution::where('reference', $oldRef)
+            ->where('qard_hasan_id', $loan->id)
+            ->first();
+
+        if ($contribution) {
+            $contribution->update([
+                'amount' => $data['amount'],
+                'paid_at' => $data['paid_at'],
+                'reference' => $repayment->reference // in case it changed, though usually it shouldn't
+            ]);
+        }
 
         // Re-sync loan paid amount
         $loan->update([
@@ -381,7 +399,13 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $repayment->qardHasan->user);
 
         $loan = $repayment->qardHasan;
+        $ref = $repayment->reference;
         $repayment->delete();
+
+        // Delete corresponding contribution
+        Contribution::where('reference', $ref)
+            ->where('qard_hasan_id', $loan->id)
+            ->delete();
 
         // Re-sync loan paid amount
         $loan->update([
@@ -492,14 +516,30 @@ class AdminMemberController extends Controller
                 ]);
             }
 
+            $ref = 'QH-REP-' . strtoupper(Str::random(12));
             $loan->repayments()->create([
                 'amount' => $amount,
                 'payment_method' => $data['method'],
-                'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
+                'reference' => $ref,
                 'paid_at' => Carbon::parse($data['paid_at']),
                 'notes' => $data['note'],
                 'status' => 'success',
             ]);
+
+            // Also create a contribution record for passbook visibility
+            $scheme = Scheme::where('name', 'Loan Repayment')->first();
+            if ($scheme) {
+                $user = $loan->user;
+                $user->contributions()->create([
+                    'scheme_id' => $scheme->id,
+                    'qard_hasan_id' => $loan->id,
+                    'amount' => $amount,
+                    'paid_at' => Carbon::parse($data['paid_at']),
+                    'reference' => $ref, // Use same reference to link them
+                    'status' => 'success',
+                    'category' => 'loan_repayment'
+                ]);
+            }
 
             $loan->increment('paid_amount', $amount);
 
