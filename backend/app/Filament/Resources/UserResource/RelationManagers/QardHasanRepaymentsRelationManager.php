@@ -37,6 +37,7 @@ class QardHasanRepaymentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->defaultSort('paid_at', 'desc')
             ->columns([
                 TextColumn::make('paid_at')->dateTime()->sortable(),
                 TextColumn::make('qardHasan.qard_id_string')->label('Loan ID')->sortable()->searchable(),

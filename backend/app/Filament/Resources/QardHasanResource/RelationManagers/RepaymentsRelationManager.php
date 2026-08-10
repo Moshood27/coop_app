@@ -52,6 +52,7 @@ class RepaymentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->defaultSort('paid_at', 'desc')
             ->columns([
                 TextColumn::make('paid_at')
                     ->label('Date')

@@ -114,7 +114,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required_without:split_50_50|nullable|exists:schemes,id',
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric',
             'paid_at' => 'required|date',
             'method' => 'required|string|in:cash,transfer,pos,other',
             'reference' => 'nullable|string|max:100',
@@ -188,7 +188,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required|exists:schemes,id',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric',
             'paid_at' => 'required|date',
             'payment_method' => 'required|string',
             'notes' => 'nullable|string|max:255',
@@ -305,7 +305,7 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $user);
 
         $loans = $user->qardHasans()
-            ->with(['repayments'])
+            ->with(['repayments' => fn($q) => $q->orderByDesc('paid_at')])
             ->orderByDesc('created_at')
             ->get();
 
@@ -465,7 +465,7 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $loan->user);
 
         $data = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric',
             'method' => 'required|string|in:cash,transfer,pos,wallet,other',
             'paid_at' => 'required|date',
             'note' => 'nullable|string|max:255',

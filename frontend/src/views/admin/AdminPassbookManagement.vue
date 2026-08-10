@@ -44,15 +44,16 @@
           </div>
           <div v-for="(amount, month) in row.months" :key="month" 
                class="p-3 rounded-2xl text-center"
-               :class="amount > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'"
+               :class="amount > 0 ? 'bg-emerald-50 text-emerald-600' : (amount < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-300')"
           >
             <p class="text-[8px] font-bold uppercase tracking-tighter">{{ monthLabels[month-1] }}</p>
-            <p class="text-[10px] font-black">{{ formatMoney(amount) }}</p>
+            <p class="text-[10px] font-black">{{ amount < 0 ? '-' : '' }}{{ formatMoney(Math.abs(amount)) }}</p>
           </div>
         </div>
       </div>
 
-        <div class="bg-emerald-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-200 text-center">
+      <div class="p-8 rounded-[2.5rem] text-white shadow-xl text-center"
+           :class="grandTotal < 0 ? 'bg-rose-600 shadow-rose-200' : 'bg-emerald-600 shadow-emerald-200'">
         <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Grand Total ({{ selectedYear }})</p>
         <p class="text-3xl font-black">₦{{ formatMoney(grandTotal) }}</p>
       </div>
@@ -77,7 +78,9 @@
             </div>
             <div class="text-right flex items-center gap-4">
               <div>
-                <p class="text-sm font-black text-slate-800">₦{{ formatMoney(con.amount) }}</p>
+                <p class="text-sm font-black text-slate-800" :class="con.amount < 0 ? 'text-rose-600' : ''">
+                  {{ con.amount < 0 ? '-' : '' }}₦{{ formatMoney(Math.abs(con.amount)) }}
+                </p>
                 <p class="text-[8px] font-bold uppercase tracking-tighter" :class="con.status === 'success' ? 'text-emerald-500' : 'text-amber-500'">{{ con.status }}</p>
               </div>
               <div class="flex gap-1">
@@ -108,9 +111,15 @@
         </div>
 
         <div class="space-y-4">
-          <div v-if="!editingCon" class="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
-            <label class="text-xs font-black text-slate-600 uppercase tracking-wider">Split 50/50 Savings/Shares</label>
-            <input v-model="form.split_50_50" type="checkbox" class="w-5 h-5 accent-emerald-600" />
+          <div v-if="!editingCon" class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
+              <label class="text-[10px] font-black text-slate-600 uppercase tracking-wider">Split 50/50</label>
+              <input v-model="form.split_50_50" type="checkbox" class="w-5 h-5 accent-emerald-600" />
+            </div>
+            <div class="bg-rose-50 p-4 rounded-2xl flex items-center justify-between">
+              <label class="text-[10px] font-black text-rose-600 uppercase tracking-wider">Debit Mode</label>
+              <input v-model="form.is_debit" type="checkbox" class="w-5 h-5 accent-rose-600" />
+            </div>
           </div>
 
           <div v-if="!form.split_50_50">
@@ -195,6 +204,7 @@ const form = ref({
   method: 'transfer',
   note: '',
   split_50_50: false,
+  is_debit: false,
   status: 'success'
 })
 const years = computed(() => {
@@ -256,11 +266,12 @@ const editContribution = (con) => {
   editingCon.value = con
   form.value = {
     scheme_id: con.scheme_id,
-    amount: con.amount,
+    amount: Math.abs(con.amount),
     paid_at: new Date(con.paid_at || con.created_at).toISOString().split('T')[0],
     method: con.payment_method,
     note: con.notes,
     split_50_50: false,
+    is_debit: con.amount < 0,
     status: con.status
   }
   showAddModal.value = true
@@ -276,6 +287,7 @@ const closeModal = () => {
     method: 'transfer',
     note: '',
     split_50_50: false,
+    is_debit: false,
     status: 'success'
   }
 }
@@ -299,23 +311,28 @@ const confirmDeleteContribution = async (con) => {
 
 const submitContribution = async () => {
   if (!form.value.split_50_50 && !form.value.scheme_id) return
-  if (form.value.amount <= 0) return
+  if (form.value.amount === 0) return
   
   submitting.value = true
   try {
+    const payload = {
+      ...form.value,
+      amount: form.value.is_debit ? -Math.abs(form.value.amount) : Math.abs(form.value.amount)
+    }
+
     if (editingCon.value) {
       await axios.patch(`/api/admin/members/contributions/${editingCon.value.id}`, {
-        scheme_id: form.value.scheme_id,
-        amount: form.value.amount,
-        paid_at: form.value.paid_at,
-        payment_method: form.value.method,
-        notes: form.value.note,
-        status: form.value.status
+        scheme_id: payload.scheme_id,
+        amount: payload.amount,
+        paid_at: payload.paid_at,
+        payment_method: payload.method,
+        notes: payload.note,
+        status: payload.status
       })
       alert('Contribution updated successfully', 'Success')
     } else {
-      await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, form.value)
-      alert('Contribution recorded successfully', 'Success')
+      await axios.post(`/api/admin/members/${route.params.id}/distribute-funds`, payload)
+      alert('Entry recorded successfully', 'Success')
     }
     
     closeModal()

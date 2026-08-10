@@ -55,10 +55,11 @@
                   <span v-if="row.is_exceptional" class="block text-[8px] text-amber-600 font-normal uppercase mt-0.5">Exceptional</span>
                 </td>
                 <td class="p-3 text-center border-r border-slate-50 text-slate-700 font-semibold">
-                  {{ Number(row.bf ?? row.brought_forward ?? 0) > 0 ? Number(row.bf ?? row.brought_forward ?? 0).toLocaleString() : '-' }}
+                  {{ Number(row.bf ?? row.brought_forward ?? 0) !== 0 ? Number(row.bf ?? row.brought_forward ?? 0).toLocaleString() : '-' }}
                 </td>
-                <td v-for="mIdx in 12" :key="mIdx" class="p-3 text-center border-r border-slate-50 text-slate-600">
-                  {{ Number(row.months[mIdx] || 0) > 0 ? Number(row.months[mIdx]).toLocaleString() : '-' }}
+                <td v-for="mIdx in 12" :key="mIdx" class="p-3 text-center border-r border-slate-50"
+                    :class="Number(row.months[mIdx] || 0) < 0 ? 'text-rose-600' : 'text-slate-600'">
+                  {{ Number(row.months[mIdx] || 0) !== 0 ? Number(row.months[mIdx]).toLocaleString() : '-' }}
                 </td>
                 <td class="p-3 text-center font-black text-slate-900 bg-slate-50">
                   {{ Number(row.total).toLocaleString() }}
@@ -68,13 +69,16 @@
             <tfoot class="text-[11px] bg-slate-50 font-black border-t-2 border-slate-200">
               <tr>
                 <td class="p-3 sticky left-0 bg-slate-50 z-10 border-r border-slate-100">GRAND TOTAL</td>
-                <td class="p-3 text-center border-r border-slate-50 text-slate-900">
+                <td class="p-3 text-center border-r border-slate-50 text-slate-900"
+                    :class="bfTotal < 0 ? 'text-rose-600' : ''">
                   {{ Number(bfTotal).toLocaleString() }}
                 </td>
-                <td v-for="mIdx in 12" :key="mIdx" class="p-3 text-center border-r border-slate-50 text-slate-900">
-                  {{ monthlyTotals[mIdx] > 0 ? Number(monthlyTotals[mIdx]).toLocaleString() : '-' }}
+                <td v-for="mIdx in 12" :key="mIdx" class="p-3 text-center border-r border-slate-50 text-slate-900"
+                    :class="monthlyTotals[mIdx] < 0 ? 'text-rose-600' : ''">
+                  {{ monthlyTotals[mIdx] !== 0 ? Number(monthlyTotals[mIdx]).toLocaleString() : '-' }}
                 </td>
-                <td class="p-3 text-center text-emerald-700 bg-emerald-50">
+                <td class="p-3 text-center bg-emerald-50"
+                    :class="grandTotal < 0 ? 'text-rose-700 bg-rose-50' : 'text-emerald-700'">
                   {{ Number(grandTotal).toLocaleString() }}
                 </td>
               </tr>

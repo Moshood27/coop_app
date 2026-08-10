@@ -215,6 +215,7 @@ class QardHasanResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with([
                 'user' => fn($q) => $q->withCount(['attendanceRecords as audited_attendance_count' => function ($sq) {
                     $sq->where('status', 'present')
