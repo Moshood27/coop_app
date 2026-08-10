@@ -35,6 +35,11 @@
         </div>
 
         <div class="space-y-4">
+          <div>
+            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Note (Optional)</label>
+            <textarea v-model="notes" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all"></textarea>
+          </div>
+
           <div v-for="(alloc, index) in allocations" :key="index" class="p-4 bg-slate-50 rounded-3xl relative">
             <button v-if="allocations.length > 1" @click="removeAllocation(index)" class="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs shadow-md">
               <span class="i-mdi-close"></span>
@@ -86,8 +91,8 @@
                 <span :class="tx.type === 'credit' ? 'i-mdi-arrow-down-bold' : 'i-mdi-arrow-up-bold'" class="text-xl"></span>
               </div>
               <div>
-                <p class="text-xs font-black text-slate-800">{{ tx.description || 'Wallet Transaction' }}</p>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.status }}</p>
+                <p class="text-xs font-black text-slate-800">{{ tx.meta?.notes || tx.meta?.description || tx.description || 'Wallet Transaction' }}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.status || tx.source }}</p>
               </div>
             </div>
             <div class="text-right flex items-center gap-4">
@@ -182,6 +187,7 @@ const allocations = ref([{ scheme_id: null, amount: 0 }])
 const transactions = ref([])
 const pagination = ref({ current_page: 1, next_page_url: null })
 const submitting = ref(false)
+const notes = ref('')
 
 const showEditModal = ref(false)
 const editingTx = ref(null)
@@ -246,8 +252,8 @@ const editTransaction = (tx) => {
   editForm.value = {
     amount: tx.amount,
     type: tx.type,
-    status: tx.status,
-    description: tx.description
+    status: tx.meta?.status || tx.status || 'success',
+    description: tx.meta?.notes || tx.meta?.description || tx.description || ''
   }
   showEditModal.value = true
 }
@@ -296,7 +302,8 @@ const submitAllocation = async () => {
   submitting.value = true
   try {
     await axios.post(`/api/admin/members/${route.params.id}/allocate-wallet`, {
-      allocations: allocations.value
+      allocations: allocations.value,
+      notes: notes.value
     })
     alert('Wallet funds allocated successfully', 'Success')
     router.push(`/admin/members/${route.params.id}`)

@@ -238,9 +238,11 @@ class AdminMemberController extends Controller
             'allocations' => 'required|array',
             'allocations.*.scheme_id' => 'required|exists:schemes,id',
             'allocations.*.amount' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         $totalRequested = collect($data['allocations'])->sum('amount');
+        $notes = $data['notes'] ?? 'Allocated from wallet by Admin';
 
         if ($user->balance < $totalRequested) {
             return response()->json(['message' => 'Insufficient wallet balance.'], 422);
@@ -248,7 +250,7 @@ class AdminMemberController extends Controller
 
         $reference = 'WALLET_ALLOC_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
-        DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested) {
+        DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested, $notes) {
             $items = [];
             foreach ($data['allocations'] as $alloc) {
                 if ($alloc['amount'] <= 0) continue;
@@ -263,7 +265,7 @@ class AdminMemberController extends Controller
                     'paid_at' => now(),
                     'payment_method' => 'wallet',
                     'reference' => $reference,
-                    'notes' => 'Allocated from wallet by Admin',
+                    'notes' => $notes,
                 ]);
 
                 // 2. Sync scheme balance
@@ -289,6 +291,7 @@ class AdminMemberController extends Controller
                 'meta' => [
                     'admin_id' => $request->user()->id,
                     'description' => "Allocation to multiple schemes (by Admin)",
+                    'notes' => $notes,
                     'distribution' => $items,
                 ]
             ]);
@@ -434,15 +437,23 @@ class AdminMemberController extends Controller
         $data = $request->validate([
             'amount' => 'required|numeric',
             'type' => 'required|string|in:credit,debit',
-            'reference' => 'required|string|unique:wallet_transactions,reference,' . $transaction->id,
+            'reference' => 'nullable|string|max:100',
             'source' => 'nullable|string',
+            'description' => 'nullable|string',
+            'status' => 'nullable|string',
         ]);
 
-        $transaction->update($data);
+        $meta = $transaction->meta ?? [];
+        if (isset($data['description'])) $meta['notes'] = $data['description'];
+        if (isset($data['status'])) $meta['status'] = $data['status'];
 
-        // Note: Wallet balance might need re-syncing if we change amount/type,
-        // but usually we don't allow deep edits of ledger-like records without careful sync.
-        // For now, simple update.
+        $transaction->update([
+            'amount' => $data['amount'],
+            'type' => $data['type'],
+            'reference' => $data['reference'] ?? $transaction->reference,
+            'source' => $data['source'] ?? $transaction->source,
+            'meta' => $meta,
+        ]);
 
         return response()->json(['message' => 'Transaction updated successfully.', 'transaction' => $transaction]);
     }
