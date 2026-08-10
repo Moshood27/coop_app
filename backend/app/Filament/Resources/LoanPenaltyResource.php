@@ -152,8 +152,7 @@ class LoanPenaltyResource extends Resource
                             'loan-penalties-' . ($branch ? Str::slug($branch->name) : 'all') . '-' . now()->format('Y-m-d') . '.pdf'
                         );
                     }),
-            ])
-            ->defaultSort('created_at', 'desc');
+            ]);
     }
 
     public static function getRelations(): array
