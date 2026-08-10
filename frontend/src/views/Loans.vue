@@ -459,7 +459,10 @@
                        <span class="text-emerald-500">💰</span>
                        <span class="text-xs font-black text-slate-800">₦ {{ n(r.amount) }}</span>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-bold">{{ formatRepaymentDate(r) }}</span>
+                    <div>
+                      <span class="text-[10px] text-slate-400 font-bold block text-right">{{ formatRepaymentDate(r) }}</span>
+                      <p v-if="r.notes" class="text-[9px] text-slate-500 italic text-right mt-0.5">{{ r.notes }}</p>
+                    </div>
                   </li>
                 </ul>
                 <p v-else class="text-[10px] text-slate-400 italic text-center py-2">No repayment history yet.</p>

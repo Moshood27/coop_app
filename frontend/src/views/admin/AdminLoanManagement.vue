@@ -92,6 +92,7 @@
               <div>
                 <p class="text-[10px] font-black text-slate-800">₦{{ formatMoney(rep.amount) }}</p>
                 <p class="text-[8px] font-bold text-slate-400 uppercase">{{ rep.payment_method }} • {{ formatDate(rep.paid_at) }}</p>
+                <p v-if="rep.notes" class="text-[8px] font-medium text-slate-500 italic mt-0.5">{{ rep.notes }}</p>
               </div>
               <div class="flex items-center gap-2">
                 <div class="flex gap-1">
@@ -144,7 +145,7 @@
 
           <div>
             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Note (Optional)</label>
-            <textarea v-model="repayForm.note" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+            <textarea v-model="repayForm.notes" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
           </div>
         </div>
 
@@ -225,7 +226,7 @@ const repayForm = ref({
   amount: 0,
   method: 'cash',
   paid_at: new Date().toISOString().split('T')[0],
-  note: ''
+  notes: ''
 })
 const loanForm = ref({
   principal_amount: 0,
@@ -266,6 +267,7 @@ const fetchData = async () => {
 const openRepayModal = (loan) => {
   selectedLoan.value = loan
   repayForm.value.amount = loan.principal_amount - loan.paid_amount
+  repayForm.value.notes = ''
   editingRep.value = null
   showRepayModal.value = true
 }
@@ -277,7 +279,7 @@ const editRepayment = (loan, rep) => {
     amount: rep.amount,
     method: rep.payment_method,
     paid_at: new Date(rep.paid_at || rep.created_at).toISOString().split('T')[0],
-    note: rep.notes
+    notes: rep.notes
   }
   showRepayModal.value = true
 }
@@ -289,7 +291,7 @@ const closeRepayModal = () => {
     amount: 0,
     method: 'cash',
     paid_at: new Date().toISOString().split('T')[0],
-    note: ''
+    notes: ''
   }
 }
 
@@ -357,7 +359,7 @@ const submitRepayment = async () => {
         amount: repayForm.value.amount,
         payment_method: repayForm.value.method,
         paid_at: repayForm.value.paid_at,
-        notes: repayForm.value.note
+        notes: repayForm.value.notes
       })
       alert('Repayment record updated successfully', 'Success')
     } else {

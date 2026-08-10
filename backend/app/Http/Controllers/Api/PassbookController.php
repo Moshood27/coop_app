@@ -14,4 +14,15 @@ class PassbookController extends Controller
 
         return response()->json($data);
     }
+
+    public function contributions(Request $request)
+    {
+        $contributions = $request->user()->contributions()
+            ->with('scheme')
+            ->orderByDesc('paid_at')
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return response()->json($contributions);
+    }
 }

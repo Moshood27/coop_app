@@ -74,6 +74,7 @@
               <div>
                 <p class="text-xs font-black text-slate-800">{{ con.scheme?.name }}</p>
                 <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(con.paid_at || con.created_at).toLocaleDateString() }} • {{ con.payment_method }}</p>
+                <p v-if="con.notes" class="text-[9px] font-medium text-slate-500 mt-1 italic">{{ con.notes }}</p>
               </div>
             </div>
             <div class="text-right flex items-center gap-4">
@@ -161,7 +162,7 @@
 
           <div>
             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Note (Optional)</label>
-            <textarea v-model="form.note" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
+            <textarea v-model="form.notes" rows="2" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all"></textarea>
           </div>
         </div>
 
@@ -202,7 +203,7 @@ const form = ref({
   amount: 0,
   paid_at: new Date().toISOString().split('T')[0],
   method: 'transfer',
-  note: '',
+  notes: '',
   split_50_50: false,
   is_debit: false,
   status: 'success'
@@ -269,7 +270,7 @@ const editContribution = (con) => {
     amount: Math.abs(con.amount),
     paid_at: new Date(con.paid_at || con.created_at).toISOString().split('T')[0],
     method: con.payment_method,
-    note: con.notes,
+    notes: con.notes,
     split_50_50: false,
     is_debit: con.amount < 0,
     status: con.status
@@ -285,7 +286,7 @@ const closeModal = () => {
     amount: 0,
     paid_at: new Date().toISOString().split('T')[0],
     method: 'transfer',
-    note: '',
+    notes: '',
     split_50_50: false,
     is_debit: false,
     status: 'success'
@@ -326,7 +327,7 @@ const submitContribution = async () => {
         amount: payload.amount,
         paid_at: payload.paid_at,
         payment_method: payload.method,
-        notes: payload.note,
+        notes: payload.notes,
         status: payload.status
       })
       alert('Contribution updated successfully', 'Success')

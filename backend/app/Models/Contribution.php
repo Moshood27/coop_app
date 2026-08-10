@@ -46,6 +46,7 @@ class Contribution extends Model
         'qard_hasan_id',
         'ledger_journal_id',
         'paid_at',
+        'notes',
         'created_at',
     ];
 

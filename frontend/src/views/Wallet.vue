@@ -719,6 +719,7 @@
               </div>
               <div class="min-w-0">
                 <p class="text-sm font-bold text-slate-800 truncate leading-none mb-1">{{ titleFor(tx) }}</p>
+                <p v-if="tx.meta?.notes" class="text-[10px] text-slate-500 italic mt-0.5">{{ tx.meta.notes }}</p>
                 <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter leading-relaxed flex items-center gap-1 cursor-pointer hover:text-emerald-600 transition-colors" @click="copy(tx.reference)" title="Click to copy">
                   {{ new Date(tx.created_at).toLocaleDateString() }} • {{ tx.reference.length > 15 ? tx.reference.substring(0, 12) + '...' : tx.reference }}
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">

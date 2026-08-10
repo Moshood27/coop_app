@@ -118,7 +118,7 @@ class AdminMemberController extends Controller
             'paid_at' => 'required|date',
             'method' => 'required|string|in:cash,transfer,pos,other',
             'reference' => 'nullable|string|max:100',
-            'note' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
             'split_50_50' => 'nullable|boolean',
         ]);
 
@@ -143,7 +143,7 @@ class AdminMemberController extends Controller
                     'paid_at' => Carbon::parse($data['paid_at']),
                     'payment_method' => $data['method'],
                     'reference' => ($data['reference'] ?? ('SPL-'.strtoupper(Str::random(8)))) . '-' . strtoupper(substr($scheme->name, 0, 3)),
-                    'notes' => $data['note'] . " (Split 50/50)",
+                    'notes' => ($data['notes'] ?? '') . " (Split 50/50)",
                     'metadata' => [
                         'admin_id' => $request->user()->id,
                         'type' => 'manual_distribution_split'
@@ -160,7 +160,7 @@ class AdminMemberController extends Controller
                 'paid_at' => Carbon::parse($data['paid_at']),
                 'payment_method' => $data['method'],
                 'reference' => $data['reference'] ?? ('MAN-'.strtoupper(Str::random(10))),
-                'notes' => $data['note'],
+                'notes' => $data['notes'] ?? null,
                 'metadata' => [
                     'admin_id' => $request->user()->id,
                     'type' => 'manual_distribution'
@@ -468,7 +468,7 @@ class AdminMemberController extends Controller
             'amount' => 'required|numeric',
             'method' => 'required|string|in:cash,transfer,pos,wallet,other',
             'paid_at' => 'required|date',
-            'note' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         $amount = (float) $data['amount'];
@@ -487,7 +487,8 @@ class AdminMemberController extends Controller
                     'meta' => [
                         'loan_id' => $loan->id,
                         'admin_id' => $request->user()->id,
-                        'description' => "Loan Repayment for QH-{$loan->id} (by Admin)"
+                        'description' => "Loan Repayment for QH-{$loan->id} (by Admin)",
+                        'notes' => $data['notes'] ?? null
                     ]
                 ]);
             }
@@ -497,7 +498,7 @@ class AdminMemberController extends Controller
                 'payment_method' => $data['method'],
                 'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
                 'paid_at' => Carbon::parse($data['paid_at']),
-                'notes' => $data['note'],
+                'notes' => $data['notes'] ?? null,
                 'status' => 'success',
             ]);
 

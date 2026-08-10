@@ -109,6 +109,40 @@
       </div>
       <div v-else-if="!isLoading && !showAgm" class="hidden"></div>
       <div v-else class="card p-4 animate-pulse h-20"></div>
+
+      <!-- Recent History -->
+      <div v-if="!isLoading" class="space-y-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Recent History</h3>
+        <div class="space-y-3">
+          <div v-for="con in contributions" :key="con.id" class="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-black text-slate-800">{{ con.scheme?.name }}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ new Date(con.paid_at || con.created_at).toLocaleDateString() }} • {{ con.payment_method }}</p>
+                <p v-if="con.notes" class="text-[9px] font-medium text-slate-500 mt-1 italic">{{ con.notes }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-black text-slate-800" :class="con.amount < 0 ? 'text-rose-600' : ''">
+                {{ con.amount < 0 ? '-' : '' }}₦{{ Number(Math.abs(con.amount)).toLocaleString() }}
+              </p>
+              <p class="text-[8px] font-bold uppercase tracking-tighter" :class="con.status === 'success' ? 'text-emerald-500' : 'text-amber-500'">{{ con.status }}</p>
+            </div>
+          </div>
+
+          <div v-if="contributions.length === 0" class="text-center py-8 bg-white rounded-[2rem] border border-dashed border-slate-200">
+            <p class="text-xs font-bold text-slate-400">No recent history found.</p>
+          </div>
+        </div>
+      </div>
+      <div v-else class="space-y-3">
+        <div v-for="i in 3" :key="i" class="h-20 bg-slate-200/60 animate-pulse rounded-[2rem]"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -123,6 +157,7 @@ const months = ref(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct',
 const years = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1]
 const selectedYear = ref(new Date().getFullYear())
 const matrix = ref([])
+const contributions = ref([])
 const grandTotal = ref(0)
 const bfTotal = ref(0)
 const agmAmount = ref(0)
@@ -158,6 +193,9 @@ const fetchPassbook = async () => {
     grandTotal.value = data.grand_total
     bfTotal.value = data.bf_total || 0
 
+    // Fetch recent history
+    await fetchContributions()
+
     // Optional fields for AGM fee tracking; dynamic per year with sensible fallbacks
     const amountKey = `agm_fee_${selectedYear.value}_amount`
     const paidKey = `agm_fee_${selectedYear.value}_paid`
@@ -180,6 +218,15 @@ const fetchPassbook = async () => {
     dividendAmount.value = null
   } finally {
     isLoading.value = false
+  }
+}
+
+const fetchContributions = async () => {
+  try {
+    const { data } = await axios.get('/api/passbook/contributions')
+    contributions.value = data.data || []
+  } catch (e) {
+    console.error('Failed to fetch contributions', e)
   }
 }
 

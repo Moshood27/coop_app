@@ -208,6 +208,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/savings-groups/{id}/dissolve', [SavingsGroupController::class, 'dissolve']);
 
     // Passbook
+    Route::get('/passbook/contributions', [PassbookController::class, 'contributions']);
     Route::get('/passbook/{year}', [PassbookController::class, 'getMatrix']);
 
     // Virtual Account (Paystack DVA)
