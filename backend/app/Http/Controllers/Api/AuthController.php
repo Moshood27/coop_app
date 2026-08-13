@@ -149,6 +149,9 @@ class AuthController extends Controller
         $tokenName = $request->boolean('remember') ? 'remember_token' : 'mobile_token';
         $token = $user->createToken($tokenName)->plainTextToken;
 
+        // Fire Login event to trigger activity logging and notifications
+        event(new \Illuminate\Auth\Events\Login('sanctum', $user, $request->boolean('remember')));
+
         $response = response()->json([
             'token' => $token,
             'user' => $user,

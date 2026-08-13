@@ -62,6 +62,9 @@ class AdminAuthController extends Controller
 
         $token = $user->createToken('admin_token')->plainTextToken;
 
+        // Fire Login event to trigger activity logging and notifications
+        event(new \Illuminate\Auth\Events\Login('sanctum', $user, false));
+
         return response()->json([
             'token' => $token,
             'user' => $user,
@@ -102,6 +105,9 @@ class AdminAuthController extends Controller
         }
 
         $token = $user->createToken('admin_token')->plainTextToken;
+
+        // Fire Login event to trigger activity logging and notifications
+        event(new \Illuminate\Auth\Events\Login('sanctum', $user, false));
 
         return response()->json([
             'token' => $token,
