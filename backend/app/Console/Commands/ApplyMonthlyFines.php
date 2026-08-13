@@ -49,62 +49,62 @@ class ApplyMonthlyFines extends Command
 
         $this->info("Checking for members who didn't contribute between {$startOfLastMonth->toDateString()} and {$endOfLastMonth->toDateString()}.");
 
-        $users = User::whereNotNull('membership_number')
+        $finesAppliedCount = 0;
+
+        User::whereNotNull('membership_number')
             ->where('is_admin', false)
             ->whereNull('deceased_at')
             ->where('created_at', '<', $startOfLastMonth) // Members joined before last month started
-            ->get();
+            ->chunkById(100, function ($users) use ($startOfLastMonth, $endOfLastMonth, $latenessScheme, $fineAmount, $dryRun, &$finesAppliedCount) {
+                foreach ($users as $user) {
+                    $hasContributed = Contribution::where('user_id', $user->id)
+                        ->where('status', 'success')
+                        ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
+                        ->exists();
 
-        $finesAppliedCount = 0;
+                    if (!$hasContributed) {
+                        // Check if fine already applied for this month to avoid duplicates if run multiple times
+                        $fineExists = Contribution::where('user_id', $user->id)
+                            ->where('scheme_id', $latenessScheme->id)
+                            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                            ->exists();
 
-        foreach ($users as $user) {
-            $hasContributed = Contribution::where('user_id', $user->id)
-                ->where('status', 'success')
-                ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
-                ->exists();
+                        if (!$fineExists) {
+                            if ($dryRun) {
+                                $this->line("[DRY-RUN] User {$user->id} ({$user->name}): Lateness fine of ₦" . number_format($fineAmount, 2) . " would be added.");
+                                $finesAppliedCount++;
+                                continue;
+                            }
 
-            if (!$hasContributed) {
-                // Check if fine already applied for this month to avoid duplicates if run multiple times
-                $fineExists = Contribution::where('user_id', $user->id)
-                    ->where('scheme_id', $latenessScheme->id)
-                    ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-                    ->exists();
-
-                if (!$fineExists) {
-                    if ($dryRun) {
-                        $this->line("[DRY-RUN] User {$user->id} ({$user->name}): Lateness fine of ₦" . number_format($fineAmount, 2) . " would be added.");
-                        $finesAppliedCount++;
-                        continue;
-                    }
-
-                    Contribution::create([
-                        'user_id' => $user->id,
-                        'scheme_id' => $latenessScheme->id,
-                        'amount' => $fineAmount,
-                        'reference' => 'FINE-' . now()->format('Ymd') . '-' . $user->id . '-' . Str::upper(Str::random(4)),
-                        'status' => 'pending', // Fines are usually pending until paid or deducted
-                    ]);
-
-                    // Best-effort push notification to the user
-                    try {
-                        $push = app(PushService::class);
-                        $token = $user->fcm_token ?: ($user->device_token ?? null);
-                        if ($token) {
-                            $title = 'Lateness Fine Applied';
-                            $body = "A lateness fine of ₦" . number_format($fineAmount, 2) . " has been added to your account for not contributing in the previous month.";
-                            $push->send($token, $title, $body, [
-                                'type' => 'lateness_fine',
-                                'amount' => (string) $fineAmount,
+                            Contribution::create([
+                                'user_id' => $user->id,
+                                'scheme_id' => $latenessScheme->id,
+                                'amount' => $fineAmount,
+                                'reference' => 'FINE-' . now()->format('Ymd') . '-' . $user->id . '-' . Str::upper(Str::random(4)),
+                                'status' => 'pending', // Fines are usually pending until paid or deducted
                             ]);
-                        }
-                    } catch (\Throwable $e) {
-                        // ignore push errors, but log if needed
-                    }
 
-                    $finesAppliedCount++;
+                            // Best-effort push notification to the user
+                            try {
+                                $push = app(PushService::class);
+                                $token = $user->fcm_token ?: ($user->device_token ?? null);
+                                if ($token) {
+                                    $title = 'Lateness Fine Applied';
+                                    $body = "A lateness fine of ₦" . number_format($fineAmount, 2) . " has been added to your account for not contributing in the previous month.";
+                                    $push->send($token, $title, $body, [
+                                        'type' => 'lateness_fine',
+                                        'amount' => (string) $fineAmount,
+                                    ]);
+                                }
+                            } catch (\Throwable $e) {
+                                // ignore push errors, but log if needed
+                            }
+
+                            $finesAppliedCount++;
+                        }
+                    }
                 }
-            }
-        }
+            });
 
         if ($dryRun) {
             $this->info("Summary: $finesAppliedCount members would be fined (Dry Run).");

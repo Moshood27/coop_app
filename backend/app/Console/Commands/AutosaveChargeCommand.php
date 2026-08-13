@@ -50,87 +50,91 @@ class AutosaveChargeCommand extends Command
               ->orWhereDate('autosave_last_run_at', '<', $now->toDateString());
         });
 
-        $users = $query->limit(500)->get();
-        if ($users->isEmpty()) {
-            $this->info('No eligible users for autosave at this time.');
-            return self::SUCCESS;
-        }
+        $processedCount = 0;
 
-        $this->info('Autosave: processing '.$users->count().' users');
-
-        foreach ($users as $user) {
-            $amount = (float) ($user->autosave_amount ?? 5000.00);
-            if ($amount <= 0) {
-                $this->warn("User {$user->id}: autosave_amount <= 0, skipping");
-                $user->autosave_last_run_at = $now; // avoid repeated tries today
-                $user->save();
-                continue;
-            }
-
-            $amountKobo = (int) round($amount * 100);
-            $reference = 'AUTOSAVE-'.$now->format('Ymd').'-'.$user->id.'-'.bin2hex(random_bytes(3));
-
-            $payload = [
-                'email' => $user->email,
-                'amount' => $amountKobo,
-                'authorization_code' => $user->paystack_authorization_code,
-                'reference' => $reference,
-                'currency' => 'NGN',
-                'metadata' => [
-                    'type' => 'autosave',
-                    'user_id' => $user->id,
-                    'reason' => 'weekly_savings',
-                ],
-            ];
-
-            if ($dryRun) {
-                $this->line("[DRY-RUN] Would charge user {$user->id} ₦".number_format($amount, 2)." ref=$reference");
-                continue;
-            }
-
-            try {
-                $resp = Http::withToken($secret)
-                    ->acceptJson()
-                    ->timeout(20)
-                    ->connectTimeout(5)
-                    ->post('https://api.paystack.co/transaction/charge_authorization', $payload);
-
-                // Mark last run to avoid re-charging multiple times same day
-                $user->autosave_last_run_at = Carbon::now($tz);
-                $user->save();
-
-                if (!$resp->ok() || ($resp->json('status') !== true)) {
-                    $body = $resp->json() ?: ['raw' => $resp->body()];
-                    Log::warning('AutosaveCharge: Paystack charge failed', [
-                        'user_id' => $user->id,
-                        'reference' => $reference,
-                        'response' => $body,
-                    ]);
-                    $this->warn("User {$user->id} charge failed: ".($resp->json('message') ?? 'HTTP '.$resp->status()));
+        $query->chunkById(100, function ($users) use ($secret, $now, $tz, $dryRun, &$processedCount) {
+            foreach ($users as $user) {
+                $amount = (float)($user->autosave_amount ?? 5000.00);
+                if ($amount <= 0) {
+                    $this->warn("User {$user->id}: autosave_amount <= 0, skipping");
+                    $user->autosave_last_run_at = $now; // avoid repeated tries today
+                    $user->save();
                     continue;
                 }
 
-                $data = $resp->json('data') ?? [];
-                $status = $data['status'] ?? 'pending';
-                Log::info('AutosaveCharge: initiated', [
-                    'user_id' => $user->id,
-                    'reference' => $reference,
-                    'amount' => $amount,
-                    'status' => $status,
-                ]);
-                $this->info("User {$user->id} autosave initiated: ₦".number_format($amount, 2)." ref=$reference status=$status");
-            } catch (\Throwable $e) {
-                // Mark last run to avoid reattempt spamming in the same minute; next day will retry
-                $user->autosave_last_run_at = Carbon::now($tz);
-                $user->save();
+                $amountKobo = (int)round($amount * 100);
+                $reference = 'AUTOSAVE-' . $now->format('Ymd') . '-' . $user->id . '-' . bin2hex(random_bytes(3));
 
-                Log::error('AutosaveCharge: exception', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                ]);
-                $this->error("User {$user->id} autosave exception: ".$e->getMessage());
-                continue;
+                $payload = [
+                    'email' => $user->email,
+                    'amount' => $amountKobo,
+                    'authorization_code' => $user->paystack_authorization_code,
+                    'reference' => $reference,
+                    'currency' => 'NGN',
+                    'metadata' => [
+                        'type' => 'autosave',
+                        'user_id' => $user->id,
+                        'reason' => 'weekly_savings',
+                    ],
+                ];
+
+                if ($dryRun) {
+                    $this->line("[DRY-RUN] Would charge user {$user->id} ₦" . number_format($amount, 2) . " ref=$reference");
+                    $processedCount++;
+                    continue;
+                }
+
+                try {
+                    $resp = Http::withToken($secret)
+                        ->acceptJson()
+                        ->timeout(20)
+                        ->connectTimeout(5)
+                        ->post('https://api.paystack.co/transaction/charge_authorization', $payload);
+
+                    // Mark last run to avoid re-charging multiple times same day
+                    $user->autosave_last_run_at = Carbon::now($tz);
+                    $user->save();
+
+                    if (!$resp->ok() || ($resp->json('status') !== true)) {
+                        $body = $resp->json() ?: ['raw' => $resp->body()];
+                        Log::warning('AutosaveCharge: Paystack charge failed', [
+                            'user_id' => $user->id,
+                            'reference' => $reference,
+                            'response' => $body,
+                        ]);
+                        $this->warn("User {$user->id} charge failed: " . ($resp->json('message') ?? 'HTTP ' . $resp->status()));
+                        continue;
+                    }
+
+                    $data = $resp->json('data') ?? [];
+                    $status = $data['status'] ?? 'pending';
+                    Log::info('AutosaveCharge: initiated', [
+                        'user_id' => $user->id,
+                        'reference' => $reference,
+                        'amount' => $amount,
+                        'status' => $status,
+                    ]);
+                    $this->info("User {$user->id} autosave initiated: ₦" . number_format($amount, 2) . " ref=$reference status=$status");
+                } catch (\Throwable $e) {
+                    // Mark last run to avoid reattempt spamming in the same minute; next day will retry
+                    $user->autosave_last_run_at = Carbon::now($tz);
+                    $user->save();
+
+                    Log::error('AutosaveCharge: exception', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $this->error("User {$user->id} autosave exception: " . $e->getMessage());
+                    continue;
+                }
+                $processedCount++;
             }
+        });
+
+        if ($processedCount === 0) {
+            $this->info('No eligible users for autosave at this time.');
+        } else {
+            $this->info("Autosave: finished processing $processedCount users");
         }
 
         return self::SUCCESS;

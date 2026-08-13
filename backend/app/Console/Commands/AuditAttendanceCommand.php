@@ -70,34 +70,34 @@ class AuditAttendanceCommand extends Command
                 $query->whereIn('branch_id', $meeting->branches()->pluck('branches.id'));
             }
 
-            $users = $query->get();
+            $query->chunkById(100, function ($users) use ($meeting, $attendanceService) {
+                foreach ($users as $user) {
+                    // Skip pregnant women and women with babies under 3 months
+                    if ($user->isInNursingMotherGracePeriod()) {
+                        $this->line("Skipping User (Nursing Mother Grace): {$user->full_name} (ID: {$user->id})");
+                        continue;
+                    }
 
-            foreach ($users as $user) {
-                // Skip pregnant women and women with babies under 3 months
-                if ($user->isInNursingMotherGracePeriod()) {
-                    $this->line("Skipping User (Nursing Mother Grace): {$user->full_name} (ID: {$user->id})");
-                    continue;
+                    $record = AttendanceRecord::where('meeting_id', $meeting->id)
+                        ->where('user_id', $user->id)
+                        ->first();
+
+                    // If record exists and is 'excused' or 'pending_excuse', skip fine
+                    if ($record && in_array($record->status, ['excused', 'pending_excuse'])) {
+                        $this->line("Skipping User (Excused/Pending): {$user->full_name} (ID: {$user->id})");
+                        continue;
+                    }
+
+                    // If no record, or status is still 'absent', charge fine
+                    // Possible statuses are 'present', 'fine_paid', 'fine_pending', or 'absent'
+                    if (!$record || $record->status === 'absent') {
+                        $attendanceService->chargeAbsenceFine($user, $meeting, $record);
+                        $this->line("Processed absence fine for User: {$user->full_name} (ID: {$user->id})");
+                    } else {
+                        $this->line("Skipping User: {$user->full_name} (Status: {$record->status})");
+                    }
                 }
-
-                $record = AttendanceRecord::where('meeting_id', $meeting->id)
-                    ->where('user_id', $user->id)
-                    ->first();
-
-                // If record exists and is 'excused' or 'pending_excuse', skip fine
-                if ($record && in_array($record->status, ['excused', 'pending_excuse'])) {
-                    $this->line("Skipping User (Excused/Pending): {$user->full_name} (ID: {$user->id})");
-                    continue;
-                }
-
-                // If no record, or status is still 'absent', charge fine
-                // Possible statuses are 'present', 'fine_paid', 'fine_pending', or 'absent'
-                if (!$record || $record->status === 'absent') {
-                    $attendanceService->chargeAbsenceFine($user, $meeting, $record);
-                    $this->line("Processed absence fine for User: {$user->full_name} (ID: {$user->id})");
-                } else {
-                    $this->line("Skipping User: {$user->full_name} (Status: {$record->status})");
-                }
-            }
+            });
 
             $this->info("Meeting {$meeting->name} audited successfully.");
         }
