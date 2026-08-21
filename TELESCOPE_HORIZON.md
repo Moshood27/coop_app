@@ -96,4 +96,33 @@ When deploying updates, the following commands are automatically run via `compos
 
 ---
 
-— Last updated: 2026-04-06
+## 6. Daily Maintenance (Production)
+
+To keep the database and Redis healthy, the following maintenance tasks are automated via the Laravel Scheduler:
+
+### Automated Tasks
+The following commands are defined in `backend/routes/console.php` and run daily:
+- **Telescope Pruning**: `php artisan telescope:prune --hours=24` (Deletes entries older than 24 hours).
+- **Horizon Metrics**: `php artisan horizon:snapshot` (Runs every 5 minutes to generate health metrics).
+- **Horizon Cleanup**: `php artisan horizon:forget --all` (Wipes all failed jobs daily to prevent Redis bloat).
+- **Queue Cleanup**: `php artisan queue:prune-failed --hours=24` and `queue:prune-batches --hours=24`.
+
+### Manual Clearing
+If you need to manually wipe all data (e.g., during troubleshooting):
+```bash
+# Clear all Telescope data
+php artisan telescope:clear
+
+# Clear all Horizon metrics
+php artisan horizon:clear-metrics
+
+# Clear all Horizon failed jobs
+php artisan horizon:forget --all
+```
+
+### Production Runner
+Ensure the `attaqwa-scheduler` service is running in Docker. This service executes `php artisan schedule:work`, which triggers the tasks listed above.
+
+---
+
+— Last updated: 2026-08-21
