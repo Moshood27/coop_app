@@ -20,24 +20,31 @@ services:
     container_name: attaqwa-app
     restart: unless-stopped
     env_file: [ ".env" ]
+    environment:
+      - PHP_MEMORY_LIMIT=512M
     volumes:
       - ./backend:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
     networks:
       - attaqwa-network
+      - gateway-network
     depends_on:
-      mysql:
+      db: # Updated from mysql to db
         condition: service_healthy
 
-  mysql:
+  db: # Service name now matches your .env DB_HOST=db
     image: mysql:8.4
-    container_name: attaqwa-mysql
+    container_name: attaqwa-db # Using 'db' to avoid 'mysql' name conflict
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    command: --mysql-native-password=ON
     volumes:
-      - mysql-data:/var/lib/mysql
+      - old-db-data:/var/lib/mysql # Points to the volume with your data
     networks:
       - attaqwa-network
     healthcheck:
@@ -62,11 +69,13 @@ services:
     env_file: [ ".env" ]
     volumes:
       - ./backend:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
     networks:
       - attaqwa-network
       - gateway-network
     depends_on:
-      - mysql
+      - db # Updated from mysql to db
       - app
 
   reverb:
@@ -76,9 +85,12 @@ services:
     container_name: attaqwa-reverb
     restart: unless-stopped
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
-    env_file: [ ".env" ]
+    env_file:
+      - .env
     volumes:
       - ./backend:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
     networks:
       - attaqwa-network
       - gateway-network
@@ -94,7 +106,7 @@ services:
     ports:
       - "${FORWARD_PMA_PORT:-8081}:80"
     environment:
-      PMA_HOST: mysql
+      PMA_HOST: db
       PMA_PORT: 3306
       PMA_USER: ${DB_USERNAME}
       PMA_PASSWORD: ${DB_PASSWORD}
@@ -103,7 +115,7 @@ services:
     networks:
       - attaqwa-network
     depends_on:
-      mysql:
+      db:
         condition: service_healthy
 
 networks:
@@ -113,5 +125,7 @@ networks:
     external: true
 
 volumes:
-  mysql-data:
-    driver: local
+  # This tells Docker to use the existing volume 'coop2_db-data'
+  old-db-data:
+    external: true
+    name: coop2_db-data
