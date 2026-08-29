@@ -112,6 +112,7 @@ class QardHasanResource extends Resource
                     ->hint('Auto-generated at create time'),
                 Forms\Components\TextInput::make('principal_amount')
                     ->numeric()
+                    ->step(0.01)
                     ->prefix('₦')
                     ->required()
                     ->disabled()
@@ -163,11 +164,13 @@ class QardHasanResource extends Resource
                 Forms\Components\TextInput::make('admin_fee_flat')
                     ->label('Admin Fee (Flat)')
                     ->numeric()
+                    ->step(0.01)
                     ->prefix('₦')
                     ->default(0),
                 Forms\Components\TextInput::make('admin_fee_pct')
                     ->label('Admin Fee (%)')
                     ->numeric()
+                    ->step(0.01)
                     ->suffix('%')
                     ->default(0),
                 Forms\Components\TextInput::make('paid_amount')
@@ -820,8 +823,7 @@ class QardHasanResource extends Resource
 
                         // Calculate credited amount
                         $principal = (float) $record->principal_amount;
-                        $fee = (float) $record->admin_fee_flat + ($principal * ((float) $record->admin_fee_pct / 100));
-                        $credit = max($principal - $fee, 0);
+                        $credit = $principal; // No deduction as per requirements
 
                         $mode = $data['disbursement_mode'] ?? 'internal';
                         $withdrawable = in_array($mode, ['cash_out', 'manual']);

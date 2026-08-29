@@ -794,6 +794,7 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('amount')
                             ->label('Amount to credit')
                             ->numeric()
+                            ->step(0.01)
                             ->minValue(0.01)
                             ->required()
                             ->prefix('₦'),
@@ -874,6 +875,7 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('amount')
                             ->label('Amount to debit')
                             ->numeric()
+                            ->step(0.01)
                             ->minValue(0.01)
                             ->required()
                             ->prefix('₦'),

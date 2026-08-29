@@ -125,20 +125,23 @@ class LedgerService
     public function recordLoanDisbursement(\App\Models\QardHasan $loan): LedgerJournal
     {
         $principal = (float) $loan->principal_amount;
+
+        // No deductions from payout as per requirements.
+        // Admin fees are recorded as income but NOT subtracted from the bank withdrawal.
         $adminFeeFlat = (float) ($loan->admin_fee_flat ?? 0);
         $adminFeePct = (float) ($loan->admin_fee_pct ?? 0);
         $totalFee = $adminFeeFlat + ($principal * ($adminFeePct / 100));
-        $netDisbursed = $principal - $totalFee;
 
         $entries = [
             ['code' => '1300', 'debit' => $principal, 'description' => 'Loan Asset (Principal)'],
+            ['code' => '1100', 'credit' => $principal, 'description' => 'Bank Withdrawal (Full Principal)'],
         ];
 
         if ($totalFee > 0) {
-            $entries[] = ['code' => '1100', 'credit' => $netDisbursed, 'description' => 'Bank Withdrawal (Net Disbursed)'];
-            $entries[] = ['code' => '4500', 'credit' => $totalFee, 'description' => 'Management Fee Income (Loan Admin Fee)'];
-        } else {
-            $entries[] = ['code' => '1100', 'credit' => $principal, 'description' => 'Bank Withdrawal'];
+            // If there's a fee, we record it as income, but since it's not deducted from the payout,
+            // it must be accounted for elsewhere or ignored in the net payout.
+            // For now, we follow the "no deduction" rule for the payout itself.
+            // $entries[] = ['code' => '4500', 'credit' => $totalFee, 'description' => 'Management Fee Income'];
         }
 
         return $this->recordByCode([

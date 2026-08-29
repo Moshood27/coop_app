@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Models\ShariahAuditLog as ShariahAudit;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Models\Contribution;
+use App\Models\Scheme;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section as InfoSection;
@@ -40,10 +42,63 @@ class WithdrawalRequestResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Withdrawal Request')
                     ->schema([
-                        Forms\Components\TextInput::make('user_id')->disabled()->dehydrated(false),
-                        Forms\Components\TextInput::make('amount')->numeric()->prefix('₦')->disabled(),
-                        Forms\Components\TextInput::make('reference')->disabled(),
-                        Forms\Components\TextInput::make('status')->disabled(),
+                        Forms\Components\Select::make('user_id')
+                            ->label('Member')
+                            ->relationship('user', 'surname')
+                            ->getOptionLabelFromRecordUsing(fn (User $record) => "{$record->full_name} ({$record->membership_number})")
+                            ->searchable(['surname', 'name', 'other_names', 'membership_number'])
+                            ->required()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if ($state) {
+                                    $user = User::find($state);
+                                    if ($user) {
+                                        $set('bank_name', $user->bank_name);
+                                        $set('account_number', $user->account_number);
+                                        $set('account_name', $user->account_name);
+                                        $set('bank_code', $user->bank_code);
+                                    }
+                                }
+                            })
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\Select::make('type')
+                            ->options([
+                                'wallet' => 'Wallet',
+                                'special_savings' => 'Special Savings',
+                            ])
+                            ->default('wallet')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\TextInput::make('amount')
+                            ->numeric()
+                            ->prefix('₦')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\TextInput::make('reference')
+                            ->default(fn () => 'WD-ADM-' . now()->format('YmdHis') . '-' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(6)))
+                            ->disabled()
+                            ->required()
+                            ->dehydrated(),
+                        Forms\Components\TextInput::make('status')
+                            ->default('pending')
+                            ->disabled()
+                            ->dehydrated(),
+                        Forms\Components\TextInput::make('bank_name')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\TextInput::make('account_number')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\TextInput::make('account_name')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\TextInput::make('bank_code')
+                            ->required()
+                            ->disabled(fn ($record) => $record !== null),
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Note')
+                            ->rows(2)
+                            ->columnSpanFull(),
                     ])->columns(2),
             ]);
     }
@@ -57,6 +112,7 @@ class WithdrawalRequestResource extends Resource
                         TextEntry::make('user.full_name')->label('Member'),
                         TextEntry::make('amount')->money('ngn'),
                         TextEntry::make('reference')->label('Ref'),
+                        TextEntry::make('type')->badge(),
                         TextEntry::make('status')->badge(),
                         TextEntry::make('bank_name')->label('Bank'),
                         TextEntry::make('account_number')->label('Acct #'),
@@ -99,6 +155,13 @@ class WithdrawalRequestResource extends Resource
                     ->getStateUsing(fn ($record) => (bool)($record->meta['is_vendor_settlement'] ?? false))
                     ->toggleable(),
                 TextColumn::make('amount')->money('ngn', true)->sortable(),
+                TextColumn::make('type')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'wallet' => 'info',
+                        'special_savings' => 'warning',
+                        default => 'gray',
+                    }),
                 TextColumn::make('bank_name')->label('Bank')->toggleable(),
                 TextColumn::make('bank_code')->label('Code')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('account_number')
@@ -195,26 +258,50 @@ class WithdrawalRequestResource extends Resource
                         DB::transaction(function () use ($record) {
                             // Lock user and ensure sufficient balance
                             $user = User::where('id', $record->user_id)->lockForUpdate()->first();
-                            if ((float)$user->balance < (float)$record->amount) {
-                                throw new \RuntimeException('Insufficient member wallet balance to fulfill withdrawal.');
-                            }
-                            $user->decrement('balance', (float)$record->amount);
 
-                            // Create wallet transaction (bank withdrawal debit)
-                            WalletTransaction::create([
-                                'user_id' => $user->id,
-                                'type' => 'debit',
-                                'amount' => (float)$record->amount,
-                                'reference' => $record->reference,
-                                'source' => 'bank_withdrawal',
-                                'meta' => [
-                                    'withdrawal_request_id' => $record->id,
-                                    'bank_code' => $record->bank_code,
-                                    'bank_name' => $record->bank_name,
-                                    'account_number' => $record->account_number,
-                                    'account_name' => $record->account_name,
-                                ],
-                            ]);
+                            if ($record->type === WithdrawalRequest::TYPE_SPECIAL_SAVINGS) {
+                                if ((float)$user->special_savings_balance < (float)$record->amount) {
+                                    throw new \RuntimeException('Insufficient member Special Savings balance to fulfill withdrawal.');
+                                }
+
+                                $specialSavingsScheme = Scheme::where('name', 'Special Savings')->first();
+                                if (!$specialSavingsScheme) {
+                                    throw new \RuntimeException('Special Savings scheme not found in the system.');
+                                }
+
+                                Contribution::create([
+                                    'user_id' => $user->id,
+                                    'scheme_id' => $specialSavingsScheme->id,
+                                    'amount' => -(float)$record->amount,
+                                    'reference' => $record->reference,
+                                    'status' => 'success',
+                                    'category' => 'withdrawal',
+                                    'paid_at' => now(),
+                                ]);
+
+                                $user->syncSchemeBalance('Special Savings');
+                            } else {
+                                if ((float)$user->balance < (float)$record->amount) {
+                                    throw new \RuntimeException('Insufficient member wallet balance to fulfill withdrawal.');
+                                }
+                                $user->decrement('balance', (float)$record->amount);
+
+                                // Create wallet transaction (bank withdrawal debit)
+                                WalletTransaction::create([
+                                    'user_id' => $user->id,
+                                    'type' => 'debit',
+                                    'amount' => (float)$record->amount,
+                                    'reference' => $record->reference,
+                                    'source' => 'bank_withdrawal',
+                                    'meta' => [
+                                        'withdrawal_request_id' => $record->id,
+                                        'bank_code' => $record->bank_code,
+                                        'bank_name' => $record->bank_name,
+                                        'account_number' => $record->account_number,
+                                        'account_name' => $record->account_name,
+                                    ],
+                                ]);
+                            }
 
                             $record->status = 'paid';
                             $record->processed_at = now();
@@ -223,6 +310,7 @@ class WithdrawalRequestResource extends Resource
                                 'withdrawal_request_id' => $record->id,
                                 'user_id' => $record->user_id,
                                 'amount' => $record->amount,
+                                'type' => $record->type,
                                 'reference' => $record->reference,
                             ]);
                         });
@@ -377,6 +465,7 @@ class WithdrawalRequestResource extends Resource
     {
         return [
             'index' => Pages\ListWithdrawalRequests::route('/'),
+            'create' => Pages\CreateWithdrawalRequest::route('/create'),
         ];
     }
 

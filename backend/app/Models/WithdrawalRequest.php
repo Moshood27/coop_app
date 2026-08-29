@@ -12,16 +12,20 @@ class WithdrawalRequest extends Model
 {
     use HasFactory, LogsActivity;
 
+    public const TYPE_WALLET = 'wallet';
+    public const TYPE_SPECIAL_SAVINGS = 'special_savings';
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'amount', 'reason', 'processed_at'])
+            ->logOnly(['status', 'amount', 'reason', 'processed_at', 'type'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
 
     protected $fillable = [
         'user_id',
+        'type',
         'amount',
         'reference',
         'status',

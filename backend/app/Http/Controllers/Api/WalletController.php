@@ -894,10 +894,13 @@ class WalletController extends Controller
 
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1',
+            'type' => 'nullable|string|in:wallet,special_savings',
             'pin' => [Setting::get('transaction_pin_enabled', true) ? 'required' : 'nullable', 'regex:/^\d{4}$/'],
             'otp' => ['nullable', 'string', 'max:10'], // optional if transition, but as per task, should use Push OTP
             'note' => 'nullable|string|max:200',
         ]);
+
+        $type = $validated['type'] ?? 'wallet';
 
         $user = $request->user();
 
@@ -927,16 +930,22 @@ class WalletController extends Controller
             return response()->json(['message' => 'Amount must be greater than zero'], 422);
         }
 
-        $available = method_exists($user, 'availableForWithdrawal') ? (float) $user->availableForWithdrawal() : (float) $user->balance;
-        if ($amount > $available) {
-            return response()->json([
-                'message' => 'Amount exceeds your available-for-withdrawal balance.',
-                'available_for_withdrawal' => $available,
-            ], 422);
-        }
+        if ($type === 'wallet') {
+            $available = method_exists($user, 'availableForWithdrawal') ? (float)$user->availableForWithdrawal() : (float)$user->balance;
+            if ($amount > $available) {
+                return response()->json([
+                    'message' => 'Amount exceeds your available-for-withdrawal balance.',
+                    'available_for_withdrawal' => $available,
+                ], 422);
+            }
 
-        if ((float)$user->balance < $amount) {
-            return response()->json(['message' => 'Insufficient wallet balance'], 422);
+            if ((float)$user->balance < $amount) {
+                return response()->json(['message' => 'Insufficient wallet balance'], 422);
+            }
+        } else {
+            if ((float)$user->special_savings_balance < $amount) {
+                return response()->json(['message' => 'Insufficient Special Savings balance'], 422);
+            }
         }
 
         // Prevent multiple concurrent pending withdrawal requests
@@ -949,18 +958,19 @@ class WalletController extends Controller
             ], 422);
         }
 
-        $reference = 'WD-'.now()->format('YmdHis').'-'.$user->id.'-'.Str::upper(Str::random(6));
+        $reference = ($type === 'special_savings' ? 'WD-SPEC-' : 'WD-') . now()->format('YmdHis') . '-' . $user->id . '-' . Str::upper(Str::random(6));
 
         // Wrap creation in a transaction and lock the user to avoid race conditions
         $req = null;
         try {
-            DB::transaction(function () use ($user, $amount, $reference, $validated, $request, &$req) {
+            DB::transaction(function () use ($user, $amount, $reference, $validated, $request, $type, &$req) {
                 // Lock the user row to serialize concurrent requests
                 User::where('id', $user->id)->lockForUpdate()->first();
 
                 // Double-check for any pending request within the same transaction
                 $hasPendingAgain = WithdrawalRequest::where('user_id', $user->id)
                     ->where('status', 'pending')
+                    ->where('type', $type)
                     ->exists();
                 if ($hasPendingAgain) {
                     throw new \RuntimeException('PENDING_DUPLICATE');
@@ -968,6 +978,7 @@ class WalletController extends Controller
 
                 $req = WithdrawalRequest::create([
                     'user_id' => $user->id,
+                    'type' => $type,
                     'amount' => $amount,
                     'reference' => $reference,
                     'status' => 'pending',

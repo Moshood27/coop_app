@@ -531,11 +531,7 @@ class QardHasan extends Model
 
     public function getCreditedAmountAttribute(): float
     {
-        $p = (float) $this->principal_amount;
-        $fee = (float) $this->admin_fee_flat + ($p * ((float) $this->admin_fee_pct / 100));
-        $credit = $p - $fee;
-
-        return $credit > 0 ? round($credit, 2) : 0.0;
+        return round((float) $this->principal_amount, 2);
     }
 
     public function getNextInstallmentAmountAttribute(): float

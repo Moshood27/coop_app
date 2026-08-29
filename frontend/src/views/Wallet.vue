@@ -584,16 +584,27 @@
           <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">Withdrawals are sent to your verified bank account in Profile settings.</p>
           <div class="space-y-4">
             <div>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Source account</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button @click="withdrawType = 'wallet'" 
+                        :class="withdrawType === 'wallet' ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20' : 'bg-slate-50 text-slate-500 border border-slate-100'"
+                        class="py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all">Wallet</button>
+                <button @click="withdrawType = 'special_savings'" 
+                        :class="withdrawType === 'special_savings' ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20' : 'bg-slate-50 text-slate-500 border border-slate-100'"
+                        class="py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all">Special Savings</button>
+              </div>
+            </div>
+            <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount</label>
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-bold">₦</div>
-                <input v-model.number="withdrawAmount" type="number" min="1" :max="Number(wallet?.available_for_withdrawal || 0)"
+                <input v-model.number="withdrawAmount" type="number" min="1" :max="Number(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_balance || 0))"
                        class="w-full bg-slate-50 pl-11 p-4 rounded-2xl border border-slate-100 text-sm outline-none focus:border-emerald-500 transition-all"
                        placeholder="0.00" />
               </div>
               <div class="mt-2 flex justify-between items-center px-1">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">Available</span>
-                <span class="text-[10px] text-emerald-700 font-black">₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet?.available_for_withdrawal || 0) }}</span>
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Available in {{ withdrawType === 'wallet' ? 'Wallet' : 'Special Savings' }}</span>
+                <span class="text-[10px] text-emerald-700 font-black">₦ {{ hideBalances ? '***,***.**' : formatMoney(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_balance || 0)) }}</span>
               </div>
             </div>
             <div>
@@ -668,6 +679,7 @@
                 </p>
               </div>
               <div class="shrink-0 flex items-center gap-2">
+                <span v-if="wr.type" class="text-[8px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">{{ wr.type.replace('_', ' ') }}</span>
                 <span :class="statusClass(wr.status)" class="text-[10px] font-black uppercase px-2 py-1 rounded-lg tracking-wider">{{ wr.status }}</span>
                 <button v-if="wr.status === 'pending'" @click="cancelWithdrawal(wr)" class="text-rose-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 transition-colors">Cancel</button>
               </div>
@@ -891,6 +903,7 @@ const flwBvnValid = computed(() => flwBvnDigits.value.length === 11)
 // Withdraw to bank form state
 const withdrawAmount = ref('')
 const withdrawNote = ref('')
+const withdrawType = ref('wallet')
 
 // P2P transfer form state
 const toType = ref('phone') // 'phone' | 'membership'
@@ -1152,13 +1165,13 @@ const startTransfer = async () => {
 // Start Withdraw: biometric check then prompt for PIN
 const startWithdraw = async () => {
   const amt = Number(withdrawAmount.value || 0)
-  const available = Number(wallet.value?.available_for_withdrawal || 0)
+  const available = Number(withdrawType.value === 'wallet' ? (wallet.value?.available_for_withdrawal || 0) : (wallet.value?.special_savings_balance || 0))
   if (!(amt > 0)) {
     showNotice('Enter amount', 'Please enter a valid withdrawal amount.', 'warning')
     return
   }
   if (amt > available) {
-    showNotice('Too high', 'Amount exceeds your available-for-withdrawal balance.', 'error')
+    showNotice('Too high', 'Amount exceeds your available balance in selected source.', 'error')
     return
   }
   try {
@@ -1198,7 +1211,7 @@ const handlePinConfirm = async (val) => {
   loading.value = true
   try {
     if (pinPrompt.value.mode === 'withdraw') {
-      const payload = { amount: Number(withdrawAmount.value), pin }
+      const payload = { amount: Number(withdrawAmount.value), type: withdrawType.value, pin }
       const n = String(withdrawNote.value || '').trim()
       if (n) payload.note = n
       const { data } = await axios.post('/api/wallet/withdraw', payload)

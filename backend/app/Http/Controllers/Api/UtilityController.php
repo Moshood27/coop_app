@@ -45,9 +45,9 @@ class UtilityController extends Controller
 
         // Determine status using existing helpers
         $status = 'failed';
-        if ($this->isVtpassSuccess($payload)) {
+        if ($this->isVtuSuccess($payload)) {
             $status = 'success';
-        } elseif ($this->isVtpassPending($payload)) {
+        } elseif ($this->isVtuPending($payload)) {
             $status = 'pending';
         }
 
@@ -256,9 +256,9 @@ class UtilityController extends Controller
         }
 
         $status = 'failed';
-        if ($this->isVtpassSuccess($result)) {
+        if ($this->isVtuSuccess($result)) {
             $status = 'success';
-        } elseif ($this->isVtpassPending($result)) {
+        } elseif ($this->isVtuPending($result)) {
             $status = 'pending';
         }
 
@@ -548,19 +548,19 @@ class UtilityController extends Controller
         }
 
         $body = $response['body'];
-        $success = $this->isVtpassSuccess($body);
+        $success = $this->isVtuSuccess($body);
 
         if (!$success) {
             // If provider indicates pending/processing, perform a single requery before deciding
-            if ($this->isVtpassPending($body)) {
+            if ($this->isVtuPending($body)) {
                 if (($providerUsed ?? '') === 'vtpass') {
                     $requery = $this->requeryVtpass($reference);
                     if ($requery['ok']) {
                         $rb = $requery['body'];
-                        if ($this->isVtpassSuccess($rb)) {
+                        if ($this->isVtuSuccess($rb)) {
                             // Treat as success below (continue to debit)
                             $body = $rb;
-                        } elseif ($this->isVtpassPending($rb)) {
+                        } elseif ($this->isVtuPending($rb)) {
                             // Keep transaction pending and inform client
                             $tx->update([
                                 'status' => 'pending',
@@ -603,10 +603,10 @@ class UtilityController extends Controller
                         $ckRequery = $this->requeryClubKonnectByRequestId($reference);
                         if ($ckRequery['ok']) {
                             $ckb = $ckRequery['body'];
-                            if ($this->isVtpassSuccess($ckb)) {
+                            if ($this->isVtuSuccess($ckb)) {
                                 // Treat as success below; set $body to requery body so we persist it
                                 $body = $ckb;
-                            } elseif ($this->isVtpassPending($ckb)) {
+                            } elseif ($this->isVtuPending($ckb)) {
                                 // ClubKonnect accepted (100). Debit member immediately and mark pending to protect Coop funds.
                                 DB::transaction(function () use ($user, $amount, $reference, $tx, $ckb) {
                                     $lockedUser = \App\Models\User::whereKey($user->id)->lockForUpdate()->first();
@@ -918,19 +918,19 @@ class UtilityController extends Controller
         }
 
         $body = $response['body'];
-        $success = $this->isVtpassSuccess($body);
+        $success = $this->isVtuSuccess($body);
 
         if (!$success) {
             // If provider indicates pending/processing, perform a single requery before deciding
-            if ($this->isVtpassPending($body)) {
+            if ($this->isVtuPending($body)) {
                 if (($providerUsed ?? '') === 'vtpass') {
                     $requery = $this->requeryVtpass($reference);
                     if ($requery['ok']) {
                         $rb = $requery['body'];
-                        if ($this->isVtpassSuccess($rb)) {
+                        if ($this->isVtuSuccess($rb)) {
                             // Treat as success below (continue to debit)
                             $body = $rb;
-                        } elseif ($this->isVtpassPending($rb)) {
+                        } elseif ($this->isVtuPending($rb)) {
                             // Keep transaction pending and inform client
                             $tx->update([
                                 'status' => 'pending',
@@ -973,10 +973,10 @@ class UtilityController extends Controller
                         $ckRequery = $this->requeryClubKonnectByRequestId($reference);
                         if ($ckRequery['ok']) {
                             $ckb = $ckRequery['body'];
-                            if ($this->isVtpassSuccess($ckb)) {
+                            if ($this->isVtuSuccess($ckb)) {
                                 // Treat as success below; set $body to requery body so we persist it
                                 $body = $ckb;
-                            } elseif ($this->isVtpassPending($ckb)) {
+                            } elseif ($this->isVtuPending($ckb)) {
                                 // ClubKonnect accepted (100). Debit member immediately and mark pending to protect Coop funds.
                                 DB::transaction(function () use ($user, $amount, $reference, $tx, $ckb, $convenience, $bundleCode) {
                                     $lockedUser = \App\Models\User::whereKey($user->id)->lockForUpdate()->first();
@@ -1631,16 +1631,16 @@ class UtilityController extends Controller
         }
 
         $body = $response['body'];
-        $success = $this->isVtpassSuccess($body);
+        $success = $this->isVtuSuccess($body);
         if (!$success) {
-            if ($this->isVtpassPending($body)) {
+            if ($this->isVtuPending($body)) {
                 if (($providerUsed ?? '') === 'vtpass') {
                     $requery = $this->requeryVtpass($reference);
                     if ($requery['ok']) {
                         $rb = $requery['body'];
-                        if ($this->isVtpassSuccess($rb)) {
+                        if ($this->isVtuSuccess($rb)) {
                             $body = $rb;
-                        } elseif ($this->isVtpassPending($rb)) {
+                        } elseif ($this->isVtuPending($rb)) {
                             $tx->update([
                                 'status' => 'pending',
                                 'provider_response' => $rb,
@@ -1680,9 +1680,9 @@ class UtilityController extends Controller
                         $ckRequery = $this->requeryClubKonnectByRequestId($reference);
                         if ($ckRequery['ok']) {
                             $ckb = $ckRequery['body'];
-                            if ($this->isVtpassSuccess($ckb)) {
+                            if ($this->isVtuSuccess($ckb)) {
                                 $body = $ckb;
-                            } elseif ($this->isVtpassPending($ckb)) {
+                            } elseif ($this->isVtuPending($ckb)) {
                                 DB::transaction(function () use ($user, $totalDebit, $reference, $tx, $ckb, $convenience, $serviceId, $meter, $meterType) {
                                     $lockedUser = \App\Models\User::whereKey($user->id)->lockForUpdate()->first();
                                     if ((float)$lockedUser->balance >= (float)$totalDebit) {
@@ -1965,16 +1965,16 @@ class UtilityController extends Controller
         }
 
         $body = $response['body'];
-        $success = $this->isVtpassSuccess($body);
+        $success = $this->isVtuSuccess($body);
         if (!$success) {
-            if ($this->isVtpassPending($body)) {
+            if ($this->isVtuPending($body)) {
                 if (($providerUsed ?? '') === 'vtpass') {
                     $requery = $this->requeryVtpass($reference);
                     if ($requery['ok']) {
                         $rb = $requery['body'];
-                        if ($this->isVtpassSuccess($rb)) {
+                        if ($this->isVtuSuccess($rb)) {
                             $body = $rb;
-                        } elseif ($this->isVtpassPending($rb)) {
+                        } elseif ($this->isVtuPending($rb)) {
                             $tx->update([
                                 'status' => 'pending',
                                 'provider_response' => $rb,
@@ -2014,10 +2014,10 @@ class UtilityController extends Controller
                         $ckRequery = $this->requeryClubKonnectByRequestId($reference);
                         if ($ckRequery['ok']) {
                             $ckb = $ckRequery['body'];
-                            if ($this->isVtpassSuccess($ckb)) {
+                            if ($this->isVtuSuccess($ckb)) {
                                 // Treat as success below; set $body to requery body so we persist it
                                 $body = $ckb;
-                            } elseif ($this->isVtpassPending($ckb)) {
+                            } elseif ($this->isVtuPending($ckb)) {
                                 // ClubKonnect accepted (100). Debit member immediately and mark pending to protect Coop funds.
                                 DB::transaction(function () use ($user, $totalDebit, $reference, $tx, $ckb, $convenience, $service, $smartcard, $bundleCode) {
                                     $lockedUser = \App\Models\User::whereKey($user->id)->lockForUpdate()->first();
@@ -2488,11 +2488,11 @@ class UtilityController extends Controller
             $resWithProvider = array_merge($resp, ['provider_used' => $provider, 'attempts' => $attempts]);
 
             // If already a success, return immediately
-            if ($this->isVtpassSuccess($body)) {
+            if ($this->isVtuSuccess($body)) {
                 return $resWithProvider;
             }
             // If pending, do not failover; return pending so requery/webhook can finalize
-            if ($this->isVtpassPending($body)) {
+            if ($this->isVtuPending($body)) {
                 return $resWithProvider;
             }
 
@@ -2928,7 +2928,7 @@ class UtilityController extends Controller
         return $token;
     }
 
-    private function isVtpassSuccess($body): bool
+    private function isVtuSuccess($body): bool
     {
         if (is_array($body)) {
             // Verification responses (electricity/cable)
@@ -2991,7 +2991,7 @@ class UtilityController extends Controller
         return false;
     }
 
-    private function isVtpassPending($body): bool
+    private function isVtuPending($body): bool
     {
         if (is_array($body)) {
             $status = strtolower((string)($body['status'] ?? ''));

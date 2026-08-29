@@ -53,8 +53,18 @@ class ExpenseEntryResource extends Resource
                         Forms\Components\TextInput::make('amount')
                             ->required()
                             ->numeric()
+                            ->step(0.01)
                             ->minValue(0.01)
                             ->prefix('₦'),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'processed' => 'Processed',
+                                'rejected' => 'Rejected',
+                            ])
+                            ->default('approved')
+                            ->required(),
                         Forms\Components\Select::make('source_of_funds')
                             ->options([
                                 'administrative_fund' => 'Administrative Fund (Monthly Fees)',
@@ -164,7 +174,7 @@ class ExpenseEntryResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('receipt_path')
                             ->label('Invoice/Receipt Upload')
-                            ->image()
+                            ->acceptedFileTypes(['image/*', 'application/pdf'])
                             ->directory('expense-receipts')
                             ->required()
                             ->helperText('Mandatory for all expenses.'),
