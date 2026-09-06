@@ -161,7 +161,14 @@ class AttendanceController extends Controller
         }
 
         // Validate either PIN or QR Token
-        if ($request->filled('qr_token') && Setting::get('attendance_qr_enabled', true)) {
+        $qrEnabled = Setting::get('attendance_qr_enabled', true);
+        $pinEnabled = Setting::get('attendance_pin_enabled', true);
+
+        if ($request->filled('qr_token')) {
+            if (!$qrEnabled) {
+                return response()->json(['message' => 'QR attendance is currently disabled'], 400);
+            }
+
             $cacheKey = "meeting_{$meeting->id}_qr_token";
             $storedToken = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
@@ -178,13 +185,25 @@ class AttendanceController extends Controller
             // Successfully used QR token, refresh it for the next person
             $this->attendanceService->refreshAttendanceQrToken($meeting);
         } else {
-            if (Setting::get('attendance_pin_enabled', true)) {
-                if (!$request->filled('pin')) {
-                    return response()->json(['message' => 'Either PIN or QR code is required'], 400);
+            if (!$pinEnabled) {
+                $methods = [];
+                if ($qrEnabled) $methods[] = 'QR Code';
+                if (Setting::get('attendance_fingerprint_enabled', true)) $methods[] = 'Biometrics';
+                if (Setting::get('attendance_ble_beacon_enabled', true)) $methods[] = 'BLE Beacon';
+
+                $message = 'PIN attendance is currently disabled.';
+                if (!empty($methods)) {
+                    $message .= ' Please use ' . implode(', ', $methods) . ' to mark attendance.';
                 }
-                if ($meeting->pin !== $request->pin) {
-                    return response()->json(['message' => 'Invalid PIN'], 400);
-                }
+
+                return response()->json(['message' => $message], 400);
+            }
+
+            if (!$request->filled('pin')) {
+                return response()->json(['message' => 'Either PIN or QR code is required'], 400);
+            }
+            if ($meeting->pin !== $request->pin) {
+                return response()->json(['message' => 'Invalid PIN'], 400);
             }
         }
 
@@ -520,6 +539,10 @@ class AttendanceController extends Controller
      */
     public function markAttendanceBiometric(AssertedRequest $request, Meeting $meeting)
     {
+        if (!Setting::get('attendance_fingerprint_enabled', true)) {
+            return response()->json(['message' => 'Biometric attendance is currently disabled'], 400);
+        }
+
         $request->validate([
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
@@ -617,6 +640,10 @@ class AttendanceController extends Controller
      */
     public function markAttendanceBeacon(Request $request, Meeting $meeting)
     {
+        if (!Setting::get('attendance_ble_beacon_enabled', true)) {
+            return response()->json(['message' => 'BLE Beacon attendance is currently disabled'], 400);
+        }
+
         $request->validate([
             'beacon_uuid' => 'required|string',
             'beacon_major' => 'nullable|integer',
@@ -750,7 +777,30 @@ class AttendanceController extends Controller
         $syncedCount = 0;
         $errors = [];
 
+        $pinEnabled = Setting::get('attendance_pin_enabled', true);
+        $qrEnabled = Setting::get('attendance_qr_enabled', true);
+        $biometricEnabled = Setting::get('attendance_fingerprint_enabled', true);
+        $beaconEnabled = Setting::get('attendance_ble_beacon_enabled', true);
+
         foreach ($request->records as $index => $data) {
+            $type = $data['verification_type'];
+            if ($type === 'pin' && !$pinEnabled) {
+                $errors[] = "Record #{$index}: PIN attendance is disabled.";
+                continue;
+            }
+            if ($type === 'qr' && !$qrEnabled) {
+                $errors[] = "Record #{$index}: QR attendance is disabled.";
+                continue;
+            }
+            if ($type === 'biometric' && !$biometricEnabled) {
+                $errors[] = "Record #{$index}: Biometric attendance is disabled.";
+                continue;
+            }
+            if ($type === 'beacon' && !$beaconEnabled) {
+                $errors[] = "Record #{$index}: BLE Beacon attendance is disabled.";
+                continue;
+            }
+
             $meeting = Meeting::find($data['meeting_id']);
 
             // Security check: Don't allow syncing for meetings too far in the past?
