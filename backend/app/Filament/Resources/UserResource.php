@@ -524,6 +524,17 @@ class UserResource extends Resource
                     ->getStateUsing(fn (User $record) => $record->bvn_verified_at !== null)
                     ->sortable(),
                 TextColumn::make('balance')->money('ngn', true)->sortable(),
+                TextColumn::make('admin_charge_balance')
+                    ->label('Admin Charge Bal.')
+                    ->money('ngn', true)
+                    ->sortable()
+                    ->color('danger')
+                    ->toggleable(),
+                TextColumn::make('last_admin_charge_at')
+                    ->label('Last Admin Charge')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('outstanding_fines')
                     ->label('Fines')
                     ->money('ngn', true)

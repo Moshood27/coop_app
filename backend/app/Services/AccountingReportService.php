@@ -1650,7 +1650,13 @@ class AccountingReportService
      * Build Administrative Charge (Sitting/Meeting Fees) Report by Branch.
      * Shows collected vs outstanding payments for each member.
      */
-    public function buildAdministrativeChargeReport(?int $branchId = null, ?string $from = null, ?string $to = null): array
+    public function buildAdministrativeChargeReport(
+        ?int $branchId = null,
+        ?string $from = null,
+        ?string $to = null,
+        string $sortField = 'member_name',
+        string $sortDirection = 'asc'
+    ): array
     {
         $fromDate = $from ? Carbon::parse($from)->startOfDay() : null;
         $toDate = $to ? Carbon::parse($to)->endOfDay() : null;
@@ -1699,7 +1705,8 @@ class AccountingReportService
                         'is_distant' => (bool) $user->is_distant,
                         'collected' => $collected,
                         'outstanding' => $outstanding,
-                        'last_charge_date' => $user->last_admin_charge_at ? $user->last_admin_charge_at->toDateString() : null,
+                        'last_charge_date' => $user->last_admin_charge_at ? $user->last_admin_charge_at->toDateTimeString() : null,
+                        'last_charge_timestamp' => $user->last_admin_charge_at ? $user->last_admin_charge_at->timestamp : 0,
                     ];
                     $branchData['total_collected'] += $collected;
                     $branchData['total_outstanding'] += $outstanding;
@@ -1707,8 +1714,22 @@ class AccountingReportService
             }
 
             if (!empty($branchData['members'])) {
-                // Sort by member name
-                usort($branchData['members'], fn($a, $b) => strcmp((string)$a['member_name'], (string)$b['member_name']));
+                // Sort members
+                usort($branchData['members'], function ($a, $b) use ($sortField, $sortDirection) {
+                    $valA = $a[$sortField] ?? '';
+                    $valB = $b[$sortField] ?? '';
+
+                    if ($sortField === 'last_charge_date') {
+                        $valA = $a['last_charge_timestamp'];
+                        $valB = $b['last_charge_timestamp'];
+                    }
+
+                    if ($sortDirection === 'asc') {
+                        return $valA <=> $valB;
+                    } else {
+                        return $valB <=> $valA;
+                    }
+                });
 
                 $report['branches'][] = $branchData;
                 $report['grand_total_collected'] += $branchData['total_collected'];

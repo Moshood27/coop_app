@@ -40,7 +40,7 @@
         </div>
 
         @forelse($report['branches'] as $branch)
-            <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden break-inside-avoid mb-8">
+            <div wire:key="branch-{{ $branch['branch_id'] }}" class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden break-inside-avoid mb-8">
                 <div class="bg-gray-50 dark:bg-gray-800/60 px-5 py-3 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ $branch['branch_name'] }}</h3>
                     <div class="flex gap-4 text-sm font-medium">
@@ -56,17 +56,52 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
                         <thead>
                             <tr class="bg-gray-50/50 dark:bg-gray-800/40">
-                                <th class="px-5 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Member</th>
-                                <th class="px-5 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Membership #</th>
+                                <th wire:click="sort('member_name')" class="px-5 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center gap-1">
+                                        Member
+                                        @if($this->sortField === 'member_name')
+                                            <x-filament::icon icon="{{ $this->sortDirection === 'asc' ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down' }}" class="h-4 w-4" />
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sort('membership_number')" class="px-5 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center gap-1">
+                                        Membership #
+                                        @if($this->sortField === 'membership_number')
+                                            <x-filament::icon icon="{{ $this->sortDirection === 'asc' ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down' }}" class="h-4 w-4" />
+                                        @endif
+                                    </div>
+                                </th>
                                 <th class="px-5 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Type</th>
-                                <th class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Collected</th>
-                                <th class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Outstanding</th>
-                                <th class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">Last Charged</th>
+                                <th wire:click="sort('collected')" class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center justify-end gap-1">
+                                        Collected
+                                        @if($this->sortField === 'collected')
+                                            <x-filament::icon icon="{{ $this->sortDirection === 'asc' ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down' }}" class="h-4 w-4" />
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sort('outstanding')" class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center justify-end gap-1">
+                                        Outstanding
+                                        @if($this->sortField === 'outstanding')
+                                            <x-filament::icon icon="{{ $this->sortDirection === 'asc' ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down' }}" class="h-4 w-4" />
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sort('last_charge_date')" class="px-5 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center justify-end gap-1">
+                                        Last Charged
+                                        @if($this->sortField === 'last_charge_date')
+                                            <x-filament::icon icon="{{ $this->sortDirection === 'asc' ? 'heroicon-m-chevron-up' : 'heroicon-m-chevron-down' }}" class="h-4 w-4" />
+                                        @endif
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach($branch['members'] as $member)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <tr wire:key="member-{{ $branch['branch_id'] }}-{{ $member['membership_number'] }}" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <td class="px-5 py-3 text-gray-900 dark:text-gray-100 font-medium">{{ $member['member_name'] }}</td>
                                     <td class="px-5 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{{ $member['membership_number'] }}</td>
                                     <td class="px-5 py-3">

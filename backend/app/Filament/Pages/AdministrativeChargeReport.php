@@ -22,6 +22,8 @@ class AdministrativeChargeReport extends Page
     public ?int $branchId = null;
     public ?string $from = null;
     public ?string $to = null;
+    public string $sortField = 'member_name';
+    public string $sortDirection = 'asc';
 
     public array $report = [
         'branches' => [],
@@ -29,6 +31,25 @@ class AdministrativeChargeReport extends Page
         'grand_total_outstanding' => 0,
         'grand_total_members_count' => 0,
     ];
+
+    public function updated($propertyName): void
+    {
+        if (in_array($propertyName, ['branchId', 'from', 'to', 'sortField', 'sortDirection'])) {
+            $this->refreshReport();
+        }
+    }
+
+    public function sort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+
+        $this->refreshReport();
+    }
 
     public function getSubheading(): ?string
     {
@@ -60,7 +81,13 @@ class AdministrativeChargeReport extends Page
         $user = auth()->user();
 
         $targetBranchId = $user->hasRole('super_admin') ? $this->branchId : $user->branch_id;
-        $this->report = $svc->buildAdministrativeChargeReport($targetBranchId, $this->from, $this->to);
+        $this->report = $svc->buildAdministrativeChargeReport(
+            $targetBranchId,
+            $this->from,
+            $this->to,
+            $this->sortField,
+            $this->sortDirection
+        );
     }
 
     public function exportCsv(): StreamedResponse
