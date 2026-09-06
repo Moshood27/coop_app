@@ -40,6 +40,36 @@ class AdministrativeChargeResource extends Resource
         return false;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->addSelect([
+                'collected_sitting_fees' => \Illuminate\Support\Facades\DB::table('contributions')
+                    ->join('users', 'users.id', '=', 'contributions.user_id')
+                    ->whereColumn('users.branch_id', 'branches.id')
+                    ->where('contributions.scheme_id', 60)
+                    ->where('users.is_distant', false)
+                    ->selectRaw('coalesce(sum(contributions.amount), 0)'),
+                'collected_meeting_fees' => \Illuminate\Support\Facades\DB::table('contributions')
+                    ->join('users', 'users.id', '=', 'contributions.user_id')
+                    ->whereColumn('users.branch_id', 'branches.id')
+                    ->where('contributions.scheme_id', 60)
+                    ->where('users.is_distant', true)
+                    ->selectRaw('coalesce(sum(contributions.amount), 0)'),
+                'outstanding_sitting_fees' => \Illuminate\Support\Facades\DB::table('users')
+                    ->whereColumn('branch_id', 'branches.id')
+                    ->where('is_distant', false)
+                    ->selectRaw('coalesce(sum(admin_charge_balance), 0)'),
+                'outstanding_meeting_fees' => \Illuminate\Support\Facades\DB::table('users')
+                    ->whereColumn('branch_id', 'branches.id')
+                    ->where('is_distant', true)
+                    ->selectRaw('coalesce(sum(admin_charge_balance), 0)'),
+                'total_outstanding' => \Illuminate\Support\Facades\DB::table('users')
+                    ->whereColumn('branch_id', 'branches.id')
+                    ->selectRaw('coalesce(sum(admin_charge_balance), 0)'),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -52,60 +82,28 @@ class AdministrativeChargeResource extends Resource
                 TextColumn::make('collected_sitting_fees')
                     ->label('Collected Sitting')
                     ->money('NGN')
-                    ->state(function (Branch $record) {
-                        return WalletTransaction::where('source', 'admin_charge')
-                            ->where(function($q) {
-                                $q->where('meta->description', 'like', '%Sitting Fee%')
-                                  ->orWhere('meta->description', 'like', '%Monthly Sitting Fee%');
-                            })
-                            ->whereHas('user', fn($q) => $q->where('branch_id', $record->id))
-                            ->sum('amount');
-                    })
                     ->summarize(Tables\Columns\Summarizers\Sum::make()->label('Total Collected Sitting')),
 
                 TextColumn::make('collected_meeting_fees')
                     ->label('Collected Meeting')
                     ->money('NGN')
-                    ->state(function (Branch $record) {
-                        return WalletTransaction::where('source', 'admin_charge')
-                            ->where(function($q) {
-                                $q->where('meta->description', 'like', '%Meeting Fee%')
-                                  ->orWhere('meta->description', 'like', '%Monthly Meeting Fee%');
-                            })
-                            ->whereHas('user', fn($q) => $q->where('branch_id', $record->id))
-                            ->sum('amount');
-                    })
                     ->summarize(Tables\Columns\Summarizers\Sum::make()->label('Total Collected Meeting')),
 
                 TextColumn::make('outstanding_sitting_fees')
                     ->label('Outstanding Sitting')
                     ->money('NGN')
-                    ->state(function (Branch $record) {
-                        return User::where('branch_id', $record->id)
-                            ->where('is_distant', false)
-                            ->sum('admin_charge_balance');
-                    })
                     ->color('danger')
                     ->summarize(Tables\Columns\Summarizers\Sum::make()->label('Total Outstanding Sitting')),
 
                 TextColumn::make('outstanding_meeting_fees')
                     ->label('Outstanding Meeting')
                     ->money('NGN')
-                    ->state(function (Branch $record) {
-                        return User::where('branch_id', $record->id)
-                            ->where('is_distant', true)
-                            ->sum('admin_charge_balance');
-                    })
                     ->color('danger')
                     ->summarize(Tables\Columns\Summarizers\Sum::make()->label('Total Outstanding Meeting')),
 
                 TextColumn::make('total_outstanding')
                     ->label('Total Outstanding')
                     ->money('NGN')
-                    ->state(function (Branch $record) {
-                        return User::where('branch_id', $record->id)
-                            ->sum('admin_charge_balance');
-                    })
                     ->weight('bold')
                     ->color('danger')
                     ->summarize(Tables\Columns\Summarizers\Sum::make()->label('Grand Total Outstanding')),

@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         __DIR__.'/../app/Console/Commands',
+        \App\Console\Commands\CollectAdministrativeCharges::class,
+        \App\Console\Commands\ProcessAdministrativeCharges::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust proxies (e.g., ngrok) so Laravel honors X-Forwarded-* headers

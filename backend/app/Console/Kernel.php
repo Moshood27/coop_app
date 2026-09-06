@@ -22,6 +22,13 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__.'/Commands');
 
+        Artisan::starting(function ($artisan) {
+            $artisan->resolveCommands([
+                \App\Console\Commands\CollectAdministrativeCharges::class,
+                \App\Console\Commands\ProcessAdministrativeCharges::class,
+            ]);
+        });
+
         require base_path('routes/console.php');
     }
 }
