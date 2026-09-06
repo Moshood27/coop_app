@@ -259,6 +259,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\QardHasanRepayment::observe(\App\Observers\QardHasanRepaymentObserver::class);
         \App\Models\TakafulContribution::observe(\App\Observers\TakafulContributionObserver::class);
         \App\Models\SadaqahContribution::observe(\App\Observers\SadaqahContributionObserver::class);
+        \App\Models\Meeting::observe(\App\Observers\MeetingObserver::class);
 
         $checks = [
             UsedDiskSpaceCheck::new(),

@@ -199,11 +199,12 @@ class MeetingResource extends Resource
                         $record->status === 'completed' ||
                         ($record->status === 'ongoing' && \Carbon\Carbon::parse($record->date->format('Y-m-d') . ' ' . $record->end_time)->isPast())
                     )
-                    ->action(function () {
-                        Artisan::call('app:audit-attendance');
+                    ->action(function (Meeting $record) {
+                        \App\Jobs\AuditMeetingAttendanceJob::dispatch($record->id);
                         Notification::make()
-                            ->title('Meeting Audit processed')
-                            ->success()
+                            ->title('Meeting Audit started')
+                            ->body("The audit process for '{$record->name}' has been queued and will run in the background.")
+                            ->info()
                             ->send();
                     }),
                 Tables\Actions\Action::make('attendance_biometric')

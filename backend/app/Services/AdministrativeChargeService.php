@@ -44,45 +44,45 @@ class AdministrativeChargeService
         ];
 
         // Process users who haven't been charged this month
-        $users = User::whereNull('deceased_at')
+        User::whereNull('deceased_at')
             ->where(function ($query) use ($period) {
                 $query->whereNull('last_admin_charge_at')
                       ->orWhere('last_admin_charge_at', '<', Carbon::now()->startOfMonth());
             })
-            ->get();
+            ->chunkById(100, function ($users) use ($sittingFee, $meetingFee, $period, &$stats) {
+                foreach ($users as $user) {
+                    $stats['total_users']++;
+                    $amount = $user->is_distant ? $meetingFee : $sittingFee;
 
-        foreach ($users as $user) {
-            $stats['total_users']++;
-            $amount = $user->is_distant ? $meetingFee : $sittingFee;
+                    DB::transaction(function () use ($user, $amount, $period, &$stats) {
+                        // 1. Accrue the charge
+                        $user->admin_charge_balance += $amount;
+                        $user->last_admin_charge_at = Carbon::now();
+                        $user->save();
+                        $stats['accrued']++;
 
-            DB::transaction(function () use ($user, $amount, $period, &$stats) {
-                // 1. Accrue the charge
-                $user->admin_charge_balance += $amount;
-                $user->last_admin_charge_at = Carbon::now();
-                $user->save();
-                $stats['accrued']++;
+                        // 2. Auto-deduct (Mandatory if funds available)
+                        if ($user->admin_charge_balance > 0) {
+                            $this->attemptDeduction($user, $stats);
+                        }
 
-                // 2. Auto-deduct (Mandatory if funds available)
-                if ($user->admin_charge_balance > 0) {
-                    $this->attemptDeduction($user, $stats);
-                }
-
-                // 3. Notify about accumulation if not fully settled
-                $user->refresh();
-                if ($user->admin_charge_balance > 0) {
-                    $user->notifyMember(
-                        "Administrative Charge Accumulated",
-                        "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($user->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
-                        [
-                            'type' => 'admin_charge_accumulation',
-                            'amount' => $amount,
-                            'total_pending' => $user->admin_charge_balance,
-                            'period' => $period
-                        ]
-                    );
+                        // 3. Notify about accumulation if not fully settled
+                        $user->refresh();
+                        if ($user->admin_charge_balance > 0) {
+                            $user->notifyMember(
+                                "Administrative Charge Accumulated",
+                                "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($user->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
+                                [
+                                    'type' => 'admin_charge_accumulation',
+                                    'amount' => $amount,
+                                    'total_pending' => $user->admin_charge_balance,
+                                    'period' => $period
+                                ]
+                            );
+                        }
+                    });
                 }
             });
-        }
 
         return $stats;
     }
@@ -98,24 +98,24 @@ class AdministrativeChargeService
             'total_deducted_amount' => 0,
         ];
 
-        $users = User::whereNull('deceased_at')
+        User::whereNull('deceased_at')
             ->where('admin_charge_balance', '>', 0)
             ->where('balance', '>', 0)
-            ->get();
+            ->chunkById(100, function ($users) use (&$stats) {
+                foreach ($users as $user) {
+                    $stats['total_users_checked']++;
+                    $beforeBalance = (float) $user->balance;
 
-        foreach ($users as $user) {
-            $stats['total_users_checked']++;
-            $beforeBalance = (float) $user->balance;
-
-            if ($this->attemptDeduction($user)) {
-                $user->refresh();
-                $deducted = $beforeBalance - (float) $user->balance;
-                if ($deducted > 0) {
-                    $stats['settled_users']++;
-                    $stats['total_deducted_amount'] += $deducted;
+                    if ($this->attemptDeduction($user)) {
+                        $user->refresh();
+                        $deducted = $beforeBalance - (float) $user->balance;
+                        if ($deducted > 0) {
+                            $stats['settled_users']++;
+                            $stats['total_deducted_amount'] += $deducted;
+                        }
+                    }
                 }
-            }
-        }
+            });
 
         return $stats;
     }

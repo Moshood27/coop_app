@@ -20,13 +20,12 @@ class ListAdministrativeCharges extends ListRecords
                 ->color('warning')
                 ->requiresConfirmation()
                 ->action(function() {
-                    $service = app(\App\Services\AdministrativeChargeService::class);
-                    $stats = $service->processMonthlyCharges();
+                    \App\Jobs\ProcessAdministrativeChargesJob::dispatch();
 
                     \Filament\Notifications\Notification::make()
-                        ->title('Administrative Charges Processed')
-                        ->body("Processed {$stats['total_users']} users. Accrued: ₦" . number_format($stats['accrued'] * 300, 2) . " (approx). Deducted: ₦" . number_format($stats['total_deducted_amount'], 2))
-                        ->success()
+                        ->title('Processing Started')
+                        ->body("The monthly administrative charges are being processed in the background. You will be notified once complete (check system logs).")
+                        ->info()
                         ->send();
                 })
         ];
