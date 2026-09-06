@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['middleware' => ['auth:sanctum,web']])
+    ->withCommands([
+        __DIR__.'/../app/Console/Commands',
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust proxies (e.g., ngrok) so Laravel honors X-Forwarded-* headers
         $middleware->trustProxies(at: '*');
