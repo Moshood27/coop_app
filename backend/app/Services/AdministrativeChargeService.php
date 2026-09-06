@@ -15,6 +15,7 @@ class AdministrativeChargeService
 {
     /**
      * Process administrative charges for all eligible users.
+     * This accrues the monthly fee and attempts deduction.
      */
     public function processMonthlyCharges(): array
     {
@@ -62,12 +63,12 @@ class AdministrativeChargeService
                 $stats['accrued']++;
 
                 // 2. Auto-deduct (Mandatory if funds available)
-                $deducted = false;
                 if ($user->admin_charge_balance > 0) {
-                    $deducted = $this->attemptDeduction($user, $stats);
+                    $this->attemptDeduction($user, $stats);
                 }
 
                 // 3. Notify about accumulation if not fully settled
+                $user->refresh();
                 if ($user->admin_charge_balance > 0) {
                     $user->notifyMember(
                         "Administrative Charge Accumulated",
@@ -81,6 +82,39 @@ class AdministrativeChargeService
                     );
                 }
             });
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Settle all outstanding administrative charges for users with balance > 0 and wallet funds.
+     */
+    public function settleAllOutstandingCharges(): array
+    {
+        $stats = [
+            'total_users_checked' => 0,
+            'settled_users' => 0,
+            'total_deducted_amount' => 0,
+        ];
+
+        $users = User::whereNull('deceased_at')
+            ->where('admin_charge_balance', '>', 0)
+            ->where('balance', '>', 0)
+            ->get();
+
+        foreach ($users as $user) {
+            $stats['total_users_checked']++;
+            $beforeBalance = (float) $user->balance;
+
+            if ($this->attemptDeduction($user)) {
+                $user->refresh();
+                $deducted = $beforeBalance - (float) $user->balance;
+                if ($deducted > 0) {
+                    $stats['settled_users']++;
+                    $stats['total_deducted_amount'] += $deducted;
+                }
+            }
         }
 
         return $stats;

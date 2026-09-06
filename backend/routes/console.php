@@ -53,7 +53,7 @@ Schedule::command('savings-groups:charge')
     ->monthlyOn(1, '08:20')
     ->timezone('Africa/Lagos')
     ->when(fn() => Feature::for('global')->active('group-savings-enabled'));
-Schedule::command('admin-charges:process')
+Schedule::command('admin-charges:collect')
     ->monthlyOn(1, '08:30')
     ->timezone('Africa/Lagos')
     ->when(fn() => Setting::get('monthly_fees_enabled', true));
