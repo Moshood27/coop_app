@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schedule;
 use App\Models\Setting;
 use Laravel\Pennant\Feature;
 use App\Jobs\ReconcileUtilityTransactions;
+use App\Console\Commands\CollectAdministrativeCharges;
+use App\Console\Commands\ProcessAdministrativeCharges;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
