@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Contribution;
+use App\Models\Scheme;
 use App\Models\WalletTransaction;
 use App\Models\QardHasan;
 use App\Models\QardHasanRepayment;
@@ -14,6 +16,7 @@ use App\Models\User;
 use App\Support\DurationHelper;
 use App\Models\JuniorAccount;
 use App\Models\TakafulPoolEntry;
+use App\Models\Branch;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
@@ -1636,6 +1639,80 @@ class AccountingReportService
                 // Sort members by total amount descending
                 usort($branchData['members'], fn($a, $b) => $b['total'] <=> $a['total']);
                 $report['branches'][] = $branchData;
+                $report['grand_total_members_count'] += count($branchData['members']);
+            }
+        }
+
+        return $report;
+    }
+
+    /**
+     * Build Administrative Charge (Sitting/Meeting Fees) Report by Branch.
+     * Shows collected vs outstanding payments for each member.
+     */
+    public function buildAdministrativeChargeReport(?int $branchId = null, ?string $from = null, ?string $to = null): array
+    {
+        $fromDate = $from ? Carbon::parse($from)->startOfDay() : null;
+        $toDate = $to ? Carbon::parse($to)->endOfDay() : null;
+
+        $branches = Branch::when($branchId, fn($q) => $q->where('id', $branchId))
+            ->with(['users' => function ($q) {
+                $q->whereNull('deceased_at');
+            }])
+            ->get();
+
+        $report = [
+            'branches' => [],
+            'grand_total_collected' => 0,
+            'grand_total_outstanding' => 0,
+            'grand_total_members_count' => 0,
+            'from' => $from,
+            'to' => $to,
+        ];
+
+        foreach ($branches as $branch) {
+            $branchData = [
+                'branch_id' => $branch->id,
+                'branch_name' => $branch->name,
+                'members' => [],
+                'total_collected' => 0,
+                'total_outstanding' => 0,
+            ];
+
+            foreach ($branch->users as $user) {
+                // Get collected administrative charges for this member in the period via Contribution records
+                $collected = (float) Contribution::where('user_id', $user->id)
+                    ->where('status', 'success')
+                    ->whereHas('scheme', function($q) {
+                        $q->where('name', 'SITTING');
+                    })
+                    ->when($fromDate, fn($q) => $q->where('paid_at', '>=', $fromDate))
+                    ->when($toDate, fn($q) => $q->where('paid_at', '<=', $toDate))
+                    ->sum('amount');
+
+                $outstanding = (float) $user->admin_charge_balance;
+
+                if ($collected > 0 || $outstanding > 0) {
+                    $branchData['members'][] = [
+                        'member_name' => $user->full_name,
+                        'membership_number' => $user->membership_number,
+                        'is_distant' => (bool) $user->is_distant,
+                        'collected' => $collected,
+                        'outstanding' => $outstanding,
+                        'last_charge_date' => $user->last_admin_charge_at ? $user->last_admin_charge_at->toDateString() : null,
+                    ];
+                    $branchData['total_collected'] += $collected;
+                    $branchData['total_outstanding'] += $outstanding;
+                }
+            }
+
+            if (!empty($branchData['members'])) {
+                // Sort by member name
+                usort($branchData['members'], fn($a, $b) => strcmp((string)$a['member_name'], (string)$b['member_name']));
+
+                $report['branches'][] = $branchData;
+                $report['grand_total_collected'] += $branchData['total_collected'];
+                $report['grand_total_outstanding'] += $branchData['total_outstanding'];
                 $report['grand_total_members_count'] += count($branchData['members']);
             }
         }

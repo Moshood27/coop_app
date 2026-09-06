@@ -48,16 +48,15 @@ class UserObserver
             }
 
             // 2. Process administrative charges (Sitting Fees)
-            if ($user->admin_charge_balance > 0 && $user->admin_charge_auto_deduct) {
+            if ($user->admin_charge_balance > 0) {
                 app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
             }
         }
 
-        // If auto-deduct was enabled
-        if ($user->wasChanged('admin_charge_auto_deduct') && $user->admin_charge_auto_deduct) {
-            if ($user->admin_charge_balance > 0 && $user->balance > 0) {
-                app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
-            }
+        // If admin_charge_balance exists, attempt to settle if balance > 0
+        // (Removing dependency on admin_charge_auto_deduct as per new requirement)
+        if ($user->wasChanged('admin_charge_balance') && $user->admin_charge_balance > 0 && $user->balance > 0) {
+            app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
         }
     }
 

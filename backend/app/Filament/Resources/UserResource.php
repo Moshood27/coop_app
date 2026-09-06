@@ -236,10 +236,6 @@ class UserResource extends Resource
                                         Forms\Components\Toggle::make('is_distant')
                                             ->label('Distant Member')
                                             ->helperText('Distant members are charged Meeting Fees instead of Sitting Fees.'),
-                                        Forms\Components\Toggle::make('admin_charge_auto_deduct')
-                                            ->label('Auto-Deduct Monthly Fees')
-                                            ->helperText('If enabled, monthly fees will be automatically deducted from the member\'s wallet.')
-                                            ->default(true),
                                         Forms\Components\TextInput::make('membership_number')
                                             ->password()
                                             ->revealable(fn () => auth()->user()->hasRole('super_admin'))
@@ -592,6 +588,15 @@ class UserResource extends Resource
                     }),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('has_admin_charge_balance')
+                    ->label('Has Pending Admin Charges')
+                    ->placeholder('All Members')
+                    ->trueLabel('Has Pending Charges')
+                    ->falseLabel('No Pending Charges')
+                    ->queries(
+                        true: fn (Builder $query) => $query->where('admin_charge_balance', '>', 0),
+                        false: fn (Builder $query) => $query->where('admin_charge_balance', '<=', 0),
+                    ),
                 Tables\Filters\SelectFilter::make('branch')
                     ->relationship('branch', 'name')
                     ->searchable()
@@ -663,6 +668,9 @@ class UserResource extends Resource
                                   ->orWhereColumn('wellness_check_notified_at', '<', 'last_activity_at');
                             });
                     }),
+                Tables\Filters\Filter::make('has_admin_charge_balance')
+                    ->label('Has Outstanding Admin Charge')
+                    ->query(fn (Builder $query) => $query->where('admin_charge_balance', '>', 0)),
             ])
             ->headerActions([
                 Action::make('exportGmailMembers')
@@ -1529,6 +1537,40 @@ class UserResource extends Resource
                             ->title('Fines waived successfully')
                             ->success()
                             ->send();
+                    })
+                    ->requiresConfirmation(),
+                Action::make('settleAdminCharge')
+                    ->label('Settle Admin Charge')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn (User $record) => (float)$record->admin_charge_balance > 0)
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount to Settle')
+                            ->numeric()
+                            ->prefix('₦')
+                            ->default(fn (User $record) => (float)$record->admin_charge_balance)
+                            ->required(),
+                        Forms\Components\Placeholder::make('wallet_balance')
+                            ->label('Available Wallet Balance')
+                            ->content(fn (User $record) => '₦' . number_format($record->balance, 2)),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        try {
+                            $service = app(AdministrativeChargeService::class);
+                            $service->settleAdminChargeManually($record, (float)$data['amount']);
+
+                            Notification::make()
+                                ->title('Administrative charge settled')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Error')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     })
                     ->requiresConfirmation(),
                 Action::make('clearPaystackDVA')

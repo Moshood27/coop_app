@@ -445,7 +445,8 @@ class WebhookController extends Controller
                     }
 
                     // Credit wallet
-                    $topupUser->increment('balance', $netAmount);
+                    $topupUser->balance += $netAmount;
+                    $topupUser->save();
 
                     // Detect autosave via metadata
                     $isAutosave = is_array($metadata) && (($metadata['type'] ?? null) === 'autosave');
@@ -1046,7 +1047,8 @@ class WebhookController extends Controller
         }
 
         DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $dbReference, $vd, $isDva) {
-            $topupUser->increment('balance', $netAmount);
+            $topupUser->balance += $netAmount;
+            $topupUser->save();
 
             $source = $isDva ? 'flutterwave_dva' : 'flutterwave_charge';
 
@@ -1256,7 +1258,9 @@ class WebhookController extends Controller
         }
 
         DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $verifiedData) {
-            $topupUser->increment('balance', $netAmount);
+            $topupUser->balance += $netAmount;
+            $topupUser->save();
+
             WalletTransaction::create([
                 'user_id' => $topupUser->id,
                 'type' => 'credit',
@@ -1460,7 +1464,9 @@ class WebhookController extends Controller
         }
 
         DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $verifiedData) {
-            $topupUser->increment('balance', $netAmount);
+            $topupUser->balance += $netAmount;
+            $topupUser->save();
+
             WalletTransaction::create([
                 'user_id' => $topupUser->id,
                 'type' => 'credit',

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Setting;
 use App\Models\WalletTransaction;
+use App\Models\Contribution;
+use App\Models\Scheme;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -59,9 +61,9 @@ class AdministrativeChargeService
                 $user->save();
                 $stats['accrued']++;
 
-                // 2. Auto-deduct if enabled
+                // 2. Auto-deduct (Mandatory if funds available)
                 $deducted = false;
-                if ($user->admin_charge_auto_deduct && $user->admin_charge_balance > 0) {
+                if ($user->admin_charge_balance > 0) {
                     $deducted = $this->attemptDeduction($user, $stats);
                 }
 
@@ -89,6 +91,8 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
+        $user->refresh();
+
         $due = (float) $user->admin_charge_balance;
         if ($due <= 0) return true;
 
@@ -107,24 +111,40 @@ class AdministrativeChargeService
         return DB::transaction(function () use ($user, $amountToDeduct, $due, &$stats) {
             // Deduct from wallet
             $user->decrement('balance', $amountToDeduct);
-            $user->decrement('admin_charge_balance', $amountToDeduct);
             $user->refresh();
 
-            // Create transaction record
-            $description = $user->is_distant ? 'Monthly Meeting Fee' : 'Monthly Sitting Fee';
+            // Find SITTING scheme
+            $scheme = Scheme::where('name', 'SITTING')->first();
+
+            // Create Contribution (this will trigger UserObserver/Contribution observer to decrement admin_charge_balance)
+            $description = $user->is_distant ? 'Meeting Fee (Distant)' : 'Sitting Fee (Regular)';
             $isAccumulated = $due > ($user->is_distant ? Setting::get('meeting_fee_amount', 1000) : Setting::get('sitting_fee_amount', 300));
 
             if ($isAccumulated) {
                 $description .= ' (Accumulated)';
             }
 
+            $reference = 'ADMIN-CHG-' . $user->id . '-' . time();
+
+            Contribution::create([
+                'user_id' => $user->id,
+                'scheme_id' => $scheme?->id,
+                'amount' => $amountToDeduct,
+                'reference' => $reference,
+                'status' => 'success',
+                'payment_method' => 'wallet',
+                'notes' => $description,
+                'paid_at' => now(),
+            ]);
+
+            $user->refresh();
             $isFullSettlement = $user->admin_charge_balance <= 0;
 
             WalletTransaction::create([
                 'user_id' => $user->id,
                 'type' => 'debit',
                 'amount' => $amountToDeduct,
-                'reference' => 'ADMIN-CHG-' . $user->id . '-' . time(),
+                'reference' => $reference,
                 'source' => 'admin_charge',
                 'meta' => [
                     'description' => $description,
@@ -153,6 +173,93 @@ class AdministrativeChargeService
             ]);
 
             return true;
+        });
+    }
+
+    /**
+     * Settle administrative charges manually from user wallet.
+     */
+    public function settleAdminChargeManually(User $user, ?float $amount = null): array
+    {
+        return DB::transaction(function () use ($user, $amount) {
+            $user->refresh();
+            $due = (float) $user->admin_charge_balance;
+
+            if ($due <= 0) {
+                throw new \Exception("Member has no outstanding administrative charges.");
+            }
+
+            $amountToPay = $amount ?? $due;
+            $amountToPay = min($amountToPay, $due);
+
+            if ($amountToPay <= 0) {
+                throw new \Exception("Invalid payment amount.");
+            }
+
+            if ((float) $user->balance < $amountToPay) {
+                throw new \Exception("Insufficient wallet balance. Available: ₦" . number_format($user->balance, 2));
+            }
+
+            // Deduct from wallet
+            $user->decrement('balance', $amountToPay);
+            $user->refresh();
+
+            // Find SITTING scheme
+            $scheme = Scheme::where('name', 'SITTING')->first();
+
+            // Create Contribution
+            $description = ($user->is_distant ? 'Meeting Fee (Distant)' : 'Sitting Fee (Regular)') . ' - Manual Settlement';
+            $reference = 'ADMIN-SETTLE-' . $user->id . '-' . time();
+
+            Contribution::create([
+                'user_id' => $user->id,
+                'scheme_id' => $scheme?->id,
+                'amount' => $amountToPay,
+                'reference' => $reference,
+                'status' => 'success',
+                'payment_method' => 'wallet',
+                'notes' => $description,
+                'paid_at' => now(),
+            ]);
+
+            $user->refresh();
+            $isFullSettlement = $user->admin_charge_balance <= 0;
+
+            $transaction = WalletTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'debit',
+                'amount' => $amountToPay,
+                'reference' => $reference,
+                'source' => 'admin_charge',
+                'meta' => [
+                    'description' => $description,
+                    'full_settlement' => $isFullSettlement,
+                    'remaining_due' => $user->admin_charge_balance,
+                    'manual' => true
+                ]
+            ]);
+
+            // Notification
+            $title = $isFullSettlement ? "Admin Charge Settled" : "Admin Charge Partial Payment";
+            $message = "₦" . number_format($amountToPay, 2) . " has been manually deducted from your wallet for administrative charges.";
+
+            if (!$isFullSettlement) {
+                $message .= " Remaining balance: ₦" . number_format($user->admin_charge_balance, 2);
+            }
+
+            $user->notifyMember($title, $message, [
+                'type' => 'admin_charge_manual_settlement',
+                'amount' => $amountToPay,
+                'remaining' => $user->admin_charge_balance,
+                'full_settlement' => $isFullSettlement
+            ]);
+
+            return [
+                'success' => true,
+                'amount_paid' => $amountToPay,
+                'remaining_due' => (float) $user->admin_charge_balance,
+                'transaction' => $transaction
+            ];
         });
     }
 
