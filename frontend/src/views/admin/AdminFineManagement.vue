@@ -106,44 +106,46 @@ const fetchData = async () => {
 }
 
 const waiveFine = async (fine) => {
-  const isConfirmed = await confirm({
-    title: 'Waive Fine',
-    message: 'Are you sure you want to waive this fine? This should only be done if the member has paid manually or for special exemptions.',
-    confirmText: 'Yes, Waive',
-    type: 'warning'
-  })
+  const isConfirmed = await confirm(
+    'Are you sure you want to waive this fine? This should only be done if the member has paid manually or for special exemptions.',
+    {
+      title: 'Waive Fine',
+      confirmText: 'Yes, Waive'
+    }
+  )
 
   if (!isConfirmed) return
 
   processing.value = true
   try {
     await axios.post(`/api/admin/members/${route.params.id}/waive-fine/${fine.id}`)
-    await alert({ title: 'Success', message: 'Fine waived successfully.' })
+    await alert('Fine waived successfully.', 'Success')
     fetchData()
   } catch (e) {
-    alert({ title: 'Error', message: e.response?.data?.message || 'Failed to waive fine.' })
+    alert(e.response?.data?.message || 'Failed to waive fine.', 'Error')
   } finally {
     processing.value = false
   }
 }
 
 const waiveAllFines = async () => {
-  const isConfirmed = await confirm({
-    title: 'Waive All Fines',
-    message: `Are you sure you want to waive ALL outstanding fines (₦${formatMoney(user.value.outstanding_fines)}) for this member?`,
-    confirmText: 'Yes, Waive All',
-    type: 'danger'
-  })
+  const isConfirmed = await confirm(
+    `Are you sure you want to waive ALL outstanding fines (₦${formatMoney(user.value.outstanding_fines)}) for this member?`,
+    {
+      title: 'Waive All Fines',
+      confirmText: 'Yes, Waive All'
+    }
+  )
 
   if (!isConfirmed) return
 
   processing.value = true
   try {
     await axios.post(`/api/admin/members/${route.params.id}/waive-all-fines`)
-    await alert({ title: 'Success', message: 'All fines waived successfully.' })
+    await alert('All fines waived successfully.', 'Success')
     fetchData()
   } catch (e) {
-    alert({ title: 'Error', message: e.response?.data?.message || 'Failed to waive all fines.' })
+    alert(e.response?.data?.message || 'Failed to waive all fines.', 'Error')
   } finally {
     processing.value = false
   }

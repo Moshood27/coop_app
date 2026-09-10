@@ -102,7 +102,7 @@
 
           <button @click="$router.push(`/admin/members/${user.id}/fines`)" class="w-full bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all text-left">
             <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl">
-              <span class="i-mdi-alert-circle-outline"></span>
+              <span class="i-mdi-message-alert"></span>
             </div>
             <div>
               <p class="text-sm font-black text-slate-800">Fine Management</p>
