@@ -282,10 +282,12 @@ Before going live, review and apply the following:
 
 
 
-8) Transaction PIN and OTP delivery (production readiness)
-Members can set a 4-digit Transaction PIN (Profile > Transaction PIN) used to authorize sensitive operations (wallet allocation, VTU purchases, store orders). If a member forgets the PIN, they can request a one-time 6-digit reset code delivered via SMS (preferred when a phone is on file) or email. To enable real delivery in production, configure the following:
+## 11) Specific Upgrade Guides
 
-Backend .env (SMS)
+*   **September 2026 Security & Performance Update:** For instructions on deploying concurrency locks, immutable fine records, and production Docker optimizations, refer to **[PRODUCTION_UPGRADE_SEPT_2026.md](PRODUCTION_UPGRADE_SEPT_2026.md)**.
+*   **System Migration Feature Update:** Refer to **[VPS_UPGRADE_GUIDE.md](VPS_UPGRADE_GUIDE.md)** for initial setup of the migration tools.
+
+## 9) Transaction PIN and OTP delivery (production readiness)
 - SMS_ENABLED=true
 - SMS_DRIVER=termii            # supported: termii, log, generic
 - SMS_API_KEY=your-termii-key
@@ -319,7 +321,7 @@ Frontend/mobile
 - The Profile screen shows PIN status (Set/Not Set) and when it was set, and provides UI for both setting and resetting the PIN.
 - For mobile builds, ensure VITE_API_URL points to your backend origin (see section 7 for details).
 
-9) USB Biometric Scanner (Admin Station)
+## 10) USB Biometric Scanner (Admin Station)
 To enable the centralized biometric station for multiple member enrollment and attendance:
 - Configure `BIOMETRIC_SCANNER_ENABLED=true` in `backend/.env`.
 - Set `BIOMETRIC_SCANNER_URL` (default: `http://localhost:8080/biometric/scan`).

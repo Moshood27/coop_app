@@ -118,7 +118,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required_without:split_50_50|nullable|exists:schemes,id',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'paid_at' => 'required|date',
             'method' => 'required|string|in:cash,transfer,pos,other',
             'reference' => 'nullable|string|max:100',
@@ -128,54 +128,58 @@ class AdminMemberController extends Controller
 
         $contributions = [];
 
-        if (!empty($data['split_50_50'])) {
-            $halfAmount = $data['amount'] / 2;
+        DB::transaction(function () use ($user, $data, $request, &$contributions) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
-            // Find Savings and Shares schemes
-            $savingsScheme = Scheme::where('name', 'like', '%Savings%')->first();
-            $sharesScheme = Scheme::where('name', 'like', '%Share%')->first();
+            if (!empty($data['split_50_50'])) {
+                $halfAmount = $data['amount'] / 2;
 
-            if (!$savingsScheme || !$sharesScheme) {
-                return response()->json(['message' => 'Savings or Shares scheme not found for split.'], 422);
-            }
+                // Find Savings and Shares schemes
+                $savingsScheme = Scheme::where('name', 'like', '%Savings%')->first();
+                $sharesScheme = Scheme::where('name', 'like', '%Share%')->first();
 
-            foreach ([$savingsScheme, $sharesScheme] as $scheme) {
-                $con = $user->contributions()->create([
-                    'scheme_id' => $scheme->id,
-                    'amount' => $halfAmount,
+                if (!$savingsScheme || !$sharesScheme) {
+                    throw new \Exception('Savings or Shares scheme not found for split.');
+                }
+
+                foreach ([$savingsScheme, $sharesScheme] as $scheme) {
+                    $con = $lockedUser->contributions()->create([
+                        'scheme_id' => $scheme->id,
+                        'amount' => $halfAmount,
+                        'status' => 'success',
+                        'paid_at' => Carbon::parse($data['paid_at']),
+                        'payment_method' => $data['method'],
+                        'reference' => ($data['reference'] ?? ('SPL-'.strtoupper(Str::random(8)))) . '-' . strtoupper(substr($scheme->name, 0, 3)),
+                        'notes' => ($data['notes'] ?? '') . " (Split 50/50)",
+                        'metadata' => [
+                            'admin_id' => $request->user()->id,
+                            'type' => 'manual_distribution_split'
+                        ]
+                    ]);
+                    $lockedUser->syncSchemeBalance($scheme->name);
+                    $contributions[] = $con;
+                }
+            } else {
+                $contribution = $lockedUser->contributions()->create([
+                    'scheme_id' => $data['scheme_id'],
+                    'amount' => $data['amount'],
                     'status' => 'success',
                     'paid_at' => Carbon::parse($data['paid_at']),
                     'payment_method' => $data['method'],
-                    'reference' => ($data['reference'] ?? ('SPL-'.strtoupper(Str::random(8)))) . '-' . strtoupper(substr($scheme->name, 0, 3)),
-                    'notes' => ($data['notes'] ?? '') . " (Split 50/50)",
+                    'reference' => $data['reference'] ?? ('MAN-'.strtoupper(Str::random(10))),
+                    'notes' => $data['notes'] ?? null,
                     'metadata' => [
                         'admin_id' => $request->user()->id,
-                        'type' => 'manual_distribution_split'
+                        'type' => 'manual_distribution'
                     ]
                 ]);
-                $user->syncSchemeBalance($scheme->name);
-                $contributions[] = $con;
-            }
-        } else {
-            $contribution = $user->contributions()->create([
-                'scheme_id' => $data['scheme_id'],
-                'amount' => $data['amount'],
-                'status' => 'success',
-                'paid_at' => Carbon::parse($data['paid_at']),
-                'payment_method' => $data['method'],
-                'reference' => $data['reference'] ?? ('MAN-'.strtoupper(Str::random(10))),
-                'notes' => $data['notes'] ?? null,
-                'metadata' => [
-                    'admin_id' => $request->user()->id,
-                    'type' => 'manual_distribution'
-                ]
-            ]);
 
-            // Sync scheme balance
-            $scheme = Scheme::find($data['scheme_id']);
-            $user->syncSchemeBalance($scheme->name);
-            $contributions[] = $contribution;
-        }
+                // Sync scheme balance
+                $scheme = Scheme::find($data['scheme_id']);
+                $lockedUser->syncSchemeBalance($scheme->name);
+                $contributions[] = $contribution;
+            }
+        });
 
         return response()->json([
             'message' => 'Funds distributed successfully.',
@@ -192,24 +196,27 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required|exists:schemes,id',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'paid_at' => 'required|date',
             'payment_method' => 'required|string',
             'notes' => 'nullable|string|max:255',
             'status' => 'required|string|in:pending,success,failed',
         ]);
 
-        $oldScheme = $contribution->scheme;
-        $contribution->update($data);
+        DB::transaction(function () use ($contribution, $data) {
+            $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
+            $oldScheme = $contribution->scheme;
+            $contribution->update($data);
 
-        // Sync balances
-        if ($oldScheme) $contribution->user->syncSchemeBalance($oldScheme->name);
-        $newScheme = Scheme::find($data['scheme_id']);
-        if ($newScheme && (!$oldScheme || $newScheme->id !== $oldScheme->id)) {
-            $contribution->user->syncSchemeBalance($newScheme->name);
-        }
+            // Sync balances
+            if ($oldScheme) $lockedUser->syncSchemeBalance($oldScheme->name);
+            $newScheme = Scheme::find($data['scheme_id']);
+            if ($newScheme && (!$oldScheme || $newScheme->id !== $oldScheme->id)) {
+                $lockedUser->syncSchemeBalance($newScheme->name);
+            }
+        });
 
-        return response()->json(['message' => 'Contribution updated successfully.', 'contribution' => $contribution]);
+        return response()->json(['message' => 'Contribution updated successfully.', 'contribution' => $contribution->fresh()]);
     }
 
     /**
@@ -219,14 +226,16 @@ class AdminMemberController extends Controller
     {
         $this->authorizeAdminAccess($request->user(), $contribution->user);
 
-        $user = $contribution->user;
-        $schemeName = $contribution->scheme?->name;
+        DB::transaction(function () use ($contribution) {
+            $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
+            $schemeName = $contribution->scheme?->name;
 
-        $contribution->delete();
+            $contribution->delete();
 
-        if ($schemeName) {
-            $user->syncSchemeBalance($schemeName);
-        }
+            if ($schemeName) {
+                $lockedUser->syncSchemeBalance($schemeName);
+            }
+        });
 
         return response()->json(['message' => 'Contribution deleted successfully.']);
     }
@@ -255,6 +264,12 @@ class AdminMemberController extends Controller
         $reference = 'WALLET_ALLOC_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
         DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested, $notes) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+
+            if ($lockedUser->balance < $totalRequested) {
+                throw new \Exception('Insufficient wallet balance.');
+            }
+
             $items = [];
             foreach ($data['allocations'] as $alloc) {
                 if ($alloc['amount'] <= 0) continue;
@@ -262,7 +277,7 @@ class AdminMemberController extends Controller
                 $scheme = Scheme::find($alloc['scheme_id']);
 
                 // 1. Create contribution record
-                $user->contributions()->create([
+                $lockedUser->contributions()->create([
                     'scheme_id' => $scheme->id,
                     'amount' => $alloc['amount'],
                     'status' => 'success',
@@ -273,7 +288,7 @@ class AdminMemberController extends Controller
                 ]);
 
                 // 2. Sync scheme balance
-                $user->syncSchemeBalance($scheme->name);
+                $lockedUser->syncSchemeBalance($scheme->name);
 
                 $items[] = [
                     'scheme_id' => $scheme->id,
@@ -284,10 +299,10 @@ class AdminMemberController extends Controller
             }
 
             // 3. Deduct from wallet total
-            $user->decrement('balance', $totalRequested);
+            $lockedUser->decrement('balance', $totalRequested);
 
             // 4. Create wallet transaction record
-            $user->walletTransactions()->create([
+            $lockedUser->walletTransactions()->create([
                 'amount' => $totalRequested,
                 'type' => 'debit',
                 'reference' => $reference,
@@ -480,35 +495,38 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $loan->user);
 
         $data = $request->validate([
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0.01',
             'method' => 'required|string|in:cash,transfer,pos,wallet,other',
             'paid_at' => 'required|date',
             'notes' => 'nullable|string|max:255',
         ]);
 
-        $amount = (float) $data['amount'];
+        $amount = round((float) $data['amount'], 2);
 
         DB::transaction(function () use ($loan, $amount, $data, $request) {
+            $lockedUser = User::where('id', $loan->user_id)->lockForUpdate()->first();
+            $lockedLoan = QardHasan::where('id', $loan->id)->lockForUpdate()->first();
+
             if ($data['method'] === 'wallet') {
-                if ($loan->user->balance < $amount) {
+                if ($lockedUser->balance < $amount) {
                     throw new \Exception('Insufficient wallet balance.');
                 }
-                $loan->user->decrement('balance', $amount);
-                $loan->user->walletTransactions()->create([
+                $lockedUser->decrement('balance', $amount);
+                $lockedUser->walletTransactions()->create([
                     'amount' => $amount,
                     'type' => 'debit',
                     'reference' => 'LRP-' . strtoupper(Str::random(12)),
                     'source' => 'loan_repayment',
                     'meta' => [
-                        'loan_id' => $loan->id,
+                        'loan_id' => $lockedLoan->id,
                         'admin_id' => $request->user()->id,
-                        'description' => "Loan Repayment for QH-{$loan->id} (by Admin)",
+                        'description' => "Loan Repayment for QH-{$lockedLoan->id} (by Admin)",
                         'notes' => $data['notes'] ?? null
                     ]
                 ]);
             }
 
-            $loan->repayments()->create([
+            $lockedLoan->repayments()->create([
                 'amount' => $amount,
                 'payment_method' => $data['method'],
                 'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
@@ -517,10 +535,10 @@ class AdminMemberController extends Controller
                 'status' => 'success',
             ]);
 
-            $loan->increment('paid_amount', $amount);
+            $lockedLoan->increment('paid_amount', $amount);
 
-            if ($loan->paid_amount >= $loan->principal_amount) {
-                $loan->update(['status' => 'completed', 'completed_at' => now()]);
+            if ($lockedLoan->paid_amount >= $lockedLoan->principal_amount) {
+                $lockedLoan->update(['status' => 'completed', 'completed_at' => now()]);
             }
         });
 
@@ -623,27 +641,31 @@ class AdminMemberController extends Controller
             'repayment_start_date' => ['nullable', 'date'],
         ]);
 
-        if ($user->hasActiveLoan()) {
-            return response()->json(['message' => 'Member already has an active loan.'], 422);
-        }
+        $loan = DB::transaction(function () use ($user, $data, $request) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
-        $perInstallment = round($data['amount'] / $data['total_installments'], 2);
+            if ($lockedUser->hasActiveLoan()) {
+                throw new \Exception('Member already has an active loan.');
+            }
 
-        $loan = QardHasan::create([
-            'user_id' => $user->id,
-            'qard_id_string' => 'ADM-' . strtoupper(Str::random(8)),
-            'principal_amount' => $data['amount'],
-            'total_installments' => $data['total_installments'],
-            'per_installment' => $perInstallment,
-            'interval' => $data['interval'],
-            'status' => 'active',
-            'description' => $data['description'] ?? 'Admin created loan',
-            'repayment_start_date' => $data['repayment_start_date'] ?? null,
-            'disbursed_at' => now(),
-            'approved_at' => now(),
-            'approved_by' => $request->user()->id,
-            'received_at' => now(),
-        ]);
+            $perInstallment = round($data['amount'] / $data['total_installments'], 2);
+
+            return QardHasan::create([
+                'user_id' => $lockedUser->id,
+                'qard_id_string' => 'ADM-' . strtoupper(Str::random(8)),
+                'principal_amount' => $data['amount'],
+                'total_installments' => $data['total_installments'],
+                'per_installment' => $perInstallment,
+                'interval' => $data['interval'],
+                'status' => 'active',
+                'description' => $data['description'] ?? 'Admin created loan',
+                'repayment_start_date' => $data['repayment_start_date'] ?? null,
+                'disbursed_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => $request->user()->id,
+                'received_at' => now(),
+            ]);
+        });
 
         // Log the action
         Log::info("Admin {$request->user()->id} created loan for member {$user->id}", ['amount' => $data['amount']]);

@@ -8,7 +8,8 @@ $projectPath = (Get-Location).Path
 $wslProjectPath = (wsl wslpath -a "$projectPath").Trim()
 
 function Escape-ForBash([string]$s) {
-  return "'" + ($s -replace "'", "'\"'\"'") + "'"
+  $escaped = $s.Replace("'", "'\''")
+  return "'$escaped'"
 }
 
 $argString = ($args | ForEach-Object { Escape-ForBash $_ }) -join ' '

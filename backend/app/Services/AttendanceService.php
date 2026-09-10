@@ -253,6 +253,7 @@ class AttendanceService
                 $record->update([
                     'status' => $status,
                     'fine_paid_at' => $paidAt,
+                    'fine_amount' => $amount,
                 ]);
             } else {
                 AttendanceRecord::create([
@@ -260,6 +261,7 @@ class AttendanceService
                     'meeting_id' => $meeting->id,
                     'status' => $status,
                     'fine_paid_at' => $paidAt,
+                    'fine_amount' => $amount,
                 ]);
             }
         });
@@ -281,7 +283,7 @@ class AttendanceService
 
             $remainingToMark = $amount;
             foreach ($pendingRecords as $record) {
-                $fineAmount = (float)($record->meeting->fine_amount ?? config('cooperative.attendance.default_fine', 500));
+                $fineAmount = (float)($record->fine_amount ?? $record->meeting->fine_amount ?? config('cooperative.attendance.default_fine', 500));
                 if ($remainingToMark >= $fineAmount) {
                     $record->update([
                         'status' => 'fine_paid',
@@ -351,23 +353,36 @@ class AttendanceService
         }
 
         DB::transaction(function () use ($user, $record) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
             $amountToDeduct = 0;
 
             if ($record->status === 'fine_pending') {
+                $amountToDeduct = (float)($record->fine_amount ?? $record->meeting->fine_amount ?? config('cooperative.attendance.default_fine', 500));
                 $record->update([
                     'status' => 'fine_paid',
                     'fine_paid_at' => now(),
                 ]);
-                $amountToDeduct = (float)($record->meeting->fine_amount ?? config('cooperative.attendance.default_fine', 500));
             } elseif (!$record->lateness_fine_paid && $record->lateness_fine_amount > 0) {
+                $amountToDeduct = (float) $record->lateness_fine_amount;
                 $record->update([
                     'lateness_fine_paid' => true,
                 ]);
-                $amountToDeduct = (float) $record->lateness_fine_amount;
             }
 
             if ($amountToDeduct > 0) {
-                $user->decrement('outstanding_fines', min((float)$user->outstanding_fines, $amountToDeduct));
+                $lockedUser->decrement('outstanding_fines', min((float)$lockedUser->outstanding_fines, $amountToDeduct));
+
+                activity('shariah_audit')
+                    ->performedOn($record)
+                    ->causedBy(auth()->user())
+                    ->withProperties([
+                        'amount' => $amountToDeduct,
+                        'user_id' => $user->id,
+                        'member_name' => $user->full_name,
+                        'type' => $record->status === 'fine_paid' ? 'absence_fine' : 'lateness_fine',
+                        'meeting_id' => $record->meeting_id,
+                    ])
+                    ->log("Waived fine of " . number_format($amountToDeduct, 2) . " for " . $user->full_name);
             }
         });
     }

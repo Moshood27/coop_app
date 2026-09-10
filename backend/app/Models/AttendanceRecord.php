@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class AttendanceRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'user_id',
         'meeting_id',
+        'fine_amount',
         'marked_by_id',
         'status',
         'attended_at',
@@ -34,6 +37,7 @@ class AttendanceRecord extends Model
     protected $casts = [
         'attended_at' => 'datetime',
         'fine_paid_at' => 'datetime',
+        'fine_amount' => 'decimal:2',
         'lat' => 'decimal:8',
         'lng' => 'decimal:8',
         'lateness_fine_paid' => 'boolean',
@@ -45,6 +49,14 @@ class AttendanceRecord extends Model
         'verified_via_beacon' => 'boolean',
         'is_offline_sync' => 'boolean',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'fine_paid_at', 'lateness_fine_paid', 'lateness_fine_amount', 'fine_amount'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function user(): BelongsTo
     {

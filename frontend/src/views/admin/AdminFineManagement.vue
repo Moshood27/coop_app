@@ -51,11 +51,11 @@
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
               {{ fine.status === 'fine_pending' ? 'Absence Fine' : 'Lateness Fine' }}
             </p>
-            <h3 class="text-sm font-black text-slate-800">{{ fine.meeting?.title || 'General Meeting' }}</h3>
+            <h3 class="text-sm font-black text-slate-800">{{ fine.meeting?.name || 'General Meeting' }}</h3>
             <p class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(fine.created_at) }}</p>
           </div>
           <div class="text-right">
-            <p class="text-lg font-black text-rose-600">₦{{ formatMoney(fine.status === 'fine_pending' ? (fine.meeting?.fine_amount || 500) : fine.lateness_fine_amount) }}</p>
+            <p class="text-lg font-black text-rose-600">₦{{ formatMoney(fine.status === 'fine_pending' ? (fine.fine_amount || fine.meeting?.fine_amount || 500) : fine.lateness_fine_amount) }}</p>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ const waiveFine = async (fine) => {
 
 const waiveAllFines = async () => {
   const isConfirmed = await confirm(
-    `Are you sure you want to waive ALL outstanding fines (₦${formatMoney(user.value.outstanding_fines)}) for this member?`,
+    `Are you sure you want to waive ALL outstanding fines (₦${formatMoney(user.value?.outstanding_fines || 0)}) for this member?`,
     {
       title: 'Waive All Fines',
       confirmText: 'Yes, Waive All'

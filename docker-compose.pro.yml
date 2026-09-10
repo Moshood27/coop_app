@@ -6,7 +6,8 @@ services:
     volumes:
       - ./backend:/var/www/html
       - ./frontend/dist:/var/www/html/public/app
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/conf.d/.htpasswd:/etc/nginx/conf.d/.htpasswd
+      - ./docker/nginx/conf.d/app.pro.conf:/etc/nginx/conf.d/app.conf
     networks:
       - attaqwa-network
       - gateway-network
@@ -24,18 +25,22 @@ services:
       - PHP_MEMORY_LIMIT=512M
     volumes:
       - ./backend:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/php.pro.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     networks:
       - attaqwa-network
       - gateway-network
     depends_on:
-      db: # Updated from mysql to db
+      db:
         condition: service_healthy
 
-  db: # Service name now matches your .env DB_HOST=db
+  db:
     image: mysql:8.4
-    container_name: attaqwa-db # Using 'db' to avoid 'mysql' name conflict
+    container_name: attaqwa-db
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
@@ -44,7 +49,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     command: --mysql-native-password=ON
     volumes:
-      - old-db-data:/var/lib/mysql # Points to the volume with your data
+      - old-db-data:/var/lib/mysql
     networks:
       - attaqwa-network
     healthcheck:
@@ -69,27 +74,12 @@ services:
     env_file: [ ".env" ]
     volumes:
       - ./backend:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/php.pro.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
-    networks:
-      - attaqwa-network
-      - gateway-network
-    depends_on:
-      - db # Updated from mysql to db
-      - app
-
-  scheduler:
-    build:
-      context: ./backend
-      dockerfile: ../docker/php/Dockerfile
-    container_name: attaqwa-scheduler
-    restart: unless-stopped
-    command: php artisan schedule:work
-    env_file: [ ".env" ]
-    volumes:
-      - ./backend:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
-      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     networks:
       - attaqwa-network
       - gateway-network
@@ -108,12 +98,39 @@ services:
       - .env
     volumes:
       - ./backend:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/php.pro.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - attaqwa-network
       - gateway-network
     depends_on:
+      - app
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: ../docker/php/Dockerfile
+    container_name: attaqwa-scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    env_file: [ ".env" ]
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/php/php.pro.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - attaqwa-network
+      - gateway-network
+    depends_on:
+      - db
       - app
 
   phpmyadmin:
@@ -144,7 +161,6 @@ networks:
     external: true
 
 volumes:
-  # This tells Docker to use the existing volume 'coop2_db-data'
   old-db-data:
     external: true
     name: coop2_db-data
