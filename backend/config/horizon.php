@@ -234,12 +234,12 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 10,
+                'maxProcesses' => 5,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
             'supervisor-webhooks' => [
-                'maxProcesses' => 5,
+                'maxProcesses' => 3,
             ],
         ],
 
