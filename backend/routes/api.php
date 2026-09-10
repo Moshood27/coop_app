@@ -123,6 +123,13 @@ Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\Utilit
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
+    // In-App Notifications (Inbox)
+    Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
+    Route::delete('/notifications/{id}', [NotificationsController::class, 'destroy'])->whereUuid('id');
+    Route::get('/notifications', [NotificationsController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
+    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne'])->whereUuid('id');
+
     Route::post('/logout', [AuthController::class, 'logout']);
     // Takaful (member-facing)
     Route::get('/takaful/summary', [TakafulController::class, 'summary']);
@@ -396,12 +403,6 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/gold/history', [GoldController::class, 'history']);
     Route::get('/gold/export', [GoldController::class, 'export']);
 
-    // In-App Notifications (Inbox)
-    Route::delete('/notifications/{id}', [NotificationsController::class, 'destroy']);
-    Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
-    Route::get('/notifications', [NotificationsController::class, 'index']);
-    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne']);
-    Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
 
 
     // Enhanced Islamic Cooperative Chat System
