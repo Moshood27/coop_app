@@ -70,7 +70,7 @@ services:
       dockerfile: ../docker/php/Dockerfile
     container_name: attaqwa-worker
     restart: unless-stopped
-    command: php artisan horizon
+    command: php artisan horizon --environment=production
     env_file: [ ".env" ]
     volumes:
       - ./backend:/var/www/html
@@ -85,6 +85,7 @@ services:
       - gateway-network
     depends_on:
       - db
+      - redis
       - app
 
   reverb:
