@@ -38,6 +38,7 @@ use Spatie\Health\Checks\Checks\HorizonCheck;
 use Spatie\Health\Checks\Checks\BackupsCheck;
 use Illuminate\Support\Facades\Bus;
 use App\Jobs\Middleware\HandleResendQuota;
+use Illuminate\Support\Facades\Broadcast;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -309,6 +310,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Logout::class, LogSuccessfulLogout::class);
         Event::listen(Failed::class, LogFailedLogin::class);
         Event::listen(Lockout::class, LogLockout::class);
+
+        // Register Broadcasting routes with support for both Sanctum (API) and Web (Session)
+        Broadcast::routes(['middleware' => ['auth:sanctum,web']]);
+        require base_path('routes/channels.php');
 
         // Register Security Event Listeners
         Event::listen(RoleAttached::class, LogRoleChange::class);
