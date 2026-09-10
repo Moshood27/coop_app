@@ -489,6 +489,9 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     Route::post('/{user}/allocate-wallet', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
     Route::get('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);
     Route::get('/{user}/wallet-transactions', [\App\Http\Controllers\Api\AdminMemberController::class, 'walletTransactions']);
+    Route::get('/{user}/fines', [\App\Http\Controllers\Api\AdminMemberController::class, 'fines']);
+    Route::post('/{user}/waive-fine/{attendanceRecord}', [\App\Http\Controllers\Api\AdminMemberController::class, 'waiveFine']);
+    Route::post('/{user}/waive-all-fines', [\App\Http\Controllers\Api\AdminMemberController::class, 'waiveAllFines']);
 
     // Contribution CRUD
     Route::patch('/contributions/{contribution}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateContribution']);

@@ -72,6 +72,7 @@ const AdminMemberDetail = () => import('../views/admin/AdminMemberDetail.vue')
 const AdminPassbookManagement = () => import('../views/admin/AdminPassbookManagement.vue')
 const AdminWalletManagement = () => import('../views/admin/AdminWalletManagement.vue')
 const AdminLoanManagement = () => import('../views/admin/AdminLoanManagement.vue')
+const AdminFineManagement = () => import('../views/admin/AdminFineManagement.vue')
 
 const routes = [
   { path: '/', name: 'landing', component: Landing, meta: { guest: true, skipOnboarding: true } },
@@ -160,6 +161,7 @@ const routes = [
   { path: '/admin/members/:id/passbook', name: 'admin.members.passbook', component: AdminPassbookManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/wallet', name: 'admin.members.wallet', component: AdminWalletManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/loans', name: 'admin.members.loans', component: AdminLoanManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/fines', name: 'admin.members.fines', component: AdminFineManagement, meta: { requiresAdmin: true } },
   { path: '/admin', redirect: '/admin/portal' },
 ]
 

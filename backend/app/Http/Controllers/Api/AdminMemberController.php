@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Services\AdministrativeChargeService;
 use App\Services\PassbookService;
+use App\Services\AttendanceService;
+use App\Models\AttendanceRecord;
 use Illuminate\Support\Facades\Log;
 
 class AdminMemberController extends Controller
@@ -23,10 +25,12 @@ class AdminMemberController extends Controller
      * List members, optionally filtered by branch if the admin is branch-bound.
      */
     protected $passbookService;
+    protected $attendanceService;
 
-    public function __construct(PassbookService $passbookService)
+    public function __construct(PassbookService $passbookService, AttendanceService $attendanceService)
     {
         $this->passbookService = $passbookService;
+        $this->attendanceService = $attendanceService;
     }
 
     public function index(Request $request)
@@ -664,5 +668,64 @@ class AdminMemberController extends Controller
         }
 
         abort(403, 'Unauthorized access to this member.');
+    }
+
+    /**
+     * Get member fines.
+     */
+    public function fines(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $fines = AttendanceRecord::where('user_id', $user->id)
+            ->where(function($q) {
+                $q->where('status', 'fine_pending')
+                  ->orWhere(function($q2) {
+                      $q2->where('lateness_fine_paid', false)
+                         ->where('lateness_fine_amount', '>', 0);
+                  });
+            })
+            ->with('meeting')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+                'membership_number' => $user->membership_number,
+                'passport_url' => $user->passport_url,
+                'outstanding_fines' => $user->outstanding_fines,
+            ],
+            'fines' => $fines
+        ]);
+    }
+
+    /**
+     * Waive a specific fine.
+     */
+    public function waiveFine(Request $request, User $user, AttendanceRecord $attendanceRecord)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        if ($attendanceRecord->user_id !== $user->id) {
+            return response()->json(['message' => 'Record mismatch'], 400);
+        }
+
+        $this->attendanceService->waiveFine($user, $attendanceRecord);
+
+        return response()->json(['message' => 'Fine waived successfully']);
+    }
+
+    /**
+     * Waive all fines for a member.
+     */
+    public function waiveAllFines(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $this->attendanceService->waiveAllFines($user);
+
+        return response()->json(['message' => 'All fines waived successfully']);
     }
 }

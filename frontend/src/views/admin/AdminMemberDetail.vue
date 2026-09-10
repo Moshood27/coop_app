@@ -100,6 +100,17 @@
             <span class="ml-auto i-mdi-chevron-right text-slate-300"></span>
           </button>
 
+          <button @click="$router.push(`/admin/members/${user.id}/fines`)" class="w-full bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all text-left">
+            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl">
+              <span class="i-mdi-alert-circle-outline"></span>
+            </div>
+            <div>
+              <p class="text-sm font-black text-slate-800">Fine Management</p>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Outstanding fines & waivers</p>
+            </div>
+            <span class="ml-auto i-mdi-chevron-right text-slate-300"></span>
+          </button>
+
           <button @click="showLoanModal = true" class="w-full bg-emerald-600 p-5 rounded-[2rem] border border-emerald-500 shadow-lg shadow-emerald-100 flex items-center gap-4 active:scale-[0.98] transition-all text-left text-white">
             <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center text-2xl">
               <span class="i-mdi-plus-circle"></span>

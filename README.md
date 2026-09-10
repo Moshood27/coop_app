@@ -1644,3 +1644,5 @@ This release adds automated BVN and face verification during member signup to el
 - Notes:
   - Selfie/Passport image path from upload is used as the live face. Reference image is taken from provider BVN record if available, else the uploaded ID image is used for comparison.
 
+#   f a s h e d u b r a n d  
+ 

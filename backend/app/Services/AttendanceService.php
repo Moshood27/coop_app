@@ -342,6 +342,37 @@ class AttendanceService
     }
 
     /**
+     * Waive a specific fine for a user.
+     */
+    public function waiveFine(User $user, AttendanceRecord $record): void
+    {
+        if ($record->user_id !== $user->id) {
+            throw new \InvalidArgumentException("Record does not belong to this user.");
+        }
+
+        DB::transaction(function () use ($user, $record) {
+            $amountToDeduct = 0;
+
+            if ($record->status === 'fine_pending') {
+                $record->update([
+                    'status' => 'fine_paid',
+                    'fine_paid_at' => now(),
+                ]);
+                $amountToDeduct = (float)($record->meeting->fine_amount ?? config('cooperative.attendance.default_fine', 500));
+            } elseif (!$record->lateness_fine_paid && $record->lateness_fine_amount > 0) {
+                $record->update([
+                    'lateness_fine_paid' => true,
+                ]);
+                $amountToDeduct = (float) $record->lateness_fine_amount;
+            }
+
+            if ($amountToDeduct > 0) {
+                $user->decrement('outstanding_fines', min((float)$user->outstanding_fines, $amountToDeduct));
+            }
+        });
+    }
+
+    /**
      * Wipe ALL outstanding fines from the entire system.
      */
     public function wipeAllSystemFines(): void
