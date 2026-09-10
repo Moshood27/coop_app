@@ -400,6 +400,8 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/notifications', [NotificationsController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne']);
     Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
+    Route::delete('/notifications/{id}', [NotificationsController::class, 'destroy']);
+    Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
 
 
     // Enhanced Islamic Cooperative Chat System

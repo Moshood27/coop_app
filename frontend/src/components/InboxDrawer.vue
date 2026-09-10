@@ -60,6 +60,26 @@ async function markOne(id) {
   } catch (_) {}
 }
 
+async function deleteOne(id) {
+  if (!confirm('Delete this notification?')) return
+  try {
+    const { data } = await axios.delete(`/api/notifications/${id}`)
+    items.value = items.value.filter(it => it.id !== id)
+    unread.value = data?.unread_count ?? 0
+    emit('unread', unread.value)
+  } catch (_) {}
+}
+
+async function deleteAll() {
+  if (!confirm('Are you sure you want to delete ALL notifications? This cannot be undone and will free up space.')) return
+  try {
+    await axios.delete('/api/notifications')
+    items.value = []
+    unread.value = 0
+    emit('unread', 0)
+  } catch (_) {}
+}
+
 onMounted(() => {
   if (open.value) fetchList()
 })
@@ -72,26 +92,36 @@ watch(open, (v) => { if (v) fetchList(page.value) })
   </transition>
   <transition name="slide">
     <aside v-if="open" class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-xl z-50 flex flex-col">
-      <header class="p-4 border-b flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <button class="mr-1 rounded-full p-2 hover:bg-slate-100" @click="open = false" aria-label="Back">
-            <span class="i-mdi-arrow-left text-xl"></span>
-          </button>
-          <span class="i-mdi-inbox-outline text-xl"></span>
-          <h2 class="font-semibold">Inbox</h2>
+      <header class="p-4 border-b flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button class="mr-1 rounded-full p-2 hover:bg-slate-100" @click="open = false" aria-label="Back">
+              <span class="i-mdi-arrow-left text-xl"></span>
+            </button>
+            <span class="i-mdi-inbox-outline text-xl"></span>
+            <h2 class="font-semibold">Inbox</h2>
+          </div>
+          <div class="flex gap-3">
+            <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all</button>
+            <button class="text-sm text-red-600 hover:underline" @click="deleteAll" :disabled="items.length===0">Clear all</button>
+          </div>
         </div>
-        <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all as read</button>
       </header>
       <div class="p-3 text-sm text-slate-500" v-if="loading">Loading...</div>
       <div class="p-3 text-sm text-red-600" v-if="error">{{ error }}</div>
       <ul class="flex-1 overflow-y-auto divide-y">
         <li v-for="it in items" :key="it.id" class="p-4 flex gap-3 items-start" :class="!it.read_at ? 'bg-amber-50' : ''">
-          <div>
+          <div class="flex-1">
             <div class="font-medium">{{ it.title }}</div>
             <div class="text-sm text-slate-600 whitespace-pre-line">{{ it.message }}</div>
             <div class="text-xs text-slate-400 mt-1">{{ new Date(it.created_at).toLocaleString() }}</div>
           </div>
-          <button v-if="!it.read_at" class="ml-auto text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
+          <div class="flex flex-col items-end gap-2">
+            <button v-if="!it.read_at" class="text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
+            <button class="text-slate-400 hover:text-red-600 transition-colors" @click="deleteOne(it.id)" title="Delete">
+              <span class="i-mdi-delete-outline text-lg"></span>
+            </button>
+          </div>
         </li>
         <li v-if="!loading && items.length===0" class="p-6 text-center text-slate-500">No notifications yet.</li>
       </ul>
