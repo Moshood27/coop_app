@@ -1,7 +1,7 @@
 <?php
 
 return [
-    // Available: mock, dojah (extendable later: smileid, else)
+    // Available: mock, dojah, paystack (extendable later: smileid, else)
     'provider' => env('KYC_PROVIDER', 'mock'),
 
     'thresholds' => [
@@ -13,5 +13,9 @@ return [
         'app_id' => env('DOJAH_APP_ID'),
         'secret' => env('DOJAH_SECRET'),
         'base_url' => env('DOJAH_BASE_URL', 'https://api.dojah.io'),
+    ],
+
+    'paystack' => [
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
     ],
 ];

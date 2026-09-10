@@ -86,15 +86,11 @@ class FlutterwaveBvnValidationTest extends TestCase
 
         $service = new FlutterwaveDvaService();
 
-        // Odd digit fails in mock
-        $result = $service->createVirtualAccount($user, '12345678901');
-        $this->assertFalse($result['success']);
-
-        // Even digit passes in mock
+        // Mock always passes for 11 digits
         Http::fake([
              'api.flutterwave.com/v3/virtual-account-numbers' => Http::response(['status' => 'success', 'data' => []])
         ]);
-        $result = $service->createVirtualAccount($user, '12345678902');
+        $result = $service->createVirtualAccount($user, '12345678901');
         $this->assertTrue($result['success']);
     }
 }

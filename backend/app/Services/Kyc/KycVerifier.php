@@ -4,6 +4,7 @@ namespace App\Services\Kyc;
 
 use App\Services\Kyc\Providers\DojahProvider;
 use App\Services\Kyc\Providers\MockProvider;
+use App\Services\Kyc\Providers\PaystackProvider;
 
 class KycVerifier
 {
@@ -12,6 +13,7 @@ class KycVerifier
         $provider = config('kyc.provider', 'mock');
         $driver = match ($provider) {
             'dojah' => new DojahProvider(),
+            'paystack' => new PaystackProvider(),
             default => new MockProvider(),
         };
 

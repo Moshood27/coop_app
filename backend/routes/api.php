@@ -398,10 +398,11 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
 
     // In-App Notifications (Inbox)
     Route::get('/notifications', [NotificationsController::class, 'index']);
-    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne']);
+    Route::get('/notifications/{id}', [NotificationsController::class, 'show']);
     Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
+    Route::delete('/notifications/clear-all', [NotificationsController::class, 'deleteAll']);
+    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne']);
     Route::delete('/notifications/{id}', [NotificationsController::class, 'deleteOne']);
-    Route::delete('/notifications', [NotificationsController::class, 'deleteAll']);
 
 
     // Enhanced Islamic Cooperative Chat System

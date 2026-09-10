@@ -77,7 +77,7 @@ async function deleteAll() {
   const confirmed = await modal.confirm('Delete all notifications? This cannot be undone.')
   if (!confirmed) return
   try {
-    await axios.delete('/api/notifications')
+    await axios.delete('/api/notifications/clear-all')
     items.value = []
     unread.value = 0
     emit('unread', 0)
