@@ -37,6 +37,9 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
+# Ensure bootstrap/cache is clean from any host-leaked files to prevent "CollisionServiceProvider not found" errors
+RUN rm -f bootstrap/cache/*.php
+
 # Install PHP dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader
 
