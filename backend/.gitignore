@@ -14,6 +14,13 @@
 /auth.json
 /node_modules
 /vendor
+/bootstrap/cache/*.php
+/bootstrap/cache/config.php
+/bootstrap/cache/routes-v7.php
+/bootstrap/cache/services.php
+/bootstrap/cache/packages.php
+/bootstrap/cache/events.php
+/storage/*.key
 Homestead.json
 Homestead.yaml
 Thumbs.db

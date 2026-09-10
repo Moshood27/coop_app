@@ -377,6 +377,7 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/storage/framework/cache/data/da" />
       <excludeFolder url="file://$MODULE_DIR$/backend/storage/framework/cache/data/e4" />
       <excludeFolder url="file://$MODULE_DIR$/backend/storage/framework/cache/data/e8" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/bootstrap/cache" />
     </content>
     <content url="file://$MODULE_DIR$/frontend/node_modules" />
     <orderEntry type="inheritedJdk" />
