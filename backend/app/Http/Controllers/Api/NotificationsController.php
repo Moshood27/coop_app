@@ -32,7 +32,10 @@ class NotificationsController extends Controller
     public function readOne(Request $request, string $id)
     {
         $user = $request->user();
-        $n = $user->notifications()->where('id', $id)->firstOrFail();
+        $n = $user->notifications()->where('id', $id)->first();
+        if (!$n) {
+            return response()->json(['message' => 'Notification not found or already deleted'], 404);
+        }
         if (is_null($n->read_at)) {
             $n->markAsRead();
         }

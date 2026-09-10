@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\QardHasanController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
@@ -123,6 +124,19 @@ Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\Utilit
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
+    // In-App Notifications (Inbox)
+    Route::get('/notifications', [NotificationsController::class, 'index']);
+    Route::get('/notifications/{id}', [NotificationsController::class, 'show']);
+    Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
+    Route::delete('/notifications/clear-all', [NotificationsController::class, 'deleteAll']);
+    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne']);
+    Route::delete('/notifications/{id}', [NotificationsController::class, 'deleteOne']);
+
+    // Broadcasting Auth (manual registration to ensure it works in API group)
+    Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+        return Broadcast::auth($request);
+    });
+
     Route::post('/logout', [AuthController::class, 'logout']);
     // Takaful (member-facing)
     Route::get('/takaful/summary', [TakafulController::class, 'summary']);
@@ -396,13 +410,6 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/gold/history', [GoldController::class, 'history']);
     Route::get('/gold/export', [GoldController::class, 'export']);
 
-    // In-App Notifications (Inbox)
-    Route::get('/notifications', [NotificationsController::class, 'index']);
-    Route::get('/notifications/{id}', [NotificationsController::class, 'show'])->where('id', '[a-f0-9-]+');
-    Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
-    Route::delete('/notifications/clear-all', [NotificationsController::class, 'deleteAll']);
-    Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne'])->where('id', '[a-f0-9-]+');
-    Route::delete('/notifications/{id}', [NotificationsController::class, 'deleteOne'])->where('id', '[a-f0-9-]+');
 
 
     // Enhanced Islamic Cooperative Chat System

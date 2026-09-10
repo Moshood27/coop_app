@@ -70,7 +70,11 @@ async function deleteOne(id) {
     items.value = items.value.filter(it => it.id !== id)
     unread.value = data.unread_count ?? unread.value
     emit('unread', unread.value)
-  } catch (_) {}
+  } catch (e) {
+    if (e?.response?.status === 404 || e?.response?.status === 410) {
+      items.value = items.value.filter(it => it.id !== id)
+    }
+  }
 }
 
 async function deleteAll() {

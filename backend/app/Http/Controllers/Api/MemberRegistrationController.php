@@ -31,7 +31,7 @@ class MemberRegistrationController extends Controller
             'marital_status' => ['required', 'string', 'in:single,married,divorced,widow'],
             'occupation' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'secondary_phone' => ['nullable', 'string', 'max:30'],
             'address' => ['required', 'string', 'max:1000'],
             'residential_address' => ['required', 'string', 'max:1000'],
@@ -263,7 +263,7 @@ class MemberRegistrationController extends Controller
 
         $code = (string) random_int(100000, 999999);
         $app->email_otp_hash = $app->email ? Hash::make($code) : null;
-        $app->sms_otp_hash = $app->phone ? Hash::make($code) : null;
+        $app->sms_otp_hash = !empty($app->phone) ? Hash::make($code) : null;
         $app->otp_expires_at = now()->addMinutes(10);
         $app->email_otp_attempts = 0;
         $app->sms_otp_attempts = 0;
@@ -286,12 +286,12 @@ class MemberRegistrationController extends Controller
             $app->notify(new OtpNotification(
                 title: 'Registration Verification Code',
                 message: "Your verification code is {$code}. It expires in 10 minutes. Use this code for both email and phone.",
-                channel: 'all', // notification handles via()
+                channel: 'all',
                 context: ['type' => 'registration']
             ));
 
             if ($app->email) $sentTo['email'] = $this->maskEmail($app->email);
-            if ($app->phone) $sentTo['phone'] = $this->maskPhone($app->phone);
+            if (!empty($app->phone)) $sentTo['phone'] = $this->maskPhone($app->phone);
             if ($hasPush) $sentTo['push'] = 'Device notification sent';
 
         } catch (\Throwable $e) {
@@ -413,7 +413,7 @@ class MemberRegistrationController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'token' => ['required', 'string', Rule::exists('member_applications', 'token')],
-            'bvn' => ['required', 'regex:/^\\d{11}$/'],
+            'bvn' => ['nullable', 'regex:/^\\d{11}$/'],
         ]);
 
         if ($validator->fails()) {
@@ -432,8 +432,8 @@ class MemberRegistrationController extends Controller
             return response()->json(['message' => 'This application has already been finalized. Please proceed to login.'], 422);
         }
         // Prevent duplicate BVN usage across different accounts
-        $bvn = $data['bvn'];
-        if (User::where('bvn', $bvn)->exists()) {
+        $bvn = $data['bvn'] ?? null;
+        if ($bvn && User::where('bvn', $bvn)->exists()) {
             return response()->json(['message' => 'This BVN is already associated with an existing member. If you believe this is an error, please contact support.'], 422);
         }
 
@@ -441,29 +441,56 @@ class MemberRegistrationController extends Controller
         $missing = [];
         foreach ([
             'passport_path' => 'Passport photo',
-            'id_card_path' => 'Valid ID card',
-            'proof_of_address_path' => 'Proof of address',
+            // 'id_card_path' => 'Valid ID card',
+            // 'proof_of_address_path' => 'Proof of address',
         ] as $field => $label) {
             if (empty($app->{$field})) $missing[] = $label;
         }
         if (!empty($missing)) {
             return response()->json(['message' => 'Missing required documents: '.implode(', ', $missing)], 422);
         }
-        if (empty($app->email_verified_at) || empty($app->phone_verified_at)) {
-            return response()->json(['message' => 'Both email and phone must be verified before joining.'], 422);
+
+        // Email verification is mandatory
+        if (empty($app->email_verified_at)) {
+            return response()->json(['message' => 'Email must be verified before joining.'], 422);
         }
 
-        // Perform BVN + Face match verification using configured KYC provider
-        try {
-            $verifier = app(\App\Services\Kyc\KycVerifier::class);
-            $kyc = $verifier->verifyBvnWithFace($bvn, $app->passport_path, $app->id_card_path);
-        } catch (\Throwable $e) {
-            Log::error('KYC verification exception', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Unable to perform KYC verification. Please try again later.'], 503);
+        // Phone verification is optional (as per requested bypass)
+        /*
+        if (!empty($app->phone) && empty($app->phone_verified_at)) {
+            return response()->json(['message' => 'Phone must be verified before joining.'], 422);
         }
-        if (empty($kyc['success'])) {
-            $reason = $kyc['status'] ?? 'failed';
-            Log::warning('KYC verification failed', [
+        */
+
+        // Perform BVN + Face match verification using configured KYC provider (ONLY if BVN provided)
+        $kyc = [];
+        if ($bvn) {
+            try {
+                $verifier = app(\App\Services\Kyc\KycVerifier::class);
+                $kyc = $verifier->verifyBvnWithFace($bvn, $app->passport_path, $app->id_card_path);
+            } catch (\Throwable $e) {
+                Log::error('KYC verification exception', ['error' => $e->getMessage()]);
+                return response()->json(['message' => 'Unable to perform KYC verification. Please try again later.'], 503);
+            }
+            if (empty($kyc['success'])) {
+                $reason = $kyc['status'] ?? 'failed';
+                Log::warning('KYC verification failed', [
+                    'provider' => $kyc['provider'] ?? null,
+                    'status' => $kyc['status'] ?? null,
+                    'score' => $kyc['score'] ?? null,
+                    'reference_source' => $kyc['meta']['reference_source'] ?? null,
+                    'app_token' => $app->token,
+                    'email' => $app->email,
+                    'branch_id' => $app->branch_id,
+                ]);
+                return response()->json([
+                    'message' => 'KYC verification failed: '.$reason,
+                    'details' => $kyc['meta'] ?? null,
+                ], 422);
+            }
+
+            // KYC passed — log minimal observability fields for support
+            Log::info('KYC verification passed', [
                 'provider' => $kyc['provider'] ?? null,
                 'status' => $kyc['status'] ?? null,
                 'score' => $kyc['score'] ?? null,
@@ -472,22 +499,12 @@ class MemberRegistrationController extends Controller
                 'email' => $app->email,
                 'branch_id' => $app->branch_id,
             ]);
-            return response()->json([
-                'message' => 'KYC verification failed: '.$reason,
-                'details' => $kyc['meta'] ?? null,
-            ], 422);
+        } else {
+            Log::info('Registration bypasses KYC (no BVN provided)', [
+                'app_token' => $app->token,
+                'email' => $app->email,
+            ]);
         }
-
-        // KYC passed — log minimal observability fields for support
-        Log::info('KYC verification passed', [
-            'provider' => $kyc['provider'] ?? null,
-            'status' => $kyc['status'] ?? null,
-            'score' => $kyc['score'] ?? null,
-            'reference_source' => $kyc['meta']['reference_source'] ?? null,
-            'app_token' => $app->token,
-            'email' => $app->email,
-            'branch_id' => $app->branch_id,
-        ]);
 
         // Generate a unique membership number within the branch (6 digits)
         $membership = User::generateMembershipNumber((int) $app->branch_id);
@@ -560,17 +577,19 @@ class MemberRegistrationController extends Controller
         $user->passport_path = $app->passport_path; // keep uploaded path
         $user->id_card_path = $app->id_card_path;
         $user->proof_of_address_path = $app->proof_of_address_path;
-        // Persist BVN verification results
-        $user->bvn = $bvn;
-        $user->bvn_verified_at = now();
+        // Persist BVN verification results if provided
+        if ($bvn) {
+            $user->bvn = $bvn;
+            $user->bvn_verified_at = now();
+        }
         $user->save();
 
         $user->virtualAccount()->create([
             'dva_verification_meta' => [
-                'provider' => $kyc['provider'] ?? null,
-                'status' => $kyc['status'] ?? null,
-                'score' => $kyc['score'] ?? null,
-                'meta' => $kyc['meta'] ?? null,
+                'provider' => $kyc['provider'] ?? 'none',
+                'status' => $kyc['status'] ?? ($bvn ? 'verified' : 'skipped'),
+                'score' => $kyc['score'] ?? ($bvn ? 1.0 : 0.0),
+                'meta' => $kyc['meta'] ?? ['note' => $bvn ? 'Manually bypassed' : 'No BVN provided'],
             ]
         ]);
         $app->finalized_at = now();
