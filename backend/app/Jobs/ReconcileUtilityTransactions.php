@@ -19,6 +19,13 @@ class ReconcileUtilityTransactions implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 300;
+
+    /**
      * Create a new job instance.
      */
     public function __construct()
@@ -134,12 +141,13 @@ class ReconcileUtilityTransactions implements ShouldQueue
     {
         $status = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
         // 300 = Cancelled, 400 = Failed
-        if (in_array($status, ['300', '400', 'ORDER_CANCELLED', 'FAILED', 'CANCELLED'])) {
+        // We also treat MISSING_ORDERID as failed because it means the provider has no record of it.
+        if (in_array($status, ['300', '400', 'ORDER_CANCELLED', 'FAILED', 'CANCELLED', 'MISSING_ORDERID'])) {
             return true;
         }
 
         $orderStatus = strtoupper((string)($body['orderstatus'] ?? ($body['order_status'] ?? ($body['OrderStatus'] ?? ''))));
-        if (in_array($orderStatus, ['ORDER_CANCELLED', 'FAILED', 'CANCELLED'])) {
+        if (in_array($orderStatus, ['ORDER_CANCELLED', 'FAILED', 'CANCELLED', 'MISSING_ORDERID'])) {
             return true;
         }
 

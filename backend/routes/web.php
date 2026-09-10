@@ -135,3 +135,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/templates/migration-passbook.xlsx', [TemplateDownloadController::class, 'migrationPassbook'])->name('admin.templates.migration-passbook');
     Route::get('/templates/migration-transactions.xlsx', [TemplateDownloadController::class, 'migrationTransactions'])->name('admin.templates.migration-transactions');
 });
+
+// Explicit broadcasting routes registration to resolve 404s on broadcasting/auth
+// Supported guards: sanctum (API/Mobile/Vue) and web (Filament/Sessions)
+\Illuminate\Support\Facades\Broadcast::routes(['middleware' => ['auth:sanctum,web']]);

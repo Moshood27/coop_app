@@ -61,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Load broadcasting channels
+        require base_path('routes/channels.php');
+
         // Register Google Drive Storage Driver
         Storage::extend('google', function ($app, $config) {
             if (empty($config['clientId']) || empty($config['clientSecret']) || empty($config['refreshToken'])) {
