@@ -69,6 +69,7 @@ services:
       context: ./backend
       dockerfile: ../docker/php/Dockerfile
     container_name: attaqwa-worker
+    hostname: attaqwa-queue-worker
     restart: unless-stopped
     command: php artisan horizon --environment=production
     env_file: [ ".env" ]
