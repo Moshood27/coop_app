@@ -46,4 +46,20 @@ class NotificationsController extends Controller
         $user->unreadNotifications->markAsRead();
         return response()->json(['message' => 'All notifications marked as read', 'unread_count' => 0]);
     }
+
+    public function deleteOne(Request $request, string $id)
+    {
+        $user = $request->user();
+        $notification = $user->notifications()->where('id', $id)->firstOrFail();
+        $notification->delete();
+        $unread = $user->unreadNotifications()->count();
+        return response()->json(['message' => 'Notification deleted', 'unread_count' => $unread]);
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $user = $request->user();
+        $user->notifications()->delete();
+        return response()->json(['message' => 'All notifications deleted', 'unread_count' => 0]);
+    }
 }

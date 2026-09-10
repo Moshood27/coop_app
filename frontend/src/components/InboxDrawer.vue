@@ -60,6 +60,26 @@ async function markOne(id) {
   } catch (_) {}
 }
 
+async function deleteOne(id) {
+  if (!confirm('Delete this notification?')) return
+  try {
+    const { data } = await axios.delete(`/api/notifications/${id}`)
+    items.value = items.value.filter(it => it.id !== id)
+    unread.value = data.unread_count ?? unread.value
+    emit('unread', unread.value)
+  } catch (_) {}
+}
+
+async function deleteAll() {
+  if (!confirm('Delete all notifications? This cannot be undone.')) return
+  try {
+    await axios.delete('/api/notifications')
+    items.value = []
+    unread.value = 0
+    emit('unread', 0)
+  } catch (_) {}
+}
+
 onMounted(() => {
   if (open.value) fetchList()
 })
@@ -80,7 +100,10 @@ watch(open, (v) => { if (v) fetchList(page.value) })
           <span class="i-mdi-inbox-outline text-xl"></span>
           <h2 class="font-semibold">Inbox</h2>
         </div>
-        <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all as read</button>
+        <div class="flex items-center gap-3">
+          <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all as read</button>
+          <button class="text-sm text-red-600 hover:underline" @click="deleteAll" :disabled="items.length===0">Clear all</button>
+        </div>
       </header>
       <div class="p-3 text-sm text-slate-500" v-if="loading">Loading...</div>
       <div class="p-3 text-sm text-red-600" v-if="error">{{ error }}</div>
@@ -91,7 +114,12 @@ watch(open, (v) => { if (v) fetchList(page.value) })
             <div class="text-sm text-slate-600 whitespace-pre-line">{{ it.message }}</div>
             <div class="text-xs text-slate-400 mt-1">{{ new Date(it.created_at).toLocaleString() }}</div>
           </div>
-          <button v-if="!it.read_at" class="ml-auto text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
+          <div class="flex flex-col gap-1 ml-auto shrink-0 items-end">
+            <button v-if="!it.read_at" class="text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
+            <button class="p-1 text-slate-400 hover:text-red-600 transition-colors" @click="deleteOne(it.id)" title="Delete">
+              <span class="i-mdi-trash-can-outline text-lg"></span>
+            </button>
+          </div>
         </li>
         <li v-if="!loading && items.length===0" class="p-6 text-center text-slate-500">No notifications yet.</li>
       </ul>
