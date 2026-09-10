@@ -52,7 +52,7 @@ class NotificationsController extends Controller
         $user = $request->user();
         $notification = $user->notifications()->where('id', $id)->first();
         if (!$notification) {
-            return response()->json(['message' => 'Notification not found'], 404);
+            return response()->json(['message' => 'Notification not found in your inbox'], 404);
         }
         return response()->json($notification);
     }
@@ -62,11 +62,11 @@ class NotificationsController extends Controller
         $user = $request->user();
         $notification = $user->notifications()->where('id', $id)->first();
         if (!$notification) {
-            return response()->json(['message' => 'Notification not found'], 404);
+            return response()->json(['message' => 'Notification not found or already deleted'], 404);
         }
         $notification->delete();
         $unread = $user->unreadNotifications()->count();
-        return response()->json(['message' => 'Notification deleted', 'unread_count' => $unread]);
+        return response()->json(['message' => 'Notification deleted successfully', 'unread_count' => $unread]);
     }
 
     public function deleteAll(Request $request)
