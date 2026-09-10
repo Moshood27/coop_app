@@ -22,13 +22,15 @@ class AutoRecoverOverdueLoans implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $userId;
+    public ?int $triggerTxId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(int $userId)
+    public function __construct(int $userId, ?int $triggerTxId = null)
     {
         $this->userId = $userId;
+        $this->triggerTxId = $triggerTxId;
         $this->onQueue('default');
     }
 
@@ -37,7 +39,7 @@ class AutoRecoverOverdueLoans implements ShouldQueue
      */
     public function handle(): void
     {
-        // Check if auto-recovery is enabled globally
+        // ... (check settings)
         if (! (bool) \App\Models\Setting::get('auto_overdue_recovery_enabled', true)) {
             return;
         }
@@ -87,8 +89,22 @@ class AutoRecoverOverdueLoans implements ShouldQueue
                         return 0.0;
                     }
 
-                    // Create repayment record with a unique reference
-                    $reference = 'QHHUNT-' . now()->format('YmdHis') . '-' . $lockedUser->id . '-' . Str::upper(Str::random(5));
+                    // Create repayment record with a unique but predictable reference
+                    $reference = 'QHHUNT-' . $lockedLoan->id;
+                    if ($this->triggerTxId) {
+                        $reference .= '-T' . $this->triggerTxId;
+                    } else {
+                        $reference .= '-' . now()->format('YmdHi');
+                    }
+
+                    // Check if already applied
+                    $alreadyApplied = WalletTransaction::where('user_id', $lockedUser->id)
+                        ->where('reference', $reference)
+                        ->exists();
+
+                    if ($alreadyApplied) {
+                        return 0.0;
+                    }
 
                     QardHasanRepayment::create([
                         'qard_hasan_id' => $lockedLoan->id,
@@ -112,6 +128,7 @@ class AutoRecoverOverdueLoans implements ShouldQueue
                             'auto_hunter' => true,
                             'qard_hasan_id' => $lockedLoan->id,
                             'qard_id_string' => $lockedLoan->qard_id_string,
+                            'trigger_tx_id' => $this->triggerTxId,
                         ],
                     ]);
 

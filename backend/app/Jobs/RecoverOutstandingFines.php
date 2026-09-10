@@ -17,7 +17,7 @@ class RecoverOutstandingFines implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public int $userId)
+    public function __construct(public int $userId, public ?int $triggerTxId = null)
     {
         //
     }
@@ -38,6 +38,24 @@ class RecoverOutstandingFines implements ShouldQueue
             $deduction = min((float)$lockedUser->balance, (float)$lockedUser->outstanding_fines);
             if ($deduction <= 0) return;
 
+            // Use a predictable reference for idempotency
+            $reference = 'FINE_COLLECT_' . $lockedUser->id;
+            if ($this->triggerTxId) {
+                $reference .= '_T' . $this->triggerTxId;
+            } else {
+                $reference .= '_' . date('Ymd'); // Fallback to daily if no trigger
+            }
+
+            // Check if this recovery attempt already happened
+            $alreadyRecovered = WalletTransaction::where('user_id', $lockedUser->id)
+                ->where('reference', $reference)
+                ->exists();
+
+            if ($alreadyRecovered) {
+                \Illuminate\Support\Facades\Log::info("RecoverOutstandingFines: Already processed recovery for reference {$reference}");
+                return;
+            }
+
             $lockedUser->decrement('balance', $deduction);
             $lockedUser->decrement('outstanding_fines', $deduction);
 
@@ -45,12 +63,13 @@ class RecoverOutstandingFines implements ShouldQueue
                 'user_id' => $lockedUser->id,
                 'type' => 'debit',
                 'amount' => $deduction,
-                'reference' => 'FINE_COLLECT_' . Str::random(8),
+                'reference' => $reference,
                 'source' => 'attendance_fine_collection',
                 'withdrawable' => true,
                 'meta' => [
                     'description' => 'Automatic collection of accumulated attendance fines',
-                    'amount_collected' => $deduction
+                    'amount_collected' => $deduction,
+                    'trigger_tx_id' => $this->triggerTxId
                 ],
             ]);
 

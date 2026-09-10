@@ -71,15 +71,24 @@ class ReconcileUtilityTransactions implements ShouldQueue
 
         $body = $response['body'];
 
-        if ($this->isSuccess($body)) {
-            $tx->update(['status' => 'success']);
-            Log::info("Reconciliation: Transaction {$tx->id} marked as success.");
-        } elseif ($this->isFailed($body)) {
-            $this->processRefund($tx, $body);
-        } else {
-            // Still pending or unknown status
-            Log::debug("Reconciliation: Transaction {$tx->id} still pending or unknown.", ['response' => $body]);
-        }
+        DB::transaction(function () use ($tx, $body) {
+            // Lock the record to prevent concurrent reconciliation
+            $lockedTx = UtilityTransaction::where('id', $tx->id)->lockForUpdate()->first();
+
+            if (!$lockedTx || $lockedTx->status !== 'pending') {
+                return;
+            }
+
+            if ($this->isSuccess($body)) {
+                $lockedTx->update(['status' => 'success']);
+                Log::info("Reconciliation: Transaction {$lockedTx->id} marked as success.");
+            } elseif ($this->isFailed($body)) {
+                $this->processRefundInsideTransaction($lockedTx, $body);
+            } else {
+                // Still pending or unknown status
+                Log::debug("Reconciliation: Transaction {$lockedTx->id} still pending or unknown.", ['response' => $body]);
+            }
+        });
     }
 
     private function queryClubKonnect(UtilityTransaction $tx): array
@@ -113,8 +122,14 @@ class ReconcileUtilityTransactions implements ShouldQueue
             $resp = Http::timeout(20)->get($baseUrl . '/APIQueryV1.asp', $params);
 
             if ($resp->ok()) {
+                // ClubKonnect can return plain strings for some errors like MISSING_ORDERID
+                $content = $resp->body();
+                if (str_contains(strtoupper($content), 'MISSING_ORDERID')) {
+                    return ['ok' => true, 'body' => ['status' => 'MISSING_ORDERID']];
+                }
+
                 $json = $resp->json();
-                return ['ok' => true, 'body' => is_array($json) ? $json : ['raw' => $resp->body()]];
+                return ['ok' => true, 'body' => is_array($json) ? $json : ['raw' => $content, 'status' => $content]];
             }
             return ['ok' => false, 'error' => 'HTTP ' . $resp->status()];
         } catch (\Throwable $e) {
@@ -124,7 +139,7 @@ class ReconcileUtilityTransactions implements ShouldQueue
 
     private function isSuccess(array $body): bool
     {
-        $status = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
+        $status = strtoupper((string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? '')))));
         if (in_array($status, ['200', 'ORDER_COMPLETED', 'COMPLETED', 'SUCCESS'])) {
             return true;
         }
@@ -139,7 +154,7 @@ class ReconcileUtilityTransactions implements ShouldQueue
 
     private function isFailed(array $body): bool
     {
-        $status = (string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? ''))));
+        $status = strtoupper((string)($body['statuscode'] ?? ($body['status_code'] ?? ($body['StatusCode'] ?? ($body['status'] ?? '')))));
         // 300 = Cancelled, 400 = Failed
         // We also treat MISSING_ORDERID as failed because it means the provider has no record of it.
         if (in_array($status, ['300', '400', 'ORDER_CANCELLED', 'FAILED', 'CANCELLED', 'MISSING_ORDERID'])) {
@@ -154,54 +169,54 @@ class ReconcileUtilityTransactions implements ShouldQueue
         return false;
     }
 
-    private function processRefund(UtilityTransaction $tx, array $body): void
+    private function processRefundInsideTransaction(UtilityTransaction $tx, array $body): void
     {
-        DB::transaction(function () use ($tx, $body) {
-            // Refresh to avoid race conditions
-            $tx = $tx->fresh();
-            if ($tx->status !== 'pending') {
-                return;
-            }
+        // Note: This must be called from within a transaction that has locked the UtilityTransaction
+        $user = User::lockForUpdate()->find($tx->user_id);
+        if (!$user) {
+            return;
+        }
 
-            $tx->update([
-                'status' => 'failed',
-                'provider_response' => array_merge((array)$tx->provider_response, ['reconciliation_refund' => $body])
-            ]);
+        // Use a predictable, idempotent reference
+        $refundReference = 'REFUND-' . $tx->reference;
 
-            $user = User::lockForUpdate()->find($tx->user_id);
-            if (!$user) {
-                return;
-            }
+        // Check if already refunded (checking both new and old format for compatibility)
+        $refundExists = WalletTransaction::where('user_id', $user->id)
+            ->where(function ($query) use ($tx, $refundReference) {
+                $query->where('reference', $refundReference)
+                      ->orWhere('reference', 'LIKE', 'REFUND-' . $tx->reference . '-%');
+            })
+            ->exists();
 
-            // Check if already refunded to be safe
-            $refundExists = WalletTransaction::where('user_id', $user->id)
-                ->where('source', 'vtu_refund')
-                ->where('reference', 'LIKE', '%' . $tx->reference . '%')
-                ->exists();
+        if ($refundExists) {
+            Log::warning("Reconciliation: Refund already exists for tx {$tx->id}");
+            // Still mark the utility transaction as failed to stop the loop
+            $tx->update(['status' => 'failed']);
+            return;
+        }
 
-            if ($refundExists) {
-                Log::warning("Reconciliation: Refund already exists for tx {$tx->id}");
-                return;
-            }
+        $tx->update([
+            'status' => 'failed',
+            'provider_response' => array_merge((array)$tx->provider_response, ['reconciliation_refund' => $body])
+        ]);
 
-            $amount = (float)$tx->amount;
-            $user->increment('balance', $amount);
+        $amount = (float)$tx->amount;
+        $user->increment('balance', $amount);
 
-            WalletTransaction::create([
-                'user_id' => $user->id,
-                'type' => 'credit',
-                'amount' => $amount,
-                'reference' => 'REFUND-' . $tx->reference . '-' . time(),
-                'source' => 'vtu_refund',
-                'meta' => [
-                    'utility_tx_id' => $tx->id,
-                    'original_reference' => $tx->reference,
-                    'type' => $tx->type,
-                    'reason' => 'VTU failure reconciliation refund',
-                ],
-            ]);
+        WalletTransaction::create([
+            'user_id' => $user->id,
+            'type' => 'credit',
+            'amount' => $amount,
+            'reference' => $refundReference,
+            'source' => 'vtu_refund',
+            'meta' => [
+                'utility_tx_id' => $tx->id,
+                'original_reference' => $tx->reference,
+                'type' => $tx->type,
+                'reason' => 'VTU failure reconciliation refund',
+            ],
+        ]);
 
-            Log::info("Reconciliation: Refund of {$amount} processed for user {$user->id} (tx {$tx->id})");
-        });
+        Log::info("Reconciliation: Refund of {$amount} processed for user {$user->id} (tx {$tx->id})");
     }
 }

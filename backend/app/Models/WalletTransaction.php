@@ -44,9 +44,9 @@ class WalletTransaction extends Model
             // Trigger recoveries on any wallet credit after the surrounding DB transaction commits
             if (strtolower((string) $tx->type) === 'credit' && ! empty($tx->user_id)) {
                 if ((bool) \App\Models\Setting::get('auto_overdue_recovery_enabled', true)) {
-                    AutoRecoverOverdueLoans::dispatch((int) $tx->user_id)->afterCommit();
+                    AutoRecoverOverdueLoans::dispatch((int) $tx->user_id, $tx->id)->afterCommit();
                 }
-                RecoverOutstandingFines::dispatch((int) $tx->user_id)->afterCommit();
+                RecoverOutstandingFines::dispatch((int) $tx->user_id, $tx->id)->afterCommit();
             }
         });
     }
