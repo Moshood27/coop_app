@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class NotificationsController extends Controller
 {
@@ -29,7 +30,7 @@ class NotificationsController extends Controller
         ]);
     }
 
-    public function readOne(Request $request, string $id)
+    public function readOne(Request $request, $id)
     {
         $user = $request->user();
         $n = $user->notifications()->where('id', $id)->firstOrFail();
@@ -47,7 +48,7 @@ class NotificationsController extends Controller
         return response()->json(['message' => 'All notifications marked as read', 'unread_count' => 0]);
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, $id)
     {
         $user = $request->user();
         $user->notifications()->where('id', $id)->delete();
