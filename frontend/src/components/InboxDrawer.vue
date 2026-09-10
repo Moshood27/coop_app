@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import axios from '../http.js'
+import { useModal } from '../composables/useModal'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue', 'unread'])
 
+const modal = useModal()
 const open = ref(props.modelValue)
 watch(() => props.modelValue, (v) => (open.value = v))
 watch(open, (v) => emit('update:modelValue', v))
@@ -61,7 +63,8 @@ async function markOne(id) {
 }
 
 async function deleteOne(id) {
-  if (!confirm('Delete this notification?')) return
+  const confirmed = await modal.confirm('Delete this notification?')
+  if (!confirmed) return
   try {
     const { data } = await axios.delete(`/api/notifications/${id}`)
     items.value = items.value.filter(it => it.id !== id)
@@ -71,7 +74,8 @@ async function deleteOne(id) {
 }
 
 async function deleteAll() {
-  if (!confirm('Delete all notifications? This cannot be undone.')) return
+  const confirmed = await modal.confirm('Delete all notifications? This cannot be undone.')
+  if (!confirmed) return
   try {
     await axios.delete('/api/notifications')
     items.value = []
@@ -109,7 +113,7 @@ watch(open, (v) => { if (v) fetchList(page.value) })
       <div class="p-3 text-sm text-red-600" v-if="error">{{ error }}</div>
       <ul class="flex-1 overflow-y-auto divide-y">
         <li v-for="it in items" :key="it.id" class="p-4 flex gap-3 items-start" :class="!it.read_at ? 'bg-amber-50' : ''">
-          <div>
+          <div class="flex-1 min-w-0">
             <div class="font-medium">{{ it.title }}</div>
             <div class="text-sm text-slate-600 whitespace-pre-line">{{ it.message }}</div>
             <div class="text-xs text-slate-400 mt-1">{{ new Date(it.created_at).toLocaleString() }}</div>
@@ -117,7 +121,7 @@ watch(open, (v) => { if (v) fetchList(page.value) })
           <div class="flex flex-col gap-1 ml-auto shrink-0 items-end">
             <button v-if="!it.read_at" class="text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
             <button class="p-1 text-slate-400 hover:text-red-600 transition-colors" @click="deleteOne(it.id)" title="Delete">
-              <span class="i-mdi-trash-can-outline text-lg"></span>
+              <span class="i-mdi-delete-outline text-lg"></span>
             </button>
           </div>
         </li>
