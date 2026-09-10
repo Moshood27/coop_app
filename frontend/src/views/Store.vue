@@ -321,7 +321,7 @@
                       <div class="flex items-start justify-between gap-2 mb-1">
                         <h4 class="text-sm font-bold text-slate-900 truncate">{{ item.name }}</h4>
                         <button @click="remove(item.id)" class="text-slate-400 hover:text-rose-500">
-                          <span class="i-mdi-delete-outline text-lg"></span>
+                          <span class="i-mdi-trash-can-outline text-lg"></span>
                         </button>
                       </div>
                       <p class="text-xs text-emerald-700 font-black mb-3">₦ {{ money(item.selling_price) }}</p>

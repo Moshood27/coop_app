@@ -1,14 +1,12 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import axios from '../http.js'
-import { useModal } from '../composables/useModal'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue', 'unread'])
 
-const modal = useModal()
 const open = ref(props.modelValue)
 watch(() => props.modelValue, (v) => (open.value = v))
 watch(open, (v) => emit('update:modelValue', v))
@@ -62,32 +60,6 @@ async function markOne(id) {
   } catch (_) {}
 }
 
-async function deleteOne(id) {
-  const confirmed = await modal.confirm('Delete this notification?')
-  if (!confirmed) return
-  try {
-    const { data } = await axios.delete(`/api/notifications/${id}`)
-    items.value = items.value.filter(it => it.id !== id)
-    unread.value = data.unread_count ?? unread.value
-    emit('unread', unread.value)
-  } catch (e) {
-    if (e?.response?.status === 404 || e?.response?.status === 410) {
-      items.value = items.value.filter(it => it.id !== id)
-    }
-  }
-}
-
-async function deleteAll() {
-  const confirmed = await modal.confirm('Delete all notifications? This cannot be undone.')
-  if (!confirmed) return
-  try {
-    await axios.delete('/api/notifications/clear-all')
-    items.value = []
-    unread.value = 0
-    emit('unread', 0)
-  } catch (_) {}
-}
-
 onMounted(() => {
   if (open.value) fetchList()
 })
@@ -108,26 +80,18 @@ watch(open, (v) => { if (v) fetchList(page.value) })
           <span class="i-mdi-inbox-outline text-xl"></span>
           <h2 class="font-semibold">Inbox</h2>
         </div>
-        <div class="flex items-center gap-3">
-          <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all as read</button>
-          <button class="text-sm text-red-600 hover:underline" @click="deleteAll" :disabled="items.length===0">Clear all</button>
-        </div>
+        <button class="text-sm text-blue-600 hover:underline" @click="markAll" :disabled="unread===0">Mark all as read</button>
       </header>
       <div class="p-3 text-sm text-slate-500" v-if="loading">Loading...</div>
       <div class="p-3 text-sm text-red-600" v-if="error">{{ error }}</div>
       <ul class="flex-1 overflow-y-auto divide-y">
         <li v-for="it in items" :key="it.id" class="p-4 flex gap-3 items-start" :class="!it.read_at ? 'bg-amber-50' : ''">
-          <div class="flex-1 min-w-0">
+          <div>
             <div class="font-medium">{{ it.title }}</div>
             <div class="text-sm text-slate-600 whitespace-pre-line">{{ it.message }}</div>
             <div class="text-xs text-slate-400 mt-1">{{ new Date(it.created_at).toLocaleString() }}</div>
           </div>
-          <div class="flex flex-col gap-1 ml-auto shrink-0 items-end">
-            <button v-if="!it.read_at" class="text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
-            <button class="p-1 text-slate-400 hover:text-red-600 transition-colors" @click="deleteOne(it.id)" title="Delete">
-              <span class="i-mdi-delete-outline text-lg"></span>
-            </button>
-          </div>
+          <button v-if="!it.read_at" class="ml-auto text-xs text-blue-600 hover:underline" @click="markOne(it.id)">Mark read</button>
         </li>
         <li v-if="!loading && items.length===0" class="p-6 text-center text-slate-500">No notifications yet.</li>
       </ul>

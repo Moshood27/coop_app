@@ -30,7 +30,7 @@ function resolveConfig() {
 
     // Auth endpoint for private channels (must be absolute for Capacitor/mobile)
     const base = backendOrigin && backendOrigin.endsWith('/') ? backendOrigin.slice(0, -1) : backendOrigin
-    const authEndpoint = `${base}/api/broadcasting/auth`
+    const authEndpoint = `${base}/broadcasting/auth`
 
     return { key, wsHost, wsPort, isSecure, authEndpoint }
 }
