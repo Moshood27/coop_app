@@ -104,7 +104,26 @@ Health checks are scheduled in `backend/routes/console.php`:
 
 ---
 
-## 3. Disaster Recovery Steps
+## 3. Database Optimization & Maintenance
+
+To ensure optimal performance and reclaim disk space after periodic pruning of old records, the application includes a database optimization command.
+
+### How it Works
+- **MySQL/MariaDB**: Executes `OPTIMIZE TABLE` for all tables. This reclaims space from deleted rows and defragments the data files.
+- **PostgreSQL**: Executes `VACUUM ANALYZE` to reclaim space and update query statistics.
+- **SQLite**: Executes `VACUUM` to rebuild the database file into a minimal amount of disk space.
+
+### Manual Command
+Run from the `backend` directory:
+- `php artisan db:optimize`
+
+### Scheduling
+The optimization is scheduled in `backend/routes/console.php`:
+- `db:optimize`: Weekly on Sundays at 03:00 AM.
+
+---
+
+## 4. Disaster Recovery Steps
 
 In the event of a total server failure:
 1. Re-provision the server using `BUILD_AND_DEPLOY.md`.

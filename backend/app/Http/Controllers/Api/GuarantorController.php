@@ -271,7 +271,7 @@ class GuarantorController extends Controller
                     'guarantor_status' => $app->guarantor_status,
                     'responded_at' => $app->guarantor_responded_at,
                     'created_at' => $app->created_at,
-                    'testimony' => "I hereby testify before Allah (SWT) that the applicant, {$app->full_name}, is known to me to be a person of good character and Islamic integrity. I vouch for their trustworthiness and believe them to be capable of fulfilling their obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in their honesty and reliability in accordance with Islamic principles of mutual support and trust."
+                    'testimony' => "I hereby testify before Allah (SWT) that the applicant, {$app->full_name}, is known to me to be a person of good character and Islamic integrity. I vouch for (his/her) trustworthiness and believe them to be capable of fulfilling (his/her) obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in (his/her) honesty and reliability in accordance with Islamic principles of mutual support and trust."
                 ];
             });
 
