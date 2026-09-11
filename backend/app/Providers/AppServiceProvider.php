@@ -276,7 +276,9 @@ class AppServiceProvider extends ServiceProvider
             HorizonCheck::new(),
         ];
 
-        foreach (array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null]) as $disk) {
+        $backupDisks = config('backup.backup.destination.disks', []);
+
+        foreach ($backupDisks as $disk) {
             try {
                 $checks[] = BackupsCheck::new()
                     ->onDisk($disk)

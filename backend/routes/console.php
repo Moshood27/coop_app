@@ -81,6 +81,7 @@ Schedule::command('app:send-meeting-reminders')->everyMinute();
 Schedule::command('app:audit-attendance')->hourly();
 
 // Maintenance Tasks
+Schedule::command('notifications:prune')->daily();
 Schedule::command('telescope:prune --hours=24')->daily();
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 Schedule::command('horizon:forget --all')->daily();

@@ -164,7 +164,7 @@ return [
              * The disk names on which the backups will be stored.
              */
             'disks' => array_filter([
-                'local',
+                env('BACKUP_DISK_LOCAL_ENABLED', true) ? 'local' : null,
                 'google',
                 env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null,
             ]),
@@ -299,7 +299,11 @@ return [
     'monitor_backups' => [
         [
             'name' => 'ATTAQWA',
-            'disks' => array_filter(['local', 'google', env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null]),
+            'disks' => array_filter([
+                env('BACKUP_DISK_LOCAL_ENABLED', true) ? 'local' : null,
+                'google',
+                env('CLOUDFLARE_R2_BUCKET') ? 'r2' : null,
+            ]),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => env('BACKUP_MAX_STORAGE_MB', 20000),
