@@ -25,7 +25,7 @@ class GuarantorController extends Controller
         $user = $request->user();
 
         $members = \App\Models\User::query()
-            ->where('id', '!=', $user->id)
+            ->when($user, fn($q) => $q->where('id', '!=', $user->id))
             ->whereNotNull('membership_number')
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")

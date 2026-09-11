@@ -63,6 +63,9 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/register/verify-sms', [MemberRegistrationController::class, 'verifySms']);
     Route::get('/register/status', [MemberRegistrationController::class, 'status']);
     Route::post('/register/finalize', [MemberRegistrationController::class, 'finalize']);
+
+    // Public guarantor search (used during registration)
+    Route::get('/guarantor/search', [GuarantorController::class, 'search']);
 });
 // Login endpoints with stricter throttle
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
@@ -328,7 +331,6 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
         Route::post('/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
         Route::post('/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
 
-        Route::get('/search', [GuarantorController::class, 'search']);
         Route::get('/requests', [GuarantorController::class, 'listRequests']);
         Route::post('/requests/{id}/accept', [GuarantorController::class, 'accept']);
         Route::post('/requests/{id}/decline', [GuarantorController::class, 'decline']);
