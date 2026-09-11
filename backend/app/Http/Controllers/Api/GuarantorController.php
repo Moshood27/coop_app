@@ -281,7 +281,7 @@ class GuarantorController extends Controller
     /**
      * Accept a registration guarantor request.
      */
-    public function acceptRegistration(Request $request, int $id)
+    public function acceptRegistration(Request $request, $id)
     {
         $user = $request->user();
         $app = MemberApplication::where('guarantor_id', $user->id)->findOrFail($id);
@@ -301,7 +301,7 @@ class GuarantorController extends Controller
     /**
      * Decline a registration guarantor request.
      */
-    public function declineRegistration(Request $request, int $id)
+    public function declineRegistration(Request $request, $id)
     {
         $user = $request->user();
         $app = MemberApplication::where('guarantor_id', $user->id)->findOrFail($id);

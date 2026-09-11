@@ -805,7 +805,7 @@ const processingRegRequest = ref(false)
 
 const fetchRegGuarantorRequests = async () => {
   try {
-    const { data } = await axios.get('/api/guarantor-reg-requests')
+    const { data } = await axios.get('/api/guarantor/registration-requests')
     regGuarantorRequests.value = data || []
     if (regGuarantorRequests.value.length > 0) {
       // Find the first pending one to show
@@ -824,7 +824,7 @@ const handleRegGuarantorAction = async (action) => {
   if (!activeRegRequest.value) return
   processingRegRequest.value = true
   try {
-    const endpoint = `/api/guarantor-reg-requests/${activeRegRequest.value.id}/${action}`
+    const endpoint = `/api/guarantor/registration-requests/${activeRegRequest.value.id}/${action}`
     await axios.post(endpoint)
     showNotice('success', action === 'accept' ? 'Request Accepted' : 'Request Declined', 
       action === 'accept' ? 'You have successfully vouched for the member.' : 'You have declined the request.')

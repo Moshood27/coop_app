@@ -123,10 +123,10 @@ Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\Utilit
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
-    // Registration Guarantor approvals (moved to top to avoid conflicts)
-    Route::get('/guarantor-reg-requests', [\App\Http\Controllers\Api\GuarantorController::class, 'listRegistrationRequests']);
-    Route::post('/guarantor-reg-requests/{id}/accept', [\App\Http\Controllers\Api\GuarantorController::class, 'acceptRegistration']);
-    Route::post('/guarantor-reg-requests/{id}/decline', [\App\Http\Controllers\Api\GuarantorController::class, 'declineRegistration']);
+    // Registration Guarantor approvals
+    Route::get('/guarantor/registration-requests', [GuarantorController::class, 'listRegistrationRequests']);
+    Route::post('/guarantor/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
+    Route::post('/guarantor/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
 
     // In-App Notifications (Inbox)
     Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
