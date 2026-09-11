@@ -1,0 +1,279 @@
+
+routes\api.php:46:Route::get('/health', function () {
+routes\api.php:54:Route::middleware('throttle:api')->group(function () {
+routes\api.php:74:Route::prefix('admin')->group(function () {
+routes\api.php:81:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin')->group(function () {
+routes\api.php:92:    Route::get('/meetings/{meeting}/attendance-qr-payload',
+[AttendanceController::class, 'getAttendanceQrPayload']);
+routes\api.php:125:Route::middleware(['auth:sanctum', 'inactivity',
+'throttle:api'])->group(function () {
+routes\api.php:128:    Route::delete('/notifications/{id}',
+[NotificationsController::class, 'destroy'])->whereUuid('id');
+routes\api.php:131:    Route::post('/notifications/{id}/read',
+[NotificationsController::class, 'readOne'])->whereUuid('id');
+routes\api.php:181:    Route::get('/wallet/transactions/{id}/receipt',
+[ExportController::class, 'downloadWalletReceipt']);
+routes\api.php:189:    Route::post('/wallet/withdrawals/{id}/cancel',
+[\App\Http\Controllers\Api\WalletController::class,
+'cancelWithdrawal'])->middleware('throttle:5,1');
+routes\api.php:199:    Route::get('/projects/{id}', [ProjectController::class,
+'show']);
+routes\api.php:200:    Route::get('/projects/{id}/investments',
+[ProjectController::class, 'myInvestments']);
+routes\api.php:201:    Route::get('/projects/{id}/profits',
+[ProjectController::class, 'profits']);
+routes\api.php:209:    Route::get('/savings-groups/{id}',
+[SavingsGroupController::class, 'show']);
+routes\api.php:210:    Route::get('/savings-groups/{id}/contribution-data',
+[SavingsGroupController::class, 'getContributionData']);
+routes\api.php:211:    Route::post('/savings-groups/{id}/join',
+[SavingsGroupController::class, 'join']);
+routes\api.php:212:    Route::post('/savings-groups/{id}/leave',
+[SavingsGroupController::class, 'leave']);
+routes\api.php:213:    Route::post('/savings-groups/{id}/invite',
+[SavingsGroupController::class, 'invite']);
+routes\api.php:214:    Route::post('/savings-groups/{id}/accept-invitation',
+[SavingsGroupController::class, 'acceptInvitation']);
+routes\api.php:215:    Route::post('/savings-groups/{id}/dissolve',
+[SavingsGroupController::class, 'dissolve']);
+routes\api.php:219:    Route::get('/passbook/{year}',
+[PassbookController::class, 'getMatrix']);
+routes\api.php:237:    Route::post('/meetings/{meeting}/mark-attendance',
+[AttendanceController::class, 'markAttendance']);
+routes\api.php:239:
+Route::post('/meetings/{meeting}/mark-member-attendance',
+[AttendanceController::class, 'markMemberAttendance']);
+routes\api.php:240:
+Route::post('/meetings/{meeting}/unmark-member-attendance',
+[AttendanceController::class, 'unmarkMemberAttendance']);
+routes\api.php:241:    Route::get('/meetings/{meeting}/marked-by-me',
+[AttendanceController::class, 'markedByMe']);
+routes\api.php:242:    Route::get('/meetings/{meeting}/report',
+[AttendanceController::class, 'meetingReport']);
+routes\api.php:243:    Route::get('/meetings/{meeting}/biometric-options',
+[AttendanceController::class, 'biometricOptions']);
+routes\api.php:244:    Route::post('/meetings/{meeting}/mark-biometric',
+[AttendanceController::class, 'markAttendanceBiometric']);
+routes\api.php:245:    Route::post('/meetings/{meeting}/mark-beacon',
+[AttendanceController::class, 'markAttendanceBeacon']);
+routes\api.php:246:    Route::post('/meetings/{meeting}/submit-excuse',
+[AttendanceController::class, 'submitExcuse']);
+routes\api.php:253:    Route::post('/meetings/{meeting}/apology',
+[MeetingApologyController::class, 'store']);
+routes\api.php:266:    Route::get('/vtu/status/{orderId}',
+[\App\Http\Controllers\Api\UtilityController::class, 'checkStatus']);
+routes\api.php:267:    Route::post('/vtu/cancel/{orderId}',
+[\App\Http\Controllers\Api\UtilityController::class, 'cancelTransaction']);
+routes\api.php:278:    Route::post('/vendor/orders/{id}/status',
+[\App\Http\Controllers\Api\VendorController::class, 'updateOrderStatus']);
+routes\api.php:283:    Route::match(['put','patch'], '/vendor/products/{id}',
+[\App\Http\Controllers\Api\VendorProductController::class, 'update']);
+routes\api.php:284:    Route::delete('/vendor/products/{id}',
+[\App\Http\Controllers\Api\VendorProductController::class, 'destroy']);
+routes\api.php:289:    Route::get('/store/orders/{id}',
+[\App\Http\Controllers\Api\StoreOrderController::class, 'show']);
+routes\api.php:291:    Route::post('/store/orders/{id}/installments/pay',
+[\App\Http\Controllers\Api\StoreOrderController::class, 'payInstallment']);
+routes\api.php:292:    Route::post('/store/orders/{id}/dispute',
+[\App\Http\Controllers\Api\StoreOrderController::class, 'dispute']);
+routes\api.php:297:    Route::get('/goals/{id}',
+[\App\Http\Controllers\Api\SavingsGoalController::class, 'show']);
+routes\api.php:298:    Route::post('/goals/{id}/deposit',
+[\App\Http\Controllers\Api\SavingsGoalController::class, 'deposit']);
+routes\api.php:299:    Route::post('/goals/{id}/book',
+[\App\Http\Controllers\Api\SavingsGoalController::class, 'book']);
+routes\api.php:308:    Route::post('/loans/{id}/repay',
+[LoanController::class, 'repay']);
+routes\api.php:309:    Route::post('/loans/{id}/agreement',
+[LoanController::class, 'uploadAgreement']);
+routes\api.php:313:    Route::get('/agm/sessions/{id}/candidates',
+[AgmController::class, 'candidates']);
+routes\api.php:314:    Route::post('/agm/sessions/{id}/vote',
+[AgmController::class, 'vote']);
+routes\api.php:315:    Route::get('/agm/sessions/{id}/results',
+[AgmController::class, 'results']);
+routes\api.php:321:    Route::get('/project-proposals/{id}',
+[ProjectProposalController::class, 'show']);
+routes\api.php:322:    Route::post('/project-proposals/{id}/vote',
+[ProjectProposalController::class, 'vote']);
+routes\api.php:323:    Route::post('/project-proposals/{id}/comments',
+[ProjectProposalController::class, 'storeComment']);
+routes\api.php:328:    Route::post('/guarantor/requests/{id}/accept',
+[GuarantorController::class, 'accept']);
+routes\api.php:329:    Route::post('/guarantor/requests/{id}/decline',
+[GuarantorController::class, 'decline']);
+routes\api.php:333:
+Route::post('/guarantor/registration-requests/{id}/accept',
+[GuarantorController::class, 'acceptRegistration']);
+routes\api.php:334:
+Route::post('/guarantor/registration-requests/{id}/decline',
+[GuarantorController::class, 'declineRegistration']);
+routes\api.php:336:    Route::post('/guarantor/loans/{id}/nudge',
+[GuarantorController::class, 'nudge']);
+routes\api.php:337:    Route::post('/guarantor/loans/{id}/escalate',
+[GuarantorController::class, 'escalate']);
+routes\api.php:341:    Route::get('/reports/loans/{id}/schedule',
+[ReportsController::class, 'loanSchedule']);
+routes\api.php:342:    Route::get('/reports/dividend/{year}',
+[ReportsController::class, 'dividend']);
+routes\api.php:348:    Route::get('/download-loan-schedule/{id}',
+[ExportController::class,
+'downloadLoanSchedule'])->name('download-loan-schedule');
+routes\api.php:349:    Route::get('/download-loan-agreement/{id}',
+[ExportController::class,
+'downloadLoanAgreement'])->name('download-loan-agreement');
+routes\api.php:350:    Route::get('/download-murabahah-agreement/{id}',
+[ExportController::class,
+'downloadMurabahahAgreement'])->name('download-murabahah-agreement');
+routes\api.php:351:    Route::get('/download-dividend/{year}',
+[ExportController::class, 'downloadDividend'])->name('download-dividend');
+routes\api.php:352:    Route::get('/download-appropriation/{year}',
+[ExportController::class,
+'downloadAppropriation'])->name('download-appropriation');
+routes\api.php:353:    Route::get('/download-financials/{year}',
+[ExportController::class, 'downloadFinancials'])->name('download-financials');
+routes\api.php:354:    Route::get('/download-cash-flow/{year}',
+[ExportController::class, 'downloadCashFlow'])->name('download-cash-flow');
+routes\api.php:355:    Route::get('/download-charity-report/{year}',
+[ExportController::class,
+'downloadCharityReport'])->name('download-charity-report');
+routes\api.php:358:    Route::get('/download-attendance-report/{year}',
+[ExportController::class,
+'downloadAttendanceReport'])->name('download-attendance-report');
+routes\api.php:359:    Route::get('/download-sharia-audit/{year}',
+[ExportController::class,
+'downloadShariaAuditReport'])->name('download-sharia-audit');
+routes\api.php:369:    Route::get('/download-order-receipt/{id}',
+[ExportController::class,
+'downloadOrderReceipt'])->name('download-order-receipt');
+routes\api.php:375:    Route::get('/download-project-distribution/{id}',
+[ExportController::class,
+'downloadProjectDistribution'])->name('download-project-distribution');
+routes\api.php:376:    Route::get('/download-savings-ledger/{userId?}',
+[ExportController::class,
+'downloadMemberSavingsLedger'])->name('download-savings-ledger');
+routes\api.php:387:    Route::get('/sadaqah/projects/{id}',
+[SadaqahController::class, 'show']);
+routes\api.php:388:    Route::post('/sadaqah/projects/{id}/contribute',
+[SadaqahController::class, 'contribute']);
+routes\api.php:393:    Route::patch('/wasiyyah/{id}',
+[WasiyyahController::class, 'update']);
+routes\api.php:394:    Route::delete('/wasiyyah/{id}',
+[WasiyyahController::class, 'destroy']);
+routes\api.php:399:    Route::patch('/junior-cooperative/{id}',
+[JuniorCooperativeController::class, 'update']);
+routes\api.php:400:    Route::post('/junior-cooperative/{id}/deposit',
+[JuniorCooperativeController::class, 'deposit']);
+routes\api.php:401:    Route::post('/junior-cooperative/{id}/withdraw',
+[JuniorCooperativeController::class, 'withdraw']);
+routes\api.php:402:    Route::get('/junior-cooperative/{id}/history',
+[JuniorCooperativeController::class, 'history']);
+routes\api.php:414:    Route::prefix('chat')->group(function () {
+routes\api.php:417:        Route::get('/rooms/{room}',
+[\App\Http\Controllers\Api\ChatController::class, 'show']);
+routes\api.php:418:        Route::post('/rooms/{room}/join',
+[\App\Http\Controllers\Api\ChatController::class, 'joinRoom']);
+routes\api.php:419:        Route::post('/rooms/{room}/messages',
+[\App\Http\Controllers\Api\ChatController::class, 'store']);
+routes\api.php:420:        Route::patch('/messages/{message}',
+[\App\Http\Controllers\Api\ChatController::class, 'update']);
+routes\api.php:421:        Route::delete('/messages/{message}',
+[\App\Http\Controllers\Api\ChatController::class, 'destroy']);
+routes\api.php:422:        Route::post('/messages/{message}/respond',
+[\App\Http\Controllers\Api\ChatController::class, 'respond']);
+routes\api.php:423:        Route::post('/rooms/{room}/read',
+[\App\Http\Controllers\Api\ChatController::class, 'markRead']);
+routes\api.php:424:        Route::post('/rooms/{room}/typing',
+[\App\Http\Controllers\Api\ChatController::class, 'typing']);
+routes\api.php:430:        Route::post('/private/{user}',
+[\App\Http\Controllers\Api\ChatController::class, 'createPrivateRoom']);
+routes\api.php:431:        Route::post('/rooms/{room}/assign',
+[\App\Http\Controllers\Api\ChatController::class, 'assignStaff']);
+routes\api.php:434:        Route::post('/users/{user}/ban',
+[\App\Http\Controllers\Api\ChatController::class, 'ban']);
+routes\api.php:435:        Route::post('/users/{user}/unban',
+[\App\Http\Controllers\Api\ChatController::class, 'unban']);
+routes\api.php:440:Route::prefix('qard-hasan')->group(function () {
+routes\api.php:443:    Route::post('/{id}/repay', [QardHasanController::class,
+'repay']);
+routes\api.php:449:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin')->group(function () {
+routes\api.php:452:    Route::prefix('reports')->group(function () {
+routes\api.php:465:Route::middleware(['auth:sanctum',
+'admin'])->prefix('admin/import')->group(function () {
+routes\api.php:473:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin/vtu')->group(function () {
+routes\api.php:478:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin/vendors')->group(function () {
+routes\api.php:480:    Route::post('/{id}/approve',
+[AdminVendorController::class, 'approve']);
+routes\api.php:481:    Route::post('/{id}/reject',
+[AdminVendorController::class, 'reject']);
+routes\api.php:482:    Route::post('/{id}/toggle-active',
+[AdminVendorController::class, 'toggleActive']);
+routes\api.php:484:    Route::post('/settlements/{id}/approve',
+[AdminVendorController::class, 'approveSettlement']);
+routes\api.php:485:    Route::post('/settlements/{id}/reject',
+[AdminVendorController::class, 'rejectSettlement']);
+routes\api.php:488:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin/members')->group(function () {
+routes\api.php:491:    Route::get('/{user}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
+routes\api.php:492:    Route::delete('/{user}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'destroy']);
+routes\api.php:493:    Route::post('/{user}/loans',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'createLoan']);
+routes\api.php:494:    Route::get('/{user}/passbook/{year}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'passbook']);
+routes\api.php:495:    Route::get('/{user}/contributions',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'contributions']);
+routes\api.php:496:    Route::post('/{user}/distribute-funds',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'distributeFunds']);
+routes\api.php:497:    Route::post('/{user}/allocate-wallet',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
+routes\api.php:498:    Route::get('/{user}/loans',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);
+routes\api.php:499:    Route::get('/{user}/wallet-transactions',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'walletTransactions']);
+routes\api.php:500:    Route::get('/{user}/fines',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'fines']);
+routes\api.php:501:    Route::post('/{user}/waive-fine/{attendanceRecord}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'waiveFine']);
+routes\api.php:502:    Route::post('/{user}/waive-all-fines',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'waiveAllFines']);
+routes\api.php:505:    Route::patch('/contributions/{contribution}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'updateContribution']);
+routes\api.php:506:    Route::delete('/contributions/{contribution}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'deleteContribution']);
+routes\api.php:509:    Route::patch('/wallet-transactions/{transaction}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'updateWalletTransaction']);
+routes\api.php:510:    Route::delete('/wallet-transactions/{transaction}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'deleteWalletTransaction']);
+routes\api.php:513:    Route::patch('/loans/{loan}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'updateLoan']);
+routes\api.php:514:    Route::delete('/loans/{loan}',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'deleteLoan']);
+routes\api.php:515:    Route::post('/loans/{loan}/repay',
+[\App\Http\Controllers\Api\AdminMemberController::class, 'loanRepayment']);
+routes\api.php:516:    Route::patch('/loan-repayments/{repayment}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'updateLoanRepayment']);
+routes\api.php:517:    Route::delete('/loan-repayments/{repayment}',
+[\App\Http\Controllers\Api\AdminMemberController::class,
+'deleteLoanRepayment']);
+routes\api.php:520:Route::middleware(['auth:sanctum', 'inactivity',
+'admin'])->prefix('admin/products')->group(function () {
+routes\api.php:522:    Route::post('/{id}/image',
+[AdminProductController::class, 'uploadImage']);
+routes\api.php:523:    Route::delete('/{id}/image',
+[AdminProductController::class, 'deleteImage']);
+routes\api.php:524:    Route::post('/{id}/approve',
+[AdminProductController::class, 'approve']);
+routes\api.php:525:    Route::post('/{id}/reject',
+[AdminProductController::class, 'reject']);

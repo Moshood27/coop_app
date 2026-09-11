@@ -123,6 +123,11 @@ Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\Utilit
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
+    // Registration Guarantor approvals (moved to top to avoid conflicts)
+    Route::get('/guarantor-reg-requests', [GuarantorController::class, 'listRegistrationRequests']);
+    Route::post('/guarantor-reg-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
+    Route::post('/guarantor-reg-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
+
     // In-App Notifications (Inbox)
     Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
     Route::delete('/notifications/{id}', [NotificationsController::class, 'destroy'])->whereUuid('id');
@@ -130,6 +135,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/notifications/read-all', [NotificationsController::class, 'readAll']);
     Route::post('/notifications/{id}/read', [NotificationsController::class, 'readOne'])->whereUuid('id');
 
+    Route::get('/test-api', function() { return response()->json(['status' => 'ok']); });
     Route::post('/logout', [AuthController::class, 'logout']);
     // Takaful (member-facing)
     Route::get('/takaful/summary', [TakafulController::class, 'summary']);
@@ -328,10 +334,6 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/guarantor/requests/{id}/accept', [GuarantorController::class, 'accept']);
     Route::post('/guarantor/requests/{id}/decline', [GuarantorController::class, 'decline']);
 
-    // Registration Guarantor approvals
-    Route::get('/guarantor/registration-requests', [GuarantorController::class, 'listRegistrationRequests']);
-    Route::post('/guarantor/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
-    Route::post('/guarantor/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
     // Borrower actions
     Route::post('/guarantor/loans/{id}/nudge', [GuarantorController::class, 'nudge']);
     Route::post('/guarantor/loans/{id}/escalate', [GuarantorController::class, 'escalate']);
