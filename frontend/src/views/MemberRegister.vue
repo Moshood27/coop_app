@@ -207,26 +207,57 @@
 
           <div class="sm:col-span-2 mt-4">
             <h3 class="text-sm font-bold text-emerald-700 uppercase tracking-widest mb-4 border-b border-emerald-100 pb-2">5. Guarantor Details</h3>
+            <p class="text-[10px] text-slate-500 font-bold mb-4">Search for an existing member or enter manually</p>
+          </div>
+
+          <div class="sm:col-span-2 relative group">
+            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Search Member (Optional)</label>
+            <div class="relative transition-all duration-200 focus-within:ring-2 focus-within:ring-emerald-500/20 rounded-2xl">
+              <input 
+                type="text" 
+                placeholder="Search by Name or Membership Number" 
+                class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60"
+                @input="searchGuarantors($event.target.value)"
+              />
+              <div v-if="searchingGuarantor" class="absolute right-4 top-1/2 -translate-y-1/2">
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent"></div>
+              </div>
+            </div>
+            
+            <div v-if="guarantorResults.length > 0" class="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+              <ul class="max-h-60 overflow-y-auto">
+                <li v-for="member in guarantorResults" :key="member.id" 
+                  @click="selectGuarantor(member)"
+                  class="p-4 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors"
+                >
+                  <div class="font-bold text-slate-800">{{ member.name }}</div>
+                  <div class="text-[10px] text-slate-500">{{ member.membership_number }} • {{ member.branch?.name }}</div>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div class="relative group">
             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Guarantor Name</label>
-            <input v-model="form.guarantor_name" type="text" placeholder="Full Name" class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" />
+            <div class="relative">
+              <input v-model="form.guarantor_name" type="text" placeholder="Full Name" class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" :readonly="!!form.guarantor_id" />
+              <button v-if="form.guarantor_id" @click="clearGuarantor" class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 font-bold text-[10px] uppercase">Clear</button>
+            </div>
           </div>
 
           <div class="relative group">
             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Guarantor Phone</label>
-            <input v-model="form.guarantor_phone" type="tel" placeholder="080..." class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" />
+            <input v-model="form.guarantor_phone" type="tel" placeholder="080..." class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" :readonly="!!form.guarantor_id" />
           </div>
 
           <div class="relative group">
             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Guarantor Occupation</label>
-            <input v-model="form.guarantor_occupation" type="text" placeholder="Profession" class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" />
+            <input v-model="form.guarantor_occupation" type="text" placeholder="Profession" class="input px-6 h-14 font-semibold bg-slate-50/50 border-slate-200/60" :readonly="!!form.guarantor_id" />
           </div>
 
           <div class="sm:col-span-2">
             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Guarantor Address</label>
-            <textarea v-model="form.guarantor_address" placeholder="Guarantor's home/office address" class="input p-4 h-24 font-semibold bg-slate-50/50 border-slate-200/60"></textarea>
+            <textarea v-model="form.guarantor_address" placeholder="Guarantor's home/office address" class="input p-4 h-24 font-semibold bg-slate-50/50 border-slate-200/60" :readonly="!!form.guarantor_id"></textarea>
           </div>
 
           <div class="sm:col-span-2 mt-4">
@@ -566,6 +597,7 @@ const form = ref({
   guarantor_address: '',
   guarantor_phone: '',
   guarantor_occupation: '',
+  guarantor_id: null,
 
   // Religious Information & Imam's Attestation
   religious_society_name: '',
@@ -591,6 +623,42 @@ const signatures = ref({
   spouse_father: '',
   imam: ''
 })
+
+// Guarantor Search
+const guarantorResults = ref([])
+const searchingGuarantor = ref(false)
+const searchGuarantors = async (query) => {
+  if (!query || query.length < 3) {
+    guarantorResults.value = []
+    return
+  }
+  searchingGuarantor.value = true
+  try {
+    const { data } = await axios.get(`/api/guarantor/search?q=${encodeURIComponent(query)}`)
+    guarantorResults.value = data
+  } catch (err) {
+    console.error('Guarantor search failed', err)
+  } finally {
+    searchingGuarantor.value = false
+  }
+}
+
+const selectGuarantor = (member) => {
+  form.value.guarantor_id = member.id
+  form.value.guarantor_name = member.name
+  form.value.guarantor_phone = member.phone || ''
+  form.value.guarantor_occupation = member.occupation || ''
+  form.value.guarantor_address = member.address || ''
+  guarantorResults.value = []
+}
+
+const clearGuarantor = () => {
+  form.value.guarantor_id = null
+  form.value.guarantor_name = ''
+  form.value.guarantor_phone = ''
+  form.value.guarantor_occupation = ''
+  form.value.guarantor_address = ''
+}
 const uploaded = ref({
   passport_path: '',
   id_card_path: '',

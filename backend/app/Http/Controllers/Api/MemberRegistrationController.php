@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\MemberApplication;
 use App\Models\User;
 use App\Notifications\OtpNotification;
+use App\Mail\NewMemberAdminNotification;
+use App\Mail\PendingRegistrationAdminNotification;
+use App\Mail\RegistrationGuarantorReminder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -59,6 +62,7 @@ class MemberRegistrationController extends Controller
             'guarantor_address' => ['nullable', 'string', 'max:1000'],
             'guarantor_phone' => ['nullable', 'string', 'max:30'],
             'guarantor_occupation' => ['nullable', 'string', 'max:255'],
+            'guarantor_id' => ['nullable', 'exists:users,id'],
 
             // Religious Information & Imam's Attestation
             'religious_society_name' => ['nullable', 'string', 'max:255'],
@@ -81,6 +85,8 @@ class MemberRegistrationController extends Controller
             ->first();
 
         if ($existing) {
+            $oldGuarantorId = $existing->guarantor_id;
+
             // Update details to latest submission
             $existing->fill(array_merge($data, [
                 'fcm_token' => $data['fcm_token'] ?? $existing->fcm_token,
@@ -88,7 +94,18 @@ class MemberRegistrationController extends Controller
                 'password_hash' => Crypt::encryptString($data['password']), // store encrypted; will hash once on User model
                 'submitted_at' => now(),
             ]));
+
+            // Reset guarantor status if guarantor changed
+            if ($existing->isDirty('guarantor_id')) {
+                $existing->guarantor_status = 'pending';
+                $existing->guarantor_responded_at = null;
+                $existing->last_guarantor_reminder_sent_at = null;
+            }
+
             $existing->save();
+
+        // Send initial email to new guarantor if selected and changed
+        // Handled by MemberApplication model hook
 
             return response()->json([
                 'message' => 'Existing application found. Please continue.',
@@ -106,6 +123,9 @@ class MemberRegistrationController extends Controller
             'password_hash' => Crypt::encryptString($data['password']), // store encrypted; will hash once on User model
             'submitted_at' => now(),
         ]));
+
+        // Send initial email to guarantor if selected
+        // Handled by MemberApplication model hook
 
         return response()->json([
             'message' => 'Application started. Please upload required documents and complete verification.',
@@ -455,6 +475,11 @@ class MemberRegistrationController extends Controller
             return response()->json(['message' => 'Email must be verified before joining.'], 422);
         }
 
+        // Guarantor acceptance is mandatory if a guarantor is linked
+        if (!empty($app->guarantor_id) && $app->guarantor_status !== 'accepted') {
+            return response()->json(['message' => 'Your selected guarantor has not yet accepted your request. Please nudge them or wait for their approval.'], 422);
+        }
+
         // Phone verification is optional (as per requested bypass)
         /*
         if (!empty($app->phone) && empty($app->phone_verified_at)) {
@@ -604,6 +629,15 @@ class MemberRegistrationController extends Controller
                 "{$user->full_name} has completed KYC registration and is pending approval (Membership: {$user->membership_number}).",
                 ['type' => 'new_member', 'user_id' => $user->id]
             );
+
+            // Also send email
+            if ($admin->email) {
+                try {
+                    Mail::to($admin->email)->send(new PendingRegistrationAdminNotification($user));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send admin notification email', ['admin' => $admin->id, 'error' => $e->getMessage()]);
+                }
+            }
         });
 
         return response()->json([

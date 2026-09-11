@@ -327,6 +327,11 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/guarantor/requests', [GuarantorController::class, 'listRequests']);
     Route::post('/guarantor/requests/{id}/accept', [GuarantorController::class, 'accept']);
     Route::post('/guarantor/requests/{id}/decline', [GuarantorController::class, 'decline']);
+
+    // Registration Guarantor approvals
+    Route::get('/guarantor/registration-requests', [GuarantorController::class, 'listRegistrationRequests']);
+    Route::post('/guarantor/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
+    Route::post('/guarantor/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
     // Borrower actions
     Route::post('/guarantor/loans/{id}/nudge', [GuarantorController::class, 'nudge']);
     Route::post('/guarantor/loans/{id}/escalate', [GuarantorController::class, 'escalate']);

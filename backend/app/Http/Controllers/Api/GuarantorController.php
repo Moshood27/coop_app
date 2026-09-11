@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\QardHasan;
+use App\Models\MemberApplication;
 use App\Models\ShariahAuditLog as ShariahAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -244,6 +245,75 @@ class GuarantorController extends Controller
     /**
      * Borrower: Nudge all pending guarantors for a given loan.
      */
+    /**
+     * List registration guarantor requests for the authenticated user.
+     */
+    public function listRegistrationRequests(Request $request)
+    {
+        $user = $request->user();
+        $requests = MemberApplication::query()
+            ->with(['branch'])
+            ->where('guarantor_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('finalized_at')
+                    ->orWhere('guarantor_status', 'pending');
+            })
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (MemberApplication $app) {
+                return [
+                    'id' => $app->id,
+                    'member_name' => $app->full_name,
+                    'email' => $app->email,
+                    'phone' => $app->phone,
+                    'branch' => $app->branch?->name,
+                    'occupation' => $app->occupation,
+                    'guarantor_status' => $app->guarantor_status,
+                    'responded_at' => $app->guarantor_responded_at,
+                    'created_at' => $app->created_at,
+                    'testimony' => "I hereby testify before Allah (SWT) that the applicant, {$app->full_name}, is known to me to be a person of good character and Islamic integrity. I vouch for their trustworthiness and believe them to be capable of fulfilling their obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in their honesty and reliability in accordance with Islamic principles of mutual support and trust."
+                ];
+            });
+
+        return response()->json($requests);
+    }
+
+    /**
+     * Accept a registration guarantor request.
+     */
+    public function acceptRegistration(Request $request, int $id)
+    {
+        $user = $request->user();
+        $app = MemberApplication::where('guarantor_id', $user->id)->findOrFail($id);
+
+        if ($app->guarantor_status === 'accepted') {
+            return response()->json(['message' => 'Already accepted'], 200);
+        }
+
+        $app->update([
+            'guarantor_status' => 'accepted',
+            'guarantor_responded_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Registration guarantor request accepted successfully.']);
+    }
+
+    /**
+     * Decline a registration guarantor request.
+     */
+    public function declineRegistration(Request $request, int $id)
+    {
+        $user = $request->user();
+        $app = MemberApplication::where('guarantor_id', $user->id)->findOrFail($id);
+
+        $app->update([
+            'guarantor_status' => 'declined',
+            'guarantor_responded_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Registration guarantor request declined.']);
+    }
+
     public function nudge(Request $request, int $loanId)
     {
         $user = $request->user();

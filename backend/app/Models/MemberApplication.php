@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\RegistrationGuarantorReminder;
 
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -13,6 +16,67 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class MemberApplication extends Model
 {
     use HasFactory, Notifiable, LogsActivity;
+
+    protected static function booted()
+    {
+        static::saving(function ($app) {
+            if (empty($app->guarantor_id)) {
+                $guarantor = static::findGuarantorMatch($app->guarantor_phone, $app->guarantor_name);
+                if ($guarantor) {
+                    $app->guarantor_id = $guarantor->id;
+                    if (empty($app->guarantor_status) || $app->guarantor_status === 'none') {
+                        $app->guarantor_status = 'pending';
+                    }
+                }
+            }
+        });
+
+        static::saved(function ($app) {
+            if ($app->wasChanged('guarantor_id') && $app->guarantor_id && $app->guarantor_status === 'pending') {
+                // Send notification
+                try {
+                    $guarantor = $app->guarantor;
+                    if ($guarantor) {
+                        Mail::to($guarantor->email)->send(new RegistrationGuarantorReminder($app, $guarantor));
+                        $app->updateQuietly(['last_guarantor_reminder_sent_at' => now()]);
+
+                        $guarantor->notifyMember(
+                            'New Guarantor Request',
+                            "{$app->full_name} has requested you to be their guarantor for membership registration. Please review and accept in your dashboard.",
+                            ['type' => 'guarantor_request', 'application_id' => $app->id]
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Failed to notify reconciled guarantor: " . $e->getMessage());
+                }
+            }
+        });
+    }
+
+    public static function findGuarantorMatch(?string $phone, ?string $name): ?User
+    {
+        $guarantor = null;
+
+        // 1. Match by phone
+        if ($phone) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            if (strlen($cleanPhone) >= 10) {
+                $guarantor = User::where('phone', 'like', "%$cleanPhone%")->first();
+            }
+        }
+
+        // 2. Match by name
+        if (!$guarantor && $name) {
+            $searchName = strtolower(trim($name));
+            $guarantor = User::where(function ($q) use ($searchName) {
+                $q->whereRaw("LOWER(TRIM(CONCAT_WS(' ', surname, name, other_names))) = ?", [$searchName])
+                    ->orWhereRaw("LOWER(TRIM(CONCAT_WS(' ', name, surname))) = ?", [$searchName])
+                    ->orWhereRaw("LOWER(TRIM(CONCAT_WS(' ', surname, name))) = ?", [$searchName]);
+            })->first();
+        }
+
+        return $guarantor;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -55,6 +119,10 @@ class MemberApplication extends Model
         'guarantor_phone',
         'guarantor_occupation',
         'guarantor_signature_path',
+        'guarantor_id',
+        'guarantor_status',
+        'guarantor_responded_at',
+        'last_guarantor_reminder_sent_at',
         'religious_society_name',
         'imam_name',
         'mosque_address',
@@ -108,6 +176,8 @@ class MemberApplication extends Model
         'submitted_at' => 'datetime',
         'finalized_at' => 'datetime',
         'last_otp_sent_at' => 'datetime',
+        'guarantor_responded_at' => 'datetime',
+        'last_guarantor_reminder_sent_at' => 'datetime',
     ];
 
     public function getFullNameAttribute(): string
@@ -118,5 +188,10 @@ class MemberApplication extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function guarantor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'guarantor_id');
     }
 }

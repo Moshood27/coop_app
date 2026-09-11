@@ -29,6 +29,9 @@ Schedule::command('loans:send-monthly-reminders')
 Schedule::command('loans:remind-guarantors')
     ->twiceDaily(9, 16)
     ->when(fn() => Setting::get('auto_overdue_recovery_enabled', true));
+Schedule::command('registration:remind-guarantors')
+    ->dailyAt('10:00')
+    ->timezone('Africa/Lagos');
 Schedule::command('loans:hunter-sweep')
     ->hourly()
     ->when(fn() => Setting::get('auto_overdue_recovery_enabled', true));

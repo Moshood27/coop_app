@@ -558,6 +558,52 @@
       @close="closeNotice"
     />
 
+    <!-- Registration Guarantor Request Modal -->
+    <div v-if="showRegGuarantorModal && activeRegRequest" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[110] p-6">
+      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
+        <div class="p-8">
+           <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm border border-emerald-100">🤝</div>
+           
+           <h3 class="text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Guarantor Request</h3>
+           <p class="text-slate-500 text-center text-xs mb-8 leading-relaxed font-medium">
+             <strong>{{ activeRegRequest.member_name }}</strong> has requested you to be their guarantor for Cooperative registration.
+           </p>
+
+           <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
+             <h4 class="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-3">Islamic Testimony</h4>
+             <p class="text-xs text-slate-600 italic leading-relaxed">
+               "{{ activeRegRequest.testimony }}"
+             </p>
+           </div>
+           
+           <div class="flex flex-col gap-3">
+             <button 
+               @click="handleRegGuarantorAction('accept')" 
+               :disabled="processingRegRequest"
+               class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] active:scale-95 transition-all disabled:opacity-50"
+             >
+               <span v-if="processingRegRequest" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+               <span>Accept & Testify</span>
+             </button>
+             
+             <button 
+               @click="handleRegGuarantorAction('decline')" 
+               :disabled="processingRegRequest"
+               class="w-full bg-white text-rose-600 border border-rose-100 font-black py-5 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] active:scale-95 transition-all disabled:opacity-50"
+             >
+               <span>Decline Request</span>
+             </button>
+           </div>
+        </div>
+        
+        <div class="p-6 bg-slate-50 border-t border-slate-100">
+          <p class="text-[9px] text-slate-400 text-center font-bold uppercase tracking-widest opacity-60">
+            By accepting, you agree to the Islamic testimony above before Allah (SWT).
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Force Gender Update Modal -->
     <div v-if="showGenderModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-6">
       <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
@@ -752,6 +798,45 @@ const searchQuery = ref('')
 const passbookSummary = ref(null)
 const isLoadingPassbook = ref(false)
 const showGenderModal = ref(false)
+const regGuarantorRequests = ref([])
+const showRegGuarantorModal = ref(false)
+const activeRegRequest = ref(null)
+const processingRegRequest = ref(false)
+
+const fetchRegGuarantorRequests = async () => {
+  try {
+    const { data } = await axios.get('/api/guarantor/registration-requests')
+    regGuarantorRequests.value = data || []
+    if (regGuarantorRequests.value.length > 0) {
+      // Find the first pending one to show
+      const pending = regGuarantorRequests.value.find(r => r.guarantor_status === 'pending')
+      if (pending) {
+        activeRegRequest.value = pending
+        showRegGuarantorModal.value = true
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch registration guarantor requests', err)
+  }
+}
+
+const handleRegGuarantorAction = async (action) => {
+  if (!activeRegRequest.value) return
+  processingRegRequest.value = true
+  try {
+    const endpoint = `/api/guarantor/registration-requests/${activeRegRequest.value.id}/${action}`
+    await axios.post(endpoint)
+    showNotice('success', action === 'accept' ? 'Request Accepted' : 'Request Declined', 
+      action === 'accept' ? 'You have successfully vouched for the member.' : 'You have declined the request.')
+    showRegGuarantorModal.value = false
+    activeRegRequest.value = null
+    fetchRegGuarantorRequests() // Check for next one
+  } catch (err) {
+    showNotice('error', 'Action Failed', err.response?.data?.message || 'Something went wrong.')
+  } finally {
+    processingRegRequest.value = false
+  }
+}
 const selectedGender = ref('')
 const updatingGender = ref(false)
 
@@ -1176,6 +1261,7 @@ const showHajjInfo = () => {
 }
 
 onMounted(async () => {
+  fetchRegGuarantorRequests()
   try {
     await load()
   } catch (_) {}
