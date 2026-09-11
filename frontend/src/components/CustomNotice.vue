@@ -1,6 +1,6 @@
 <template>
-  <div v-if="modelValue" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6" @click.self="onClose">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
+  <div v-if="modelValue" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6" @click.self="onClose">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto animate-in zoom-in duration-200">
       <div class="p-6 text-center">
         <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
              :class="{

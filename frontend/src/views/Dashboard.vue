@@ -559,19 +559,19 @@
     />
 
     <!-- Registration Guarantor Request Modal -->
-    <div v-if="showRegGuarantorModal && activeRegRequest" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[110] p-6">
-      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
-        <div class="p-8">
-           <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm border border-emerald-100">🤝</div>
+    <div v-if="showRegGuarantorModal && activeRegRequest" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 sm:p-6">
+      <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 border border-slate-100">
+        <div class="p-6 sm:p-8">
+           <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-6 shadow-sm border border-emerald-100">🤝</div>
            
-           <h3 class="text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Guarantor Request</h3>
-           <p class="text-slate-500 text-center text-xs mb-8 leading-relaxed font-medium">
+           <h3 class="text-xl sm:text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Guarantor Request</h3>
+           <p class="text-slate-500 text-center text-[10px] sm:text-xs mb-6 sm:mb-8 leading-relaxed font-medium">
              <strong>{{ activeRegRequest.member_name }}</strong> has requested you to be their guarantor for Cooperative registration.
            </p>
 
-           <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
-             <h4 class="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-3">Islamic Testimony</h4>
-             <p class="text-xs text-slate-600 italic leading-relaxed">
+           <div class="bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-100 mb-6 sm:mb-8">
+             <h4 class="text-[9px] sm:text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-2 sm:mb-3">Islamic Testimony</h4>
+             <p class="text-[11px] sm:text-xs text-slate-600 italic leading-relaxed">
                "{{ activeRegRequest.testimony }}"
              </p>
            </div>
@@ -580,7 +580,7 @@
              <button 
                @click="handleRegGuarantorAction('accept')" 
                :disabled="processingRegRequest"
-               class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] active:scale-95 transition-all disabled:opacity-50"
+               class="w-full bg-emerald-600 text-white font-black py-4 sm:py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] active:scale-95 transition-all disabled:opacity-50"
              >
                <span v-if="processingRegRequest" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                <span>Accept & Testify</span>
@@ -589,15 +589,15 @@
              <button 
                @click="handleRegGuarantorAction('decline')" 
                :disabled="processingRegRequest"
-               class="w-full bg-white text-rose-600 border border-rose-100 font-black py-5 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] active:scale-95 transition-all disabled:opacity-50"
+               class="w-full bg-white text-rose-600 border border-rose-100 font-black py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] active:scale-95 transition-all disabled:opacity-50"
              >
                <span>Decline Request</span>
              </button>
            </div>
         </div>
         
-        <div class="p-6 bg-slate-50 border-t border-slate-100">
-          <p class="text-[9px] text-slate-400 text-center font-bold uppercase tracking-widest opacity-60">
+        <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
+          <p class="text-[8px] sm:text-[9px] text-slate-400 text-center font-bold uppercase tracking-widest opacity-60">
             By accepting, you agree to the Islamic testimony above before Allah (SWT).
           </p>
         </div>
@@ -605,19 +605,19 @@
     </div>
 
     <!-- Force Gender Update Modal -->
-    <div v-if="showGenderModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-6">
-      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
-        <div class="p-8">
-           <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm border border-emerald-100">👤</div>
+    <div v-if="showGenderModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 sm:p-6">
+      <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 border border-slate-100">
+        <div class="p-6 sm:p-8">
+           <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-6 shadow-sm border border-emerald-100">👤</div>
            
-           <h3 class="text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Update Gender</h3>
-           <p class="text-slate-500 text-center text-xs mb-8 leading-relaxed font-medium">To provide you with tailored services and accurate records, please select your gender.</p>
+           <h3 class="text-xl sm:text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Update Gender</h3>
+           <p class="text-slate-500 text-center text-[10px] sm:text-xs mb-6 sm:mb-8 leading-relaxed font-medium">To provide you with tailored services and accurate records, please select your gender.</p>
            
            <div class="space-y-3">
              <button 
                @click="selectedGender = 'male'"
                :class="selectedGender === 'male' ? 'bg-emerald-600 text-white border-emerald-600 scale-[1.02] shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'"
-               class="w-full p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-xs transition-all flex items-center justify-between"
+               class="w-full p-4 sm:p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all flex items-center justify-between"
              >
                <span>Male</span>
                <span v-if="selectedGender === 'male'" class="text-lg">✓</span>
@@ -626,7 +626,7 @@
              <button 
                @click="selectedGender = 'female'"
                :class="selectedGender === 'female' ? 'bg-emerald-600 text-white border-emerald-600 scale-[1.02] shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'"
-               class="w-full p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-xs transition-all flex items-center justify-between"
+               class="w-full p-4 sm:p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all flex items-center justify-between"
              >
                <span>Female</span>
                <span v-if="selectedGender === 'female'" class="text-lg">✓</span>
@@ -634,130 +634,130 @@
            </div>
         </div>
         
-        <div class="p-6 bg-slate-50 border-t border-slate-100">
+        <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
           <button 
             @click="updateGender" 
             :disabled="!selectedGender || updatingGender"
-            class="w-full bg-slate-800 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 active:scale-95 transition-all"
+            class="w-full bg-slate-800 text-white font-black py-4 sm:py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] disabled:opacity-50 active:scale-95 transition-all"
           >
             <span v-if="updatingGender" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
             <span v-else>Confirm Profile Update</span>
           </button>
           
-          <p class="text-[9px] text-slate-400 text-center mt-4 font-bold uppercase tracking-widest opacity-60">This is required to proceed to your dashboard</p>
+          <p class="text-[8px] sm:text-[9px] text-slate-400 text-center mt-3 sm:mt-4 font-bold uppercase tracking-widest opacity-60">This is required to proceed to your dashboard</p>
         </div>
       </div>
     </div>
 
     <!-- Force Email Update Modal -->
-    <div v-if="showEmailModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[101] p-6">
-      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
-        <div class="p-8">
-           <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm border border-emerald-100">📧</div>
+    <div v-if="showEmailModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[101] p-4 sm:p-6">
+      <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 border border-slate-100">
+        <div class="p-6 sm:p-8">
+           <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-6 shadow-sm border border-emerald-100">📧</div>
            
-           <h3 class="text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Update Email</h3>
-           <p class="text-slate-500 text-center text-xs mb-8 leading-relaxed font-medium">Your current email address is invalid. Please provide a valid email to receive notifications and secure your account.</p>
+           <h3 class="text-xl sm:text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Update Email</h3>
+           <p class="text-slate-500 text-center text-[10px] sm:text-xs mb-6 sm:mb-8 leading-relaxed font-medium">Your current email address is invalid. Please provide a valid email to receive notifications and secure your account.</p>
            
            <div class="space-y-4">
              <div>
-               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">New Email Address</label>
+               <label class="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">New Email Address</label>
                <input 
                  v-model="emailForm.email" 
                  type="email" 
                  placeholder="yourname@example.com"
-                 class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-700"
+                 class="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-sm sm:text-base"
                />
-               <p v-if="emailErrors.email" class="text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ emailErrors.email[0] }}</p>
+               <p v-if="emailErrors.email" class="text-[9px] sm:text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ emailErrors.email[0] }}</p>
              </div>
 
              <div>
-               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm Password</label>
+               <label class="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">Confirm Password</label>
                <input 
                  v-model="emailForm.password" 
                  type="password" 
                  placeholder="••••••••"
-                 class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-700"
+                 class="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-sm sm:text-base"
                />
-               <p v-if="emailErrors.password" class="text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ emailErrors.password[0] }}</p>
+               <p v-if="emailErrors.password" class="text-[9px] sm:text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ emailErrors.password[0] }}</p>
              </div>
            </div>
         </div>
         
-        <div class="p-6 bg-slate-50 border-t border-slate-100">
+        <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
           <button 
             @click="updateEmail" 
             :disabled="emailSaving"
-            class="w-full bg-slate-800 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 active:scale-95 transition-all"
+            class="w-full bg-slate-800 text-white font-black py-4 sm:py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] disabled:opacity-50 active:scale-95 transition-all"
           >
             <span v-if="emailSaving" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
             <span v-else>Update Email Address</span>
           </button>
           
-          <p class="text-[9px] text-slate-400 text-center mt-4 font-bold uppercase tracking-widest opacity-60">This is required to proceed to your dashboard</p>
+          <p class="text-[8px] sm:text-[9px] text-slate-400 text-center mt-3 sm:mt-4 font-bold uppercase tracking-widest opacity-60">This is required to proceed to your dashboard</p>
         </div>
       </div>
     </div>
 
     <!-- Force PIN Setup Modal -->
-    <div v-if="showPinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[101] p-6">
-      <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
-        <div class="p-8">
-           <div class="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm border border-amber-100">🔐</div>
+    <div v-if="showPinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[101] p-4 sm:p-6">
+      <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 border border-slate-100">
+        <div class="p-6 sm:p-8">
+           <div class="w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-6 shadow-sm border border-amber-100">🔐</div>
            
-           <h3 class="text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Set Security PIN</h3>
-           <p class="text-slate-500 text-center text-xs mb-8 leading-relaxed font-medium">Please set a 4-digit transaction PIN to secure your withdrawals and transfers.</p>
+           <h3 class="text-xl sm:text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Set Security PIN</h3>
+           <p class="text-slate-500 text-center text-[10px] sm:text-xs mb-6 sm:mb-8 leading-relaxed font-medium">Please set a 4-digit transaction PIN to secure your withdrawals and transfers.</p>
            
            <div class="space-y-4">
              <div>
-               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">New 4-Digit PIN</label>
+               <label class="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">New 4-Digit PIN</label>
                <input 
                  v-model="pinForm.new_pin" 
                  type="password" 
                  inputmode="numeric"
                  maxlength="4"
                  placeholder="••••"
-                 class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-center text-2xl tracking-[0.5em]"
+                 class="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-center text-xl sm:text-2xl tracking-[0.5em]"
                />
-               <p v-if="pinErrors.new_pin" class="text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.new_pin) ? pinErrors.new_pin[0] : pinErrors.new_pin }}</p>
+               <p v-if="pinErrors.new_pin" class="text-[9px] sm:text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.new_pin) ? pinErrors.new_pin[0] : pinErrors.new_pin }}</p>
              </div>
 
              <div>
-               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Confirm PIN</label>
+               <label class="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">Confirm PIN</label>
                <input 
                  v-model="pinForm.confirm_pin" 
                  type="password" 
                  inputmode="numeric"
                  maxlength="4"
                  placeholder="••••"
-                 class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-center text-2xl tracking-[0.5em]"
+                 class="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-center text-xl sm:text-2xl tracking-[0.5em]"
                />
-               <p v-if="pinErrors.confirm_pin" class="text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.confirm_pin) ? pinErrors.confirm_pin[0] : pinErrors.confirm_pin }}</p>
+               <p v-if="pinErrors.confirm_pin" class="text-[9px] sm:text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.confirm_pin) ? pinErrors.confirm_pin[0] : pinErrors.confirm_pin }}</p>
              </div>
 
              <div>
-               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Account Password</label>
+               <label class="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 sm:mb-2 ml-1">Account Password</label>
                <input 
                  v-model="pinForm.current_password" 
                  type="password" 
                  placeholder="••••••••"
-                 class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700"
+                 class="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white outline-none transition-all font-bold text-slate-700 text-sm sm:text-base"
                />
-               <p v-if="pinErrors.current_password" class="text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.current_password) ? pinErrors.current_password[0] : pinErrors.current_password }}</p>
+               <p v-if="pinErrors.current_password" class="text-[9px] sm:text-[10px] text-rose-500 mt-1 ml-1 font-bold">{{ Array.isArray(pinErrors.current_password) ? pinErrors.current_password[0] : pinErrors.current_password }}</p>
              </div>
            </div>
         </div>
         
-        <div class="p-6 bg-slate-50 border-t border-slate-100">
+        <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
           <button 
             @click="updatePin" 
             :disabled="pinSaving"
-            class="w-full bg-slate-800 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[10px] disabled:opacity-50 active:scale-95 transition-all"
+            class="w-full bg-slate-800 text-white font-black py-4 sm:py-5 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] disabled:opacity-50 active:scale-95 transition-all"
           >
             <span v-if="pinSaving" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
             <span v-else>Set Transaction PIN</span>
           </button>
           
-          <p class="text-[9px] text-slate-400 text-center mt-4 font-bold uppercase tracking-widest opacity-60">This is required for account security</p>
+          <p class="text-[8px] sm:text-[9px] text-slate-400 text-center mt-3 sm:mt-4 font-bold uppercase tracking-widest opacity-60">This is required for account security</p>
         </div>
       </div>
     </div>
