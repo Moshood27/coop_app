@@ -123,11 +123,6 @@ Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\Utilit
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
-    // Registration Guarantor approvals
-    Route::get('/guarantor/registration-requests', [GuarantorController::class, 'listRegistrationRequests']);
-    Route::post('/guarantor/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
-    Route::post('/guarantor/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
-
     // In-App Notifications (Inbox)
     Route::delete('/notifications', [NotificationsController::class, 'destroyAll']);
     Route::delete('/notifications/{id}', [NotificationsController::class, 'destroy'])->whereUuid('id');
@@ -327,15 +322,20 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/project-proposals/{id}/vote', [ProjectProposalController::class, 'vote']);
     Route::post('/project-proposals/{id}/comments', [ProjectProposalController::class, 'storeComment']);
 
-    // Guarantor digital approvals
-    Route::get('/guarantor/search', [\App\Http\Controllers\Api\GuarantorController::class, 'search']);
-    Route::get('/guarantor/requests', [\App\Http\Controllers\Api\GuarantorController::class, 'listRequests']);
-    Route::post('/guarantor/requests/{id}/accept', [\App\Http\Controllers\Api\GuarantorController::class, 'accept']);
-    Route::post('/guarantor/requests/{id}/decline', [\App\Http\Controllers\Api\GuarantorController::class, 'decline']);
+    // Guarantor digital approvals & Registration Guarantor approvals
+    Route::prefix('guarantor')->group(function () {
+        Route::get('/registration-requests', [GuarantorController::class, 'listRegistrationRequests']);
+        Route::post('/registration-requests/{id}/accept', [GuarantorController::class, 'acceptRegistration']);
+        Route::post('/registration-requests/{id}/decline', [GuarantorController::class, 'declineRegistration']);
 
-    // Borrower actions
-    Route::post('/guarantor/loans/{id}/nudge', [\App\Http\Controllers\Api\GuarantorController::class, 'nudge']);
-    Route::post('/guarantor/loans/{id}/escalate', [\App\Http\Controllers\Api\GuarantorController::class, 'escalate']);
+        Route::get('/search', [GuarantorController::class, 'search']);
+        Route::get('/requests', [GuarantorController::class, 'listRequests']);
+        Route::post('/requests/{id}/accept', [GuarantorController::class, 'accept']);
+        Route::post('/requests/{id}/decline', [GuarantorController::class, 'decline']);
+
+        Route::post('/loans/{id}/nudge', [GuarantorController::class, 'nudge']);
+        Route::post('/loans/{id}/escalate', [GuarantorController::class, 'escalate']);
+    });
 
     // Member reports
     Route::get('/reports/contribution-mix', [ReportsController::class, 'contributionMix']);
