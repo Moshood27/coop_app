@@ -53,19 +53,25 @@ class ReconcileLegacyGuarantors extends Command
                 }
             }
 
-            // 2. Reconcile status for already approved members
-            if ($app->admission_date || $app->approval_status === 'approved' || !empty($app->guarantor_signature_path)) {
-                if ($app->guarantor_status !== 'accepted') {
-                    $app->guarantor_status = 'accepted';
-                    if (!$app->guarantor_responded_at) {
-                        $app->guarantor_responded_at = $app->admission_date ?: $app->updated_at;
+            // 2. Reconcile status
+            if ($app->guarantor_id) {
+                // If there is no digital signature path, it should be pending so they can sign it
+                // unless it was explicitly declined.
+                if (empty($app->guarantor_signature_path)) {
+                    if ($app->guarantor_status !== 'pending' && $app->guarantor_status !== 'declined') {
+                        $app->guarantor_status = 'pending';
+                        $changed = true;
                     }
-                    $changed = true;
+                } else {
+                    // Has signature path, so it should be accepted
+                    if ($app->guarantor_status !== 'accepted') {
+                        $app->guarantor_status = 'accepted';
+                        if (!$app->guarantor_responded_at) {
+                            $app->guarantor_responded_at = $app->admission_date ?: $app->updated_at;
+                        }
+                        $changed = true;
+                    }
                 }
-            } elseif ($app->guarantor_id && ($app->guarantor_status === 'none' || empty($app->guarantor_status))) {
-                // If matched but not approved, set to pending if not already something else
-                $app->guarantor_status = 'pending';
-                $changed = true;
             }
 
             if ($changed) {
