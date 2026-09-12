@@ -294,6 +294,13 @@ class MemberApplicationResource extends Resource
                     ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('pdfs.imam_attestation', ['application' => $record])->output();
                     }, "imam-attestation-{$record->id}.pdf")),
+                Tables\Actions\Action::make('download_guarantor')
+                    ->label('Download Guarantor Testimony')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('info')
+                    ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
+                    }, "guarantor-testimony-{$record->id}.pdf")),
                 Tables\Actions\Action::make('invite_to_meeting')
                     ->label('Invite to Meeting')
                     ->icon('heroicon-o-calendar-days')
@@ -411,6 +418,9 @@ class MemberApplicationResource extends Resource
                                 'guarantor_phone' => $record->guarantor_phone,
                                 'guarantor_occupation' => $record->guarantor_occupation,
                                 'guarantor_signature_path' => $record->guarantor_signature_path,
+                                'guarantor_id' => $record->guarantor_id,
+                                'guarantor_status' => $record->guarantor_status,
+                                'guarantor_responded_at' => $record->guarantor_responded_at,
                                 'religious_society_name' => $record->religious_society_name,
                                 'imam_name' => $record->imam_name,
                                 'mosque_address' => $record->mosque_address,

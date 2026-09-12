@@ -139,6 +139,9 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         'guarantor_phone',
         'guarantor_occupation',
         'guarantor_signature_path',
+        'guarantor_id',
+        'guarantor_status',
+        'guarantor_responded_at',
         'religious_society_name',
         'imam_name',
         'mosque_address',
@@ -243,6 +246,7 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             'has_other_cooperatives' => 'boolean',
             'imam_approval_status' => 'boolean',
             'imam_approved_at' => 'datetime',
+            'guarantor_responded_at' => 'datetime',
             'president_signed_at' => 'datetime',
             'secretary_general_signed_at' => 'datetime',
         ];

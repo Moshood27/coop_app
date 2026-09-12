@@ -1369,6 +1369,13 @@ class UserResource extends Resource
                     ->action(fn (User $record) => response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('pdfs.imam_attestation', ['application' => $record])->output();
                     }, "imam-attestation-{$record->id}.pdf")),
+                Action::make('downloadGuarantorTestimony')
+                    ->label('Download Guarantor Testimony')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('info')
+                    ->action(fn (User $record) => response()->streamDownload(function () use ($record) {
+                        echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
+                    }, "guarantor-testimony-{$record->id}.pdf")),
                 Action::make('reset2fa')
                     ->label('Reset 2FA')
                     ->icon('heroicon-o-arrow-path')

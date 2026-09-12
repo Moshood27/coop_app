@@ -229,6 +229,33 @@
     <div class="page-break"></div>
 
     <div class="header">
+        <h1>GUARANTOR TESTIMONY</h1>
+    </div>
+
+    <div class="section">
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 20px;">
+            I hereby testify before Allah (SWT) that the applicant, <strong>{{ $application->full_name }}</strong>, is known to me to be a person of good character and Islamic integrity. I vouch for (his/her) trustworthiness and believe them to be capable of fulfilling (his/her) obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in (his/her) honesty and reliability in accordance with Islamic principles of mutual support and trust.
+        </p>
+
+        <div style="margin-top: 40px; position: relative; height: 120px;">
+            <div style="float: right; width: 250px; text-align: center;">
+                @if($sig = $getPath($application->guarantor_signature_path))
+                    <img src="{{ $sig }}" class="signature-image">
+                @endif
+                <div style="border-top: 1px solid #000; padding-top: 5px; font-weight: bold;">
+                    Guarantor's Signature
+                </div>
+                <p>Date: {{ $application->guarantor_responded_at ? $application->guarantor_responded_at->format('d/m/Y') : ($application->admission_date ? $application->admission_date->format('d/m/Y') : date('d/m/Y')) }}</p>
+                @if(isset($application->guarantor_status) && $application->guarantor_status !== 'none')
+                    <p>Status: <span style="text-transform: uppercase; font-weight: bold; color: {{ $application->guarantor_status === 'accepted' ? 'green' : 'orange' }}">{{ $application->guarantor_status }}</span></p>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="header">
         <h1>ATTESTATION OF IMAM/AMIR</h1>
     </div>
 
