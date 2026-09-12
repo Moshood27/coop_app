@@ -9,6 +9,7 @@ use App\Models\ShariahAuditLog as ShariahAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GuarantorController extends Controller
 {
@@ -290,10 +291,32 @@ class GuarantorController extends Controller
             return response()->json(['message' => 'Already accepted'], 200);
         }
 
-        $app->update([
+        $updateData = [
             'guarantor_status' => 'accepted',
             'guarantor_responded_at' => now(),
-        ]);
+        ];
+
+        if ($base64 = $request->input('signature_base64')) {
+            $data = explode(',', $base64);
+            if (count($data) > 1) {
+                $content = base64_decode($data[1]);
+                $token = $app->token ?: Str::uuid()->toString();
+                if (!$app->token) {
+                    $app->token = $token;
+                }
+
+                $baseDir = public_path('upload/apps/'.$token);
+                if (!is_dir($baseDir)) {
+                    @mkdir($baseDir, 0755, true);
+                }
+
+                $name = 'guarantor-sig-live-'.time().'.png';
+                file_put_contents($baseDir.'/'.$name, $content);
+                $updateData['guarantor_signature_path'] = 'upload/apps/'.$token.'/'.$name;
+            }
+        }
+
+        $app->update($updateData);
 
         return response()->json(['message' => 'Registration guarantor request accepted successfully.']);
     }

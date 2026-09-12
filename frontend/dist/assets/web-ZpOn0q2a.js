@@ -1,0 +1,1 @@
+import{T as e}from"./index-CIMwVA2s.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

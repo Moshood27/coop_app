@@ -575,11 +575,19 @@
                "{{ activeRegRequest.testimony }}"
              </p>
            </div>
+
+           <div v-if="!processingRegRequest" class="mb-6 sm:mb-8">
+             <SignaturePad 
+               v-model="guarantorSignature" 
+               label="Your Signature" 
+               hint="Please sign above to testify"
+             />
+           </div>
            
            <div class="flex flex-col gap-3">
              <button 
                @click="handleRegGuarantorAction('accept')" 
-               :disabled="processingRegRequest"
+               :disabled="processingRegRequest || !guarantorSignature"
                class="w-full bg-emerald-600 text-white font-black py-4 sm:py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-[9px] sm:text-[10px] active:scale-95 transition-all disabled:opacity-50"
              >
                <span v-if="processingRegRequest" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
@@ -782,6 +790,7 @@ import { useNotice } from '../composables/useNotice'
 import FinCard from '../components/FinCard.vue'
 import StatPill from '../components/StatPill.vue'
 import TrendChart from '../components/TrendChart.vue'
+import SignaturePad from '../components/SignaturePad.vue'
 import { startDashboardTour } from '../utils/tour'
 import { useBalanceVisibility } from '../composables/useBalanceVisibility'
 
@@ -801,6 +810,7 @@ const showGenderModal = ref(false)
 const regGuarantorRequests = ref([])
 const showRegGuarantorModal = ref(false)
 const activeRegRequest = ref(null)
+const guarantorSignature = ref('')
 const processingRegRequest = ref(false)
 
 const fetchRegGuarantorRequests = async () => {
@@ -825,11 +835,13 @@ const handleRegGuarantorAction = async (action) => {
   processingRegRequest.value = true
   try {
     const endpoint = `/api/guarantor/registration-requests/${activeRegRequest.value.id}/${action}`
-    await axios.post(endpoint)
+    const payload = action === 'accept' ? { signature_base64: guarantorSignature.value } : {}
+    await axios.post(endpoint, payload)
     showNotice('success', action === 'accept' ? 'Request Accepted' : 'Request Declined', 
       action === 'accept' ? 'You have successfully vouched for the member.' : 'You have declined the request.')
     showRegGuarantorModal.value = false
     activeRegRequest.value = null
+    guarantorSignature.value = ''
     fetchRegGuarantorRequests() // Check for next one
   } catch (err) {
     showNotice('error', 'Action Failed', err.response?.data?.message || 'Something went wrong.')

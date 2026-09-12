@@ -30,57 +30,92 @@ class ReconcileLegacyGuarantors extends Command
      */
     public function handle()
     {
-        $applications = MemberApplication::whereNull('guarantor_id')
-            ->where(function ($query) {
-                $query->whereNotNull('guarantor_name')
-                    ->orWhereNotNull('guarantor_phone');
-            })
-            ->where(function ($query) {
-                $query->whereNull('finalized_at')
-                    ->orWhere('guarantor_status', '!=', 'accepted');
-            })
-            ->get();
+        $this->info("Starting comprehensive reconciliation of guarantor data...");
 
+        $applications = MemberApplication::all();
         $this->info("Found {$applications->count()} applications to check.");
 
         $matchedCount = 0;
+        $updatedAppCount = 0;
+        $syncedUserCount = 0;
 
         foreach ($applications as $app) {
-            $guarantor = null;
+            $changed = false;
 
-            // 1. Try matching by phone if available
-            if ($app->guarantor_phone) {
-                $cleanPhone = preg_replace('/[^0-9]/', '', $app->guarantor_phone);
-                if (strlen($cleanPhone) >= 10) {
-                    $guarantor = User::where('phone', 'like', "%$cleanPhone%")->first();
-                }
-            }
-
-            // 2. Try matching by name if no phone match
-            if (!$guarantor && $app->guarantor_name) {
-                $searchName = strtolower(trim($app->guarantor_name));
-
-                $guarantor = User::where(function ($q) use ($searchName) {
-                    $q->whereRaw("LOWER(TRIM(CONCAT_WS(' ', surname, name, other_names))) = ?", [$searchName])
-                        ->orWhereRaw("LOWER(TRIM(CONCAT_WS(' ', name, surname))) = ?", [$searchName])
-                        ->orWhereRaw("LOWER(TRIM(CONCAT_WS(' ', surname, name))) = ?", [$searchName]);
-                })->first();
-            }
-
-            if ($guarantor) {
-                $this->info("Matched application for {$app->full_name} with guarantor {$guarantor->full_name} ({$guarantor->id})");
-
-                if (!$this->option('dry-run')) {
+            // 1. Try to find guarantor_id if missing
+            if (empty($app->guarantor_id)) {
+                $guarantor = MemberApplication::findGuarantorMatch($app->guarantor_phone, $app->guarantor_name);
+                if ($guarantor) {
                     $app->guarantor_id = $guarantor->id;
-                    $app->guarantor_status = 'pending';
-                    $app->save();
-                    // Notification is handled by MemberApplication model hook
+                    $changed = true;
+                    $this->info("Matched application for {$app->full_name} with guarantor {$guarantor->full_name} ({$guarantor->id})");
+                    $matchedCount++;
                 }
-                $matchedCount++;
+            }
+
+            // 2. Reconcile status for already approved members
+            if ($app->admission_date || $app->approval_status === 'approved' || !empty($app->guarantor_signature_path)) {
+                if ($app->guarantor_status !== 'accepted') {
+                    $app->guarantor_status = 'accepted';
+                    if (!$app->guarantor_responded_at) {
+                        $app->guarantor_responded_at = $app->admission_date ?: $app->updated_at;
+                    }
+                    $changed = true;
+                }
+            } elseif ($app->guarantor_id && ($app->guarantor_status === 'none' || empty($app->guarantor_status))) {
+                // If matched but not approved, set to pending if not already something else
+                $app->guarantor_status = 'pending';
+                $changed = true;
+            }
+
+            if ($changed) {
+                if (!$this->option('dry-run')) {
+                    $app->saveQuietly(); // Use saveQuietly to avoid triggering the 'saved' hook reminder
+                    $updatedAppCount++;
+                } else {
+                    $this->info("Would update application {$app->id} ({$app->full_name}) to status: {$app->guarantor_status}");
+                }
+            }
+
+            // 3. Sync to User table if application is approved and linked to a user
+            if ($app->user_id) {
+                $user = User::find($app->user_id);
+                if ($user) {
+                    $userChanges = false;
+
+                    if ($user->guarantor_id !== $app->guarantor_id) {
+                        $user->guarantor_id = $app->guarantor_id;
+                        $userChanges = true;
+                    }
+                    if ($user->guarantor_status !== $app->guarantor_status) {
+                        $user->guarantor_status = $app->guarantor_status;
+                        $userChanges = true;
+                    }
+                    if ($user->guarantor_responded_at != $app->guarantor_responded_at) {
+                        $user->guarantor_responded_at = $app->guarantor_responded_at;
+                        $userChanges = true;
+                    }
+                    if ($user->guarantor_signature_path !== $app->guarantor_signature_path) {
+                        $user->guarantor_signature_path = $app->guarantor_signature_path;
+                        $userChanges = true;
+                    }
+
+                    if ($userChanges) {
+                        if (!$this->option('dry-run')) {
+                            $user->save();
+                            $syncedUserCount++;
+                        } else {
+                            $this->info("Would sync guarantor data to User {$user->id} ({$user->full_name})");
+                        }
+                    }
+                }
             }
         }
 
-        $this->info("Reconciliation complete. Total matches: {$matchedCount}");
+        $this->info("Reconciliation complete.");
+        $this->info("Matched Guarantors: {$matchedCount}");
+        $this->info("Updated Applications: {$updatedAppCount}");
+        $this->info("Synced Users: {$syncedUserCount}");
 
         return 0;
     }
