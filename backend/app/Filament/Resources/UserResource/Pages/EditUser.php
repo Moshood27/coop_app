@@ -14,6 +14,34 @@ class EditUser extends EditRecord
     {
         return [
             Actions\ActionGroup::make([
+                Actions\Action::make('downloadForm')
+                    ->label('Download Enrolment Form')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->action(fn (\App\Models\User $record) => response()->streamDownload(function () use ($record) {
+                        echo \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.membership_application', ['application' => $record])->output();
+                    }, "enrolment-form-{$record->id}.pdf")),
+                Actions\Action::make('downloadImamAttestation')
+                    ->label('Download Imam Attestation')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->action(fn (\App\Models\User $record) => response()->streamDownload(function () use ($record) {
+                        echo \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.imam_attestation', ['application' => $record])->output();
+                    }, "imam-attestation-{$record->id}.pdf")),
+                Actions\Action::make('downloadGuarantorTestimony')
+                    ->label('Download Guarantor Testimony')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('info')
+                    ->action(fn (\App\Models\User $record) => response()->streamDownload(function () use ($record) {
+                        echo \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
+                    }, "guarantor-testimony-{$record->id}.pdf")),
+            ])
+                ->label('Downloads')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->color('primary')
+                ->button(),
+
+            Actions\ActionGroup::make([
                 Actions\Action::make('chargeFine')
                     ->label('Charge Manual Fine')
                     ->icon('heroicon-o-plus-circle')

@@ -88,6 +88,13 @@ class ViewMemberApplication extends ViewRecord
                 ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
                     echo Pdf::loadView('pdfs.imam_attestation', ['application' => $record])->output();
                 }, "imam-attestation-{$record->id}.pdf")),
+            Actions\Action::make('download_guarantor')
+                ->label('Download Guarantor Testimony')
+                ->icon('heroicon-o-check-badge')
+                ->color('info')
+                ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
+                    echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
+                }, "guarantor-testimony-{$record->id}.pdf")),
             Actions\Action::make('invite_to_meeting')
                 ->label('Invite to Meeting')
                 ->icon('heroicon-o-calendar-days')
