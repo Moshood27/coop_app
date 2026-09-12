@@ -515,6 +515,11 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         return $this->belongsTo(Branch::class);
     }
 
+    public function guarantor()
+    {
+        return $this->belongsTo(User::class, 'guarantor_id');
+    }
+
     public function contributions()
     {
         return $this->hasMany(Contribution::class);

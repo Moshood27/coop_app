@@ -129,27 +129,30 @@
         <table>
             <tr>
                 <td class="label">Guarantor Name:</td>
-                <td class="value">{{ $application->guarantor_name }}</td>
+                <td class="value">{{ $application->guarantor?->full_name ?? $application->guarantor_name }}</td>
             </tr>
             <tr>
                 <td class="label">Occupation:</td>
-                <td class="value">{{ $application->guarantor_occupation }}</td>
+                <td class="value">{{ $application->guarantor?->occupation ?? $application->guarantor_occupation }}</td>
             </tr>
             <tr>
                 <td class="label">Phone Number:</td>
-                <td class="value">{{ $application->guarantor_phone }}</td>
+                <td class="value">{{ $application->guarantor?->phone ?? $application->guarantor_phone }}</td>
             </tr>
             <tr>
                 <td class="label">Address:</td>
-                <td class="value">{{ $application->guarantor_address }}</td>
+                <td class="value">{{ $application->guarantor?->address ?? $application->guarantor_address }}</td>
             </tr>
         </table>
     </div>
 
-    <div style="margin-top: 30px; font-size: 16px;">
-        <p>
-            I hereby testify before Allah (SWT) that the applicant, <strong>{{ $fullName }}</strong>, is known to me to be a person of good character and Islamic integrity. I vouch for (his/her) trustworthiness and believe them to be capable of fulfilling (his/her) obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in (his/her) honesty and reliability in accordance with Islamic principles of mutual support and trust.
-        </p>
+    <div class="section">
+        <div class="section-title">Islamic Testimony</div>
+        <div style="background: #f0fdf4; padding: 20px; border: 1px solid #bbf7d0; border-radius: 8px; color: #065f46; font-style: italic;">
+            <p style="margin: 0; font-size: 16px;">
+                "I hereby testify before Allah (SWT) that the applicant, <strong>{{ $fullName }}</strong>, is known to me to be a person of good character and Islamic integrity. I vouch for (his/her) trustworthiness and believe them to be capable of fulfilling (his/her) obligations to the Cooperative. I understand that by acting as a guarantor, I am affirming my belief in (his/her) honesty and reliability in accordance with Islamic principles of mutual support and trust."
+            </p>
+        </div>
     </div>
 
     <div style="margin-top: 40px; position: relative; height: 150px;">
