@@ -32,6 +32,7 @@ class EditUser extends EditRecord
                     ->label('Download Guarantor Testimony')
                     ->icon('heroicon-o-check-badge')
                     ->color('info')
+                    ->visible(fn (\App\Models\User $record) => $record->guarantor_signature_path !== null)
                     ->action(fn (\App\Models\User $record) => response()->streamDownload(function () use ($record) {
                         echo \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
                     }, "guarantor-testimony-{$record->id}.pdf")),

@@ -291,6 +291,7 @@ class MemberApplicationResource extends Resource
                     ->label('Download Imam Attestation')
                     ->icon('heroicon-o-document-text')
                     ->color('success')
+                    ->visible(fn (MemberApplication $record) => $record->imam_signature_path !== null)
                     ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('pdfs.imam_attestation', ['application' => $record])->output();
                     }, "imam-attestation-{$record->id}.pdf")),
@@ -298,6 +299,7 @@ class MemberApplicationResource extends Resource
                     ->label('Download Guarantor Testimony')
                     ->icon('heroicon-o-check-badge')
                     ->color('info')
+                    ->visible(fn (MemberApplication $record) => $record->guarantor_signature_path !== null)
                     ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
                     }, "guarantor-testimony-{$record->id}.pdf")),

@@ -92,6 +92,7 @@ class ViewMemberApplication extends ViewRecord
                 ->label('Download Guarantor Testimony')
                 ->icon('heroicon-o-check-badge')
                 ->color('info')
+                ->visible(fn (MemberApplication $record) => $record->guarantor_signature_path !== null)
                 ->action(fn (MemberApplication $record) => response()->streamDownload(function () use ($record) {
                     echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
                 }, "guarantor-testimony-{$record->id}.pdf")),
@@ -208,6 +209,9 @@ class ViewMemberApplication extends ViewRecord
                             'guarantor_phone' => $record->guarantor_phone,
                             'guarantor_occupation' => $record->guarantor_occupation,
                             'guarantor_signature_path' => $record->guarantor_signature_path,
+                            'guarantor_id' => $record->guarantor_id,
+                            'guarantor_status' => $record->guarantor_status,
+                            'guarantor_responded_at' => $record->guarantor_responded_at,
                             'religious_society_name' => $record->religious_society_name,
                             'imam_name' => $record->imam_name,
                             'mosque_address' => $record->mosque_address,

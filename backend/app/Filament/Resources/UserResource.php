@@ -1373,6 +1373,7 @@ class UserResource extends Resource
                     ->label('Download Guarantor Testimony')
                     ->icon('heroicon-o-check-badge')
                     ->color('info')
+                    ->visible(fn (User $record) => $record->guarantor_signature_path !== null)
                     ->action(fn (User $record) => response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('pdfs.guarantor_testimony', ['application' => $record])->output();
                     }, "guarantor-testimony-{$record->id}.pdf")),
