@@ -76,6 +76,7 @@ class AppStatusSettings extends Page
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
             'attendance_ble_beacon_enabled' => (bool) Setting::get('attendance_ble_beacon_enabled', true),
             'attendance_fingerprint_enabled' => (bool) Setting::get('attendance_fingerprint_enabled', true),
+            'mark_admin_attendance_enabled' => (bool) Setting::get('mark_admin_attendance_enabled', false),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
@@ -319,6 +320,10 @@ class AppStatusSettings extends Page
                             ->label('Enable Fingerprint')
                             ->helperText('If disabled, members will not be able to use Fingerprint for attendance.')
                             ->default(true),
+                        Toggle::make('mark_admin_attendance_enabled')
+                            ->label('Allow Admins to mark attendance for other Admins')
+                            ->helperText('If enabled, authorized officers can search for and mark attendance for other administrators.')
+                            ->default(false),
                     ])->columns(2),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')

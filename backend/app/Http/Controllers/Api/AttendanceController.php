@@ -279,7 +279,10 @@ class AttendanceController extends Controller
              return response()->json([]);
         }
 
-        $userQuery = User::where('is_admin', false);
+        $includeAdmins = (bool) Setting::get('mark_admin_attendance_enabled', false);
+        $userQuery = User::when(!$includeAdmins, function($q) {
+            $q->where('is_admin', false);
+        });
 
         $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
 
@@ -337,6 +340,11 @@ class AttendanceController extends Controller
 
         try {
             $targetUser = User::findOrFail($request->user_id);
+
+            // If target is admin, check if marking admin attendance is enabled
+            if ($targetUser->is_admin && !Setting::get('mark_admin_attendance_enabled', false)) {
+                return response()->json(['message' => 'Unauthorized: Marking attendance for admins is currently disabled by the system.'], 403);
+            }
 
             // Check if already marked to avoid confusion and double marking
             $existing = AttendanceRecord::where('user_id', $targetUser->id)

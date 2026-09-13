@@ -61,6 +61,7 @@ class AuthController extends Controller
             'attendance_apology_enabled' => (bool) Setting::get('attendance_apology_enabled', true),
             'attendance_ble_beacon_enabled' => (bool) Setting::get('attendance_ble_beacon_enabled', true),
             'attendance_fingerprint_enabled' => (bool) Setting::get('attendance_fingerprint_enabled', true),
+            'mark_admin_attendance_enabled' => (bool) Setting::get('mark_admin_attendance_enabled', false),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'payment_gateways' => [
                 'paystack' => (bool) Setting::get('gateway_paystack_enabled', true),

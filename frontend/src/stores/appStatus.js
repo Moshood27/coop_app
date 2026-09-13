@@ -18,6 +18,7 @@ export const useAppStatusStore = defineStore('appStatus', {
     attendanceApologyEnabled: true,
     attendanceBleBeaconEnabled: true,
     attendanceFingerprintEnabled: true,
+    markAdminAttendanceEnabled: false,
     openingBalanceVerificationEnabled: true,
     onboardingSwiperEnabled: true,
     onboardingSwiperSlides: [],
@@ -52,6 +53,7 @@ export const useAppStatusStore = defineStore('appStatus', {
       this.attendanceApologyEnabled = status.attendance_apology_enabled ?? true
       this.attendanceBleBeaconEnabled = status.attendance_ble_beacon_enabled ?? true
       this.attendanceFingerprintEnabled = status.attendance_fingerprint_enabled ?? true
+      this.markAdminAttendanceEnabled = status.mark_admin_attendance_enabled ?? false
       this.openingBalanceVerificationEnabled = status.opening_balance_verification_enabled ?? true
       this.onboardingSwiperEnabled = status.onboarding_swiper_enabled ?? true
       this.onboardingSwiperSlides = status.onboarding_swiper_slides ?? []
