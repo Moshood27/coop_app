@@ -119,10 +119,17 @@ class WalletController extends Controller
             'available_for_withdrawal' => (float) $user->balance,
         ];
 
+        $pendingSpecialSavings = WithdrawalRequest::where('user_id', $user->id)
+            ->where('type', 'special_savings')
+            ->where('status', 'pending')
+            ->sum('amount');
+        $specialSavingsAvailable = max(0, (float)($user->special_savings_balance ?? 0) - (float)$pendingSpecialSavings);
+
         return response()->json([
             'balance' => (float) $user->balance,
             'gold_balance' => (float) ($user->gold_balance ?? 0),
             'special_savings_balance' => (float) ($user->special_savings_balance ?? 0),
+            'special_savings_available_for_withdrawal' => (float) $specialSavingsAvailable,
             'available_for_withdrawal' => (float) ($breakdown['available_for_withdrawal'] ?? 0),
             'admin_charge_balance' => (float) ($user->admin_charge_balance ?? 0),
             'breakdown' => $breakdown,
@@ -892,6 +899,14 @@ class WalletController extends Controller
             return response()->json(['message' => 'Withdrawals are currently disabled for maintenance.'], 403);
         }
 
+        $type = $request->input('type', 'wallet');
+        if ($type === 'wallet' && Feature::for('global')->inactive('wallet-withdrawal-enabled')) {
+            return response()->json(['message' => 'Wallet withdrawals are currently disabled.'], 403);
+        }
+        if ($type === 'special_savings' && Feature::for('global')->inactive('special-savings-withdrawal-enabled')) {
+            return response()->json(['message' => 'Special Savings withdrawals are currently disabled.'], 403);
+        }
+
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1',
             'type' => 'nullable|string|in:wallet,special_savings',
@@ -943,19 +958,31 @@ class WalletController extends Controller
                 return response()->json(['message' => 'Insufficient wallet balance'], 422);
             }
         } else {
-            if ((float)$user->special_savings_balance < $amount) {
-                return response()->json(['message' => 'Insufficient Special Savings balance'], 422);
+            $pendingSpecialSavings = WithdrawalRequest::where('user_id', $user->id)
+                ->where('type', 'special_savings')
+                ->where('status', 'pending')
+                ->sum('amount');
+            $specialSavingsAvailable = max(0, (float)($user->special_savings_balance ?? 0) - (float)$pendingSpecialSavings);
+
+            if ($amount > $specialSavingsAvailable) {
+                return response()->json([
+                    'message' => 'Amount exceeds your available Special Savings balance after pending requests.',
+                    'available_special_savings' => $specialSavingsAvailable,
+                ], 422);
             }
         }
 
-        // Prevent multiple concurrent pending withdrawal requests
-        $hasPending = WithdrawalRequest::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->exists();
-        if ($hasPending) {
-            return response()->json([
-                'message' => 'You already have a pending withdrawal request. Please wait for it to be processed.'
-            ], 422);
+        // Prevent multiple concurrent pending withdrawal requests (only for wallet type now)
+        if ($type === 'wallet') {
+            $hasPending = WithdrawalRequest::where('user_id', $user->id)
+                ->where('type', 'wallet')
+                ->where('status', 'pending')
+                ->exists();
+            if ($hasPending) {
+                return response()->json([
+                    'message' => 'You already have a pending withdrawal request for your wallet. Please wait for it to be processed.'
+                ], 422);
+            }
         }
 
         $reference = ($type === 'special_savings' ? 'WD-SPEC-' : 'WD-') . now()->format('YmdHis') . '-' . $user->id . '-' . Str::upper(Str::random(6));
@@ -967,13 +994,15 @@ class WalletController extends Controller
                 // Lock the user row to serialize concurrent requests
                 User::where('id', $user->id)->lockForUpdate()->first();
 
-                // Double-check for any pending request within the same transaction
-                $hasPendingAgain = WithdrawalRequest::where('user_id', $user->id)
-                    ->where('status', 'pending')
-                    ->where('type', $type)
-                    ->exists();
-                if ($hasPendingAgain) {
-                    throw new \RuntimeException('PENDING_DUPLICATE');
+                // Double-check for any pending request within the same transaction (for wallet type)
+                if ($type === 'wallet') {
+                    $hasPendingAgain = WithdrawalRequest::where('user_id', $user->id)
+                        ->where('status', 'pending')
+                        ->where('type', 'wallet')
+                        ->exists();
+                    if ($hasPendingAgain) {
+                        throw new \RuntimeException('PENDING_DUPLICATE');
+                    }
                 }
 
                 $req = WithdrawalRequest::create([

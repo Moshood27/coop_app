@@ -583,13 +583,15 @@
           <h3 class="font-bold text-slate-800 mb-2">Withdraw to Bank</h3>
           <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">Withdrawals are sent to your verified bank account in Profile settings.</p>
           <div class="space-y-4">
-            <div>
+            <div v-if="appStatusStore.features['wallet-withdrawal-enabled'] || appStatusStore.features['special-savings-withdrawal-enabled']">
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Source account</label>
               <div class="grid grid-cols-2 gap-2">
-                <button @click="withdrawType = 'wallet'" 
+                <button v-if="appStatusStore.features['wallet-withdrawal-enabled']"
+                        @click="withdrawType = 'wallet'" 
                         :class="withdrawType === 'wallet' ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20' : 'bg-slate-50 text-slate-500 border border-slate-100'"
                         class="py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all">Wallet</button>
-                <button @click="withdrawType = 'special_savings'" 
+                <button v-if="appStatusStore.features['special-savings-withdrawal-enabled']"
+                        @click="withdrawType = 'special_savings'" 
                         :class="withdrawType === 'special_savings' ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20' : 'bg-slate-50 text-slate-500 border border-slate-100'"
                         class="py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all">Special Savings</button>
               </div>
@@ -598,13 +600,13 @@
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount</label>
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-bold">₦</div>
-                <input v-model.number="withdrawAmount" type="number" min="1" :max="Number(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_balance || 0))"
+                <input v-model.number="withdrawAmount" type="number" min="1" :max="Number(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_available_for_withdrawal || wallet?.special_savings_balance || 0))"
                        class="w-full bg-slate-50 pl-11 p-4 rounded-2xl border border-slate-100 text-sm outline-none focus:border-emerald-500 transition-all"
                        placeholder="0.00" />
               </div>
               <div class="mt-2 flex justify-between items-center px-1">
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Available in {{ withdrawType === 'wallet' ? 'Wallet' : 'Special Savings' }}</span>
-                <span class="text-[10px] text-emerald-700 font-black">₦ {{ hideBalances ? '***,***.**' : formatMoney(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_balance || 0)) }}</span>
+                <span class="text-[10px] text-emerald-700 font-black">₦ {{ hideBalances ? '***,***.**' : formatMoney(withdrawType === 'wallet' ? (wallet?.available_for_withdrawal || 0) : (wallet?.special_savings_available_for_withdrawal || wallet?.special_savings_balance || 0)) }}</span>
               </div>
             </div>
             <div>
@@ -903,7 +905,7 @@ const flwBvnValid = computed(() => flwBvnDigits.value.length === 11)
 // Withdraw to bank form state
 const withdrawAmount = ref('')
 const withdrawNote = ref('')
-const withdrawType = ref('wallet')
+const withdrawType = ref(appStatusStore.features['special-savings-withdrawal-enabled'] && !appStatusStore.features['wallet-withdrawal-enabled'] ? 'special_savings' : 'wallet')
 
 // P2P transfer form state
 const toType = ref('phone') // 'phone' | 'membership'
@@ -943,7 +945,7 @@ const canSend = computed(() => {
 })
 const canWithdraw = computed(() => {
   const amt = Number(withdrawAmount.value || 0)
-  const available = Number(wallet.value?.available_for_withdrawal || 0)
+  const available = Number(withdrawType.value === 'wallet' ? (wallet.value?.available_for_withdrawal || 0) : (wallet.value?.special_savings_available_for_withdrawal || wallet.value?.special_savings_balance || 0))
   return amt > 0 && amt <= available
 })
 
@@ -1150,22 +1152,23 @@ const startTransfer = async () => {
     // If biometric check throws, allow fallback to PIN only
   }
 
+  pinPrompt.value.mode = 'transfer'
+  pinPrompt.value.title = 'Confirm Transfer'
+  pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to authorize this transfer.'
+  pinPrompt.value.confirmText = 'Send'
+
   if (!appStatusStore.transactionPinEnabled) {
     handlePinConfirm('')
     return
   }
 
-  pinPrompt.value.mode = 'transfer'
-  pinPrompt.value.title = 'Confirm Transfer'
-  pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to authorize this transfer.'
-  pinPrompt.value.confirmText = 'Send'
   pinPrompt.value.visible = true
 }
 
 // Start Withdraw: biometric check then prompt for PIN
 const startWithdraw = async () => {
   const amt = Number(withdrawAmount.value || 0)
-  const available = Number(withdrawType.value === 'wallet' ? (wallet.value?.available_for_withdrawal || 0) : (wallet.value?.special_savings_balance || 0))
+  const available = Number(withdrawType.value === 'wallet' ? (wallet.value?.available_for_withdrawal || 0) : (wallet.value?.special_savings_available_for_withdrawal || wallet.value?.special_savings_balance || 0))
   if (!(amt > 0)) {
     showNotice('Enter amount', 'Please enter a valid withdrawal amount.', 'warning')
     return
@@ -1190,15 +1193,16 @@ const startWithdraw = async () => {
     // allow fallback to PIN
   }
 
+  pinPrompt.value.mode = 'withdraw'
+  pinPrompt.value.title = 'Confirm Withdrawal'
+  pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to request this withdrawal.'
+  pinPrompt.value.confirmText = 'Request'
+
   if (!appStatusStore.transactionPinEnabled) {
     handlePinConfirm('')
     return
   }
 
-  pinPrompt.value.mode = 'withdraw'
-  pinPrompt.value.title = 'Confirm Withdrawal'
-  pinPrompt.value.message = 'Enter your 4-digit Transaction PIN to request this withdrawal.'
-  pinPrompt.value.confirmText = 'Request'
   pinPrompt.value.visible = true
 }
 
