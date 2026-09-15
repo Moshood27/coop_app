@@ -496,6 +496,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     Route::get('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'index']);
     Route::post('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'store']);
     Route::get('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
+    Route::patch('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'update']);
     Route::delete('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'destroy']);
     Route::post('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'createLoan']);
     Route::get('/{user}/passbook/{year}', [\App\Http\Controllers\Api\AdminMemberController::class, 'passbook']);

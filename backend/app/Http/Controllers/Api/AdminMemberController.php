@@ -86,6 +86,33 @@ class AdminMemberController extends Controller
     }
 
     /**
+     * Update member profile.
+     */
+    public function update(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $data = $request->validate([
+            'surname' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'other_names' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'membership_number' => 'required|string|max:50|unique:users,membership_number,' . $user->id,
+            'address' => 'nullable|string',
+            'gender' => 'required|string|in:male,female,other',
+            'branch_id' => 'required|exists:branches,id',
+        ]);
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Member profile updated successfully.',
+            'user' => $user->fresh(['branch', 'roles']),
+        ]);
+    }
+
+    /**
      * Get passbook matrix for a member.
      */
     public function passbook(Request $request, User $user, int $year)

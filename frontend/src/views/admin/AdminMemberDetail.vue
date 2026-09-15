@@ -10,6 +10,9 @@
           <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">Manage member funds & loans</p>
         </div>
       </div>
+      <button v-if="user" @click="openEditModal" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+        Edit Profile
+      </button>
     </header>
 
     <div v-if="loading" class="flex flex-col items-center py-20 space-y-4">
@@ -174,6 +177,76 @@
         </div>
       </div>
     </transition>
+
+    <!-- Edit Profile Modal -->
+    <transition name="fade">
+      <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <div class="absolute inset-0 bg-black/40" @click="showEditModal = false"></div>
+        <div class="relative w-full sm:max-w-md bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="p-6 border-b border-slate-50 flex items-center justify-between">
+            <h3 class="text-lg font-black text-slate-800 tracking-tight">Edit Profile</h3>
+            <button @click="showEditModal = false" class="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">✕</button>
+          </div>
+          <div class="p-6 space-y-4 overflow-y-auto">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Surname</label>
+                <input v-model="editForm.surname" type="text" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">First Name</label>
+                <input v-model="editForm.name" type="text" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Other Names</label>
+              <input v-model="editForm.other_names" type="text" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 text-emerald-600">Membership Number (ID)</label>
+              <input v-model="editForm.membership_number" type="text" class="w-full px-5 py-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
+              <input v-model="editForm.email" type="email" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Phone Number</label>
+              <input v-model="editForm.phone" type="tel" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Gender</label>
+                <select v-model="editForm.gender" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 appearance-none">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Branch</label>
+                <select v-model="editForm.branch_id" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 appearance-none">
+                  <option v-for="branch in branches" :key="branch.id" :value="branch.id">{{ branch.name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Residential Address</label>
+              <textarea v-model="editForm.address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]"></textarea>
+            </div>
+          </div>
+          <div class="p-6 border-t border-slate-50">
+            <button 
+              @click="handleUpdateProfile" 
+              :disabled="updatingProfile"
+              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {{ updatingProfile ? 'Saving Changes...' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -204,6 +277,67 @@ const loanForm = ref({
   description: '',
   repayment_start_date: ''
 })
+
+const showEditModal = ref(false)
+const updatingProfile = ref(false)
+const branches = ref([])
+const editForm = ref({
+  surname: '',
+  name: '',
+  other_names: '',
+  membership_number: '',
+  email: '',
+  phone: '',
+  gender: 'male',
+  branch_id: '',
+  address: ''
+})
+
+const openEditModal = () => {
+  editForm.value = {
+    surname: user.value.surname,
+    name: user.value.name,
+    other_names: user.value.other_names,
+    membership_number: user.value.membership_number,
+    email: user.value.email,
+    phone: user.value.phone,
+    gender: user.value.gender || 'male',
+    branch_id: user.value.branch_id,
+    address: user.value.address
+  }
+  showEditModal.value = true
+  fetchBranches()
+}
+
+const fetchBranches = async () => {
+  if (branches.value.length > 0) return
+  try {
+    const { data } = await axios.get('/api/branches')
+    branches.value = data
+  } catch (e) {
+    console.error('Failed to fetch branches', e)
+  }
+}
+
+const handleUpdateProfile = async () => {
+  if (!editForm.value.name || !editForm.value.surname || !editForm.value.email || !editForm.value.phone || !editForm.value.membership_number) {
+    alert('Please fill in all required fields.')
+    return
+  }
+
+  updatingProfile.value = true
+  try {
+    const { data } = await axios.patch(`/api/admin/members/${route.params.id}`, editForm.value)
+    alert(data.message, 'Success')
+    showEditModal.value = false
+    fetchData()
+  } catch (e) {
+    const msg = e.response?.data?.message || 'Failed to update profile.'
+    alert(msg, 'Error')
+  } finally {
+    updatingProfile.value = false
+  }
+}
 
 const handleCreateLoan = async () => {
   if (!loanForm.value.amount || !loanForm.value.total_installments) {
