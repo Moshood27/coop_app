@@ -46,6 +46,7 @@ const props = defineProps({
 const emit = defineEmits(['scan', 'close', 'error'])
 
 let html5QrCode = null
+let isStopping = false
 
 onMounted(async () => {
   // Give a small delay to ensure DOM is ready
@@ -69,8 +70,10 @@ onMounted(async () => {
         { facingMode: "environment" },
         config,
         (decodedText, decodedResult) => {
-          emit('scan', decodedText)
-          stopScanner()
+          if (!isStopping) {
+            emit('scan', decodedText)
+            stopScanner()
+          }
         },
         (errorMessage) => {
           // ignore common "no code found" errors as they are frequent during scanning
@@ -84,11 +87,20 @@ onMounted(async () => {
 })
 
 const stopScanner = async () => {
-  if (html5QrCode && html5QrCode.isScanning) {
+  if (html5QrCode && html5QrCode.isScanning && !isStopping) {
+    isStopping = true
     try {
       await html5QrCode.stop()
+      html5QrCode.clear()
     } catch (err) {
-      console.error("Failed to stop scanner", err)
+      const errorMsg = typeof err === 'string' ? err : (err.message || '');
+      if (errorMsg.includes("already under transition") || errorMsg.includes("is not scanning")) {
+        // Ignore these specific errors as they are common when multiple stop calls happen or if already stopped
+      } else {
+        console.error("Failed to stop scanner", err)
+      }
+    } finally {
+      isStopping = false
     }
   }
 }

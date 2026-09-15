@@ -95,13 +95,19 @@
              <p class="text-[9px] text-slate-500 font-medium mt-1">Present this code for instant marking</p>
            </div>
 
-           <!-- Large High-Contrast QR -->
-           <div class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
-              <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
-              <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}`" 
-                   alt="Member QR" 
-                   class="w-full h-full rounded-xl relative z-10 shadow-sm" />
-           </div>
+          <!-- Large High-Contrast QR -->
+          <div v-if="user.membership_id" class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
+             <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
+             <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}`" 
+                  alt="Member QR" 
+                  class="w-full h-full rounded-xl relative z-10 shadow-sm" />
+          </div>
+          <div v-else class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
+             <div class="animate-pulse flex flex-col items-center">
+                <div class="w-12 h-12 bg-slate-200 rounded-full mb-2"></div>
+                <div class="h-2 w-24 bg-slate-200 rounded"></div>
+             </div>
+          </div>
 
            <div class="w-full space-y-4">
               <div class="flex items-center gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100">

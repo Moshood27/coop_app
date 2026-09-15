@@ -950,6 +950,12 @@ const processAdminScan = async (code) => {
     // legacy or variations
     memberIdOrNum = code.split('id=')[1]
   }
+
+  // Handle cases where the ID might be "undefined" as a string or null
+  if (!memberIdOrNum || memberIdOrNum === 'undefined' || memberIdOrNum === 'null') {
+    modal.alert("Invalid QR Code: Member identity could not be verified.")
+    return
+  }
   
   memberSearchQuery.value = memberIdOrNum
   searchingMembers.value = true
