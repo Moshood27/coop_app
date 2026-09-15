@@ -418,6 +418,62 @@ class AttendanceController extends Controller
         }
     }
 
+    public function bulkMarkMemberAttendance(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        if (!$request->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized: You do not have permission to mark attendance for others.'], 403);
+        }
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => "Meeting is not ongoing."], 400);
+        }
+
+        $userIds = $request->user_ids;
+        $count = 0;
+
+        foreach ($userIds as $userId) {
+            try {
+                $targetUser = User::find($userId);
+                if (!$targetUser) continue;
+
+                AttendanceRecord::updateOrCreate(
+                    ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
+                    [
+                        'status' => 'present',
+                        'attended_at' => now(),
+                        'marked_by_id' => $request->user()->id,
+                        'verified_biometrically' => false,
+                        'device_uuid' => 'bulk_marked_by_admin_' . $request->user()->id,
+                    ]
+                );
+
+                // Attempt to notify but ignore failures for speed
+                try {
+                    $targetUser->notifyMember(
+                        "Attendance Marked",
+                        "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
+                        ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
+                        ['push', 'database']
+                    );
+                } catch (\Exception $e) {}
+
+                $count++;
+            } catch (\Exception $e) {
+                \Log::warning("Bulk mark failed for user {$userId}: " . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully marked {$count} members as present."
+        ]);
+    }
+
     public function unmarkMemberAttendance(Request $request, Meeting $meeting)
     {
         $request->validate([

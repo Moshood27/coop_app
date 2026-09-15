@@ -221,85 +221,150 @@
         </div>
         
         <!-- Mark for Member (Delegated Admin) -->
-        <div v-if="canMarkForOthers && meeting && (meeting.status === 'ongoing' || meeting.status === 'scheduled')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mt-4">
-             <div class="flex items-center gap-2 mb-4">
-               <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-lg">👥</div>
-               <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Mark for Member</h3>
+        <div v-if="canMarkForOthers && meeting && (meeting.status === 'ongoing' || meeting.status === 'scheduled')" 
+             class="bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6 rounded-[2.5rem] shadow-xl shadow-amber-100/20 border border-amber-100/50 mt-4 relative overflow-hidden transition-all duration-500">
+             
+             <!-- Decorative background element -->
+             <div class="absolute -right-10 -top-10 w-32 h-32 bg-amber-200/20 rounded-full blur-3xl"></div>
+             
+             <div class="flex items-center justify-between mb-4 relative z-10">
+               <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 bg-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-amber-200">👥</div>
+                 <div>
+                   <h3 class="font-black text-slate-800 text-base uppercase tracking-tight leading-none">Admin Control</h3>
+                   <p class="text-[9px] text-amber-600 font-black uppercase tracking-widest mt-1">Mark for Member</p>
+                 </div>
+               </div>
+               
+               <div class="flex flex-col items-end gap-1">
+                 <label class="relative inline-flex items-center cursor-pointer scale-75 origin-right">
+                   <input type="checkbox" v-model="quickMark" class="sr-only peer">
+                   <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                   <span class="ml-2 text-[10px] font-black text-slate-500 uppercase">Quick Mark</span>
+                 </label>
+               </div>
             </div>
-            <p class="text-[11px] text-slate-500 mb-4">You have privilege to mark attendance for other members who may not have their devices or are unable to mark.</p>
             
-            <div class="relative">
+            <p class="text-[11px] text-slate-500 mb-6 font-medium leading-relaxed relative z-10">
+              Select members below to mark them present instantly. Use search to find specific members.
+            </p>
+            
+            <div class="relative z-10">
               <input 
                 v-model="memberSearchQuery" 
                 @input="searchMembers"
                 type="text" 
                 placeholder="Search name, phone or membership #"
-                class="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-bold focus:ring-1 focus:ring-amber-500"
+                class="w-full bg-white/80 border-2 border-amber-100 rounded-2xl p-4 text-xs font-bold focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all placeholder:text-slate-300"
               />
               <div v-if="searchingMembers" class="absolute right-4 top-4">
                 <div class="animate-spin rounded-full h-4 w-4 border-2 border-amber-600 border-t-transparent"></div>
               </div>
             </div>
 
-            <div v-if="memberSearchResults.length > 0" class="mt-4 space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+            <div v-if="memberSearchResults.length > 0" class="mt-6 space-y-2 max-h-[32rem] overflow-y-auto no-scrollbar relative z-10">
+               <!-- Bulk Actions Bar -->
+               <div class="flex items-center justify-between bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-amber-100 mb-3 sticky top-0 z-20 shadow-sm">
+                 <div class="flex items-center gap-3">
+                   <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="w-5 h-5 rounded-lg border-slate-300 text-amber-600 focus:ring-amber-500 transition-all cursor-pointer" />
+                   <span class="text-[11px] font-black text-slate-600 uppercase tracking-tight">
+                     {{ isAllSelected ? 'Unselect All' : `Select All (${memberSearchResults.filter(m => !m.is_present).length})` }}
+                   </span>
+                 </div>
+                 <button 
+                   v-if="selectedMembers.length > 0"
+                   @click="bulkMarkAction"
+                   :disabled="bulkMarking"
+                   class="bg-amber-600 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                 >
+                   <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
+                   <span v-else>Mark ({{ selectedMembers.length }})</span>
+                 </button>
+               </div>
+
                <div v-for="member in memberSearchResults" :key="member.id" 
-                    class="p-3 bg-slate-50 rounded-2xl flex items-center justify-between gap-3 border border-slate-100">
-                  <div class="flex-1 min-w-0">
-                    <p class="text-xs font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase">{{ member.membership_number }} • {{ member.phone }}</p>
+                    class="p-4 bg-white/80 rounded-[1.5rem] flex items-center justify-between gap-4 border border-slate-100 shadow-sm transition-all hover:border-amber-200 active:bg-amber-50/30 group"
+                    :class="{'ring-2 ring-amber-500/50 bg-amber-50/20': selectedMembers.includes(member.id)}">
+                  <div class="flex items-center gap-4 flex-1 min-w-0">
+                    <div class="relative">
+                      <input 
+                        v-if="!member.is_present"
+                        type="checkbox" 
+                        :value="member.id" 
+                        v-model="selectedMembers"
+                        class="w-6 h-6 rounded-lg border-slate-300 text-amber-600 focus:ring-amber-500 transition-all cursor-pointer" 
+                      />
+                      <div v-else class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-emerald-50 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0" @click="!member.is_present && (selectedMembers.includes(member.id) ? selectedMembers = selectedMembers.filter(id => id !== member.id) : selectedMembers.push(member.id))">
+                      <p class="text-sm font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
+                      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{{ member.membership_number }} • {{ member.phone }}</p>
+                    </div>
                   </div>
+
                   <div class="flex items-center gap-2">
                     <button 
                       v-if="member.is_present"
                       @click="unmarkForMemberAction(member)"
                       :disabled="unmarkingForMember === member.id || meeting.status !== 'ongoing'"
-                      class="px-2 py-2 bg-red-50 text-red-600 rounded-xl text-[8px] font-black uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all"
+                      class="w-10 h-10 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shadow-sm active:scale-90 disabled:opacity-50 transition-all"
                     >
-                      <span v-if="unmarkingForMember === member.id" class="animate-spin rounded-full h-2 w-2 border-2 border-red-600 border-t-transparent inline-block"></span>
-                      <span v-else>Unmark</span>
+                      <span v-if="unmarkingForMember === member.id" class="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></span>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                     <button 
+                      v-else
                       @click="markForMemberAction(member)" 
-                      :disabled="markingForMember === member.id || member.is_present || meeting.status !== 'ongoing'"
-                      class="px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 disabled:opacity-50 transition-colors"
-                      :class="member.is_present ? 'bg-slate-100 text-slate-400 border border-slate-200' : (meeting.status !== 'ongoing' ? 'bg-slate-200 text-slate-500' : 'bg-emerald-600 text-white')"
+                      :disabled="markingForMember === member.id || meeting.status !== 'ongoing'"
+                      class="h-10 px-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-95 disabled:opacity-50 transition-all"
                     >
-                      <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block"></span>
-                      <span v-else-if="member.is_present" class="flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Present
-                      </span>
-                      <span v-else>{{ meeting.status !== 'ongoing' ? 'Wait for Meeting' : 'Mark Present' }}</span>
+                      <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block"></span>
+                      <span v-else>{{ meeting.status !== 'ongoing' ? 'Wait' : 'Mark' }}</span>
                     </button>
                   </div>
                </div>
             </div>
             
             <!-- Members I've Marked -->
-            <div v-if="markedByMeList.length > 0" class="mt-6 border-t border-slate-100 pt-6">
-               <div class="flex items-center justify-between mb-3">
-                 <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Marked by me ({{ markedByMeList.length }})</h4>
-                 <button @click="fetchMarkedByMe" :disabled="loadingMarkedByMe" class="text-[9px] font-bold text-emerald-600 uppercase">Refresh</button>
+            <div v-if="markedByMeList.length > 0" class="mt-8 border-t border-amber-100 pt-6 relative z-10">
+               <div class="flex items-center justify-between mb-4">
+                 <div class="flex flex-col">
+                   <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Your Records Today</h4>
+                   <span class="text-[9px] font-bold text-amber-600 uppercase mt-1">Total: {{ markedByMeList.length }} members</span>
+                 </div>
+                 <button @click="fetchMarkedByMe" :disabled="loadingMarkedByMe" 
+                         class="bg-white border border-slate-200 text-[10px] font-bold text-slate-500 px-3 py-1.5 rounded-xl active:scale-95 disabled:opacity-50 transition-all shadow-sm">
+                   Refresh List
+                 </button>
                </div>
-               <div class="space-y-2">
-                 <div v-for="rec in markedByMeList" :key="rec.id" class="flex items-center justify-between p-2 bg-emerald-50/50 rounded-xl border border-emerald-100/50">
-                    <div class="flex items-center gap-2">
-                      <div class="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[10px] shadow-sm">👤</div>
+               
+               <div class="grid grid-cols-1 gap-2">
+                 <div v-for="rec in markedByMeList" :key="rec.id" class="flex items-center justify-between p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/50 group transition-all">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-xs shadow-sm ring-1 ring-emerald-100">👤</div>
                       <div>
-                        <p class="text-[10px] font-black text-slate-800">{{ rec.user?.name }} {{ rec.user?.surname }}</p>
-                        <p class="text-[8px] text-slate-400 font-bold">{{ rec.user?.membership_number }}</p>
+                        <p class="text-[11px] font-black text-slate-800">{{ rec.user?.name }} {{ rec.user?.surname }}</p>
+                        <div class="flex items-center gap-2">
+                          <p class="text-[9px] text-slate-400 font-bold tracking-tight">{{ rec.user?.membership_number }}</p>
+                          <span class="w-1 h-1 bg-emerald-300 rounded-full"></span>
+                          <span class="text-[9px] font-black text-emerald-600 uppercase">{{ formatTime(rec.attended_at) }}</span>
+                        </div>
                       </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                      <span class="text-[8px] font-black text-emerald-600 uppercase">{{ formatTime(rec.attended_at) }}</span>
-                      <button @click="unmarkForMemberAction(rec)" :disabled="unmarkingForMember === rec.user_id || meeting.status !== 'ongoing'" 
-                              class="w-5 h-5 bg-red-50 text-red-500 rounded-lg flex items-center justify-center text-[10px] active:scale-90 disabled:opacity-50 transition-all">
-                        <span v-if="unmarkingForMember === rec.user_id" class="animate-spin h-2 w-2 border border-red-500 border-t-transparent rounded-full"></span>
-                        <span v-else>✕</span>
-                      </button>
-                    </div>
+                    <button @click="unmarkForMemberAction(rec)" :disabled="unmarkingForMember === rec.user_id || meeting.status !== 'ongoing'" 
+                            class="w-8 h-8 bg-white text-red-500 rounded-xl flex items-center justify-center text-[10px] shadow-sm border border-red-50 border-t-transparent active:scale-90 disabled:opacity-50 transition-all opacity-40 group-hover:opacity-100 hover:bg-red-50">
+                      <span v-if="unmarkingForMember === rec.user_id" class="animate-spin h-3 w-3 border-2 border-red-500 border-t-transparent rounded-full"></span>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                  </div>
                </div>
             </div>
@@ -433,7 +498,7 @@
 </template>
 
 <script setup>
-import {ref, onMounted, onUnmounted, computed} from 'vue'
+import {ref, onMounted, onUnmounted, computed, watch} from 'vue'
 import { Geolocation } from '@capacitor/geolocation'
 import { Device } from '@capacitor/device'
 import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning'
@@ -491,6 +556,31 @@ const showReportModal = ref(false)
 const meetingReportData = ref(null)
 const loadingReport = ref(false)
 
+const quickMark = ref(localStorage.getItem('attendance_quick_mark') === 'true')
+const selectedMembers = ref([])
+const bulkMarking = ref(false)
+
+watch(quickMark, (val) => {
+  localStorage.setItem('attendance_quick_mark', val)
+})
+
+const isAllSelected = computed(() => {
+  const markable = memberSearchResults.value.filter(m => !m.is_present)
+  return markable.length > 0 && markable.every(m => selectedMembers.value.includes(m.id))
+})
+
+const toggleSelectAll = () => {
+  const markableIds = memberSearchResults.value.filter(m => !m.is_present).map(m => m.id)
+  if (isAllSelected.value) {
+    // Remove currently visible markable members from selection
+    selectedMembers.value = selectedMembers.value.filter(id => !markableIds.includes(id))
+  } else {
+    // Add all currently visible markable members to selection
+    const newSelection = new Set([...selectedMembers.value, ...markableIds])
+    selectedMembers.value = Array.from(newSelection)
+  }
+}
+
 const canMarkForOthers = computed(() => {
   if (!currentUser.value) return false
   return currentUser.value.permission_names?.includes('mark_attendance') || currentUser.value.is_admin
@@ -542,8 +632,10 @@ const searchMembers = async () => {
 }
 
 const markForMemberAction = async (member) => {
-  const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
-  if (!confirm) return
+  if (!quickMark.value) {
+    const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
+    if (!confirm) return
+  }
 
   markingForMember.value = member.id
   try {
@@ -552,10 +644,13 @@ const markForMemberAction = async (member) => {
     })
     
     if (res.data.success || res.data.record) {
-      modal.alert(res.data.message || "Attendance marked successfully")
+      if (!quickMark.value) modal.alert(res.data.message || "Attendance marked successfully")
       // Update local state to reflect change immediately
       member.is_present = true
       fetchMarkedByMe()
+      
+      // Remove from selected if there
+      selectedMembers.value = selectedMembers.value.filter(id => id !== member.id)
     } else {
       modal.alert(res.data.message || "Failed to mark attendance", "Attendance Error")
     }
@@ -564,6 +659,42 @@ const markForMemberAction = async (member) => {
     modal.alert(errorMsg, "Attendance Error")
   } finally {
     markingForMember.value = null
+  }
+}
+
+const bulkMarkAction = async () => {
+  if (selectedMembers.value.length === 0) return
+  
+  const count = selectedMembers.value.length
+  if (!quickMark.value) {
+    const confirm = await modal.confirm(`Mark attendance for ${count} selected members?`)
+    if (!confirm) return
+  }
+
+  bulkMarking.value = true
+  try {
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/bulk-mark-attendance`, {
+      user_ids: selectedMembers.value
+    })
+    
+    if (res.data.success) {
+      modal.alert(res.data.message || `Successfully marked ${count} members.`)
+      
+      // Update local state for all selected members
+      selectedMembers.value.forEach(id => {
+        const member = memberSearchResults.value.find(m => m.id === id)
+        if (member) member.is_present = true
+      })
+      
+      selectedMembers.value = []
+      fetchMarkedByMe()
+    } else {
+      modal.alert(res.data.message || "Failed to bulk mark attendance", "Attendance Error")
+    }
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Error during bulk marking", "Attendance Error")
+  } finally {
+    bulkMarking.value = false
   }
 }
 
