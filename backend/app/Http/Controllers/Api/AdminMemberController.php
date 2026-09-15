@@ -19,6 +19,8 @@ use App\Services\AttendanceService;
 use App\Models\AttendanceRecord;
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Validation\Rule;
+
 class AdminMemberController extends Controller
 {
     /**
@@ -93,15 +95,15 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $user);
 
         $data = $request->validate([
-            'surname' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'other_names' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
-            'membership_number' => 'required|string|max:50|unique:users,membership_number,' . $user->id,
-            'address' => 'nullable|string',
-            'gender' => 'required|string|in:male,female,other',
-            'branch_id' => 'required|exists:branches,id',
+            'surname' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'other_names' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone' => ['required', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
+            'membership_number' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
+            'residential_address' => ['nullable', 'string'],
+            'gender' => ['required', 'string', Rule::in(['male', 'female', 'other'])],
+            'branch_id' => ['required', 'exists:branches,id'],
         ]);
 
         $user->update($data);
@@ -586,13 +588,13 @@ class AdminMemberController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'surname' => ['required', 'string', 'max:255'],
             'other_names' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
-            'gender' => ['required', 'in:male,female'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')],
+            'phone' => ['required', 'string', 'max:20', Rule::unique('users')],
+            'gender' => ['required', Rule::in(['male', 'female', 'other'])],
             'branch_id' => ['required', 'exists:branches,id'],
             'password' => ['required', 'string', 'min:8'],
-            'address' => ['nullable', 'string'],
-            'membership_number' => ['nullable', 'string', 'max:255', 'unique:users,membership_number'],
+            'residential_address' => ['nullable', 'string'],
+            'membership_number' => ['nullable', 'string', 'max:255', Rule::unique('users')],
         ]);
 
         // If admin is branch-bound, force the branch_id
@@ -610,7 +612,7 @@ class AdminMemberController extends Controller
             'phone' => $data['phone'],
             'gender' => $data['gender'],
             'branch_id' => $data['branch_id'],
-            'address' => $data['address'],
+            'residential_address' => $data['residential_address'] ?? null,
             'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
             'membership_number' => $membership,
             'is_admin' => false,

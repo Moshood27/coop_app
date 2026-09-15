@@ -232,7 +232,7 @@
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Residential Address</label>
-              <textarea v-model="editForm.address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]"></textarea>
+              <textarea v-model="editForm.residential_address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]"></textarea>
             </div>
           </div>
           <div class="p-6 border-t border-slate-50">
@@ -288,9 +288,9 @@ const editForm = ref({
   membership_number: '',
   email: '',
   phone: '',
-  gender: 'male',
-  branch_id: '',
-  address: ''
+    gender: 'male',
+    branch_id: '',
+    residential_address: ''
 })
 
 const openEditModal = () => {
@@ -303,7 +303,7 @@ const openEditModal = () => {
     phone: user.value.phone,
     gender: user.value.gender || 'male',
     branch_id: user.value.branch_id,
-    address: user.value.address
+    residential_address: user.value.residential_address
   }
   showEditModal.value = true
   fetchBranches()

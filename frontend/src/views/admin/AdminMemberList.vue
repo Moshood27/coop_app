@@ -144,7 +144,7 @@
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Residential Address</label>
-              <textarea v-model="newMember.address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]" placeholder="Enter full address"></textarea>
+              <textarea v-model="newMember.residential_address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]" placeholder="Full address..."></textarea>
             </div>
           </div>
           <div class="p-6 border-t border-slate-50">
@@ -190,7 +190,7 @@ const newMember = ref({
   gender: 'male',
   branch_id: '',
   password: '',
-  address: ''
+  residential_address: ''
 })
 
 const fetchBranches = async () => {
@@ -214,7 +214,7 @@ const openCreateModal = () => {
     gender: 'male',
     branch_id: branches.value.length > 0 ? branches.value[0].id : '',
     password: '',
-    address: ''
+    residential_address: ''
   }
   showCreateModal.value = true
 }
