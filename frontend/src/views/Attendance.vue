@@ -942,7 +942,12 @@ const processAdminScan = async (code) => {
   if (!code) return
 
   let memberIdOrNum = code
-  if (code.includes('member?id=')) {
+  const isSpecializedQr = code.startsWith('attaqwa:member?id=')
+  
+  if (isSpecializedQr) {
+    memberIdOrNum = code.split('id=')[1]
+  } else if (code.includes('member?id=')) {
+    // legacy or variations
     memberIdOrNum = code.split('id=')[1]
   }
   
@@ -958,10 +963,10 @@ const processAdminScan = async (code) => {
     })
     memberSearchResults.value = data
     
-    // If unique match and quickMark enabled, auto mark
+    // If unique match and (quickMark enabled or specialized QR), auto mark
     if (data.length === 1 && !data[0].is_present) {
-      if (quickMark.value) {
-        await markForMemberAction(data[0])
+      if (quickMark.value || isSpecializedQr) {
+        await markForMemberAction(data[0], isSpecializedQr)
         // Give a small feedback and allow scanning again
         setTimeout(() => {
            if (isNative) {
@@ -1037,8 +1042,8 @@ const scrollToLetter = (letter) => {
   }
 }
 
-const markForMemberAction = async (member) => {
-  if (!quickMark.value) {
+const markForMemberAction = async (member, forceQuick = false) => {
+  if (!quickMark.value && !forceQuick) {
     const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
     if (!confirm) return
   }

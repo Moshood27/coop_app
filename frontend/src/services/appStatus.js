@@ -44,6 +44,7 @@ export async function checkAppStatus() {
       admin_attendance_alphabetical_scroller_enabled: data.admin_attendance_alphabetical_scroller_enabled,
       admin_attendance_recent_list_enabled: data.admin_attendance_recent_list_enabled,
       admin_attendance_smart_search_enabled: data.admin_attendance_smart_search_enabled,
+      admin_attendance_stats_enabled: data.admin_attendance_stats_enabled,
       onboarding_swiper_enabled: data.onboarding_swiper_enabled,
       onboarding_swiper_slides: data.onboarding_swiper_slides,
       opening_balance_verification_enabled: data.opening_balance_verification_enabled,

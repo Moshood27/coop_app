@@ -113,6 +113,7 @@ class AuthController extends Controller
                 'vendor-enabled' => Feature::for('global')->active('vendor-enabled'),
                 'agm-voting-enabled' => Feature::for('global')->active('agm-voting-enabled'),
                 'airtime-data-enabled' => Feature::for('global')->active('airtime-data-enabled'),
+                'digital-id-card-enabled' => Feature::for('global')->active('digital-id-card-enabled'),
                 'special-savings-withdrawal-enabled' => Feature::for('global')->active('special-savings-withdrawal-enabled'),
                 'wallet-withdrawal-enabled' => Feature::for('global')->active('wallet-withdrawal-enabled'),
             ];

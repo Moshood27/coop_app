@@ -65,6 +65,7 @@ class AppStatusSettings extends Page
             'agm_voting_enabled' => Feature::for('global')->active('agm-voting-enabled'),
             'airtime_data_enabled' => Feature::for('global')->active('airtime-data-enabled'),
             'withdrawals_enabled' => Feature::for('global')->active('withdrawals-enabled'),
+            'digital_id_card_enabled' => Feature::for('global')->active('digital-id-card-enabled'),
             'wellness_check_enabled' => (bool) Setting::get('wellness_check_enabled', true),
             'wellness_check_inactivity_months' => (int) Setting::get('wellness_check_inactivity_months', config('cooperative.legacy.inactivity_months', 6)),
             'wellness_check_period_days' => (int) Setting::get('wellness_check_period_days', config('cooperative.legacy.check_period_days', 30)),
@@ -425,6 +426,7 @@ class AppStatusSettings extends Page
                         Toggle::make('vendor_enabled')->label('Vendor'),
                         Toggle::make('agm_voting_enabled')->label('AGM & Voting'),
                         Toggle::make('airtime_data_enabled')->label('Airtime/Data'),
+                        Toggle::make('digital_id_card_enabled')->label('Digital ID Card'),
                         Toggle::make('withdrawals_enabled')->label('Withdrawals Enabled')
                             ->helperText('Global kill switch for all withdrawals.'),
                     ])->columns(3),
@@ -454,6 +456,7 @@ class AppStatusSettings extends Page
             'vendor_enabled' => 'vendor-enabled',
             'agm_voting_enabled' => 'agm-voting-enabled',
             'airtime_data_enabled' => 'airtime-data-enabled',
+            'digital_id_card_enabled' => 'digital-id-card-enabled',
             'withdrawals_enabled' => 'withdrawals-enabled',
         ];
 

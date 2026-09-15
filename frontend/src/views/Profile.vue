@@ -33,15 +33,15 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="flex p-1.5 bg-slate-200/50 rounded-[1.5rem] gap-1 shadow-inner">
+      <div class="flex p-1.5 bg-slate-200/50 rounded-[1.5rem] gap-1 shadow-inner overflow-x-auto no-scrollbar">
         <button 
-          v-for="tab in ['account', 'finance', 'security']" 
+          v-for="tab in ['account', 'finance', 'security', ...(appStatusStore.features['digital-id-card-enabled'] ? ['id-card'] : [])]" 
           :key="tab"
           @click="activeTab = tab; searchQuery = ''"
           :class="activeTab === tab ? 'bg-white text-emerald-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/30'"
-          class="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ease-out"
+          class="flex-1 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ease-out whitespace-nowrap"
         >
-          {{ tab }}
+          {{ tab === 'id-card' ? 'Digital ID' : tab }}
         </button>
       </div>
 
@@ -64,6 +64,79 @@
           <p class="text-xs text-slate-500 mt-1">We couldn't find any settings matching "{{ searchQuery }}"</p>
         </div>
         <button @click="searchQuery = ''" class="text-emerald-700 text-xs font-bold uppercase tracking-wider">Clear Search</button>
+      </div>
+
+      <!-- Digital ID Card Tab -->
+      <div v-if="activeTab === 'id-card' && appStatusStore.features['digital-id-card-enabled']" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden relative">
+          <!-- ID Card Header -->
+          <div class="bg-emerald-800 p-8 text-white relative overflow-hidden">
+             <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+             <div class="flex items-center justify-between relative z-10">
+                <div>
+                  <h3 class="text-xl font-black tracking-tight">DIGITAL IDENTITY</h3>
+                  <p class="text-emerald-200 text-[10px] font-bold tracking-widest uppercase">Attaqwa Cooperative Society</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h3.75v3.75H5.25V7.5Z" />
+                   </svg>
+                </div>
+             </div>
+          </div>
+
+          <!-- ID Card Content -->
+          <div class="p-8 flex flex-col items-center gap-8">
+            <div class="w-full flex items-center gap-6">
+               <div class="w-24 h-24 rounded-3xl bg-slate-100 overflow-hidden border-4 border-white shadow-lg shrink-0">
+                  <img v-if="profile.passport_url" :src="getImageUrl(profile.passport_url)" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex items-center justify-center text-3xl font-bold text-slate-300">{{ (profile.full_name || 'M')[0] }}</div>
+               </div>
+               <div class="min-w-0">
+                  <h4 class="text-lg font-black text-slate-800 uppercase leading-tight truncate">{{ profile.full_name }}</h4>
+                  <p class="text-emerald-700 font-mono text-sm font-bold mt-1">{{ profile.membership_id }}</p>
+                  <div class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 uppercase tracking-tighter">
+                    Official Member
+                  </div>
+               </div>
+            </div>
+
+            <!-- QR Code Section -->
+            <div class="w-full bg-slate-50 rounded-[2rem] p-8 flex flex-col items-center gap-4 border border-slate-100">
+               <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-200">
+                  <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent('attaqwa:member?id=' + profile.membership_id)}`" 
+                       alt="Member QR" 
+                       class="w-48 h-48 rounded-xl" />
+               </div>
+               <div class="text-center">
+                  <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Attendance Scan QR</p>
+                  <p class="text-[9px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">Present this code to an officer for instant attendance marking.</p>
+               </div>
+            </div>
+            
+            <div class="w-full grid grid-cols-2 gap-4">
+               <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-1">Branch</p>
+                  <p class="text-xs font-bold text-slate-800">{{ profile.branch_name || 'N/A' }}</p>
+               </div>
+               <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-1">Joined</p>
+                  <p class="text-xs font-bold text-slate-800">{{ profile.date_joined || 'N/A' }}</p>
+               </div>
+            </div>
+          </div>
+          
+          <!-- ID Card Footer Decoration -->
+          <div class="h-2 bg-emerald-800 w-full opacity-20"></div>
+        </div>
+        
+        <div class="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4">
+           <div class="text-2xl mt-1">💡</div>
+           <div>
+              <h5 class="font-bold text-amber-900 text-sm">Screen Brightness</h5>
+              <p class="text-xs text-amber-800 opacity-80 mt-1 leading-relaxed">Increasing your screen brightness helps the scanner recognize your QR code faster.</p>
+           </div>
+        </div>
       </div>
 
       <div v-if="isSectionVisible('details')" class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 relative overflow-hidden">
@@ -1221,6 +1294,11 @@ const bandLabel = (band) => {
 }
 
 onMounted(async () => {
+  // Check for tab query param
+  if (route.query.tab && ['account', 'finance', 'security', 'id-card'].includes(route.query.tab)) {
+    activeTab.value = route.query.tab
+  }
+
   // Load platform and quick login status
   isNativePlatform.value = await isNative()
   if (isNativePlatform.value) {
