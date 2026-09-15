@@ -52,6 +52,7 @@ const Attendance = () => import('../views/Attendance.vue')
 const MaintenanceMode = () => import('../views/MaintenanceMode.vue')
 const UpdateRequired = () => import('../views/UpdateRequired.vue')
 const PinLock = () => import('../views/PinLock.vue')
+const DigitalID = () => import('../views/DigitalID.vue')
 
 const SavingsGroups = () => import('../views/SavingsGroups.vue')
 const SavingsGroupDetail = () => import('../views/SavingsGroupDetail.vue')
@@ -105,6 +106,7 @@ const routes = [
 
   { path: '/wasiyyah', name: 'wasiyyah', component: Wasiyyah, meta: { requiresAuth: true, feature: 'wassiyah-enabled' } },
   { path: '/attendance', name: 'attendance', component: Attendance, meta: { requiresAuth: true } },
+  { path: '/digital-id', name: 'digital-id', component: DigitalID, meta: { requiresAuth: true, feature: 'digital-id-card-enabled' } },
   { path: '/maintenance', name: 'maintenance', component: MaintenanceMode, meta: { skipOnboarding: true, skipStatusCheck: true } },
   { path: '/update-required', name: 'update-required', component: UpdateRequired, meta: { skipOnboarding: true, skipStatusCheck: true }, props: route => ({ url: route.query.url }) },
   { path: '/pin-lock', name: 'pin-lock', component: PinLock, meta: { requiresAuth: true, skipPinLock: true } },
