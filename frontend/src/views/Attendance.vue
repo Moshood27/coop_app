@@ -704,6 +704,7 @@ const timeRemaining = ref('')
 const countdownInterval = ref(null)
 const refreshingStatus = ref(false)
 const showWebScanner = ref(false)
+const scanMode = ref('member') // 'member' or 'admin'
 const hasBiometrics = ref(false)
 const scanningBeacon = ref(false)
 
@@ -935,9 +936,52 @@ const startVoiceSearch = async () => {
   }
 }
 
+const processAdminScan = async (code) => {
+  if (!code) return
+
+  let memberIdOrNum = code
+  if (code.includes('member?id=')) {
+    memberIdOrNum = code.split('id=')[1]
+  }
+  
+  memberSearchQuery.value = memberIdOrNum
+  searchingMembers.value = true
+  try {
+    const { data } = await axios.get('/api/attendance/search-members', {
+      params: {
+        q: memberIdOrNum,
+        meeting_id: meeting.value.id,
+        smart: true
+      }
+    })
+    memberSearchResults.value = data
+    
+    // If unique match and quickMark enabled, auto mark
+    if (data.length === 1 && !data[0].is_present) {
+      if (quickMark.value) {
+        await markForMemberAction(data[0])
+        // Give a small feedback and allow scanning again
+        setTimeout(() => {
+           if (isNative) {
+             adminScanQr()
+           } else {
+             scanMode.value = 'admin'
+             showWebScanner.value = true
+           }
+        }, 500)
+      }
+    }
+  } catch (err) {
+    console.error("Search failed after scan", err)
+  } finally {
+    searchingMembers.value = false
+  }
+}
+
 const adminScanQr = async () => {
   if (!isNative) {
-    modal.alert('Scanning for admins is currently optimized for mobile app.')
+    scanMode.value = 'admin'
+    showWebScanner.value = true
     return
   }
 
@@ -956,39 +1000,7 @@ const adminScanQr = async () => {
     
     if (barcodes.length > 0) {
       const code = barcodes[0].rawValue || barcodes[0].displayValue
-      
-      let memberIdOrNum = code
-      if (code.includes('member?id=')) {
-        memberIdOrNum = code.split('id=')[1]
-      }
-      
-      memberSearchQuery.value = memberIdOrNum
-      searchingMembers.value = true
-      try {
-        const { data } = await axios.get('/api/attendance/search-members', {
-          params: {
-            q: memberIdOrNum,
-            meeting_id: meeting.value.id,
-            smart: true
-          }
-        })
-        memberSearchResults.value = data
-        
-        // If unique match and quickMark enabled, auto mark
-        if (data.length === 1 && !data[0].is_present) {
-          if (quickMark.value) {
-            await markForMemberAction(data[0])
-            // Give a small feedback and allow scanning again
-            setTimeout(() => {
-               adminScanQr()
-            }, 500)
-          }
-        }
-      } catch (err) {
-        console.error("Search failed after scan", err)
-      } finally {
-        searchingMembers.value = false
-      }
+      processAdminScan(code)
     }
   } catch (err) {
     console.error('Admin Scan Error:', err)
@@ -1185,6 +1197,7 @@ const scanQr = async () => {
     return
   }
 
+  scanMode.value = 'member'
   if (!isNative) {
     showWebScanner.value = true
     return
@@ -1396,6 +1409,12 @@ const getLocation = async () => {
 
 const handleScan = async (code) => {
   showWebScanner.value = false
+  
+  if (scanMode.value === 'admin') {
+    processAdminScan(code)
+    return
+  }
+
   if (code && code.startsWith('attaqwa:attendance?')) {
     const urlStr = code.replace('attaqwa:attendance', 'http://localhost')
     const url = new URL(urlStr)
