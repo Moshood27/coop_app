@@ -736,6 +736,8 @@ const isListening = ref(false)
 const recentMarked = ref(JSON.parse(localStorage.getItem('recent_marked') || '[]'))
 const showFilters = ref(false)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+const isNative = Capacitor.isNativePlatform()
+const canScan = true // Always true now as we have web fallback
 
 watch(quickMark, (val) => {
   localStorage.setItem('attendance_quick_mark', val)
@@ -1187,9 +1189,6 @@ const unmarkForMemberAction = async (memberOrRecord) => {
     unmarkingForMember.value = null
   }
 }
-
-const isNative = Capacitor.isNativePlatform()
-const canScan = true // Always true now as we have web fallback
 
 const scanQr = async () => {
   if (!location.value) {
