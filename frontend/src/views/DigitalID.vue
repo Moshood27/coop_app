@@ -153,7 +153,7 @@
 import { ref, onMounted } from 'vue'
 import axios from '../http'
 import { useRouter } from 'vue-router'
-import { getImageUrl } from '../brand'
+import getImageUrl from '../utils/image'
 
 const router = useRouter()
 const user = ref({})

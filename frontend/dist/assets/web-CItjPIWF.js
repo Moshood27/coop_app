@@ -1,0 +1,1 @@
+import{T as e}from"./index-Biopcvbr.js";var t=class extends e{async show(e){}async hide(e){}};export{t as SplashScreenWeb};

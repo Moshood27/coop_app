@@ -324,6 +324,7 @@ class DashboardController extends Controller
                 'vendor-enabled' => Feature::for('global')->active('vendor-enabled'),
                 'agm-voting-enabled' => Feature::for('global')->active('agm-voting-enabled'),
                 'airtime-data-enabled' => Feature::for('global')->active('airtime-data-enabled'),
+                'digital-id-card-enabled' => Feature::for('global')->active('digital-id-card-enabled'),
             ],
             'is_ramadan' => $this->priceService->isRamadan(),
             'is_admin' => (bool) $user->is_admin,
