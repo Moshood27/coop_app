@@ -732,7 +732,7 @@
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
 import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
 import axios from '../http'
 import getImageUrl from '../utils/image'
@@ -744,6 +744,7 @@ const hasQuickLogin = ref(false)
 const quickLoginBusy = ref(false)
 
 const router = useRouter()
+const route = useRoute()
 const appStatusStore = useAppStatusStore()
 
 const activeTab = ref('account')
