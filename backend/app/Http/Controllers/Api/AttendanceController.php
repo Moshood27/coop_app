@@ -316,7 +316,12 @@ class AttendanceController extends Controller
             $meeting = Meeting::find($meetingId);
             if ($meeting && $meeting->branches()->exists()) {
                 $branchIds = $meeting->branches()->pluck('branches.id');
-                $userQuery->whereIn('branch_id', $branchIds);
+                $userQuery->where(function($q) use ($branchIds, $includeAdmins) {
+                    $q->whereIn('branch_id', $branchIds);
+                    if ($includeAdmins) {
+                        $q->orWhere('is_admin', true);
+                    }
+                });
             }
         }
 
@@ -481,6 +486,11 @@ class AttendanceController extends Controller
                 $targetUser = User::find($userId);
                 if (!$targetUser) continue;
 
+                // Respect admin marking toggle
+                if ($targetUser->is_admin && !Setting::get('mark_admin_attendance_enabled', false)) {
+                    continue;
+                }
+
                 AttendanceRecord::updateOrCreate(
                     ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
                     [
@@ -631,18 +641,34 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $totalMembers = User::where('is_admin', false)->count();
-        $totalPresent = AttendanceRecord::where('meeting_id', $meeting->id)->where('status', 'present')->count();
+        $includeAdmins = (bool) Setting::get('mark_admin_attendance_enabled', false);
 
-        $branchStats = \App\Models\Branch::withCount(['users' => function($q) {
+        $totalMembers = User::when(!$includeAdmins, function($q) {
                 $q->where('is_admin', false);
+            })->count();
+        $totalPresent = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->where('status', 'present')
+            ->when(!$includeAdmins, function($q) {
+                $q->whereHas('user', function($u) {
+                    $u->where('is_admin', false);
+                });
+            })
+            ->count();
+
+        $branchStats = \App\Models\Branch::withCount(['users' => function($q) use ($includeAdmins) {
+                if (!$includeAdmins) {
+                    $q->where('is_admin', false);
+                }
             }])
             ->get()
-            ->map(function($branch) use ($meeting) {
+            ->map(function($branch) use ($meeting, $includeAdmins) {
                 $presentCount = AttendanceRecord::where('meeting_id', $meeting->id)
                     ->where('status', 'present')
-                    ->whereHas('user', function($q) use ($branch) {
+                    ->whereHas('user', function($q) use ($branch, $includeAdmins) {
                         $q->where('branch_id', $branch->id);
+                        if (!$includeAdmins) {
+                            $q->where('is_admin', false);
+                        }
                     })
                     ->count();
 
@@ -656,17 +682,31 @@ class AttendanceController extends Controller
 
         $genderStats = [
             'male' => [
-                'total' => User::where('gender', 'male')->where('is_admin', false)->count(),
+                'total' => User::where('gender', 'male')->when(!$includeAdmins, function($q) {
+                    $q->where('is_admin', false);
+                })->count(),
                 'present' => AttendanceRecord::where('meeting_id', $meeting->id)
                     ->where('status', 'present')
-                    ->whereHas('user', function($q) { $q->where('gender', 'male'); })
+                    ->whereHas('user', function($q) use ($includeAdmins) {
+                        $q->where('gender', 'male');
+                        if (!$includeAdmins) {
+                            $q->where('is_admin', false);
+                        }
+                    })
                     ->count()
             ],
             'female' => [
-                'total' => User::where('gender', 'female')->where('is_admin', false)->count(),
+                'total' => User::where('gender', 'female')->when(!$includeAdmins, function($q) {
+                    $q->where('is_admin', false);
+                })->count(),
                 'present' => AttendanceRecord::where('meeting_id', $meeting->id)
                     ->where('status', 'present')
-                    ->whereHas('user', function($q) { $q->where('gender', 'female'); })
+                    ->whereHas('user', function($q) use ($includeAdmins) {
+                        $q->where('gender', 'female');
+                        if (!$includeAdmins) {
+                            $q->where('is_admin', false);
+                        }
+                    })
                     ->count()
             ]
         ];
