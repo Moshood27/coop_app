@@ -237,6 +237,9 @@
                </div>
                
                <div class="flex flex-col items-end gap-1">
+                 <button v-if="appStatusStore.adminAttendanceStatsEnabled" @click="showStatsDashboard = !showStatsDashboard" class="text-[9px] font-black text-amber-600 uppercase tracking-widest border border-amber-200 px-2 py-1 rounded-lg hover:bg-amber-100 transition-colors mb-1">
+                   {{ showStatsDashboard ? 'Hide Stats' : 'Show Stats' }}
+                 </button>
                  <label class="relative inline-flex items-center cursor-pointer scale-75 origin-right">
                    <input type="checkbox" v-model="quickMark" class="sr-only peer">
                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
@@ -248,6 +251,61 @@
             <p class="text-[11px] text-slate-500 mb-6 font-medium leading-relaxed relative z-10">
               Select members below to mark them present instantly. Use search to find specific members.
             </p>
+
+            <!-- Admin Stats Dashboard -->
+            <transition name="slide-down">
+              <div v-if="showStatsDashboard && meetingStats" class="mb-6 relative z-10 space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="bg-white p-3 rounded-2xl border border-amber-100 shadow-sm">
+                    <div class="text-[8px] font-black text-slate-400 uppercase mb-1">Total Members</div>
+                    <div class="text-lg font-black text-slate-700">{{ meetingStats.total_members }}</div>
+                  </div>
+                  <div class="bg-white p-3 rounded-2xl border border-amber-100 shadow-sm">
+                    <div class="text-[8px] font-black text-slate-400 uppercase mb-1">Present</div>
+                    <div class="text-lg font-black text-emerald-600">{{ meetingStats.total_present }}</div>
+                  </div>
+                  <div class="bg-white p-3 rounded-2xl border border-amber-100 shadow-sm">
+                    <div class="text-[8px] font-black text-slate-400 uppercase mb-1">Rate</div>
+                    <div class="text-lg font-black text-amber-600">{{ meetingStats.attendance_rate }}%</div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-3xl border border-amber-100 shadow-sm overflow-hidden">
+                   <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center justify-between">
+                     <span>Branch Breakdown</span>
+                     <span class="text-amber-600">Present / Total</span>
+                   </h4>
+                   <div class="space-y-3 max-h-48 overflow-y-auto no-scrollbar pr-1">
+                      <div v-for="b in meetingStats.branches" :key="b.name" class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-600">
+                          <span>{{ b.name }}</span>
+                          <span>{{ b.present }} / {{ b.total }}</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div class="h-full bg-amber-500 rounded-full transition-all duration-1000" :style="{ width: b.percentage + '%' }"></div>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-white p-4 rounded-3xl border border-amber-100 shadow-sm flex items-center justify-between">
+                    <div>
+                       <div class="text-[8px] font-black text-blue-400 uppercase mb-1">Male</div>
+                       <div class="text-xs font-black text-slate-700">{{ meetingStats.gender.male.present }} / {{ meetingStats.gender.male.total }}</div>
+                    </div>
+                    <div class="text-xl">👨</div>
+                  </div>
+                  <div class="bg-white p-4 rounded-3xl border border-amber-100 shadow-sm flex items-center justify-between">
+                    <div>
+                       <div class="text-[8px] font-black text-rose-400 uppercase mb-1">Female</div>
+                       <div class="text-xs font-black text-slate-700">{{ meetingStats.gender.female.present }} / {{ meetingStats.gender.female.total }}</div>
+                    </div>
+                    <div class="text-xl">👩</div>
+                  </div>
+                </div>
+              </div>
+            </transition>
 
             <div v-if="meeting.status === 'scheduled'" class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 mb-6 relative z-10 flex items-center gap-3">
                <span class="text-xl">⏳</span>
@@ -661,6 +719,10 @@ const showReportModal = ref(false)
 const meetingReportData = ref(null)
 const loadingReport = ref(false)
 
+const meetingStats = ref(null)
+const loadingStats = ref(false)
+const showStatsDashboard = ref(false)
+
 const quickMark = ref(localStorage.getItem('attendance_quick_mark') === 'true')
 const selectedMembers = ref([])
 const bulkMarking = ref(false)
@@ -741,6 +803,19 @@ const fetchMarkedByMe = async () => {
     console.error('Failed to fetch marked members:', err)
   } finally {
     loadingMarkedByMe.value = false
+  }
+}
+
+const fetchMeetingStats = async () => {
+  if (!meeting.value) return
+  loadingStats.value = true
+  try {
+    const { data } = await axios.get(`/api/meetings/${meeting.value.id}/stats`)
+    meetingStats.value = data
+  } catch (err) {
+    console.error('Failed to fetch stats:', err)
+  } finally {
+    loadingStats.value = false
   }
 }
 
@@ -862,9 +937,7 @@ const startVoiceSearch = async () => {
 
 const adminScanQr = async () => {
   if (!isNative) {
-    // We could use WebQrScanner but it's designed for marking SELF
-    // For now let's just show an alert that it's coming to web
-    modal.alert('QR scanning for admins is currently optimized for mobile app.')
+    modal.alert('Scanning for admins is currently optimized for mobile app.')
     return
   }
 
@@ -875,21 +948,50 @@ const adminScanQr = async () => {
       if (req.camera !== 'granted') return
     }
     
-    const { barcodes } = await BarcodeScanner.scan({ formats: ['qrCode'] })
+    // Support QR and 1D barcodes
+    const { barcodes } = await BarcodeScanner.scan({ 
+      formats: ['qrCode', 'code128', 'code39', 'ean13', 'upca'],
+      lensFacing: 'back'
+    })
+    
     if (barcodes.length > 0) {
-      const code = barcodes[0].rawValue
-      // Assuming member QR contains their membership number or ID
-      // If it's a URL like "attaqwa:member?id=123"
+      const code = barcodes[0].rawValue || barcodes[0].displayValue
+      
+      let memberIdOrNum = code
       if (code.includes('member?id=')) {
-        const id = code.split('id=')[1]
-        memberSearchQuery.value = id
-      } else {
-        memberSearchQuery.value = code
+        memberIdOrNum = code.split('id=')[1]
       }
-      searchMembers()
+      
+      memberSearchQuery.value = memberIdOrNum
+      searchingMembers.value = true
+      try {
+        const { data } = await axios.get('/api/attendance/search-members', {
+          params: {
+            q: memberIdOrNum,
+            meeting_id: meeting.value.id,
+            smart: true
+          }
+        })
+        memberSearchResults.value = data
+        
+        // If unique match and quickMark enabled, auto mark
+        if (data.length === 1 && !data[0].is_present) {
+          if (quickMark.value) {
+            await markForMemberAction(data[0])
+            // Give a small feedback and allow scanning again
+            setTimeout(() => {
+               adminScanQr()
+            }, 500)
+          }
+        }
+      } catch (err) {
+        console.error("Search failed after scan", err)
+      } finally {
+        searchingMembers.value = false
+      }
     }
   } catch (err) {
-    console.error('Admin QR Scan Error:', err)
+    console.error('Admin Scan Error:', err)
   }
 }
 
@@ -938,6 +1040,7 @@ const markForMemberAction = async (member) => {
       // Update local state to reflect change immediately
       member.is_present = true
       fetchMarkedByMe()
+      fetchMeetingStats()
       addToRecent(member)
       
       // Remove from selected if there
@@ -994,6 +1097,7 @@ const bulkMarkAction = async () => {
       // Let's just clear for now or filter by those who are now present
       selectedMembers.value = []
       fetchMarkedByMe()
+      fetchMeetingStats()
     } else {
       modal.alert(res.data.message || "Failed to bulk mark attendance", "Attendance Error")
     }
@@ -1030,6 +1134,7 @@ const bulkUnmarkAction = async () => {
       
       selectedMembers.value = selectedMembers.value.filter(id => !toUnmark.map(m => m.id).includes(id))
       fetchMarkedByMe()
+      fetchMeetingStats()
     } else {
       modal.alert(res.data.message || "Failed to bulk unmark attendance", "Attendance Error")
     }
@@ -1060,6 +1165,7 @@ const unmarkForMemberAction = async (memberOrRecord) => {
       if (foundInSearch) foundInSearch.is_present = false
       
       fetchMarkedByMe()
+      fetchMeetingStats()
     } else {
       modal.alert(res.data.message || "Failed to unmark attendance")
     }
@@ -1234,6 +1340,7 @@ const fetchCurrentMeeting = async () => {
       startCountdown()
       if (canMarkForOthers.value) {
         fetchMarkedByMe()
+        fetchMeetingStats()
       }
     }
   } catch (err) {

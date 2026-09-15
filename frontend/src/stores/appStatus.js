@@ -25,6 +25,7 @@ export const useAppStatusStore = defineStore('appStatus', {
     adminAttendanceAlphabeticalScrollerEnabled: true,
     adminAttendanceRecentListEnabled: true,
     adminAttendanceSmartSearchEnabled: true,
+    adminAttendanceStatsEnabled: true,
     openingBalanceVerificationEnabled: true,
     onboardingSwiperEnabled: true,
     onboardingSwiperSlides: [],
@@ -66,6 +67,7 @@ export const useAppStatusStore = defineStore('appStatus', {
       this.adminAttendanceAlphabeticalScrollerEnabled = status.admin_attendance_alphabetical_scroller_enabled ?? true
       this.adminAttendanceRecentListEnabled = status.admin_attendance_recent_list_enabled ?? true
       this.adminAttendanceSmartSearchEnabled = status.admin_attendance_smart_search_enabled ?? true
+      this.adminAttendanceStatsEnabled = status.admin_attendance_stats_enabled ?? true
       this.openingBalanceVerificationEnabled = status.opening_balance_verification_enabled ?? true
       this.onboardingSwiperEnabled = status.onboarding_swiper_enabled ?? true
       this.onboardingSwiperSlides = status.onboarding_swiper_slides ?? []

@@ -246,6 +246,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::post('/meetings/{meeting}/unmark-member-attendance', [AttendanceController::class, 'unmarkMemberAttendance']);
     Route::get('/meetings/{meeting}/marked-by-me', [AttendanceController::class, 'markedByMe']);
     Route::get('/meetings/{meeting}/report', [AttendanceController::class, 'meetingReport']);
+    Route::get('/meetings/{meeting}/stats', [AttendanceController::class, 'meetingStats']);
     Route::get('/meetings/{meeting}/biometric-options', [AttendanceController::class, 'biometricOptions']);
     Route::post('/meetings/{meeting}/mark-biometric', [AttendanceController::class, 'markAttendanceBiometric']);
     Route::post('/meetings/{meeting}/mark-beacon', [AttendanceController::class, 'markAttendanceBeacon']);

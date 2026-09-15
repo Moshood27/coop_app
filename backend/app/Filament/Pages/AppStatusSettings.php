@@ -83,6 +83,7 @@ class AppStatusSettings extends Page
             'admin_attendance_alphabetical_scroller_enabled' => (bool) Setting::get('admin_attendance_alphabetical_scroller_enabled', true),
             'admin_attendance_recent_list_enabled' => (bool) Setting::get('admin_attendance_recent_list_enabled', true),
             'admin_attendance_smart_search_enabled' => (bool) Setting::get('admin_attendance_smart_search_enabled', true),
+            'admin_attendance_stats_enabled' => (bool) Setting::get('admin_attendance_stats_enabled', true),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
@@ -357,6 +358,10 @@ class AppStatusSettings extends Page
                         Toggle::make('admin_attendance_smart_search_enabled')
                             ->label('Enable Smart Search Logic')
                             ->helperText('Fuzzy matching and multi-field search (Phone, ID).')
+                            ->default(true),
+                        Toggle::make('admin_attendance_stats_enabled')
+                            ->label('Enable Attendance Summary Dashboard')
+                            ->helperText('Visual breakdown of attendance status by branch and gender.')
                             ->default(true),
                     ])->columns(3),
                 Section::make('Wallet Settings')

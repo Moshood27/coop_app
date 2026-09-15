@@ -625,6 +625,61 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function meetingStats(Meeting $meeting)
+    {
+        if (!auth()->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $totalMembers = User::where('is_admin', false)->count();
+        $totalPresent = AttendanceRecord::where('meeting_id', $meeting->id)->where('status', 'present')->count();
+
+        $branchStats = \App\Models\Branch::withCount(['users' => function($q) {
+                $q->where('is_admin', false);
+            }])
+            ->get()
+            ->map(function($branch) use ($meeting) {
+                $presentCount = AttendanceRecord::where('meeting_id', $meeting->id)
+                    ->where('status', 'present')
+                    ->whereHas('user', function($q) use ($branch) {
+                        $q->where('branch_id', $branch->id);
+                    })
+                    ->count();
+
+                return [
+                    'name' => $branch->name,
+                    'total' => $branch->users_count,
+                    'present' => $presentCount,
+                    'percentage' => $branch->users_count > 0 ? round(($presentCount / $branch->users_count) * 100, 1) : 0
+                ];
+            });
+
+        $genderStats = [
+            'male' => [
+                'total' => User::where('gender', 'male')->where('is_admin', false)->count(),
+                'present' => AttendanceRecord::where('meeting_id', $meeting->id)
+                    ->where('status', 'present')
+                    ->whereHas('user', function($q) { $q->where('gender', 'male'); })
+                    ->count()
+            ],
+            'female' => [
+                'total' => User::where('gender', 'female')->where('is_admin', false)->count(),
+                'present' => AttendanceRecord::where('meeting_id', $meeting->id)
+                    ->where('status', 'present')
+                    ->whereHas('user', function($q) { $q->where('gender', 'female'); })
+                    ->count()
+            ]
+        ];
+
+        return response()->json([
+            'total_members' => $totalMembers,
+            'total_present' => $totalPresent,
+            'attendance_rate' => $totalMembers > 0 ? round(($totalPresent / $totalMembers) * 100, 1) : 0,
+            'branches' => $branchStats,
+            'gender' => $genderStats
+        ]);
+    }
+
     public function getAttendanceQrPayload(Meeting $meeting)
     {
         // Only admins can see this
