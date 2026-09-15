@@ -19,6 +19,12 @@ export const useAppStatusStore = defineStore('appStatus', {
     attendanceBleBeaconEnabled: true,
     attendanceFingerprintEnabled: true,
     markAdminAttendanceEnabled: false,
+    adminAttendanceQrEnabled: true,
+    adminAttendanceVoiceSearchEnabled: true,
+    adminAttendanceIntelligentFilteringEnabled: true,
+    adminAttendanceAlphabeticalScrollerEnabled: true,
+    adminAttendanceRecentListEnabled: true,
+    adminAttendanceSmartSearchEnabled: true,
     openingBalanceVerificationEnabled: true,
     onboardingSwiperEnabled: true,
     onboardingSwiperSlides: [],
@@ -54,6 +60,12 @@ export const useAppStatusStore = defineStore('appStatus', {
       this.attendanceBleBeaconEnabled = status.attendance_ble_beacon_enabled ?? true
       this.attendanceFingerprintEnabled = status.attendance_fingerprint_enabled ?? true
       this.markAdminAttendanceEnabled = status.mark_admin_attendance_enabled ?? false
+      this.adminAttendanceQrEnabled = status.admin_attendance_qr_enabled ?? true
+      this.adminAttendanceVoiceSearchEnabled = status.admin_attendance_voice_search_enabled ?? true
+      this.adminAttendanceIntelligentFilteringEnabled = status.admin_attendance_intelligent_filtering_enabled ?? true
+      this.adminAttendanceAlphabeticalScrollerEnabled = status.admin_attendance_alphabetical_scroller_enabled ?? true
+      this.adminAttendanceRecentListEnabled = status.admin_attendance_recent_list_enabled ?? true
+      this.adminAttendanceSmartSearchEnabled = status.admin_attendance_smart_search_enabled ?? true
       this.openingBalanceVerificationEnabled = status.opening_balance_verification_enabled ?? true
       this.onboardingSwiperEnabled = status.onboarding_swiper_enabled ?? true
       this.onboardingSwiperSlides = status.onboarding_swiper_slides ?? []

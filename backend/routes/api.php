@@ -237,6 +237,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/attendance/current', [AttendanceController::class, 'current']);
     Route::get('/attendance/history', [AttendanceController::class, 'history']);
     Route::post('/attendance/sync-offline', [AttendanceController::class, 'syncOfflineAttendance']);
+    Route::get('/attendance/search-filters', [AttendanceController::class, 'searchFilters']);
     Route::post('/meetings/{meeting}/mark-attendance', [AttendanceController::class, 'markAttendance']);
     Route::get('/attendance/search-members', [AttendanceController::class, 'searchMembers']);
     Route::post('/meetings/{meeting}/mark-member-attendance', [AttendanceController::class, 'markMemberAttendance']);

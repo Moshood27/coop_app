@@ -17,6 +17,7 @@
   "dependencies": {
     "@awesome-cordova-plugins/core": "^6.0.0",
     "@awesome-cordova-plugins/ibeacon": "^6.0.0",
+    "@capacitor-community/speech-recognition": "^6.0.1",
     "@capacitor-mlkit/barcode-scanning": "^6.2.0",
     "@capacitor/android": "^6.2.1",
     "@capacitor/app": "^6.0.3",

@@ -274,8 +274,12 @@ class AttendanceController extends Controller
 
         $query = $request->input('q') ?? $request->input('search');
         $meetingId = $request->input('meeting_id');
+        $branchId = $request->input('branch_id');
+        $gender = $request->input('gender');
+        $expectedOnly = $request->boolean('expected_only');
+        $smartSearch = $request->boolean('smart', true);
 
-        if (strlen($query) < 2) {
+        if (empty($query) && !$branchId && !$gender && !$expectedOnly) {
              return response()->json([]);
         }
 
@@ -284,11 +288,31 @@ class AttendanceController extends Controller
             $q->where('is_admin', false);
         });
 
-        $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
+        // Smart Search Logic: multi-field search
+        if ($query) {
+            $userQuery->where(function($q) use ($query, $smartSearch) {
+                if ($smartSearch) {
+                    $q->where('surname', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('other_names', 'like', "%{$query}%")
+                        ->orWhere('membership_number', 'like', "%{$query}%")
+                        ->orWhere('phone', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%")
+                        ->orWhere(DB::raw("CONCAT(surname, ' ', name)"), 'like', "%{$query}%")
+                        ->orWhere(DB::raw("CONCAT(name, ' ', surname)"), 'like', "%{$query}%");
+                } else {
+                    // Simple search fallback
+                    $q->where('surname', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%");
+                }
+            });
+        }
 
-        // Filter by meeting branches if meeting_id is provided
-        // Restriction: Only members scheduled for the meeting's branches should be searchable
-        if ($meetingId) {
+        // Branch Filter
+        if ($branchId) {
+            $userQuery->where('branch_id', $branchId);
+        } elseif ($meetingId) {
+            // Default to meeting branches if no specific branch selected
             $meeting = Meeting::find($meetingId);
             if ($meeting && $meeting->branches()->exists()) {
                 $branchIds = $meeting->branches()->pluck('branches.id');
@@ -296,31 +320,47 @@ class AttendanceController extends Controller
             }
         }
 
-        $columns = ['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id'];
+        // Gender Filter
+        if ($gender) {
+            $userQuery->where('gender', $gender);
+        }
+
+        // Expected Only (Not Marked)
+        if ($expectedOnly && $meetingId) {
+            $userQuery->whereDoesntHave('attendanceRecords', function($q) use ($meetingId) {
+                $q->where('meeting_id', $meetingId)->where('status', 'present');
+            });
+        }
+
+        $columns = ['id', 'surname', 'name', 'other_names', 'membership_number', 'phone', 'branch_id', 'gender', 'passport_path'];
         if ($meetingId) {
             $columns[] = 'is_present';
         }
 
-        $users = $userQuery->where(function($q) use ($query) {
-                $q->where('surname', 'like', "%{$query}%")
-                    ->orWhere('name', 'like', "%{$query}%")
-                    ->orWhere('other_names', 'like', "%{$query}%")
-                    ->orWhere('membership_number', 'like', "%{$query}%")
-                    ->orWhere('phone', 'like', "%{$query}%")
-                    ->orWhere(DB::raw("CONCAT(surname, ' ', name)"), 'like', "%{$query}%")
-                    ->orWhere(DB::raw("CONCAT(name, ' ', surname)"), 'like', "%{$query}%");
-            })
-            ->when($meetingId, function($q) use ($meetingId) {
+        $users = $userQuery->when($meetingId, function($q) use ($meetingId) {
                 $q->withExists(['attendanceRecords as is_present' => function($q) use ($meetingId) {
                     $q->where('meeting_id', $meetingId)->where('status', 'present');
                 }]);
             })
-            ->limit(20)
+            ->limit(50) // Increased limit for better usability with filters
             ->get($columns);
 
         $users->makeHidden(['permission_names']);
 
         return response()->json($users);
+    }
+
+    public function searchFilters()
+    {
+        if (!auth()->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'branches' => \App\Models\Branch::orderBy('name')->get(['id', 'name']),
+            'genders' => ['male', 'female'],
+            'categories' => ['Regular', 'Distant', 'Staff'] // Hardcoded for now based on standard Coop usage
+        ]);
     }
 
     public function markMemberAttendance(Request $request, Meeting $meeting)
