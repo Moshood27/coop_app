@@ -248,6 +248,11 @@
             <p class="text-[11px] text-slate-500 mb-6 font-medium leading-relaxed relative z-10">
               Select members below to mark them present instantly. Use search to find specific members.
             </p>
+
+            <div v-if="meeting.status === 'scheduled'" class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 mb-6 relative z-10 flex items-center gap-3">
+               <span class="text-xl">⏳</span>
+               <p class="text-[10px] font-bold text-amber-700 uppercase tracking-tight">Meeting has not started yet. You will be able to mark attendance once it's ongoing.</p>
+            </div>
             
             <div class="relative z-10">
               <input 
@@ -262,46 +267,72 @@
               </div>
             </div>
 
+            <div v-if="memberSearchResults.length > 0" class="flex items-center gap-2 mt-4 relative z-10 overflow-x-auto no-scrollbar pb-1">
+              <button 
+                v-for="f in ['all', 'absent', 'present']" 
+                :key="f"
+                @click="searchFilter = f"
+                class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap"
+                :class="searchFilter === f ? 'bg-amber-600 text-white shadow-lg shadow-amber-200' : 'bg-white text-slate-400 border border-slate-100 hover:border-amber-200'"
+              >
+                {{ f === 'all' ? 'All Results' : (f === 'absent' ? 'Not Marked' : 'Already Present') }}
+              </button>
+            </div>
+
             <div v-if="memberSearchResults.length > 0" class="mt-6 space-y-2 max-h-[32rem] overflow-y-auto no-scrollbar relative z-10">
                <!-- Bulk Actions Bar -->
                <div class="flex items-center justify-between bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-amber-100 mb-3 sticky top-0 z-20 shadow-sm">
                  <div class="flex items-center gap-3">
                    <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="w-5 h-5 rounded-lg border-slate-300 text-amber-600 focus:ring-amber-500 transition-all cursor-pointer" />
                    <span class="text-[11px] font-black text-slate-600 uppercase tracking-tight">
-                     {{ isAllSelected ? 'Unselect All' : `Select All (${memberSearchResults.filter(m => !m.is_present).length})` }}
+                     {{ isAllSelected ? 'Unselect All' : `Select All (${searchFilter === 'present' ? filteredSearchResults.length : filteredSearchResults.filter(m => !m.is_present).length})` }}
                    </span>
                  </div>
-                 <button 
-                   v-if="selectedMembers.length > 0"
-                   @click="bulkMarkAction"
-                   :disabled="bulkMarking"
-                   class="bg-amber-600 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
-                 >
-                   <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
-                   <span v-else>Mark ({{ selectedMembers.length }})</span>
-                 </button>
+                 <div class="flex items-center gap-2">
+                   <button 
+                     v-if="selectedCountByStatus.absent > 0"
+                     @click="bulkMarkAction"
+                     :disabled="bulkMarking"
+                     class="bg-emerald-600 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                   >
+                     <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
+                     <span v-else>Mark ({{ selectedCountByStatus.absent }})</span>
+                   </button>
+                   <button 
+                     v-if="selectedCountByStatus.present > 0"
+                     @click="bulkUnmarkAction"
+                     :disabled="bulkMarking"
+                     class="bg-red-500 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-red-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
+                   >
+                     <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
+                     <span v-else>Unmark ({{ selectedCountByStatus.present }})</span>
+                   </button>
+                 </div>
                </div>
 
-               <div v-for="member in memberSearchResults" :key="member.id" 
+               <div v-if="filteredSearchResults.length === 0" class="py-12 text-center bg-white/50 rounded-3xl border-2 border-dashed border-slate-100">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">No members match this filter</p>
+               </div>
+
+               <div v-for="member in filteredSearchResults" :key="member.id" 
                     class="p-4 bg-white/80 rounded-[1.5rem] flex items-center justify-between gap-4 border border-slate-100 shadow-sm transition-all hover:border-amber-200 active:bg-amber-50/30 group"
                     :class="{'ring-2 ring-amber-500/50 bg-amber-50/20': selectedMembers.includes(member.id)}">
                   <div class="flex items-center gap-4 flex-1 min-w-0">
                     <div class="relative">
                       <input 
-                        v-if="!member.is_present"
                         type="checkbox" 
                         :value="member.id" 
                         v-model="selectedMembers"
                         class="w-6 h-6 rounded-lg border-slate-300 text-amber-600 focus:ring-amber-500 transition-all cursor-pointer" 
                       />
-                      <div v-else class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-emerald-50 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
+                      <div v-if="member.is_present" class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-2 w-2 text-white" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                         </svg>
                       </div>
                     </div>
                     
-                    <div class="flex-1 min-w-0" @click="!member.is_present && (selectedMembers.includes(member.id) ? selectedMembers = selectedMembers.filter(id => id !== member.id) : selectedMembers.push(member.id))">
+                    <div class="flex-1 min-w-0" @click="selectedMembers.includes(member.id) ? selectedMembers = selectedMembers.filter(id => id !== member.id) : selectedMembers.push(member.id)">
                       <p class="text-sm font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
                       <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{{ member.membership_number }} • {{ member.phone }}</p>
                     </div>
@@ -559,27 +590,59 @@ const loadingReport = ref(false)
 const quickMark = ref(localStorage.getItem('attendance_quick_mark') === 'true')
 const selectedMembers = ref([])
 const bulkMarking = ref(false)
+const searchFilter = ref('all') // 'all', 'absent', 'present'
 
 watch(quickMark, (val) => {
   localStorage.setItem('attendance_quick_mark', val)
 })
 
+const filteredSearchResults = computed(() => {
+  if (searchFilter.value === 'present') {
+    return memberSearchResults.value.filter(m => m.is_present)
+  }
+  if (searchFilter.value === 'absent') {
+    return memberSearchResults.value.filter(m => !m.is_present)
+  }
+  return memberSearchResults.value
+})
+
 const isAllSelected = computed(() => {
-  const markable = memberSearchResults.value.filter(m => !m.is_present)
-  return markable.length > 0 && markable.every(m => selectedMembers.value.includes(m.id))
+  let items = []
+  if (searchFilter.value === 'present') {
+    items = filteredSearchResults.value
+  } else {
+    items = filteredSearchResults.value.filter(m => !m.is_present)
+  }
+  
+  if (items.length === 0) return false
+  return items.every(m => selectedMembers.value.includes(m.id))
 })
 
 const toggleSelectAll = () => {
-  const markableIds = memberSearchResults.value.filter(m => !m.is_present).map(m => m.id)
-  if (isAllSelected.value) {
-    // Remove currently visible markable members from selection
-    selectedMembers.value = selectedMembers.value.filter(id => !markableIds.includes(id))
+  let targetIds = []
+  if (searchFilter.value === 'present') {
+    targetIds = filteredSearchResults.value.map(m => m.id)
   } else {
-    // Add all currently visible markable members to selection
-    const newSelection = new Set([...selectedMembers.value, ...markableIds])
+    targetIds = filteredSearchResults.value.filter(m => !m.is_present).map(m => m.id)
+  }
+
+  if (isAllSelected.value) {
+    // Remove these from selection
+    selectedMembers.value = selectedMembers.value.filter(id => !targetIds.includes(id))
+  } else {
+    // Add these to selection
+    const newSelection = new Set([...selectedMembers.value, ...targetIds])
     selectedMembers.value = Array.from(newSelection)
   }
 }
+
+const selectedCountByStatus = computed(() => {
+  const selected = memberSearchResults.value.filter(m => selectedMembers.value.includes(m.id))
+  return {
+    absent: selected.filter(m => !m.is_present).length,
+    present: selected.filter(m => m.is_present).length
+  }
+})
 
 const canMarkForOthers = computed(() => {
   if (!currentUser.value) return false
@@ -686,6 +749,18 @@ const bulkMarkAction = async () => {
         if (member) member.is_present = true
       })
       
+      // Keep selectedThoseWhoWereAlreadyPresent if any
+      selectedMembers.value = selectedMembers.value.filter(id => {
+        const m = memberSearchResults.value.find(m => m.id === id)
+        return m && m.is_present // Actually we should probably just clear or filter carefully
+      })
+      // Simpler: just remove those we just marked
+      selectedMembers.value = selectedMembers.value.filter(id => {
+         const m = memberSearchResults.value.find(item => item.id === id)
+         return m ? false : true // if we found it in search results, it was probably marked
+      })
+      // Actually the backend response might be better. 
+      // Let's just clear for now or filter by those who are now present
       selectedMembers.value = []
       fetchMarkedByMe()
     } else {
@@ -693,6 +768,42 @@ const bulkMarkAction = async () => {
     }
   } catch (err) {
     modal.alert(err.response?.data?.message || "Error during bulk marking", "Attendance Error")
+  } finally {
+    bulkMarking.value = false
+  }
+}
+
+const bulkUnmarkAction = async () => {
+  const toUnmark = memberSearchResults.value.filter(m => selectedMembers.value.includes(m.id) && m.is_present)
+  if (toUnmark.length === 0) return
+  
+  const count = toUnmark.length
+  if (!quickMark.value) {
+    const confirm = await modal.confirm(`Remove attendance for ${count} selected members?`)
+    if (!confirm) return
+  }
+
+  bulkMarking.value = true
+  try {
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/bulk-unmark-attendance`, {
+      user_ids: toUnmark.map(m => m.id)
+    })
+    
+    if (res.data.success) {
+      if (!quickMark.value) modal.alert(res.data.message || `Successfully unmarked ${count} members.`)
+      
+      // Update local state
+      toUnmark.forEach(m => {
+        m.is_present = false
+      })
+      
+      selectedMembers.value = selectedMembers.value.filter(id => !toUnmark.map(m => m.id).includes(id))
+      fetchMarkedByMe()
+    } else {
+      modal.alert(res.data.message || "Failed to bulk unmark attendance", "Attendance Error")
+    }
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Error during bulk unmarking", "Attendance Error")
   } finally {
     bulkMarking.value = false
   }

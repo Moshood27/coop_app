@@ -474,6 +474,32 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function bulkUnmarkMemberAttendance(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        if (!$request->user()->hasPermissionTo('mark_attendance')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($meeting->status !== 'ongoing') {
+            return response()->json(['message' => "Meeting is not ongoing."], 400);
+        }
+
+        $userIds = $request->user_ids;
+        $count = AttendanceRecord::where('meeting_id', $meeting->id)
+            ->whereIn('user_id', $userIds)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully unmarked {$count} members."
+        ]);
+    }
+
     public function unmarkMemberAttendance(Request $request, Meeting $meeting)
     {
         $request->validate([

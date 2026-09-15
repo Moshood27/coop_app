@@ -241,6 +241,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/attendance/search-members', [AttendanceController::class, 'searchMembers']);
     Route::post('/meetings/{meeting}/mark-member-attendance', [AttendanceController::class, 'markMemberAttendance']);
     Route::post('/meetings/{meeting}/bulk-mark-attendance', [AttendanceController::class, 'bulkMarkMemberAttendance']);
+    Route::post('/meetings/{meeting}/bulk-unmark-attendance', [AttendanceController::class, 'bulkUnmarkMemberAttendance']);
     Route::post('/meetings/{meeting}/unmark-member-attendance', [AttendanceController::class, 'unmarkMemberAttendance']);
     Route::get('/meetings/{meeting}/marked-by-me', [AttendanceController::class, 'markedByMe']);
     Route::get('/meetings/{meeting}/report', [AttendanceController::class, 'meetingReport']);
