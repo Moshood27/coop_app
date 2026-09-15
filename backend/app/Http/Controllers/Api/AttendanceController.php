@@ -642,16 +642,36 @@ class AttendanceController extends Controller
         }
 
         $includeAdmins = (bool) Setting::get('mark_admin_attendance_enabled', false);
+        $hasMeetingBranches = $meeting->branches()->exists();
+        $meetingBranchIds = $hasMeetingBranches ? $meeting->branches()->pluck('branches.id') : collect([]);
 
         $totalMembers = User::when(!$includeAdmins, function($q) {
                 $q->where('is_admin', false);
-            })->count();
+            })
+            ->when($hasMeetingBranches, function($q) use ($meetingBranchIds, $includeAdmins) {
+                $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                    $sq->whereIn('branch_id', $meetingBranchIds);
+                    if ($includeAdmins) {
+                        $sq->orWhere('is_admin', true);
+                    }
+                });
+            })
+            ->count();
+
         $totalPresent = AttendanceRecord::where('meeting_id', $meeting->id)
             ->where('status', 'present')
-            ->when(!$includeAdmins, function($q) {
-                $q->whereHas('user', function($u) {
-                    $u->where('is_admin', false);
-                });
+            ->whereHas('user', function($q) use ($hasMeetingBranches, $meetingBranchIds, $includeAdmins) {
+                if (!$includeAdmins) {
+                    $q->where('is_admin', false);
+                }
+                if ($hasMeetingBranches) {
+                    $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                        $sq->whereIn('branch_id', $meetingBranchIds);
+                        if ($includeAdmins) {
+                            $sq->orWhere('is_admin', true);
+                        }
+                    });
+                }
             })
             ->count();
 
@@ -660,6 +680,9 @@ class AttendanceController extends Controller
                     $q->where('is_admin', false);
                 }
             }])
+            ->when($hasMeetingBranches, function($q) use ($meetingBranchIds) {
+                $q->whereIn('id', $meetingBranchIds);
+            })
             ->get()
             ->map(function($branch) use ($meeting, $includeAdmins) {
                 $presentCount = AttendanceRecord::where('meeting_id', $meeting->id)
@@ -682,29 +705,65 @@ class AttendanceController extends Controller
 
         $genderStats = [
             'male' => [
-                'total' => User::where('gender', 'male')->when(!$includeAdmins, function($q) {
-                    $q->where('is_admin', false);
-                })->count(),
+                'total' => User::where('gender', 'male')
+                    ->when(!$includeAdmins, function($q) {
+                        $q->where('is_admin', false);
+                    })
+                    ->when($hasMeetingBranches, function($q) use ($meetingBranchIds, $includeAdmins) {
+                        $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                            $sq->whereIn('branch_id', $meetingBranchIds);
+                            if ($includeAdmins) {
+                                $sq->orWhere('is_admin', true);
+                            }
+                        });
+                    })
+                    ->count(),
                 'present' => AttendanceRecord::where('meeting_id', $meeting->id)
                     ->where('status', 'present')
-                    ->whereHas('user', function($q) use ($includeAdmins) {
+                    ->whereHas('user', function($q) use ($includeAdmins, $hasMeetingBranches, $meetingBranchIds) {
                         $q->where('gender', 'male');
                         if (!$includeAdmins) {
                             $q->where('is_admin', false);
+                        }
+                        if ($hasMeetingBranches) {
+                            $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                                $sq->whereIn('branch_id', $meetingBranchIds);
+                                if ($includeAdmins) {
+                                    $sq->orWhere('is_admin', true);
+                                }
+                            });
                         }
                     })
                     ->count()
             ],
             'female' => [
-                'total' => User::where('gender', 'female')->when(!$includeAdmins, function($q) {
-                    $q->where('is_admin', false);
-                })->count(),
+                'total' => User::where('gender', 'female')
+                    ->when(!$includeAdmins, function($q) {
+                        $q->where('is_admin', false);
+                    })
+                    ->when($hasMeetingBranches, function($q) use ($meetingBranchIds, $includeAdmins) {
+                        $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                            $sq->whereIn('branch_id', $meetingBranchIds);
+                            if ($includeAdmins) {
+                                $sq->orWhere('is_admin', true);
+                            }
+                        });
+                    })
+                    ->count(),
                 'present' => AttendanceRecord::where('meeting_id', $meeting->id)
                     ->where('status', 'present')
-                    ->whereHas('user', function($q) use ($includeAdmins) {
+                    ->whereHas('user', function($q) use ($includeAdmins, $hasMeetingBranches, $meetingBranchIds) {
                         $q->where('gender', 'female');
                         if (!$includeAdmins) {
                             $q->where('is_admin', false);
+                        }
+                        if ($hasMeetingBranches) {
+                            $q->where(function($sq) use ($meetingBranchIds, $includeAdmins) {
+                                $sq->whereIn('branch_id', $meetingBranchIds);
+                                if ($includeAdmins) {
+                                    $sq->orWhere('is_admin', true);
+                                }
+                            });
                         }
                     })
                     ->count()
