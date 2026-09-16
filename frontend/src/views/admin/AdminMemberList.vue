@@ -140,7 +140,7 @@
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Initial Password</label>
-              <input v-model="newMember.password" type="password" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Min 8 characters" />
+              <input v-model="newMember.password" type="password" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Enter password" />
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Residential Address</label>

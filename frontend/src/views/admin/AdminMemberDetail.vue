@@ -231,6 +231,10 @@
               </div>
             </div>
             <div class="space-y-1">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Password (Leave blank to keep current)</label>
+              <input v-model="editForm.password" type="password" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Enter new password" />
+            </div>
+            <div class="space-y-1">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Residential Address</label>
               <textarea v-model="editForm.residential_address" class="w-full px-5 py-3 bg-slate-50 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]"></textarea>
             </div>
@@ -290,6 +294,7 @@ const editForm = ref({
   phone: '',
     gender: 'male',
     branch_id: '',
+    password: '',
     residential_address: ''
 })
 
@@ -303,6 +308,7 @@ const openEditModal = () => {
     phone: user.value.phone,
     gender: user.value.gender || 'male',
     branch_id: user.value.branch_id,
+    password: '',
     residential_address: user.value.residential_address
   }
   showEditModal.value = true

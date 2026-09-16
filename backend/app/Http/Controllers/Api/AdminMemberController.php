@@ -104,9 +104,15 @@ class AdminMemberController extends Controller
             'residential_address' => ['nullable', 'string'],
             'gender' => ['required', 'string', Rule::in(['male', 'female', 'other'])],
             'branch_id' => ['required', 'exists:branches,id'],
+            'password' => ['nullable', 'string'],
         ]);
 
-        $user->update($data);
+        if (!empty($data['password'])) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($data['password']);
+        }
+
+        $user->fill(collect($data)->except('password')->toArray());
+        $user->save();
 
         return response()->json([
             'message' => 'Member profile updated successfully.',
@@ -592,7 +598,7 @@ class AdminMemberController extends Controller
             'phone' => ['required', 'string', 'max:20', Rule::unique('users')],
             'gender' => ['required', Rule::in(['male', 'female', 'other'])],
             'branch_id' => ['required', 'exists:branches,id'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string'],
             'residential_address' => ['nullable', 'string'],
             'membership_number' => ['nullable', 'string', 'max:255', Rule::unique('users')],
         ]);
