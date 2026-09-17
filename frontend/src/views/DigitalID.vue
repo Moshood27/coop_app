@@ -202,14 +202,32 @@ const downloadCard = async () => {
   try {
     const el = cardRef.value
     if (!el) throw new Error('Card element not found')
-    // Lazy-load html2canvas from local bundle (avoids CSP issues with remote CDNs)
-    const { default: html2canvas } = await import('html2canvas')
-    const canvas = await html2canvas(el, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true
-    })
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+
+    // Try html-to-image first (better with modern CSS like oklch via foreignObject)
+    let blob = null
+    try {
+      const htmlToImage = await import('html-to-image')
+      blob = await htmlToImage.toBlob(el, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true
+      })
+    } catch (e) {
+      console.warn('html-to-image failed, will try html2canvas', e)
+    }
+
+    // Fallback to html2canvas if needed
+    if (!blob) {
+      const { default: html2canvas } = await import('html2canvas')
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        foreignObjectRendering: true
+      })
+      blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+    }
+
     if (!blob) throw new Error('Failed to generate image')
 
     const fileName = `attaqwa-id-${user.value.membership_id || 'member'}.png`
