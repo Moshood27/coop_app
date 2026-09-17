@@ -45,7 +45,7 @@
            <!-- Member Photo -->
            <div class="relative z-10">
               <div class="w-32 h-32 rounded-[2.5rem] bg-emerald-900 border-4 border-white/20 p-1 shadow-2xl relative overflow-hidden">
-                 <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" class="w-full h-full object-cover rounded-[2rem]" />
+                 <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" crossorigin="anonymous" class="w-full h-full object-cover rounded-[2rem]" />
                  <div v-else class="w-full h-full flex items-center justify-center text-5xl font-black text-emerald-700 bg-emerald-50">
                    {{ (user.full_name || 'M')[0] }}
                  </div>
@@ -98,7 +98,7 @@
           <!-- Large High-Contrast QR -->
           <div v-if="user.membership_id" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group overflow-hidden">
               <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
-              <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
+              <img crossorigin="anonymous" :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
                    alt="Member QR" 
                    class="w-full h-full rounded-xl relative z-10 shadow-sm" />
           </div>
@@ -202,8 +202,8 @@ const downloadCard = async () => {
   try {
     const el = cardRef.value
     if (!el) throw new Error('Card element not found')
-    // Dynamically import html2canvas from CDN to avoid bundler changes
-    const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js')
+    // Lazy-load html2canvas from local bundle (avoids CSP issues with remote CDNs)
+    const { default: html2canvas } = await import('html2canvas')
     const canvas = await html2canvas(el, {
       backgroundColor: '#ffffff',
       scale: 2,
@@ -264,6 +264,11 @@ onMounted(() => {
 /* Custom shadow for emerald colors */
 .shadow-emerald-900\/40 {
   shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.4), 0 4px 6px -4px rgba(6, 78, 59, 0.4);
+}
+
+/* Safe-area aware bottom bar position */
+.bottom-actions {
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Print optimizations */
