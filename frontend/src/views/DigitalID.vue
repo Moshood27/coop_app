@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 pb-20 overflow-hidden relative">
     <!-- Background Decor -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none no-print">
        <div class="absolute -top-20 -left-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
        <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
     </div>
 
     <!-- Header / Close -->
-    <div class="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
+    <div class="absolute top-6 left-6 right-6 flex items-center justify-between z-20 no-print">
       <button @click="$router.back()" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-lg transition-all active:scale-90 shadow-xl border border-white/10">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -19,9 +19,9 @@
 
     <!-- The Card Container with Flip Effect -->
     <div class="w-full max-w-[340px] perspective-1000">
-      <div class="relative w-full aspect-[2/3] transition-all duration-700 preserve-3d cursor-pointer shadow-2xl rounded-[2.5rem]"
+      <div ref="cardRef" class="relative w-full aspect-[2/3] transition-all duration-700 preserve-3d cursor-pointer shadow-2xl rounded-[2.5rem] print-card"
            :class="{ 'rotate-y-180': isFlipped }"
-           @click="isFlipped = !isFlipped">
+           @click.stop="isFlipped = !isFlipped">
         
         <!-- Front of the Card -->
         <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-[2.5rem] p-8 border border-white/20 flex flex-col items-center justify-between overflow-hidden shadow-2xl">
@@ -96,9 +96,9 @@
            </div>
 
           <!-- Large High-Contrast QR -->
-          <div v-if="user.membership_id" class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
+          <div v-if="user.membership_id" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group">
              <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
-             <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}`" 
+             <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
                   alt="Member QR" 
                   class="w-full h-full rounded-xl relative z-10 shadow-sm" />
           </div>
@@ -128,7 +128,7 @@
     </div>
 
     <!-- Flip Instructions -->
-    <div class="mt-12 text-center animate-bounce-slow">
+    <div class="mt-12 text-center animate-bounce-slow no-print">
        <p class="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -138,14 +138,15 @@
     </div>
 
     <!-- Bottom Actions -->
-    <div class="fixed bottom-8 left-6 right-6 flex items-center justify-center gap-4 z-20">
-       <button @click="shareId" class="flex-1 max-w-[160px] h-14 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-xl border border-white/10 transition-all active:scale-95">
+    <div class="fixed left-6 right-6 flex items-center justify-center gap-4 z-50 no-print pointer-events-auto"
+         style="bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); touch-action: manipulation;">
+       <button @click="shareId" aria-label="Share Digital ID" role="button" class="flex-1 max-w-[160px] h-14 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-xl border border-white/10 transition-all active:scale-95 pointer-events-auto">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
           </svg>
           Share ID
        </button>
-       <button @click="downloadCard" class="flex-1 max-w-[160px] h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95">
+       <button @click="downloadCard" aria-label="Save ID as Image" role="button" class="flex-1 max-w-[160px] h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95 pointer-events-auto">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
           </svg>
@@ -160,10 +161,12 @@ import { ref, onMounted } from 'vue'
 import axios from '../http'
 import { useRouter } from 'vue-router'
 import getImageUrl from '../utils/image'
+import { Clipboard } from '@capacitor/clipboard'
 
 const router = useRouter()
 const user = ref({})
 const isFlipped = ref(false)
+const cardRef = ref(null)
 
 const load = async () => {
   try {
@@ -175,23 +178,60 @@ const load = async () => {
 }
 
 const shareId = async () => {
-  if (navigator.share) {
-    try {
+  const text = `Attaqwa Digital ID\nName: ${user.value.full_name || ''}\nMembership ID: ${user.value.membership_id || ''}\nLink: ${window.location.href}`
+  try {
+    if (navigator.share) {
       await navigator.share({
         title: 'Attaqwa Digital ID',
-        text: `Membership ID: ${user.value.membership_id}`,
-        url: window.location.href
+        text
       })
-    } catch (err) {
-      console.error('Share failed', err)
+      return
     }
+  } catch (err) {
+    console.error('Web Share failed', err)
+  }
+  try {
+    await Clipboard.write({ string: text })
+    window.alert('ID details copied to clipboard.')
+  } catch (err) {
+    console.error('Clipboard write failed', err)
   }
 }
 
-const downloadCard = () => {
-  // Logic to save as image would ideally use html2canvas or similar
-  // For now, simple alert or print
-  window.print()
+const downloadCard = async () => {
+  try {
+    const el = cardRef.value
+    if (!el) throw new Error('Card element not found')
+    // Dynamically import html2canvas from CDN to avoid bundler changes
+    const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js')
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true
+    })
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+    if (!blob) throw new Error('Failed to generate image')
+
+    const fileName = `attaqwa-id-${user.value.membership_id || 'member'}.png`
+    const file = new File([blob], fileName, { type: 'image/png' })
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Attaqwa Digital ID' })
+      return
+    }
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Save Image failed, falling back to print', err)
+    window.print()
+  }
 }
 
 onMounted(() => {
@@ -224,5 +264,12 @@ onMounted(() => {
 /* Custom shadow for emerald colors */
 .shadow-emerald-900\/40 {
   shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.4), 0 4px 6px -4px rgba(6, 78, 59, 0.4);
+}
+
+/* Print optimizations */
+@media print {
+  .no-print { display: none !important; }
+  .print-card { box-shadow: none !important; }
+  .bg-slate-900 { background-color: #ffffff !important; }
 }
 </style>
