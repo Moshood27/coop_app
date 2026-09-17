@@ -87,7 +87,7 @@
         </div>
 
         <!-- Back of the Card (QR Code) -->
-        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-[2.5rem] p-8 border border-slate-200 flex flex-col items-center justify-between shadow-2xl">
+        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-[2.5rem] p-8 border border-slate-200 flex flex-col items-center justify-between shadow-2xl isolate">
            <div class="absolute top-0 left-0 w-full h-8 bg-emerald-800 rounded-t-[2.5rem]"></div>
            
            <div class="mt-4 text-center">
@@ -96,11 +96,11 @@
            </div>
 
           <!-- Large High-Contrast QR -->
-          <div v-if="user.membership_id" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group">
-             <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
-             <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
-                  alt="Member QR" 
-                  class="w-full h-full rounded-xl relative z-10 shadow-sm" />
+          <div v-if="user.membership_id" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group overflow-hidden">
+              <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
+              <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
+                   alt="Member QR" 
+                   class="w-full h-full rounded-xl relative z-10 shadow-sm" />
           </div>
           <div v-else class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
              <div class="animate-pulse flex flex-col items-center">
@@ -138,15 +138,15 @@
     </div>
 
     <!-- Bottom Actions -->
-    <div class="fixed left-6 right-6 flex items-center justify-center gap-4 z-50 no-print pointer-events-auto"
-         style="bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); touch-action: manipulation;">
-       <button @click="shareId" aria-label="Share Digital ID" role="button" class="flex-1 max-w-[160px] h-14 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-xl border border-white/10 transition-all active:scale-95 pointer-events-auto">
+    <div class="fixed left-4 right-4 md:left-6 md:right-6 flex items-center justify-center gap-3 md:gap-4 z-50 no-print pointer-events-auto bottom-actions"
+         style="touch-action: manipulation;">
+      <button @click="shareId" aria-label="Share Digital ID" role="button" class="flex-1 max-w-[180px] h-16 md:h-14 bg-white/15 hover:bg-white/20 rounded-2xl flex items-center justify-center gap-2 text-white text-[11px] md:text-[10px] font-black uppercase tracking-widest backdrop-blur-2xl border border-white/15 transition-all active:scale-95 pointer-events-auto drop-shadow-xl">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
           </svg>
           Share ID
        </button>
-       <button @click="downloadCard" aria-label="Save ID as Image" role="button" class="flex-1 max-w-[160px] h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95 pointer-events-auto">
+      <button @click="downloadCard" aria-label="Save ID as Image" role="button" class="flex-1 max-w-[180px] h-16 md:h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[11px] md:text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95 pointer-events-auto drop-shadow-xl">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
           </svg>
