@@ -42,6 +42,7 @@
  use App\Http\Controllers\Api\AdminUtilityController;
  use App\Http\Controllers\Api\AdminVendorController;
  use App\Services\AccountingReportService;
+ use App\Http\Controllers\Api\AdminAuthController;
 
  Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
      Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
@@ -83,6 +84,18 @@ Route::post('/ussd/callback', [UssdController::class, 'handleCallback']);
 Route::match(['get', 'post'], '/vtu/webhook', [\App\Http\Controllers\Api\UtilityController::class, 'handleWebhook']);
 // Alias for ClubKonnect/Nellobytes callback URL
 Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\UtilityController::class, 'handleWebhook']);
+
+// Public authentication & meta endpoints (used by frontend before login)
+Route::get('/status', [AuthController::class, 'status']);
+Route::get('/branches', [AuthController::class, 'branches']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+// Admin mobile portal auth (token-based, separate from Filament panel)
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::post('/admin/register', [AdminAuthController::class, 'register']);
+Route::post('/admin/forgot-password', [AdminAuthController::class, 'forgotPassword']);
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
