@@ -1,4 +1,50 @@
-    Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
+ <?php
+
+ use Illuminate\Support\Facades\Route;
+ use App\Http\Controllers\Api\AdminTakafulController;
+ use App\Http\Controllers\Api\AdminArController;
+ use App\Http\Controllers\Api\AdminApController;
+ use App\Http\Controllers\Api\WebhookController;
+ use App\Http\Controllers\Api\UssdController;
+ use App\Http\Controllers\Api\NotificationsController;
+ use App\Http\Controllers\Api\AuthController;
+ use App\Http\Controllers\Api\TakafulController;
+ use App\Http\Controllers\Api\TransparencyController;
+ use App\Http\Controllers\Api\DashboardController;
+ use App\Http\Controllers\Api\ProfileController;
+ use App\Http\Controllers\Api\SecurityController;
+ use App\Http\Controllers\Api\PaymentController;
+ use App\Http\Controllers\Api\MerchantPayController;
+ use App\Http\Controllers\Api\ProjectController;
+ use App\Http\Controllers\Api\SavingsGroupController;
+ use App\Http\Controllers\Api\PassbookController;
+ use App\Http\Controllers\Api\AttendanceController;
+ use App\Http\Controllers\Api\BiometricController;
+ use App\Http\Controllers\Api\MeetingApologyController;
+ use App\Http\Controllers\Api\ProductController;
+ use App\Http\Controllers\Api\VendorController;
+ use App\Http\Controllers\Api\VendorProductController;
+ use App\Http\Controllers\Api\StoreOrderController;
+ use App\Http\Controllers\Api\SavingsGoalController;
+ use App\Http\Controllers\Api\LoanController;
+ use App\Http\Controllers\Api\ScoreController;
+ use App\Http\Controllers\Api\AgmController;
+ use App\Http\Controllers\Api\ShariaBoardController;
+ use App\Http\Controllers\Api\ProjectProposalController;
+ use App\Http\Controllers\Api\GuarantorController;
+ use App\Http\Controllers\Api\ReportsController;
+ use App\Http\Controllers\Api\ExportController;
+ use App\Http\Controllers\Api\GoldController;
+ use App\Http\Controllers\Api\QardHasanController;
+ use App\Http\Controllers\Api\AdminDashboardController;
+ use App\Http\Controllers\Api\AdminReportsController;
+ use App\Http\Controllers\Api\ImportController;
+ use App\Http\Controllers\Api\AdminUtilityController;
+ use App\Http\Controllers\Api\AdminVendorController;
+ use App\Services\AccountingReportService;
+
+ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
+     Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
     Route::post('/takaful/mark-deceased', [AdminTakafulController::class, 'markDeceased']);
     Route::post('/takaful/mark-major-loss', [AdminTakafulController::class, 'markMajorLoss']);
 
