@@ -95,18 +95,18 @@
              <p class="text-[9px] text-slate-500 font-medium mt-1">Present this code for instant marking</p>
            </div>
 
-          <!-- Large High-Contrast QR -->
-          <div v-if="user.membership_id" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group overflow-hidden">
+          <!-- Large High-Contrast QR (local generator) -->
+          <div v-if="qrDataUrl" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group overflow-hidden">
               <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
-              <img crossorigin="anonymous" :src="`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('attaqwa:member?id=' + user.membership_id)}&ecc=H&margin=20&color=000000&bgcolor=FFFFFF&format=png`" 
-                   alt="Member QR" 
+              <img :src="qrDataUrl"
+                   alt="Member QR"
                    class="w-full h-full rounded-xl relative z-10 shadow-sm" />
           </div>
           <div v-else class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
-             <div class="animate-pulse flex flex-col items-center">
-                <div class="w-12 h-12 bg-slate-200 rounded-full mb-2"></div>
-                <div class="h-2 w-24 bg-slate-200 rounded"></div>
-             </div>
+              <div class="animate-pulse flex flex-col items-center">
+                 <div class="w-12 h-12 bg-slate-200 rounded-full mb-2"></div>
+                 <div class="h-2 w-24 bg-slate-200 rounded"></div>
+              </div>
           </div>
 
            <div class="w-full space-y-4">
@@ -157,16 +157,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from '../http'
 import { useRouter } from 'vue-router'
 import getImageUrl from '../utils/image'
 import { Clipboard } from '@capacitor/clipboard'
+import QRCode from 'qrcode'
 
 const router = useRouter()
 const user = ref({})
 const isFlipped = ref(false)
 const cardRef = ref(null)
+const qrDataUrl = ref('')
 
 const load = async () => {
   try {
@@ -174,6 +176,26 @@ const load = async () => {
     user.value = data
   } catch (err) {
     console.error('Failed to load user info', err)
+  }
+}
+
+const generateQr = async () => {
+  try {
+    const id = user.value?.membership_id
+    if (!id) {
+      qrDataUrl.value = ''
+      return
+    }
+    const data = `attaqwa:member?id=${id}`
+    qrDataUrl.value = await QRCode.toDataURL(data, {
+      width: 600,
+      margin: 2,
+      errorCorrectionLevel: 'H',
+      color: { dark: '#000000', light: '#ffffff' }
+    })
+  } catch (e) {
+    console.error('QR generation failed', e)
+    qrDataUrl.value = ''
   }
 }
 
@@ -254,6 +276,10 @@ const downloadCard = async () => {
 
 onMounted(() => {
   load()
+})
+
+watch(() => user.value?.membership_id, () => {
+  generateQr()
 })
 </script>
 
