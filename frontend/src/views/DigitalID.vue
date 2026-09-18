@@ -148,15 +148,16 @@
       </button>
     </div>
 
-    <!-- Print layout: two sides on paper -->
+    <!-- Print layout: exact copy of card faces -->
     <div class="print-area" aria-hidden="true">
       <div class="print-grid">
         <!-- Front (print) -->
-        <div class="id-card-print">
-          <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
-          <div class="w-full h-full bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-[7mm] p-[6mm] border border-white/20 flex flex-col items-center justify-between overflow-hidden">
-            <div class="w-full flex flex-col items-center gap-2">
-              <div class="w-16 h-16 bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center">
+        <div class="id-card-print relative overflow-hidden">
+          <div class="w-full h-full bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-[2.5rem] p-8 border border-white/20 flex flex-col items-center justify-between overflow-hidden shadow-2xl">
+            <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
+            <div class="absolute -bottom-20 -right-20 w-60 h-60 bg-white/5 rounded-full"></div>
+            <div class="w-full flex flex-col items-center gap-2 relative z-10">
+              <div class="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-inner">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-10 h-10 text-emerald-300">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h3.75v3.75H5.25V7.5Z" />
                 </svg>
@@ -166,47 +167,75 @@
                 <p class="text-[8px] font-black text-emerald-300/80 tracking-[0.3em] uppercase mt-1">Cooperative Society</p>
               </div>
             </div>
-            <div>
-              <div class="w-28 h-28 rounded-[6mm] bg-emerald-900 border-4 border-white/20 p-1 shadow-2xl overflow-hidden">
-                <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" crossorigin="anonymous" class="w-full h-full object-cover rounded-[5mm]" />
-                <div v-else class="w-full h-full flex items-center justify-center text-4xl font-black text-emerald-700 bg-emerald-50">
+            <div class="relative z-10">
+              <div class="w-32 h-32 rounded-[2.5rem] bg-emerald-900 border-4 border-white/20 p-1 shadow-2xl relative overflow-hidden">
+                <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" crossorigin="anonymous" class="w-full h-full object-cover rounded-[2rem]" />
+                <div v-else class="w-full h-full flex items-center justify-center text-5xl font-black text-emerald-700 bg-emerald-50">
                   {{ (user.full_name || 'M')[0] }}
                 </div>
               </div>
-            </div>
-            <div class="w-full text-center space-y-1">
-              <h3 class="text-base font-black text-white uppercase truncate">{{ user.full_name }}</h3>
-              <p class="text-[10px] font-bold text-emerald-400 font-mono tracking-widest">{{ user.membership_id }}</p>
-              <div class="flex items-center justify-center gap-2">
-                <div class="px-2 py-0.5 bg-white/10 rounded-full border border-white/10 text-[8px] font-black text-white uppercase tracking-tighter">{{ user.branch_name || 'Global Branch' }}</div>
-                <div class="px-2 py-0.5 bg-emerald-500/20 rounded-full border border-emerald-500/20 text-[8px] font-black text-emerald-400 uppercase tracking-tighter">Official Member</div>
+              <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-2xl border-4 border-emerald-900 flex items-center justify-center text-white shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.498 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.307 4.49 4.49 0 0 1-1.307-3.497A4.49 4.49 0 0 1 2.25 12a4.49 4.49 0 0 1 1.549-3.397 4.491 4.491 0 0 1 1.307-3.498 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+                </svg>
               </div>
-              <div class="w-full flex items-center justify-between border-t border-white/10 pt-2">
-                <div class="flex flex-col text-left">
-                  <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Valid Thru</span>
-                  <span class="text-[9px] font-black text-white uppercase tracking-widest">PERMANENT</span>
+            </div>
+            <div class="w-full text-center space-y-2 relative z-10">
+              <div class="px-4">
+                <h3 class="text-xl font-black text-white uppercase truncate">{{ user.full_name }}</h3>
+                <p class="text-xs font-bold text-emerald-400 font-mono tracking-widest mt-1">{{ user.membership_id }}</p>
+              </div>
+              <div class="flex items-center justify-center gap-3">
+                <div class="px-3 py-1 bg-white/10 rounded-full border border-white/10 text-[9px] font-black text-white uppercase tracking-tighter backdrop-blur-sm">
+                  {{ user.branch_name || 'Global Branch' }}
                 </div>
-                <div class="flex flex-col items-end text-right">
-                  <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Verified Since</span>
-                  <span class="text-[9px] font-black text-white uppercase tracking-widest">{{ user.date_joined || '2024' }}</span>
+                <div class="px-3 py-1 bg-emerald-500/20 rounded-full border border-emerald-500/20 text-[9px] font-black text-emerald-400 uppercase tracking-tighter backdrop-blur-sm">
+                  Official Member
                 </div>
+              </div>
+            </div>
+            <div class="w-full flex items-center justify-between border-t border-white/10 pt-4 relative z-10">
+              <div class="flex flex-col">
+                <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Valid Thru</span>
+                <span class="text-[10px] font-black text-white uppercase tracking-widest">PERMANENT</span>
+              </div>
+              <div class="flex flex-col items-end">
+                <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Verified Since</span>
+                <span class="text-[10px] font-black text-white uppercase tracking-widest">{{ user.date_joined || '2024' }}</span>
               </div>
             </div>
           </div>
         </div>
         <!-- Back (print) -->
         <div class="id-card-print bg-white">
-          <div class="w-full h-full bg-white rounded-[7mm] p-[6mm] border border-slate-200 flex flex-col items-center justify-between">
-            <div class="mt-1 text-center">
+          <div class="w-full h-full bg-white rounded-[2.5rem] p-8 border border-slate-200 flex flex-col items-center justify-between shadow-2xl isolate">
+            <div class="absolute top-0 left-0 w-full h-8 bg-emerald-800 rounded-t-[2.5rem]"></div>
+            <div class="mt-4 text-center">
               <h4 class="text-slate-800 font-black text-xs uppercase tracking-widest">Attendance QR Code</h4>
+              <p class="text-[9px] text-slate-500 font-medium mt-1">Present this code for instant marking</p>
             </div>
-            <div class="w-full flex-1 flex items-center justify-center">
-              <div class="w-full h-full bg-white rounded-[5mm] p-[4mm] border-2 border-slate-200 flex items-center justify-center overflow-hidden">
-                <img v-if="qrDataUrl" :src="qrDataUrl" alt="Member QR" class="w-full h-full rounded-[3mm]" />
+            <div v-if="qrDataUrl" class="w-full aspect-square bg-white rounded-[2rem] p-6 border-2 border-slate-200 flex items-center justify-center relative group overflow-hidden">
+              <div class="absolute inset-0 bg-emerald-500/5 scale-0 group-hover:scale-100 transition-transform rounded-[2rem]"></div>
+              <img :src="qrDataUrl" alt="Member QR" class="w-full h-full rounded-xl relative z-10 shadow-sm" />
+            </div>
+            <div v-else class="w-full aspect-square bg-slate-50 rounded-[2rem] p-6 border-2 border-slate-100 flex items-center justify-center relative group">
+              <div class="animate-pulse flex flex-col items-center">
+                <div class="w-12 h-12 bg-slate-200 rounded-full mb-2"></div>
+                <div class="h-2 w-24 bg-slate-200 rounded"></div>
               </div>
             </div>
-            <div class="text-center">
-              <p class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Property of Attaqwa Cooperative</p>
+            <div class="w-full space-y-4">
+              <div class="flex items-center gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                  </svg>
+                </div>
+                <p class="text-[9px] font-bold text-emerald-800 leading-tight">Increase screen brightness to maximum for better scan reliability.</p>
+              </div>
+              <div class="text-center">
+                <p class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Property of Attaqwa Cooperative</p>
+              </div>
             </div>
           </div>
         </div>
