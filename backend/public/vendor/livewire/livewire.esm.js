@@ -8846,10 +8846,26 @@ async function sendRequest(pool) {
   } else {
     finishProfile({ content, failed: false });
   }
-  let { components: components2, assets } = JSON.parse(content);
+  // Defensively handle unexpected JSON to prevent calling .shift() on undefined
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (e) {
+    finishProfile({ content: "{}", failed: true });
+    handleFailure();
+    fail({ status: response.status, content, preventDefault: () => {} });
+    return;
+  }
+  let { components: components2, assets } = parsed;
+  if (!Array.isArray(components2)) {
+    finishProfile({ content: "{}", failed: true });
+    handleFailure();
+    fail({ status: response.status, content, preventDefault: () => {} });
+    return;
+  }
   await triggerAsync("payload.intercept", { components: components2, assets });
   await handleSuccess(components2);
-  succeed({ status: response.status, json: JSON.parse(content) });
+  succeed({ status: response.status, json: parsed });
 }
 function handlePageExpiry() {
   confirm("This page has expired.\nWould you like to refresh the page?") && window.location.reload();
