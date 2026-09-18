@@ -389,6 +389,7 @@ const printId = async () => {
 
 /* Print optimizations */
 @media print {
+  @page { size: A4 portrait; margin: 10mm; }
   .no-print { display: none !important; }
   .print-card { box-shadow: none !important; }
   .bg-slate-900 { background-color: #ffffff !important; }
@@ -398,17 +399,12 @@ const printId = async () => {
 .print-area { display: none; }
 @media print {
   .print-area { display: block !important; margin: 0 auto; }
-  .print-grid {
-    display: grid;
-    grid-template-rows: auto auto;
-    gap: 12mm;
-    justify-content: center;
-    align-content: start;
-    padding: 10mm;
-  }
+  .print-grid { display: block; }
   .id-card-print {
-    width: 85.6mm; /* CR80 width */
-    height: 54mm;  /* CR80 height */
+    /* Make each side fill most of an A4 page while preserving ID aspect ratio */
+    width: 180mm;
+    height: calc(180mm * 54 / 85.6);
+    margin: 0 auto;
     border-radius: 7mm;
     position: relative;
     -webkit-print-color-adjust: exact;
@@ -416,5 +412,7 @@ const printId = async () => {
     box-shadow: none !important;
     overflow: hidden;
   }
+  /* Put the back side on a new page */
+  .id-card-print + .id-card-print { break-before: page; page-break-before: always; }
 }
 </style>
