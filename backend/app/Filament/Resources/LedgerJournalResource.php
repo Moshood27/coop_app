@@ -4,12 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LedgerJournalResource\Pages;
 use App\Models\LedgerJournal;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Support\Accounting as AccountingSupport;
 
 class LedgerJournalResource extends Resource
 {
@@ -26,19 +28,25 @@ class LedgerJournalResource extends Resource
             ->schema([
                 Forms\Components\DatePicker::make('date')
                     ->required()
-                    ->default(now()),
+                    ->default(now())
+                    ->disabled(fn ($record) => $record && method_exists($record, 'isPosted') && $record->isPosted()),
                 Forms\Components\TextInput::make('reference')
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->disabled(fn ($record) => $record && method_exists($record, 'isPosted') && $record->isPosted()),
                 Forms\Components\Textarea::make('description')
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->disabled(fn ($record) => $record && method_exists($record, 'isPosted') && $record->isPosted()),
 
                 Forms\Components\Section::make('Entries')
                     ->schema([
                         Forms\Components\Repeater::make('entries')
                             ->relationship()
+                            ->disabled(fn ($record) => $record && method_exists($record, 'isPosted') && $record->isPosted())
                             ->schema([
                                 Forms\Components\Select::make('ledger_account_id')
-                                    ->relationship('account', 'name')
+                                    ->relationship('account', 'name', fn (Builder $query) => $query
+                                        ->doesntHave('children')
+                                        ->where('is_active', true))
                                     ->required()
                                     ->searchable()
                                     ->preload(),
@@ -52,6 +60,19 @@ class LedgerJournalResource extends Resource
                                     ->required(),
                                 Forms\Components\TextInput::make('description')
                                     ->maxLength(255),
+                                // Optional analytic dimensions (schema-aware)
+                                Forms\Components\TextInput::make('branch_id')
+                                    ->label('Branch ID')
+                                    ->numeric()
+                                    ->visible(fn () => AccountingSupport::columnExists('ledger_entries', 'branch_id')),
+                                Forms\Components\TextInput::make('project_id')
+                                    ->label('Project ID')
+                                    ->numeric()
+                                    ->visible(fn () => AccountingSupport::columnExists('ledger_entries', 'project_id')),
+                                Forms\Components\TextInput::make('fund_id')
+                                    ->label('Fund ID')
+                                    ->numeric()
+                                    ->visible(fn () => AccountingSupport::columnExists('ledger_entries', 'fund_id')),
                             ])
                             ->columns(4)
                             ->minItems(2)
@@ -65,6 +86,10 @@ class LedgerJournalResource extends Resource
         return $table
             ->defaultSort('date', 'desc')
             ->columns([
+                TextColumn::make('number')
+                    ->label('Number')
+                    ->visible(fn () => \App\Support\Accounting::columnExists('ledger_journals', 'number'))
+                    ->sortable(),
                 TextColumn::make('date')->date()->sortable(),
                 TextColumn::make('reference')->searchable(),
                 TextColumn::make('description')->limit(50)->searchable(),
@@ -72,6 +97,15 @@ class LedgerJournalResource extends Resource
                     ->sum('entries', 'debit')
                     ->money('ngn', true)
                     ->label('Total Debit'),
+                TextColumn::make('status_label')
+                    ->label('Status')
+                    ->state(fn (LedgerJournal $record) => $record->isPosted() ? 'Posted' : 'Draft')
+                    ->badge()
+                    ->colors([
+                        'success' => fn ($state) => $state === 'Posted',
+                        'warning' => fn ($state) => $state === 'Draft',
+                    ])
+                    ->toggleable(),
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->toggleable(),
@@ -90,7 +124,18 @@ class LedgerJournalResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (LedgerJournal $record) => !$record->isPosted()),
+                Tables\Actions\Action::make('post')
+                    ->label('Post')
+                    ->requiresConfirmation()
+                    ->icon('heroicon-o-check-circle')
+                    ->visible(fn (LedgerJournal $record) => !$record->isPosted() && (AccountingSupport::columnExists('ledger_journals','posted_at') || AccountingSupport::columnExists('ledger_journals','status')))
+                    ->action(function (LedgerJournal $record): void {
+                        app(\App\Services\LedgerService::class)->postJournal($record, auth()->id());
+                        // Optional numbering
+                        app(\App\Services\JournalNumberingService::class)->assignNumber($record);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

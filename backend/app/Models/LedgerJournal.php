@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Support\Accounting as AccountingSupport;
 
 class LedgerJournal extends Model
 {
@@ -51,5 +52,38 @@ class LedgerJournal extends Model
         $credits = $this->entries()->sum('credit');
 
         return round((float)$debits, 2) === round((float)$credits, 2);
+    }
+
+    /**
+     * Determine if the journal has been posted (immutable).
+     * This is schema-aware and returns false if no status columns exist.
+     */
+    public function isPosted(): bool
+    {
+        // Support either posted_at datetime or status column
+        if (AccountingSupport::columnExists('ledger_journals', 'posted_at')) {
+            return !empty($this->getAttribute('posted_at'));
+        }
+        if (AccountingSupport::columnExists('ledger_journals', 'status')) {
+            $status = strtolower((string) $this->getAttribute('status'));
+            return $status === 'posted' || $status === 'locked';
+        }
+        return false;
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (self $model) {
+            if ($model->exists && $model->getOriginal() && method_exists($model, 'isPosted') && $model->isPosted()) {
+                // Prevent editing posted journals at the application layer
+                throw new \RuntimeException('Posted journal entries cannot be modified. Create an adjustment journal instead.');
+            }
+        });
+
+        static::deleting(function (self $model) {
+            if (method_exists($model, 'isPosted') && $model->isPosted()) {
+                throw new \RuntimeException('Posted journal entries cannot be deleted. Create an adjustment journal instead.');
+            }
+        });
     }
 }

@@ -26,6 +26,10 @@ class LedgerEntry extends Model
         'debit',
         'credit',
         'description',
+        // Optional analytic dimensions (only populated when columns exist)
+        'branch_id',
+        'project_id',
+        'fund_id',
     ];
 
     protected $casts = [
