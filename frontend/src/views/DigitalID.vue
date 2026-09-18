@@ -17,8 +17,8 @@
       <div class="w-10"></div>
     </div>
 
-    <!-- The Card Container with Flip Effect -->
-    <div class="w-full max-w-[340px] perspective-1000">
+    <!-- The Card Container with Flip Effect (screen only) -->
+    <div class="w-full max-w-[340px] perspective-1000 no-print">
       <div ref="cardRef" class="relative w-full aspect-[2/3] transition-all duration-700 preserve-3d cursor-pointer shadow-2xl rounded-[2.5rem] print-card"
            :class="{ 'rotate-y-180': isFlipped }"
            @click.stop="isFlipped = !isFlipped">
@@ -137,21 +137,80 @@
        </p>
     </div>
 
-    <!-- Bottom Actions -->
-    <div class="fixed left-4 right-4 md:left-6 md:right-6 flex items-center justify-center gap-3 md:gap-4 z-50 no-print pointer-events-auto bottom-actions"
+    <!-- Bottom Action: Print only -->
+    <div class="fixed left-4 right-4 md:left-6 md:right-6 flex items-center justify-center z-50 no-print pointer-events-auto bottom-actions"
          style="touch-action: manipulation;">
-      <button @click="shareId" aria-label="Share Digital ID" role="button" class="flex-1 max-w-[180px] h-16 md:h-14 bg-white/15 hover:bg-white/20 rounded-2xl flex items-center justify-center gap-2 text-white text-[11px] md:text-[10px] font-black uppercase tracking-widest backdrop-blur-2xl border border-white/15 transition-all active:scale-95 pointer-events-auto drop-shadow-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+      <button @click="printId" aria-label="Print Digital ID" role="button" class="w-full max-w-[340px] h-16 md:h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[12px] md:text-[11px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95 pointer-events-auto drop-shadow-xl">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V9M6 15H5.25A2.25 2.25 0 0 1 3 12.75v-3A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v3A2.25 2.25 0 0 1 18.75 15H18m-12 0h12M6 15v4.5A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V15" />
           </svg>
-          Share ID
-       </button>
-      <button @click="downloadCard" aria-label="Save ID as Image" role="button" class="flex-1 max-w-[180px] h-16 md:h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-white text-[11px] md:text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all active:scale-95 pointer-events-auto drop-shadow-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-          </svg>
-          Save Image
-       </button>
+          Print ID Card
+      </button>
+    </div>
+
+    <!-- Print layout: two sides on paper -->
+    <div class="print-area" aria-hidden="true">
+      <div class="print-grid">
+        <!-- Front (print) -->
+        <div class="id-card-print">
+          <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
+          <div class="w-full h-full bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-[7mm] p-[6mm] border border-white/20 flex flex-col items-center justify-between overflow-hidden">
+            <div class="w-full flex flex-col items-center gap-2">
+              <div class="w-16 h-16 bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-10 h-10 text-emerald-300">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h3.75v3.75H5.25V7.5Z" />
+                </svg>
+              </div>
+              <div class="text-center">
+                <h2 class="text-lg font-black text-white tracking-tight uppercase leading-none">Attaqwa</h2>
+                <p class="text-[8px] font-black text-emerald-300/80 tracking-[0.3em] uppercase mt-1">Cooperative Society</p>
+              </div>
+            </div>
+            <div>
+              <div class="w-28 h-28 rounded-[6mm] bg-emerald-900 border-4 border-white/20 p-1 shadow-2xl overflow-hidden">
+                <img v-if="user.passport_url" :src="getImageUrl(user.passport_url)" crossorigin="anonymous" class="w-full h-full object-cover rounded-[5mm]" />
+                <div v-else class="w-full h-full flex items-center justify-center text-4xl font-black text-emerald-700 bg-emerald-50">
+                  {{ (user.full_name || 'M')[0] }}
+                </div>
+              </div>
+            </div>
+            <div class="w-full text-center space-y-1">
+              <h3 class="text-base font-black text-white uppercase truncate">{{ user.full_name }}</h3>
+              <p class="text-[10px] font-bold text-emerald-400 font-mono tracking-widest">{{ user.membership_id }}</p>
+              <div class="flex items-center justify-center gap-2">
+                <div class="px-2 py-0.5 bg-white/10 rounded-full border border-white/10 text-[8px] font-black text-white uppercase tracking-tighter">{{ user.branch_name || 'Global Branch' }}</div>
+                <div class="px-2 py-0.5 bg-emerald-500/20 rounded-full border border-emerald-500/20 text-[8px] font-black text-emerald-400 uppercase tracking-tighter">Official Member</div>
+              </div>
+              <div class="w-full flex items-center justify-between border-t border-white/10 pt-2">
+                <div class="flex flex-col text-left">
+                  <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Valid Thru</span>
+                  <span class="text-[9px] font-black text-white uppercase tracking-widest">PERMANENT</span>
+                </div>
+                <div class="flex flex-col items-end text-right">
+                  <span class="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest">Verified Since</span>
+                  <span class="text-[9px] font-black text-white uppercase tracking-widest">{{ user.date_joined || '2024' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Back (print) -->
+        <div class="id-card-print bg-white">
+          <div class="w-full h-full bg-white rounded-[7mm] p-[6mm] border border-slate-200 flex flex-col items-center justify-between">
+            <div class="mt-1 text-center">
+              <h4 class="text-slate-800 font-black text-xs uppercase tracking-widest">Attendance QR Code</h4>
+            </div>
+            <div class="w-full flex-1 flex items-center justify-center">
+              <div class="w-full h-full bg-white rounded-[5mm] p-[4mm] border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+                <img v-if="qrDataUrl" :src="qrDataUrl" alt="Member QR" class="w-full h-full rounded-[3mm]" />
+              </div>
+            </div>
+            <div class="text-center">
+              <p class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Property of Attaqwa Cooperative</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -284,6 +343,16 @@ onMounted(() => {
 watch(() => user.value?.membership_id, () => {
   generateQr()
 })
+
+const printId = async () => {
+  try {
+    // ensure QR is ready before printing
+    if (!qrDataUrl.value) await generateQr()
+    setTimeout(() => window.print(), 150)
+  } catch (e) {
+    window.print()
+  }
+}
 </script>
 
 <style scoped>
@@ -323,5 +392,29 @@ watch(() => user.value?.membership_id, () => {
   .no-print { display: none !important; }
   .print-card { box-shadow: none !important; }
   .bg-slate-900 { background-color: #ffffff !important; }
+}
+
+/* Print layout */
+.print-area { display: none; }
+@media print {
+  .print-area { display: block !important; margin: 0 auto; }
+  .print-grid {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 12mm;
+    justify-content: center;
+    align-content: start;
+    padding: 10mm;
+  }
+  .id-card-print {
+    width: 85.6mm; /* CR80 width */
+    height: 54mm;  /* CR80 height */
+    border-radius: 7mm;
+    position: relative;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+    overflow: hidden;
+  }
 }
 </style>
