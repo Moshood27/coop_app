@@ -41,6 +41,7 @@
     "html2canvas": "^1.4.1",
     "html-to-image": "^1.11.11",
     "html5-qrcode": "^2.3.8",
+    "qrcode": "^1.5.4",
     "laravel-echo": "^1.19.0",
     "patch-package": "^8.0.1",
     "pinia": "^3.0.4",

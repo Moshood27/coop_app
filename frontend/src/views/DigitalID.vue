@@ -232,7 +232,10 @@ const downloadCard = async () => {
       blob = await htmlToImage.toBlob(el, {
         backgroundColor: '#ffffff',
         pixelRatio: 2,
-        cacheBust: true
+        cacheBust: true,
+        // Avoid trying to inline remote webfonts (Google Fonts) which can
+        // throw SecurityError when accessing cross-origin CSSStyleSheet.
+        skipFonts: true
       })
     } catch (e) {
       console.warn('html-to-image failed, will try html2canvas', e)
