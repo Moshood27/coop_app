@@ -162,7 +162,7 @@ import axios from '../http'
 import { useRouter } from 'vue-router'
 import getImageUrl from '../utils/image'
 import { Clipboard } from '@capacitor/clipboard'
-import QRCode from 'qrcode'
+// Load QRCode library on demand to enable code-splitting and reduce initial chunk size
 
 const router = useRouter()
 const user = ref({})
@@ -187,6 +187,9 @@ const generateQr = async () => {
       return
     }
     const data = `attaqwa:member?id=${id}`
+    // Dynamic import to keep bundle lean; resolves build error if dependency wasn't preloaded
+    // Use CDN ESM build to avoid bundler resolution and keep dynamic loading
+    const QRCode = (await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm')).default
     qrDataUrl.value = await QRCode.toDataURL(data, {
       width: 600,
       margin: 2,

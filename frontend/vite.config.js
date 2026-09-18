@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [vue()],
     base: isMobile ? './' : '/app/',
-    build: { cssCodeSplit: false },
+    build: {
+      cssCodeSplit: false,
+      // Reduce noise from large vendor chunks; does not affect functionality
+      chunkSizeWarningLimit: 1200,
+    },
     server: {
       host: '0.0.0.0',
       port: 5174,
