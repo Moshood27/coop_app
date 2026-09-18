@@ -24,21 +24,6 @@ class LedgerAccount extends Model
         'is_active' => 'boolean',
     ];
 
-    public function hasChildren(): bool
-    {
-        // Efficient existence check
-        return $this->children()->exists();
-    }
-
-    public function isPostingAllowed(): bool
-    {
-        // Must be active and a leaf account
-        if ($this->is_active === false) {
-            return false;
-        }
-        return !$this->hasChildren();
-    }
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(LedgerAccount::class, 'parent_id');

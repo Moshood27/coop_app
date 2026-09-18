@@ -4464,28 +4464,10 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     } else {
       finishProfile({ content, failed: false });
     }
-    // Parse JSON and defensively guard against unexpected shapes to avoid
-    // "Cannot read properties of undefined (reading 'shift')" in RequestPool.succeed
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch (e) {
-      finishProfile({ content: "{}", failed: true });
-      handleFailure();
-      fail({ status: response.status, content, preventDefault: () => {} });
-      return;
-    }
-    let { components: components2, assets } = parsed;
-    // If the response doesn't contain the expected components array, treat as failure
-    if (!Array.isArray(components2)) {
-      finishProfile({ content: "{}", failed: true });
-      handleFailure();
-      fail({ status: response.status, content, preventDefault: () => {} });
-      return;
-    }
+    let { components: components2, assets } = JSON.parse(content);
     await triggerAsync("payload.intercept", { components: components2, assets });
     await handleSuccess(components2);
-    succeed({ status: response.status, json: parsed });
+    succeed({ status: response.status, json: JSON.parse(content) });
   }
   function handlePageExpiry() {
     confirm("This page has expired.\nWould you like to refresh the page?") && window.location.reload();

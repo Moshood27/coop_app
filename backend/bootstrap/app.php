@@ -35,9 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'bypass_cache' => \App\Http\Middleware\BypassCache::class,
         ]);
 
-        // Ensure Livewire/AJAX requests get JSON (prevents HTML redirects breaking JSON.parse)
-        $middleware->prependToGroup('web', [\App\Http\Middleware\ForceJsonForLivewire::class]);
-
         // Append security and cache headers to all web and API responses
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SecurityHeaders::class,
@@ -58,23 +55,4 @@ return Application::configure(basePath: dirname(__DIR__))
         if (class_exists(\Sentry\Laravel\Integration::class)) {
             \Sentry\Laravel\Integration::handles($exceptions);
         }
-
-        // Return JSON for common auth/CSRF issues when the request is Livewire/AJAX
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            $isAjax = $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest' || $request->headers->has('X-Livewire');
-            if ($isAjax) {
-                return response()->json([
-                    'message' => 'Unauthenticated',
-                ], 401);
-            }
-        });
-
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
-            $isAjax = $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest' || $request->headers->has('X-Livewire');
-            if ($isAjax) {
-                return response()->json([
-                    'message' => 'CSRF token mismatch or session expired',
-                ], 419);
-            }
-        });
     })->create();

@@ -1,76 +1,115 @@
- <?php
+<?php
 
- use Illuminate\Support\Facades\Route;
- use App\Http\Controllers\Api\AdminTakafulController;
- use App\Http\Controllers\Api\AdminArController;
- use App\Http\Controllers\Api\AdminApController;
- use App\Http\Controllers\Api\WebhookController;
- use App\Http\Controllers\Api\UssdController;
- use App\Http\Controllers\Api\NotificationsController;
- use App\Http\Controllers\Api\AuthController;
- use App\Http\Controllers\Api\TakafulController;
- use App\Http\Controllers\Api\TransparencyController;
- use App\Http\Controllers\Api\DashboardController;
- use App\Http\Controllers\Api\ProfileController;
- use App\Http\Controllers\Api\SecurityController;
- use App\Http\Controllers\Api\PaymentController;
- use App\Http\Controllers\Api\MerchantPayController;
- use App\Http\Controllers\Api\ProjectController;
- use App\Http\Controllers\Api\SavingsGroupController;
- use App\Http\Controllers\Api\PassbookController;
- use App\Http\Controllers\Api\AttendanceController;
- use App\Http\Controllers\Api\BiometricController;
- use App\Http\Controllers\Api\MeetingApologyController;
- use App\Http\Controllers\Api\ProductController;
- use App\Http\Controllers\Api\VendorController;
- use App\Http\Controllers\Api\VendorProductController;
- use App\Http\Controllers\Api\StoreOrderController;
- use App\Http\Controllers\Api\SavingsGoalController;
- use App\Http\Controllers\Api\LoanController;
- use App\Http\Controllers\Api\ScoreController;
- use App\Http\Controllers\Api\AgmController;
- use App\Http\Controllers\Api\ShariaBoardController;
- use App\Http\Controllers\Api\ProjectProposalController;
- use App\Http\Controllers\Api\GuarantorController;
- use App\Http\Controllers\Api\ReportsController;
- use App\Http\Controllers\Api\ExportController;
- use App\Http\Controllers\Api\GoldController;
- use App\Http\Controllers\Api\QardHasanController;
- use App\Http\Controllers\Api\AdminDashboardController;
- use App\Http\Controllers\Api\AdminReportsController;
- use App\Http\Controllers\Api\ImportController;
- use App\Http\Controllers\Api\AdminUtilityController;
- use App\Http\Controllers\Api\AdminVendorController;
- use App\Services\AccountingReportService;
- use App\Http\Controllers\Api\AdminAuthController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QardHasanController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PassbookController;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\LoanController;
+use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\AdminReportsController;
+use App\Http\Controllers\Api\AdminTakafulController;
+use App\Http\Controllers\Api\ImportController;
+use App\Http\Controllers\Api\AdminUtilityController;
+use App\Http\Controllers\Api\AdminProfileController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\AgmController;
+use App\Http\Controllers\Api\ProjectProposalController;
+use App\Http\Controllers\Api\ShariaBoardController;
+use App\Http\Controllers\Api\GuarantorController;
+use App\Http\Controllers\Api\ZakatController;
+use App\Http\Controllers\Api\SadaqahController;
+use App\Http\Controllers\Api\AdminProductController;
+use App\Http\Controllers\Api\AdminVendorController;
+use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\SecurityController;
+use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\MemberRegistrationController;
+use App\Http\Controllers\Api\NotificationsController;
+use App\Http\Controllers\Api\TakafulController;
+use App\Http\Controllers\Api\TransparencyController;
+use App\Http\Controllers\Api\MerchantPayController;
+use App\Http\Controllers\Api\WasiyyahController;
+use App\Http\Controllers\Api\JuniorCooperativeController;
+use App\Http\Controllers\Api\ScoreController;
+use App\Http\Controllers\Api\GoldController;
+use App\Http\Controllers\Api\SavingsGroupController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\BiometricController;
+use App\Http\Controllers\Api\MeetingApologyController;
+use App\Http\Controllers\Api\UssdController;
 
- Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
-     Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
+Route::get('/health', function () {
+    return response()
+        ->json(['status' => 'ok'])
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
+});
+
+// Public endpoints (rate limited)
+Route::middleware('throttle:api')->group(function () {
+    Route::get('/status', [AuthController::class, 'status']);
+    Route::get('/branches', [AuthController::class, 'branches']);
+
+    // Member self-registration (multi-step) endpoints
+    Route::post('/register/start', [MemberRegistrationController::class, 'start']);
+    Route::post('/register/upload', [MemberRegistrationController::class, 'upload']);
+    Route::post('/register/send-otps', [MemberRegistrationController::class, 'sendOtps']);
+    Route::post('/register/verify-email', [MemberRegistrationController::class, 'verifyEmail']);
+    Route::post('/register/verify-sms', [MemberRegistrationController::class, 'verifySms']);
+    Route::get('/register/status', [MemberRegistrationController::class, 'status']);
+    Route::post('/register/finalize', [MemberRegistrationController::class, 'finalize']);
+
+    // Public guarantor search (used during registration)
+    Route::get('/guarantor/search', [GuarantorController::class, 'search']);
+});
+// Login endpoints with stricter throttle
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+// Member password reset (email or SMS code)
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
+
+// Admin auth endpoints (Vue-based)
+Route::prefix('admin')->group(function () {
+    Route::post('/register', [AdminAuthController::class, 'register'])->middleware('throttle:login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/forgot-password', [AdminAuthController::class, 'forgotPassword'])->middleware('throttle:login');
+});
+
+// Admin: profile & push token endpoints (protected)
+Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->group(function () {
+    // Admin profile (separated from member profile)
+    Route::get('/profile', [AdminProfileController::class, 'show']);
+    Route::post('/profile/email', [AdminProfileController::class, 'updateEmail']);
+    Route::post('/profile/password', [AdminProfileController::class, 'updatePassword']);
+
+    // Push tokens (admins may also register their device tokens)
+    Route::post('/push/token', [ProfileController::class, 'savePushToken']);
+    Route::post('/fcm-token', [ProfileController::class, 'savePushToken']);
+
+    // Attendance QR (for admins to show on screen)
+    Route::get('/meetings/{meeting}/attendance-qr-payload', [AttendanceController::class, 'getAttendanceQrPayload']);
+
+    // Biometric Identification (for station)
+    Route::post('/biometrics/identify', [BiometricController::class, 'identify']);
+
+
+    // Takaful (Mutual Protection Pool) admin endpoints
+    Route::get('/takaful/summary', [AdminTakafulController::class, 'summary']);
+    Route::get('/takaful/ledger', [AdminTakafulController::class, 'ledger']);
+    // Exports
+    Route::get('/takaful/export/ledger.csv', [AdminTakafulController::class, 'exportLedgerCsv']);
+    Route::get('/takaful/export/ledger.pdf', [AdminTakafulController::class, 'exportLedgerPdf']);
+    Route::get('/takaful/export/summary.csv', [AdminTakafulController::class, 'exportSummaryCsv']);
+    Route::get('/takaful/export/summary.pdf', [AdminTakafulController::class, 'exportSummaryPdf']);
+    // Manual batch charge and policy actions
+    Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
     Route::post('/takaful/mark-deceased', [AdminTakafulController::class, 'markDeceased']);
     Route::post('/takaful/mark-major-loss', [AdminTakafulController::class, 'markMajorLoss']);
-
-    // Accounts Receivable / Accounts Payable (conditionally enabled)
-    if (config('accounting.features.ar_ap')) {
-        // AR - Customer Invoices & Receipts
-        Route::get('/ar/invoices', [AdminArController::class, 'invoices']);
-        Route::get('/ar/invoices/{id}', [AdminArController::class, 'showInvoice']);
-        Route::post('/ar/invoices', [AdminArController::class, 'createInvoice']);
-        Route::post('/ar/invoices/{id}', [AdminArController::class, 'updateInvoice']);
-        Route::post('/ar/invoices/{id}/post', [AdminArController::class, 'postInvoice']);
-        Route::get('/ar/receipts', [AdminArController::class, 'receipts']);
-        Route::post('/ar/invoices/{id}/receive', [AdminArController::class, 'receivePayment']);
-        Route::post('/ar/invoices/{id}/void', [AdminArController::class, 'voidInvoice']);
-
-        // AP - Vendor Bills & Payments
-        Route::get('/ap/bills', [AdminApController::class, 'bills']);
-        Route::get('/ap/bills/{id}', [AdminApController::class, 'showBill']);
-        Route::post('/ap/bills', [AdminApController::class, 'createBill']);
-        Route::post('/ap/bills/{id}', [AdminApController::class, 'updateBill']);
-        Route::post('/ap/bills/{id}/post', [AdminApController::class, 'postBill']);
-        Route::get('/ap/payments', [AdminApController::class, 'payments']);
-        Route::post('/ap/bills/{id}/pay', [AdminApController::class, 'payBill']);
-        Route::post('/ap/bills/{id}/void', [AdminApController::class, 'voidBill']);
-    }
 });
 
 // Webhook (public, signature-verified inside controller)
@@ -84,18 +123,6 @@ Route::post('/ussd/callback', [UssdController::class, 'handleCallback']);
 Route::match(['get', 'post'], '/vtu/webhook', [\App\Http\Controllers\Api\UtilityController::class, 'handleWebhook']);
 // Alias for ClubKonnect/Nellobytes callback URL
 Route::match(['get', 'post'], '/vtu/callback', [\App\Http\Controllers\Api\UtilityController::class, 'handleWebhook']);
-
-// Public authentication & meta endpoints (used by frontend before login)
-Route::get('/status', [AuthController::class, 'status']);
-Route::get('/branches', [AuthController::class, 'branches']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-
-// Admin mobile portal auth (token-based, separate from Filament panel)
-Route::post('/admin/login', [AdminAuthController::class, 'login']);
-Route::post('/admin/register', [AdminAuthController::class, 'register']);
-Route::post('/admin/forgot-password', [AdminAuthController::class, 'forgotPassword']);
 
 // Protected endpoints (rate limited)
 Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(function () {
@@ -505,21 +532,3 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/produc
     Route::post('/{id}/approve', [AdminProductController::class, 'approve']);
     Route::post('/{id}/reject', [AdminProductController::class, 'reject']);
 });
-
-
-    // Accounting AR/AP Aging (conditionally register)
-    if (config('accounting.features.ar_ap')) {
-        Route::get('/aging/receivables', function () {
-            /** @var AccountingReportService $svc */
-            $svc = app(AccountingReportService::class);
-            $asOf = request()->query('as_of');
-            return response()->json($svc->buildReceivablesAging($asOf));
-        });
-
-        Route::get('/aging/payables', function () {
-            /** @var AccountingReportService $svc */
-            $svc = app(AccountingReportService::class);
-            $asOf = request()->query('as_of');
-            return response()->json($svc->buildPayablesAging($asOf));
-        });
-    }

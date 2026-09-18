@@ -6,8 +6,6 @@ use App\Models\LedgerJournal;
 use App\Models\LedgerAccount;
 use Illuminate\Support\Facades\DB;
 use Exception;
-use App\Services\FiscalPeriodService;
-use App\Support\Accounting as AccountingSupport;
 
 class LedgerService
 {
@@ -22,29 +20,6 @@ class LedgerService
     public function record(array $data, array $entries): LedgerJournal
     {
         return DB::transaction(function () use ($data, $entries) {
-            // Enforce posting period if enabled and schema exists
-            if (AccountingSupport::guard('enforce_open_period')) {
-                try {
-                    app(FiscalPeriodService::class)->assertDateInOpenPeriod($data['date'] ?? now());
-                } catch (\Throwable $e) {
-                    throw new Exception($e->getMessage());
-                }
-            }
-
-            // Optionally prevent posting to parent/inactive accounts at service layer
-            if (AccountingSupport::guard('prevent_parent_posting')) {
-                foreach ($entries as $entryData) {
-                    if (!empty($entryData['ledger_account_id'])) {
-                        $acc = LedgerAccount::find($entryData['ledger_account_id']);
-                        if (!$acc) {
-                            throw new Exception("Ledger account not found: ID {$entryData['ledger_account_id']}");
-                        }
-                        if (!$acc->isPostingAllowed()) {
-                            throw new Exception("Posting not allowed to account '{$acc->name}' (code {$acc->code}). Use a leaf active account.");
-                        }
-                    }
-                }
-            }
             $journal = LedgerJournal::create([
                 'date' => $data['date'] ?? now(),
                 'reference' => $data['reference'] ?? null,
@@ -53,24 +28,12 @@ class LedgerService
             ]);
 
             foreach ($entries as $entryData) {
-                // Optional analytic dimensions (schema-aware)
-                $optional = [];
-                if (AccountingSupport::columnExists('ledger_entries', 'branch_id') && array_key_exists('branch_id', $entryData)) {
-                    $optional['branch_id'] = $entryData['branch_id'];
-                }
-                if (AccountingSupport::columnExists('ledger_entries', 'project_id') && array_key_exists('project_id', $entryData)) {
-                    $optional['project_id'] = $entryData['project_id'];
-                }
-                if (AccountingSupport::columnExists('ledger_entries', 'fund_id') && array_key_exists('fund_id', $entryData)) {
-                    $optional['fund_id'] = $entryData['fund_id'];
-                }
-
-                $journal->entries()->create(array_filter([
+                $journal->entries()->create([
                     'ledger_account_id' => $entryData['ledger_account_id'],
                     'debit' => $entryData['debit'] ?? 0,
                     'credit' => $entryData['credit'] ?? 0,
                     'description' => $entryData['description'] ?? null,
-                ]) + $optional);
+                ]);
             }
 
             if (!$journal->isBalanced()) {
@@ -78,71 +41,6 @@ class LedgerService
             }
 
             return $journal;
-        });
-    }
-
-    /**
-     * Convenience helper to record a simple two-line journal (DR/CR) for a single amount.
-     * This is schema-aware and enforces the same guards as record().
-     */
-    public function recordSimple(array $data, int $debitAccountId, int $creditAccountId, float $amount, array $options = []): LedgerJournal
-    {
-        $amount = round((float) $amount, 2);
-        if ($amount <= 0) {
-            throw new Exception('Amount must be greater than zero.');
-        }
-
-        $entries = [
-            array_merge([
-                'ledger_account_id' => $debitAccountId,
-                'debit' => $amount,
-                'credit' => 0,
-                'description' => $options['debit_description'] ?? null,
-            ], $options['debit_dimensions'] ?? []),
-            array_merge([
-                'ledger_account_id' => $creditAccountId,
-                'debit' => 0,
-                'credit' => $amount,
-                'description' => $options['credit_description'] ?? null,
-            ], $options['credit_dimensions'] ?? []),
-        ];
-
-        return $this->record($data, $entries);
-    }
-
-    /**
-     * Mark a journal as posted (immutable), if supported by schema.
-     * Validates balance before posting.
-     */
-    public function postJournal(LedgerJournal $journal, ?int $postedBy = null): LedgerJournal
-    {
-        if (!$journal->isBalanced()) {
-            throw new Exception('Cannot post an unbalanced journal.');
-        }
-
-        if (!AccountingSupport::columnExists('ledger_journals', 'posted_at') && !AccountingSupport::columnExists('ledger_journals', 'status')) {
-            // Nothing to persist; treat as no-op
-            return $journal;
-        }
-
-        return DB::transaction(function () use ($journal, $postedBy) {
-            $payload = [];
-            if (AccountingSupport::columnExists('ledger_journals', 'posted_at')) {
-                $payload['posted_at'] = now();
-            }
-            if (AccountingSupport::columnExists('ledger_journals', 'posted_by') && $postedBy) {
-                $payload['posted_by'] = $postedBy;
-            }
-            if (AccountingSupport::columnExists('ledger_journals', 'status')) {
-                $payload['status'] = 'posted';
-            }
-
-            if (!empty($payload)) {
-                $journal->fill($payload);
-                $journal->saveQuietly();
-            }
-
-            return $journal->fresh();
         });
     }
 
