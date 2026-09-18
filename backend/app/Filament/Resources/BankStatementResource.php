@@ -7,7 +7,7 @@ use App\Models\BankAccount;
 use App\Models\BankStatement;
 use App\Services\BankReconciliationService;
 use Filament\Forms;
-use Filament\Resources\Form;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
