@@ -1,25 +1,76 @@
 <template>
-  <div class="min-h-screen auth-bg relative flex items-center justify-center p-4 overflow-hidden">
+  <div class="min-h-screen auth-bg relative flex items-center justify-center p-4 lg:p-8 overflow-hidden">
     <!-- Decorative fintech gradient blobs -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
       <div class="absolute -top-24 -right-20 w-72 h-72 bg-gradient-to-br from-emerald-400/25 to-sky-400/25 rounded-full blur-3xl"></div>
       <div class="absolute -bottom-28 -left-16 w-80 h-80 bg-gradient-to-tr from-emerald-300/20 to-indigo-300/20 rounded-full blur-3xl"></div>
     </div>
-    <div class="w-full max-w-md relative">
-      <!-- Background glow effect -->
-      <div aria-hidden="true" class="pointer-events-none absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50"></div>
+    <!-- Responsive container: single column on mobile, two columns on large screens -->
+    <div class="w-full max-w-5xl relative grid lg:grid-cols-2 gap-6 lg:gap-10 items-stretch">
+      <!-- Desktop-only left panel: brand + highlights (hidden on small screens) -->
+      <aside class="hidden lg:flex flex-col justify-between rounded-[2rem] p-10 bg-white/60 backdrop-blur-xl border border-white/70 shadow-xl">
+        <div>
+          <div class="flex items-center gap-4 mb-8">
+            <img :src="brand.logo" :alt="brand.name" class="h-12 w-auto drop-shadow-sm" />
+            <div>
+              <p class="text-xs font-bold tracking-[0.2em] text-emerald-800 uppercase opacity-80">{{ brand.name }}</p>
+              <h2 class="text-2xl font-extrabold text-slate-900 mt-1">Member Portal</h2>
+            </div>
+          </div>
 
-      <div class="card card-elevated relative overflow-hidden p-8 sm:p-10 bg-white/90 backdrop-blur-2xl border border-white/80 shadow-2xl rounded-[2rem]">
+          <ul class="space-y-5 text-slate-700">
+            <li class="flex items-start gap-3">
+              <span class="shrink-0 mt-0.5 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M9 12.75L11.25 15 15 9.75"/></svg>
+              </span>
+              <div>
+                <p class="font-semibold">Track savings and loans</p>
+                <p class="text-sm text-slate-500">View balances, statements and recent activity in real-time.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="shrink-0 mt-0.5 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M9 12.75L11.25 15 15 9.75"/></svg>
+              </span>
+              <div>
+                <p class="font-semibold">Make secure requests</p>
+                <p class="text-sm text-slate-500">Easily apply for withdrawals and loans from your dashboard.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="shrink-0 mt-0.5 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M9 12.75L11.25 15 15 9.75"/></svg>
+              </span>
+              <div>
+                <p class="font-semibold">Biometric quick login</p>
+                <p class="text-sm text-slate-500">Enable Face ID or fingerprint for faster, safer access.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-10 text-sm text-slate-500">
+          <p>
+            Need help? <button @click="showSupportModal = true" class="font-bold text-emerald-700 hover:text-emerald-800">Contact Support</button>
+          </p>
+        </div>
+      </aside>
+      <!-- Right column wrapper -->
+      <div class="relative">
+        <!-- Background glow effect (scoped to right panel only) -->
+        <div aria-hidden="true" class="pointer-events-none absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50"></div>
+
+        <!-- Right panel: login card -->
+        <div class="card card-elevated relative overflow-hidden p-8 sm:p-10 bg-white/90 backdrop-blur-2xl border border-white/80 shadow-2xl rounded-[2rem]">
         <!-- Top accent gradient line -->
         <div aria-hidden="true" class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-400 opacity-80"></div>
 
-        <div class="flex flex-col items-center text-center mb-8">
+        <div class="flex flex-col items-center text-center mb-8 lg:mb-10">
           <div class="mb-4 transform hover:scale-105 transition-transform duration-300">
             <img :src="brand.logo" :alt="brand.name" class="h-20 sm:h-24 w-auto drop-shadow-sm" />
           </div>
-<!--          <p class="text-[10px] font-bold tracking-[0.2em] text-emerald-800 uppercase opacity-80 mb-1">{{ brand.name }}</p>-->
-          <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Assalamu Alaikum</h1>
-          <p class="text-slate-500 text-sm mt-2 font-medium">Securely access your membership account</p>
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Assalamu Alaikum</h1>
+          <p class="text-slate-500 text-sm lg:text-base mt-2 font-medium">Securely access your membership account</p>
         </div>
 
         <div class="space-y-6">
@@ -103,36 +154,38 @@
           <p v-if="error" class="text-center p-3 bg-rose-50 rounded-xl text-rose-600 text-sm font-medium animate-pulse">{{ error }}</p>
         </div>
 
-        <p class="mt-8 text-[12px] text-center text-slate-400 leading-relaxed px-4">
+        <p class="mt-8 text-[12px] lg:text-[13px] text-center text-slate-400 leading-relaxed px-4">
           By signing in you agree to our
           <router-link to="/policy" class="text-emerald-700 font-bold hover:underline">Terms</router-link>
           and
           <router-link to="/privacy" class="text-emerald-700 font-bold hover:underline">Privacy Policy</router-link>.
         </p>
-      </div>
+        </div>
 
-      <div class="mt-8 text-center text-sm text-slate-500 space-y-3 font-medium relative">
-        <p>
-          <router-link to="/forgot" class="text-emerald-700 font-bold hover:text-emerald-800 flex items-center justify-center gap-1">
-            <span>Forgot password?</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </router-link>
-        </p>
-        <div class="w-12 h-px bg-slate-200 mx-auto"></div>
-        <p>New to the Cooperative?
-          <router-link to="/register" class="text-emerald-700 font-bold hover:text-emerald-800 ml-1">Create membership</router-link>
-        </p>
-        <div class="px-6 py-4 bg-emerald-50/40 rounded-2xl border border-emerald-100/40 text-slate-600 text-[13px] leading-relaxed max-w-[280px] mx-auto">
-          Finding it difficult to sign in or want to know more about our Cooperative?
-          <br />
-          <button @click="showSupportModal = true" class="text-emerald-700 font-bold hover:text-emerald-800 inline-flex items-center justify-center gap-1 mt-2 w-full">
-            <span>Contact Support</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-          </button>
+        <!-- Secondary links below the form (right panel only) -->
+        <div class="mt-6 lg:mt-4 text-center text-sm text-slate-500 space-y-3 font-medium relative">
+          <p>
+            <router-link to="/forgot" class="text-emerald-700 font-bold hover:text-emerald-800 flex items-center justify-center gap-1">
+              <span>Forgot password?</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </router-link>
+          </p>
+          <div class="w-12 h-px bg-slate-200 mx-auto"></div>
+          <p>New to the Cooperative?
+            <router-link to="/register" class="text-emerald-700 font-bold hover:text-emerald-800 ml-1">Create membership</router-link>
+          </p>
+          <div class="px-6 py-4 bg-emerald-50/40 rounded-2xl border border-emerald-100/40 text-slate-600 text-[13px] leading-relaxed max-w-[280px] mx-auto">
+            Finding it difficult to sign in or want to know more about our Cooperative?
+            <br />
+            <button @click="showSupportModal = true" class="text-emerald-700 font-bold hover:text-emerald-800 inline-flex items-center justify-center gap-1 mt-2 w-full">
+              <span>Contact Support</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
