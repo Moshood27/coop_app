@@ -74,6 +74,11 @@ const AdminPassbookManagement = () => import('../views/admin/AdminPassbookManage
 const AdminWalletManagement = () => import('../views/admin/AdminWalletManagement.vue')
 const AdminLoanManagement = () => import('../views/admin/AdminLoanManagement.vue')
 const AdminFineManagement = () => import('../views/admin/AdminFineManagement.vue')
+// Accounting (new)
+const AdminBankReconciliation = () => import('../views/admin/AdminBankReconciliation.vue')
+const AdminFixedAssets = () => import('../views/admin/AdminFixedAssets.vue')
+const AdminBranchTrialBalance = () => import('../views/admin/AdminBranchTrialBalance.vue')
+const AdminAccountingOps = () => import('../views/admin/AdminAccountingOps.vue')
 
 const routes = [
   { path: '/', name: 'landing', component: Landing, meta: { guest: true, skipOnboarding: true } },
@@ -164,6 +169,11 @@ const routes = [
   { path: '/admin/members/:id/wallet', name: 'admin.members.wallet', component: AdminWalletManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/loans', name: 'admin.members.loans', component: AdminLoanManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/fines', name: 'admin.members.fines', component: AdminFineManagement, meta: { requiresAdmin: true } },
+  // Accounting routes (admin)
+  { path: '/admin/accounting/bank-reconciliation', name: 'admin.accounting.bank', component: AdminBankReconciliation, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/fixed-assets', name: 'admin.accounting.assets', component: AdminFixedAssets, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/branch-trial-balance', name: 'admin.accounting.branch_tb', component: AdminBranchTrialBalance, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/ops', name: 'admin.accounting.ops', component: AdminAccountingOps, meta: { requiresAdmin: true } },
   { path: '/admin', redirect: '/admin/portal' },
 ]
 

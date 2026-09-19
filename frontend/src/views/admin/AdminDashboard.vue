@@ -157,6 +157,35 @@
             <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Imports</span>
           </button>
 
+          <!-- Accounting Modules -->
+          <button @click="$router.push('/admin/accounting/bank-reconciliation')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
+              <span class="i-mdi-bank-outline"></span>
+            </div>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Bank Reconciliation</span>
+          </button>
+
+          <button @click="$router.push('/admin/accounting/fixed-assets')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
+              <span class="i-mdi-factory"></span>
+            </div>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Fixed Assets</span>
+          </button>
+
+          <button @click="$router.push('/admin/accounting/branch-trial-balance')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+            <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
+              <span class="i-mdi-scale-balance"></span>
+            </div>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Branch Trial Balance</span>
+          </button>
+
+          <button @click="$router.push('/admin/accounting/ops')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+            <div class="w-14 h-14 bg-yellow-50 text-yellow-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
+              <span class="i-mdi-cog-refresh-outline"></span>
+            </div>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Accounting Ops</span>
+          </button>
+
           <button @click="openFilament('')" class="bg-slate-800 p-6 rounded-[2.5rem] shadow-xl flex flex-col items-center gap-3 active:scale-95 transition-all">
             <div class="w-14 h-14 bg-white/10 text-white rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-monitor-dashboard"></span>

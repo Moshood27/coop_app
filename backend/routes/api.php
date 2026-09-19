@@ -42,6 +42,19 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\BiometricController;
 use App\Http\Controllers\Api\MeetingApologyController;
 use App\Http\Controllers\Api\UssdController;
+use App\Http\Controllers\Api\BankReconciliationController;
+use App\Http\Controllers\Api\FixedAssetsController;
+use App\Http\Controllers\Api\BranchReportsController;
+use App\Http\Controllers\Api\PeriodsController;
+use App\Http\Controllers\Api\JournalsAdminController;
+use App\Http\Controllers\Api\RecurringJournalsController;
+use App\Http\Controllers\Api\GeneralLedgerController;
+use App\Http\Controllers\Api\TaxAdminController;
+use App\Http\Controllers\Api\LedgerAttachmentsController;
+use App\Http\Controllers\Api\AccountingOpsController;
+use App\Http\Controllers\Api\ReportExportController;
+use App\Http\Controllers\Api\AgingReportsController;
+use App\Http\Controllers\Api\CurrencyAdminController;
 
 Route::get('/health', function () {
     return response()
@@ -110,6 +123,77 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->gro
     Route::post('/takaful/charge', [AdminTakafulController::class, 'charge']);
     Route::post('/takaful/mark-deceased', [AdminTakafulController::class, 'markDeceased']);
     Route::post('/takaful/mark-major-loss', [AdminTakafulController::class, 'markMajorLoss']);
+
+    // Accounting (admin-only)
+    Route::prefix('accounting')->group(function () {
+        // Lookups
+        Route::get('/bank-accounts', [BankReconciliationController::class, 'listBankAccounts']);
+        // Bank Reconciliation
+        Route::post('/bank-statements', [BankReconciliationController::class, 'createStatement']);
+        Route::post('/bank-statements/{id}/import-lines', [BankReconciliationController::class, 'importLines']);
+        Route::post('/bank-statements/{id}/auto-match', [BankReconciliationController::class, 'autoMatch']);
+        Route::post('/reconciliations/start', [BankReconciliationController::class, 'startReconciliation']);
+        Route::post('/reconciliations/{id}/finalize', [BankReconciliationController::class, 'finalize']);
+
+        // Fixed Assets
+        Route::post('/assets/categories', [FixedAssetsController::class, 'createCategory']);
+        Route::post('/assets', [FixedAssetsController::class, 'createAsset']);
+        Route::post('/assets/depreciations/{id}/post', [FixedAssetsController::class, 'postDepreciation']);
+
+        // Branch Reports
+        Route::get('/branches/{branchId}/trial-balance', [BranchReportsController::class, 'trialBalance']);
+
+        // Fiscal Periods
+        Route::get('/periods', [PeriodsController::class, 'index']);
+        Route::post('/periods', [PeriodsController::class, 'store']);
+        Route::post('/periods/{id}/close', [PeriodsController::class, 'close']);
+        Route::post('/periods/{id}/open', [PeriodsController::class, 'open']);
+
+        // Journal Approvals (maker-checker)
+        Route::post('/journals/{id}/submit', [JournalsAdminController::class, 'submit']);
+        Route::post('/journals/{id}/approve', [JournalsAdminController::class, 'approve']);
+        Route::post('/journals/{id}/reject', [JournalsAdminController::class, 'reject']);
+
+        // Recurring Journals
+        Route::get('/recurring-journals', [RecurringJournalsController::class, 'index']);
+        Route::post('/recurring-journals', [RecurringJournalsController::class, 'store']);
+        Route::post('/recurring-journals/{id}/run-now', [RecurringJournalsController::class, 'runNow']);
+
+        // General Ledger (per account)
+        Route::get('/gl/{accountId}', [GeneralLedgerController::class, 'show']);
+
+        // Tax / VAT (guarded pre-migration)
+        Route::get('/tax/rates', [TaxAdminController::class, 'listRates']);
+        Route::post('/tax/rates', [TaxAdminController::class, 'createRate']);
+        Route::put('/tax/rates/{id}', [TaxAdminController::class, 'updateRate']);
+        Route::delete('/tax/rates/{id}', [TaxAdminController::class, 'deleteRate']);
+        Route::post('/tax/products/{productId}/rate', [TaxAdminController::class, 'mapProductRate']);
+        Route::post('/tax/settlements/run', [TaxAdminController::class, 'runSettlement']);
+
+        // Journal Attachments (guarded pre-migration)
+        Route::get('/journals/{journalId}/attachments', [LedgerAttachmentsController::class, 'index']);
+        Route::post('/journals/{journalId}/attachments', [LedgerAttachmentsController::class, 'store']);
+        Route::delete('/journals/{journalId}/attachments/{attachmentId}', [LedgerAttachmentsController::class, 'destroy']);
+
+        // Ops: Year-End Close, Auto-Reverse, Monthly Balances, FX Revaluation (guarded)
+        Route::post('/ops/year-end-close', [AccountingOpsController::class, 'yearEndClose']);
+        Route::post('/ops/auto-reverse', [AccountingOpsController::class, 'autoReverse']);
+        Route::post('/ops/rebuild-monthly', [AccountingOpsController::class, 'rebuildMonthly']);
+        Route::post('/ops/fx/revalue', [AccountingOpsController::class, 'fxRevalue']);
+
+        // FX realized difference posting
+        Route::post('/fx/realized', [CurrencyAdminController::class, 'realized']);
+
+        // CSV exports & comparative
+        Route::get('/reports/trial-balance.csv', [ReportExportController::class, 'trialBalanceCsv']);
+        Route::get('/reports/income-expenditure.csv', [ReportExportController::class, 'incomeExpenditureCsv']);
+        Route::get('/reports/balance-sheet.csv', [ReportExportController::class, 'balanceSheetCsv']);
+        Route::get('/reports/cash-flows.csv', [ReportExportController::class, 'cashFlowsCsv']);
+        Route::get('/reports/comparative', [ReportExportController::class, 'comparative']);
+
+        // AR/AP Aging (JSON or CSV via ?format=csv) – guarded pre-migration
+        Route::get('/reports/aging', [AgingReportsController::class, 'index']);
+    });
 });
 
 // Webhook (public, signature-verified inside controller)

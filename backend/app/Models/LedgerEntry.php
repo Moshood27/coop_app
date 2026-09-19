@@ -26,6 +26,7 @@ class LedgerEntry extends Model
         'debit',
         'credit',
         'description',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -41,5 +42,10 @@ class LedgerEntry extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(LedgerAccount::class, 'ledger_account_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 }

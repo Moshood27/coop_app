@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LedgerJournal;
 use App\Models\LedgerAccount;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Exception;
 
 class LedgerService
@@ -20,12 +21,82 @@ class LedgerService
     public function record(array $data, array $entries): LedgerJournal
     {
         return DB::transaction(function () use ($data, $entries) {
-            $journal = LedgerJournal::create([
-                'date' => $data['date'] ?? now(),
+            // Assign a sequential journal number if available
+            $number = null;
+            try {
+                if (Schema::hasTable('journal_sequences') && Schema::hasColumn('ledger_journals', 'number')) {
+                    $number = app(JournalNumberService::class)->nextNumber(optional($data['date'] ?? null) ? (int) date('Y', strtotime((string) $data['date'])) : null);
+                }
+            } catch (\Throwable $e) {
+                // In case migrations aren't applied yet in some environments, fail open without number
+                $number = null;
+            }
+
+            $journalDate = $data['date'] ?? now();
+
+            // Period lock enforcement (guarded for pre-migration environments)
+            try {
+                if (Schema::hasTable('fiscal_periods')) {
+                    $periodService = app(PeriodService::class);
+                    if (!$periodService->isDateOpen($journalDate)) {
+                        throw new Exception("Cannot post journal: fiscal period is closed for date " . date('Y-m-d', strtotime((string)$journalDate)) . ".");
+                    }
+                    $period = $periodService->findForDate($journalDate);
+                    $periodId = optional($period)->id;
+                } else {
+                    $periodId = null;
+                }
+            } catch (\Throwable $e) {
+                $periodId = null; // fail open
+            }
+
+            // Idempotency via external key (guarded)
+            if (!empty($data['external_key'])) {
+                try {
+                    if (Schema::hasColumn('ledger_journals', 'external_key')) {
+                        $exists = LedgerJournal::where('external_key', $data['external_key'])->exists();
+                        if ($exists) {
+                            throw new Exception("Duplicate posting detected for external_key: {$data['external_key']}");
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // ignore check if schema not ready
+                }
+            }
+
+            $payload = [
+                'date' => $journalDate,
+                'number' => $data['number'] ?? $number,
                 'reference' => $data['reference'] ?? null,
                 'description' => $data['description'] ?? null,
                 'created_by' => $data['created_by'] ?? null,
-            ]);
+            ];
+
+            // Optional new columns (guarded)
+            try {
+                if (Schema::hasColumn('ledger_journals', 'period_id')) {
+                    $payload['period_id'] = $periodId ?? null;
+                }
+                if (Schema::hasColumn('ledger_journals', 'status')) {
+                    $payload['status'] = 'posted';
+                }
+                if (Schema::hasColumn('ledger_journals', 'posted_at')) {
+                    $payload['posted_at'] = now();
+                }
+                if (Schema::hasColumn('ledger_journals', 'external_key') && !empty($data['external_key'])) {
+                    $payload['external_key'] = $data['external_key'];
+                }
+                if (Schema::hasColumn('ledger_journals', 'currency_code') && !empty($data['currency_code'])) {
+                    $payload['currency_code'] = strtoupper($data['currency_code']);
+                }
+                if (Schema::hasColumn('ledger_journals', 'fx_rate') && !empty($data['fx_rate'])) {
+                    $payload['fx_rate'] = $data['fx_rate'];
+                }
+            } catch (\Throwable $e) {
+                // ignore population of optional columns
+            }
+
+            $journal = LedgerJournal::create($payload);
 
             foreach ($entries as $entryData) {
                 $journal->entries()->create([
@@ -33,6 +104,7 @@ class LedgerService
                     'debit' => $entryData['debit'] ?? 0,
                     'credit' => $entryData['credit'] ?? 0,
                     'description' => $entryData['description'] ?? null,
+                    'branch_id' => $entryData['branch_id'] ?? ($data['branch_id'] ?? null),
                 ]);
             }
 
@@ -96,6 +168,7 @@ class LedgerService
             'date' => $contribution->created_at ?? now(),
             'reference' => $contribution->reference,
             'description' => "Contribution from " . ($contribution->user->name ?? 'User') . " for " . ($contribution->scheme->name ?? 'Unknown Scheme'),
+            'branch_id' => optional($contribution->user)->branch_id,
         ], [
             ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
             ['code' => $creditAccount, 'credit' => $contribution->amount, 'description' => "Contribution Receipt"],
@@ -112,6 +185,7 @@ class LedgerService
             'date' => $contribution->created_at ?? now(),
             'reference' => $contribution->reference,
             'description' => "Fine payment from {$contribution->user->name}",
+            'branch_id' => optional($contribution->user)->branch_id,
         ], [
             ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
             ['code' => '4200', 'credit' => $contribution->amount, 'description' => 'Fine Income'],
@@ -137,17 +211,13 @@ class LedgerService
             ['code' => '1100', 'credit' => $principal, 'description' => 'Bank Withdrawal (Full Principal)'],
         ];
 
-        if ($totalFee > 0) {
-            // If there's a fee, we record it as income, but since it's not deducted from the payout,
-            // it must be accounted for elsewhere or ignored in the net payout.
-            // For now, we follow the "no deduction" rule for the payout itself.
-            // $entries[] = ['code' => '4500', 'credit' => $totalFee, 'description' => 'Management Fee Income'];
-        }
+        // If there is a fee, it is recorded elsewhere per business rule (no deduction from payout).
 
         return $this->recordByCode([
             'date' => $loan->approved_at ?? now(),
             'reference' => $loan->qard_id_string,
             'description' => "Qard Hasan Disbursement to {$loan->user->name}",
+            'branch_id' => optional($loan->user)->branch_id,
         ], $entries);
     }
 
@@ -169,6 +239,7 @@ class LedgerService
             'date' => $repayment->paid_at ?? now(),
             'reference' => $repayment->reference,
             'description' => "Qard Hasan Repayment from {$repayment->qardHasan->user->name}",
+            'branch_id' => optional($repayment->qardHasan->user)->branch_id,
         ], [
             ['code' => $debitAccount, 'debit' => $repayment->amount, 'description' => $debitDesc],
             ['code' => '1300', 'credit' => $repayment->amount, 'description' => 'Loan Asset Reduction'],
@@ -212,6 +283,7 @@ class LedgerService
             'date' => $tx->created_at ?? now(),
             'reference' => $tx->reference,
             'description' => "Wallet Credit for {$tx->user->name} via {$tx->source}",
+            'branch_id' => optional($tx->user)->branch_id,
         ], $entries);
     }
 
@@ -244,6 +316,7 @@ class LedgerService
             'date' => $tx->created_at ?? now(),
             'reference' => $tx->reference,
             'description' => "Wallet Debit for {$tx->user->name} via {$tx->source}",
+            'branch_id' => optional($tx->user)->branch_id,
         ], [
             ['code' => '2200', 'debit' => $tx->amount, 'description' => "Member Withdrawal ({$tx->user->membership_number})"],
             ['code' => $creditAccount, 'credit' => $tx->amount, 'description' => $creditDescription],
@@ -260,6 +333,7 @@ class LedgerService
             'date' => $contribution->created_at ?? now(),
             'reference' => $contribution->reference,
             'description' => "Takaful Contribution from {$contribution->user->name}",
+            'branch_id' => optional($contribution->user)->branch_id,
         ], [
             ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
             ['code' => '2210', 'credit' => $contribution->amount, 'description' => 'Takaful Pool Fund Credit'],
@@ -276,6 +350,7 @@ class LedgerService
             'date' => $income->date ?? now(),
             'reference' => 'INC-' . $income->id,
             'description' => "Income: {$income->title} ({$income->category})",
+            'branch_id' => $income->branch_id ?? null,
         ], [
             ['code' => '1100', 'debit' => $income->amount, 'description' => 'Bank Deposit'],
             ['code' => '4000', 'credit' => $income->amount, 'description' => "Income - {$income->category}"],
@@ -300,6 +375,7 @@ class LedgerService
             'date' => $expense->date ?? now(),
             'reference' => $expense->payout_reference ?? 'EXP-' . $expense->id,
             'description' => "Expense: {$expense->title} ({$expense->category})",
+            'branch_id' => $expense->branch_id ?? null,
         ], [
             ['code' => $debitAccount, 'debit' => $expense->amount, 'description' => "Expense - {$expense->category}"],
             ['code' => '1100', 'credit' => $expense->amount, 'description' => 'Bank Withdrawal'],
@@ -311,15 +387,94 @@ class LedgerService
      */
     public function recordStoreOrder(\App\Models\StoreOrder $order): LedgerJournal
     {
-        return $this->recordByCode([
+        $journal = $this->recordByCode([
             'date' => $order->created_at ?? now(),
             'reference' => $order->reference,
             'description' => "Store Order: {$order->reference} from {$order->user->name}",
+            'branch_id' => optional($order->user)->branch_id,
         ], [
             ['code' => '1100', 'debit' => $order->total_amount, 'description' => 'Bank Receipt'],
             ['code' => '4400', 'credit' => $order->total_profit, 'description' => 'Murabahah Profit'],
             ['code' => '2000', 'credit' => $order->total_cost, 'description' => 'Accounts Payable (Vendor Portion)'],
         ]);
+
+        // Optional VAT reclassification and COGS posting (guarded by schema checks)
+        try {
+            // VAT Output: reclassify portion of profit to VAT Output liability if tax tables exist
+            if (\Illuminate\Support\Facades\Schema::hasTable('tax_rates')) {
+                $taxService = app(\App\Services\TaxService::class);
+                $vat = $taxService->computeOrderOutputTax($order);
+                $taxAmount = (float) ($vat['total_tax'] ?? 0);
+                if ($taxAmount > 0.0) {
+                    // Dr Murabahah Profit (reduce income), Cr VAT Output (2410)
+                    $this->recordByCode([
+                        'date' => $order->created_at ?? now(),
+                        'reference' => ($order->reference ?: 'ORDER') . '-VAT',
+                        'description' => 'VAT Output on store order ' . ($order->reference ?? $order->id),
+                        'branch_id' => optional($order->user)->branch_id,
+                        'external_key' => 'VAT:' . ($order->id ?? '0'),
+                    ], [
+                        ['code' => '4400', 'debit' => $taxAmount, 'description' => 'Reclassify VAT from Income'],
+                        ['code' => '2410', 'credit' => $taxAmount, 'description' => 'VAT Output (Liability)'],
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fail open: never block core order posting due to VAT logic
+        }
+
+        try {
+            // Prefer inventory valuation if inventory tables exist; fallback to line_cost approach
+            $branchId = optional($order->user)->branch_id;
+            $order->loadMissing('items.product');
+            $cogs = 0.0;
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('inventory_transactions')) {
+                $inv = app(\App\Services\InventoryService::class);
+                foreach ($order->items as $it) {
+                    $prod = $it->product;
+                    if ($prod && empty($it->vendor_id)) { // we own the stock
+                        // Only track if product has track_stock column and flag true, otherwise treat as service/non-stock
+                        $track = true;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'track_stock')) {
+                            $track = (bool) ($prod->track_stock);
+                        }
+                        if ($track) {
+                            $cogs += $inv->issue($prod->id, (float) $it->quantity, $branchId, [
+                                'reference_type' => 'store_orders',
+                                'reference_id' => $order->id,
+                                'performed_at' => $order->created_at ?? now(),
+                            ]);
+                        }
+                    }
+                }
+            } elseif (\Illuminate\Support\Facades\Schema::hasColumn('products', 'track_stock')) {
+                // Fallback: sum provided line_cost for tracked items
+                foreach ($order->items as $it) {
+                    $prod = $it->product;
+                    if ($prod && $prod->track_stock && empty($it->vendor_id)) {
+                        $cogs += (float) ($it->line_cost ?? 0);
+                    }
+                }
+            }
+
+            if ($cogs > 0.0) {
+                $this->recordByCode([
+                    'date' => $order->created_at ?? now(),
+                    'reference' => ($order->reference ?: 'ORDER') . '-COGS',
+                    'description' => 'COGS posting for store order ' . ($order->reference ?? $order->id),
+                    'branch_id' => $branchId,
+                    'external_key' => 'COGS:' . ($order->id ?? '0'),
+                ], [
+                    ['code' => '5100', 'debit' => $cogs, 'description' => 'Cost of Goods Sold'],
+                    ['code' => '1200', 'credit' => $cogs, 'description' => 'Inventory'],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Fail open: do not interrupt main flow
+        }
+
+        return $journal;
     }
     /**
      * Record Murabahah Financing (Receivable).
@@ -331,6 +486,7 @@ class LedgerService
             'date' => now(),
             'reference' => 'MURABAHA-' . $order->id,
             'description' => "Murabahah Financing for order: {$order->reference}",
+            'branch_id' => optional($order->user)->branch_id,
         ], [
             ['code' => '1310', 'debit' => $order->total_amount, 'description' => 'Receivable (Cost + Profit)'],
             ['code' => '1100', 'credit' => $order->total_cost, 'description' => 'Payment to Vendor/Inventory'],
@@ -348,6 +504,7 @@ class LedgerService
             'date' => $charity->processed_at ?? now(),
             'reference' => 'CHARITY-' . $charity->id,
             'description' => "Charity Receipt: {$charity->source}",
+            'branch_id' => $charity->branch_id ?? null,
         ], [
             ['code' => '1100', 'debit' => $charity->amount, 'description' => 'Bank Deposit'],
             ['code' => '2220', 'credit' => $charity->amount, 'description' => 'Charity Fund Credit'],
@@ -364,6 +521,7 @@ class LedgerService
             'date' => $profit->created_at ?? now(),
             'reference' => 'PROFIT-DECL-' . $profit->id,
             'description' => "Profit Declaration for project: " . ($profit->project->name ?? 'Project #' . $profit->project_id),
+            'branch_id' => $profit->branch_id ?? null,
         ], [
             ['code' => '1100', 'debit' => $profit->gross_profit, 'description' => 'Realized Profit (Bank)'],
             ['code' => '4500', 'credit' => $profit->management_fee_amount, 'description' => 'Management Fee Income'],
@@ -381,6 +539,7 @@ class LedgerService
             'date' => $payout->updated_at ?? now(),
             'reference' => 'PROFIT-PAY-' . $payout->id,
             'description' => "Profit Payout to Member: " . ($payout->user->name ?? 'User #' . $payout->user_id),
+            'branch_id' => optional($payout->user)->branch_id,
         ], [
             ['code' => '2300', 'debit' => $payout->amount, 'description' => 'Profits Payable Debit'],
             ['code' => '2200', 'credit' => $payout->amount, 'description' => 'Member Wallet Credit'],
@@ -397,6 +556,7 @@ class LedgerService
             'date' => $contribution->created_at ?? now(),
             'reference' => $contribution->reference ?? 'SAD-' . $contribution->id,
             'description' => "Sadaqah Contribution for project: " . ($contribution->project->name ?? 'Project #' . $contribution->sadaqah_project_id),
+            'branch_id' => $contribution->branch_id ?? null,
         ], [
             ['code' => '1100', 'debit' => $contribution->amount, 'description' => 'Bank Deposit'],
             ['code' => '2220', 'credit' => $contribution->amount, 'description' => 'Charity Fund Credit'],

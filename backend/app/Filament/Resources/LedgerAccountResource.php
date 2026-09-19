@@ -10,6 +10,10 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 class LedgerAccountResource extends Resource
 {
@@ -76,6 +80,35 @@ class LedgerAccountResource extends Resource
                         'income' => 'Income',
                         'expense' => 'Expense',
                     ]),
+            ])
+            ->headerActions([
+                Action::make('rebuild_monthly_balances')
+                    ->label('Rebuild Monthly Balances')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')->label('From (YYYY-MM-DD)'),
+                        Forms\Components\DatePicker::make('to')->label('To (YYYY-MM-DD)'),
+                        Forms\Components\TextInput::make('branch_id')->numeric()->label('Branch ID')->placeholder('All branches'),
+                        Forms\Components\Toggle::make('truncate')->label('Clear Existing for Months')->default(false),
+                    ])
+                    ->action(function (array $data) {
+                        try {
+                            if (!Schema::hasTable('ledger_account_monthly_balances')) {
+                                Notification::make('mb_missing')->title('Migrations pending')->warning()->body('monthly balances table missing')->send();
+                                return;
+                            }
+                            Artisan::call('accounting:rebuild-monthly-balances', array_filter([
+                                '--from' => $data['from'] ?? null,
+                                '--to' => $data['to'] ?? null,
+                                '--branch' => $data['branch_id'] ?? null,
+                                '--truncate' => ($data['truncate'] ?? false) ? true : null,
+                            ]));
+                            Notification::make('mb_ok')->title('Monthly Balances Rebuilt')->success()->body(trim(Artisan::output()))->send();
+                        } catch (\Throwable $e) {
+                            Notification::make('mb_err')->title('Rebuild Failed')->danger()->body($e->getMessage())->send();
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

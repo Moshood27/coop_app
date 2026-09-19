@@ -23,13 +23,25 @@ class LedgerJournal extends Model
 
     protected $fillable = [
         'date',
+        'number',
+        'currency_code',
+        'fx_rate',
         'reference',
+        'external_key',
         'description',
+        'status',
+        'approved_by',
+        'approved_at',
+        'posted_at',
+        'period_id',
+        'reversing_journal_id',
         'created_by',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'approved_at' => 'datetime',
+        'posted_at' => 'datetime',
     ];
 
     public function entries(): HasMany
@@ -40,6 +52,21 @@ class LedgerJournal extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(FiscalPeriod::class, 'period_id');
+    }
+
+    public function reversingJournal(): BelongsTo
+    {
+        return $this->belongsTo(LedgerJournal::class, 'reversing_journal_id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(LedgerAttachment::class, 'ledger_journal_id');
     }
 
     /**
