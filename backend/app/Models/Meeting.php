@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\MeetingDeleted;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -84,6 +85,22 @@ class Meeting extends Model
                         ['type' => 'meeting_audited']
                     );
                 }
+            }
+        });
+        // Defensive cleanup + broadcast when a meeting is deleted
+        static::deleting(function ($meeting) {
+            // Ensure any attendance records tied to this meeting are removed
+            // (DB has cascadeOnDelete, but this guards legacy schemas)
+            try {
+                $meeting->attendanceRecords()->delete();
+            } catch (\Throwable $e) {
+                // swallow to avoid blocking deletion
+            }
+            // Notify listeners (mobile/web dashboards) to clear any live lists
+            try {
+                event(new MeetingDeleted($meeting->id, $meeting->name));
+            } catch (\Throwable $e) {
+                // non-blocking
             }
         });
     }
