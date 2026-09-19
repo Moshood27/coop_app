@@ -6,26 +6,55 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
+    private function indexExists(string $table, string $indexName): bool
+    {
+        try {
+            $result = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
+            return !empty($result);
+        } catch (\Throwable $e) {
+            return false; // if check fails, act as not existing to avoid fatal
+        }
+    }
+
     public function up(): void
     {
         // Add helpful indexes if tables exist
         if (Schema::hasTable('ledger_entries')) {
-            Schema::table('ledger_entries', function (Blueprint $table) {
-                $table->index(['ledger_account_id']);
-                if (Schema::hasColumn('ledger_entries', 'branch_id')) {
+            // ledger_account_id index (default name: ledger_entries_ledger_account_id_index)
+            if (!$this->indexExists('ledger_entries', 'ledger_entries_ledger_account_id_index')) {
+                Schema::table('ledger_entries', function (Blueprint $table) {
+                    $table->index(['ledger_account_id']);
+                });
+            }
+
+            // branch_id index (default name: ledger_entries_branch_id_index)
+            if (Schema::hasColumn('ledger_entries', 'branch_id') &&
+                !$this->indexExists('ledger_entries', 'ledger_entries_branch_id_index')) {
+                Schema::table('ledger_entries', function (Blueprint $table) {
                     $table->index(['branch_id']);
-                }
-            });
+                });
+            }
         }
         if (Schema::hasTable('ledger_journals')) {
-            Schema::table('ledger_journals', function (Blueprint $table) {
-                if (!Schema::hasColumn('ledger_journals', 'external_key')) return;
-                $table->unique('external_key');
-                $table->index(['date']);
-                if (Schema::hasColumn('ledger_journals', 'number')) {
+            if (Schema::hasColumn('ledger_journals', 'external_key') &&
+                !$this->indexExists('ledger_journals', 'ledger_journals_external_key_unique')) {
+                Schema::table('ledger_journals', function (Blueprint $table) {
+                    $table->unique('external_key');
+                });
+            }
+
+            if (!$this->indexExists('ledger_journals', 'ledger_journals_date_index')) {
+                Schema::table('ledger_journals', function (Blueprint $table) {
+                    $table->index(['date']);
+                });
+            }
+
+            if (Schema::hasColumn('ledger_journals', 'number') &&
+                !$this->indexExists('ledger_journals', 'ledger_journals_number_unique')) {
+                Schema::table('ledger_journals', function (Blueprint $table) {
                     $table->unique('number');
-                }
-            });
+                });
+            }
         }
 
         // Add CHECK constraints where supported (best-effort; MySQL < 8 may ignore)

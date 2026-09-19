@@ -17,6 +17,7 @@ use Laragear\WebAuthn\Http\Requests\AssertedRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
@@ -244,7 +245,7 @@ class AttendanceController extends Controller
         try {
             broadcast(new AttendanceMarked($meeting, $record));
         } catch (\Throwable $e) {
-            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+            Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
         }
 
         $message = 'Attendance marked successfully';
@@ -442,7 +443,7 @@ class AttendanceController extends Controller
                     ['push', 'database']
                 );
             } catch (\Throwable $e) {
-                \Log::warning('Attendance side-effects failed: ' . $e->getMessage(), [
+                Log::warning('Attendance side-effects failed: ' . $e->getMessage(), [
                     'meeting_id' => $meeting->id,
                     'user_id' => $targetUser->id
                 ]);
@@ -454,7 +455,7 @@ class AttendanceController extends Controller
                 'record' => $record
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Failed to mark member attendance: ' . $e->getMessage(), [
+            Log::error('Failed to mark member attendance: ' . $e->getMessage(), [
                 'exception' => $e,
                 'meeting_id' => $meeting->id,
                 'user_id' => $request->user_id,
@@ -523,12 +524,12 @@ class AttendanceController extends Controller
                                 ['push', 'database']
                             );
                         } catch (\Throwable $e) {
-                            \Log::warning('Bulk side-effects failed: ' . $e->getMessage());
+                            Log::warning('Bulk side-effects failed: ' . $e->getMessage());
                         }
 
                         $count++;
                     } catch (\Throwable $e) {
-                        \Log::warning("Bulk mark failed for user {$targetUser->id}: " . $e->getMessage());
+                        Log::warning("Bulk mark failed for user {$targetUser->id}: " . $e->getMessage());
                     }
                 }
             });
@@ -893,7 +894,7 @@ class AttendanceController extends Controller
         try {
             broadcast(new AttendanceMarked($meeting, $record));
         } catch (\Throwable $e) {
-            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+            Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
         }
 
         $message = 'Attendance marked successfully via Biometrics';
@@ -980,7 +981,7 @@ class AttendanceController extends Controller
         try {
             broadcast(new AttendanceMarked($meeting, $record));
         } catch (\Throwable $e) {
-            \Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
+            Log::warning('Broadcasting attendance marked failed: ' . $e->getMessage());
         }
 
         $message = 'Attendance marked successfully via Beacon';
