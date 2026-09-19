@@ -309,6 +309,15 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Attendance marking limiter (admin-to-member marking & searches)
+        RateLimiter::for('marking', function (Request $request) {
+            $key = optional($request->user())->id ?: $request->ip();
+            // Allow reasonable throughput but prevent runaway clients
+            return [
+                Limit::perMinute(120)->by($key),
+            ];
+        });
+
         // Register Auth Event Listeners for Activity Logging
         Event::listen(Login::class, LogSuccessfulLogin::class);
         Event::listen(Login::class, SendLoginNotification::class);

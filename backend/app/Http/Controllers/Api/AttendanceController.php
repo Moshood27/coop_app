@@ -405,9 +405,10 @@ class AttendanceController extends Controller
                 ]);
             }
 
-            // Optional: Check branch eligibility
-            $canMarkAttendance = $request->user()->hasPermissionTo('mark_attendance');
-            if ($meeting->branches()->exists() && !$canMarkAttendance) {
+            // Branch eligibility: allow cross-branch for admins or users with explicit permission
+            $requester = $request->user();
+            $hasAnyBranchScope = $requester->is_admin || $requester->hasPermissionTo('mark_attendance_any_branch');
+            if ($meeting->branches()->exists() && !$hasAnyBranchScope) {
                 $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
                 if (!$isEligible) {
                     return response()->json(['message' => 'Member is not eligible for this meeting (Branch mismatch)'], 400);
@@ -480,42 +481,57 @@ class AttendanceController extends Controller
 
         $userIds = $request->user_ids;
         $count = 0;
+        $requester = $request->user();
+        $hasAnyBranchScope = $requester->is_admin || $requester->hasPermissionTo('mark_attendance_any_branch');
 
-        foreach ($userIds as $userId) {
-            try {
-                $targetUser = User::find($userId);
-                if (!$targetUser) continue;
+        foreach (array_chunk($userIds, 200) as $chunk) {
+            DB::transaction(function () use ($chunk, $meeting, $requester, $hasAnyBranchScope, &$count) {
+                $users = User::whereIn('id', $chunk)->get();
+                foreach ($users as $targetUser) {
+                    try {
+                        // Respect admin marking toggle
+                        if ($targetUser->is_admin && !Setting::get('mark_admin_attendance_enabled', false)) {
+                            continue;
+                        }
 
-                // Respect admin marking toggle
-                if ($targetUser->is_admin && !Setting::get('mark_admin_attendance_enabled', false)) {
-                    continue;
+                        // Enforce branch eligibility for non-admin scoped markers when meeting has branches
+                        if ($meeting->branches()->exists() && !$hasAnyBranchScope) {
+                            $isEligible = $meeting->branches()->where('branches.id', $targetUser->branch_id)->exists();
+                            if (!$isEligible) {
+                                continue;
+                            }
+                        }
+
+                        $record = AttendanceRecord::updateOrCreate(
+                            ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
+                            [
+                                'status' => 'present',
+                                'attended_at' => now(),
+                                'marked_by_id' => $requester->id,
+                                'verified_biometrically' => false,
+                                'device_uuid' => 'bulk_marked_by_admin_' . $requester->id,
+                            ]
+                        );
+
+                        // Queue broadcast/notification; failures should not break batch
+                        try {
+                            broadcast(new \App\Events\AttendanceMarked($meeting, $record));
+                            $targetUser->notifyMember(
+                                "Attendance Marked",
+                                "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
+                                ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
+                                ['push', 'database']
+                            );
+                        } catch (\Throwable $e) {
+                            \Log::warning('Bulk side-effects failed: ' . $e->getMessage());
+                        }
+
+                        $count++;
+                    } catch (\Throwable $e) {
+                        \Log::warning("Bulk mark failed for user {$targetUser->id}: " . $e->getMessage());
+                    }
                 }
-
-                AttendanceRecord::updateOrCreate(
-                    ['user_id' => $targetUser->id, 'meeting_id' => $meeting->id],
-                    [
-                        'status' => 'present',
-                        'attended_at' => now(),
-                        'marked_by_id' => $request->user()->id,
-                        'verified_biometrically' => false,
-                        'device_uuid' => 'bulk_marked_by_admin_' . $request->user()->id,
-                    ]
-                );
-
-                // Attempt to notify but ignore failures for speed
-                try {
-                    $targetUser->notifyMember(
-                        "Attendance Marked",
-                        "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
-                        ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
-                        ['push', 'database']
-                    );
-                } catch (\Exception $e) {}
-
-                $count++;
-            } catch (\Exception $e) {
-                \Log::warning("Bulk mark failed for user {$userId}: " . $e->getMessage());
-            }
+            });
         }
 
         return response()->json([
@@ -540,9 +556,10 @@ class AttendanceController extends Controller
         }
 
         $userIds = $request->user_ids;
+        // Set status back to 'absent' and clear attended_at to preserve audit trail
         $count = AttendanceRecord::where('meeting_id', $meeting->id)
             ->whereIn('user_id', $userIds)
-            ->delete();
+            ->update(['status' => 'absent', 'attended_at' => null]);
 
         return response()->json([
             'success' => true,
@@ -570,8 +587,9 @@ class AttendanceController extends Controller
                 ->first();
 
             if ($record) {
-                // Remove the record to correct mistake
-                $record->delete();
+                $record->status = 'absent';
+                $record->attended_at = null;
+                $record->save();
 
                 return response()->json([
                     'success' => true,

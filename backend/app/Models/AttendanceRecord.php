@@ -53,7 +53,7 @@ class AttendanceRecord extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'fine_paid_at', 'lateness_fine_paid', 'lateness_fine_amount', 'fine_amount'])
+            ->logOnly(['status', 'fine_paid_at', 'lateness_fine_paid', 'lateness_fine_amount', 'fine_amount', 'marked_by_id', 'attended_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

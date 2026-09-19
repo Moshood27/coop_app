@@ -322,12 +322,12 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/attendance/history', [AttendanceController::class, 'history']);
     Route::post('/attendance/sync-offline', [AttendanceController::class, 'syncOfflineAttendance']);
     Route::get('/attendance/search-filters', [AttendanceController::class, 'searchFilters']);
-    Route::post('/meetings/{meeting}/mark-attendance', [AttendanceController::class, 'markAttendance']);
-    Route::get('/attendance/search-members', [AttendanceController::class, 'searchMembers']);
-    Route::post('/meetings/{meeting}/mark-member-attendance', [AttendanceController::class, 'markMemberAttendance']);
-    Route::post('/meetings/{meeting}/bulk-mark-attendance', [AttendanceController::class, 'bulkMarkMemberAttendance']);
-    Route::post('/meetings/{meeting}/bulk-unmark-attendance', [AttendanceController::class, 'bulkUnmarkMemberAttendance']);
-    Route::post('/meetings/{meeting}/unmark-member-attendance', [AttendanceController::class, 'unmarkMemberAttendance']);
+    Route::post('/meetings/{meeting}/mark-attendance', [AttendanceController::class, 'markAttendance'])->middleware('throttle:marking');
+    Route::get('/attendance/search-members', [AttendanceController::class, 'searchMembers'])->middleware('throttle:marking');
+    Route::post('/meetings/{meeting}/mark-member-attendance', [AttendanceController::class, 'markMemberAttendance'])->middleware('throttle:marking');
+    Route::post('/meetings/{meeting}/bulk-mark-attendance', [AttendanceController::class, 'bulkMarkMemberAttendance'])->middleware('throttle:marking');
+    Route::post('/meetings/{meeting}/bulk-unmark-attendance', [AttendanceController::class, 'bulkUnmarkMemberAttendance'])->middleware('throttle:marking');
+    Route::post('/meetings/{meeting}/unmark-member-attendance', [AttendanceController::class, 'unmarkMemberAttendance'])->middleware('throttle:marking');
     Route::get('/meetings/{meeting}/marked-by-me', [AttendanceController::class, 'markedByMe']);
     Route::get('/meetings/{meeting}/report', [AttendanceController::class, 'meetingReport']);
     Route::get('/meetings/{meeting}/stats', [AttendanceController::class, 'meetingStats']);

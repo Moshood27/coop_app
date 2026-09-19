@@ -193,6 +193,7 @@ onMounted(load)
 </script>
 
 <style scoped>
+@reference "tailwindcss";
 .input { @apply w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm; }
 .btn { @apply px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider; }
 .chip { @apply inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors; }
