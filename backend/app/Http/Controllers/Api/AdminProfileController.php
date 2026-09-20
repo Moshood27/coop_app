@@ -24,6 +24,7 @@ class AdminProfileController extends Controller
             'full_name' => $user->full_name,
             'email' => $user->email,
             'role' => 'Admin',
+            'balance' => $user->balance,
             'created_at' => $user->created_at ? $user->created_at->toDateTimeString() : null,
         ]);
     }

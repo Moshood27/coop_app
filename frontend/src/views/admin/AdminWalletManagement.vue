@@ -286,7 +286,12 @@
       <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto">
         <div class="text-center">
           <h3 class="text-xl font-black text-slate-800 tracking-tight">Admin Allocation</h3>
-          <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Your Balance: ₦{{ formatMoney(adminBalance) }}</p>
+          <div class="mt-2 flex items-center justify-center gap-2">
+            <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Your Balance: ₦{{ formatMoney(adminBalance) }}</p>
+            <button @click="showAdminFundModal = true" class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase rounded-md hover:bg-emerald-100 transition-colors">
+              Topup
+            </button>
+          </div>
         </div>
 
         <div class="space-y-4">
@@ -332,6 +337,27 @@
         </div>
       </div>
     </div>
+    <!-- Admin Topup Modal -->
+    <div v-if="showAdminFundModal" class="fixed inset-0 z-[110] flex items-end justify-center sm:items-center p-4">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAdminFundModal = false"></div>
+      <div class="relative bg-white w-full max-w-sm rounded-[2.5rem] p-8 space-y-6 animate-in zoom-in-95 duration-200">
+        <div class="text-center">
+          <h3 class="text-lg font-black text-slate-800 tracking-tight">Topup Admin Wallet</h3>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Fund your account to allocate to members</p>
+        </div>
+        <div>
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Amount (₦)</label>
+          <input v-model="adminFundAmount" type="number" step="0.01" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all" placeholder="Enter amount" />
+        </div>
+        <button 
+          @click="initializeAdminFunding" 
+          :disabled="submitting || adminFundAmount < 100"
+          class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50"
+        >
+          {{ submitting ? 'Initializing...' : 'Pay Now' }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -365,6 +391,8 @@ const dvaForm = ref({
 })
 
 const showAdminAllocModal = ref(false)
+const showAdminFundModal = ref(false)
+const adminFundAmount = ref(0)
 const adminBalance = ref(0)
 const adminAllocations = ref([{ scheme_id: null, amount: 0 }])
 const adminNotes = ref('')
@@ -519,6 +547,24 @@ const initializeFunding = async () => {
     }
   } catch (e) {
     alert(e.response?.data?.message || 'Failed to initialize funding', 'Error')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const initializeAdminFunding = async () => {
+  submitting.value = true
+  try {
+    const { data } = await axios.post('/api/wallet/topup/initiate', {
+      amount: adminFundAmount.value,
+      provider: 'paystack',
+      callback_url: window.location.href
+    })
+    if (data.authorization_url) {
+      window.location.href = data.authorization_url
+    }
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to initialize admin funding', 'Error')
   } finally {
     submitting.value = false
   }
