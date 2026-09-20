@@ -153,7 +153,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required_without:split_50_50|nullable|exists:schemes,id',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric',
             'paid_at' => 'required|date',
             'method' => 'required|string|in:cash,transfer,pos,other',
             'reference' => 'nullable|string|max:100',
@@ -231,7 +231,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'scheme_id' => 'required|exists:schemes,id',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric',
             'paid_at' => 'required|date',
             'payment_method' => 'required|string',
             'notes' => 'nullable|string|max:255',
