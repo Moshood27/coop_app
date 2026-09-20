@@ -52,6 +52,15 @@ axios.interceptors.response.use(
         }
       } catch (_) {}
     }
+    // 429 = Too Many Requests (rate limited)
+    if (status === 429) {
+      try {
+        // Dispatch a lightweight global event; views can show a toast or cooldown UI
+        window?.dispatchEvent(
+          new CustomEvent('toast', { detail: { type: 'info', text: 'You’re going too fast. Please pause and try again.' } })
+        )
+      } catch (_) {}
+    }
     return Promise.reject(error)
   }
 )

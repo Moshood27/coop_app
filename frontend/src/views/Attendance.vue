@@ -410,10 +410,14 @@
                      </span>
                    </div>
                    <div class="flex items-center gap-2">
+                     <div v-if="throttleCooldown > 0" class="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl text-[9px] font-black uppercase flex items-center gap-2">
+                        <span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></span>
+                        Cooldown: {{ throttleCooldown }}s
+                     </div>
                      <button 
                        v-if="selectedCountByStatus.absent > 0"
                        @click="bulkMarkAction"
-                       :disabled="bulkMarking"
+                       :disabled="bulkMarking || throttleCooldown > 0"
                        class="bg-emerald-600 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
                      >
                        <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
@@ -422,7 +426,7 @@
                      <button 
                        v-if="selectedCountByStatus.present > 0"
                        @click="bulkUnmarkAction"
-                       :disabled="bulkMarking"
+                       :disabled="bulkMarking || throttleCooldown > 0"
                        class="bg-red-500 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-red-200 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2"
                      >
                        <span v-if="bulkMarking" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
@@ -454,7 +458,19 @@
                       </div>
                       
                       <div class="flex-1 min-w-0" @click="selectedMembers.includes(member.id) ? selectedMembers = selectedMembers.filter(id => id !== member.id) : selectedMembers.push(member.id)">
-                        <p class="text-sm font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
+                        <div class="flex items-center gap-2">
+                          <p class="text-sm font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
+                          <span 
+                            :class="[
+                              'px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter transition-colors',
+                              getMemberEligibility(member).eligible 
+                                ? (getMemberEligibility(member).isOverride ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')
+                                : 'bg-rose-100 text-rose-700'
+                            ]"
+                          >
+                            {{ getMemberEligibility(member).label }}
+                          </span>
+                        </div>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{{ member.membership_number }} • {{ member.phone }}</p>
                       </div>
                     </div>
@@ -474,7 +490,7 @@
                       <button 
                         v-else
                         @click="markForMemberAction(member)" 
-                        :disabled="markingForMember === member.id || meeting.status !== 'ongoing'"
+                        :disabled="markingForMember === member.id || meeting.status !== 'ongoing' || (!getMemberEligibility(member).eligible && !hasAnyBranchScope) || throttleCooldown > 0"
                         class="h-10 px-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-95 disabled:opacity-50 transition-all"
                       >
                         <span v-if="markingForMember === member.id" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block"></span>
@@ -656,6 +672,73 @@
           </div>
        </div>
     </div>
+
+    <!-- Bulk Mark Confirmation Modal -->
+    <div v-if="showBulkConfirmModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+       <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBulkConfirmModal = false"></div>
+       <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div class="p-8 text-center">
+             <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">📝</div>
+             <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Bulk Mark Attendance</h3>
+             <p class="text-slate-500 text-xs mt-2 font-medium">Review the impact before proceeding</p>
+             
+             <div class="mt-6 grid grid-cols-2 gap-3 text-left">
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                   <p class="text-[8px] font-black text-slate-400 uppercase">Total Selected</p>
+                   <p class="text-lg font-black text-slate-800">{{ bulkActionPreview.total }}</p>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                   <p class="text-[8px] font-black text-emerald-600 uppercase">Will Mark</p>
+                   <p class="text-lg font-black text-emerald-700">{{ bulkActionPreview.eligible }}</p>
+                </div>
+                <div class="p-3 bg-rose-50 rounded-2xl border border-rose-100">
+                   <p class="text-[8px] font-black text-rose-600 uppercase">Ineligible</p>
+                   <p class="text-lg font-black text-rose-700">{{ bulkActionPreview.ineligible }}</p>
+                </div>
+                <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100">
+                   <p class="text-[8px] font-black text-blue-600 uppercase">Already Present</p>
+                   <p class="text-lg font-black text-blue-700">{{ bulkActionPreview.alreadyPresent }}</p>
+                </div>
+             </div>
+             
+             <p v-if="bulkActionPreview.ineligible > 0" class="mt-4 text-[9px] font-bold text-amber-600 uppercase bg-amber-50 p-2 rounded-lg">
+                ⚠️ {{ bulkActionPreview.ineligible }} members are from different branches and you don't have override permission.
+             </p>
+          </div>
+          
+          <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+             <button @click="showBulkConfirmModal = false" class="flex-1 bg-white border border-slate-200 text-slate-600 font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] active:scale-95 transition-all">Cancel</button>
+             <button @click="confirmBulkMark" class="flex-[2] bg-emerald-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-100 active:scale-95 transition-all">Proceed</button>
+          </div>
+       </div>
+    </div>
+
+    <!-- Unmark Reason Modal -->
+    <div v-if="showUnmarkReasonModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+       <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showUnmarkReasonModal = false"></div>
+       <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div class="p-8">
+             <div class="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">↩️</div>
+             <h3 class="text-xl font-black text-slate-800 text-center uppercase tracking-tight">Unmark Attendance</h3>
+             <p class="text-slate-500 text-xs mt-2 text-center font-medium">Please provide a reason for this correction</p>
+             
+             <div class="mt-6">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Reason (Optional)</label>
+                <textarea 
+                  v-model="unmarkReason" 
+                  rows="3" 
+                  placeholder="e.g., Scan error, Wrong member, Correction..."
+                  class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-sm focus:bg-white focus:border-red-500 focus:ring-0 transition-all placeholder:text-slate-300"
+                ></textarea>
+             </div>
+          </div>
+          
+          <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+             <button @click="showUnmarkReasonModal = false" class="flex-1 bg-white border border-slate-200 text-slate-600 font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] active:scale-95 transition-all">Cancel</button>
+             <button @click="confirmUnmark" class="flex-[2] bg-red-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] shadow-lg shadow-red-100 active:scale-95 transition-all">Confirm</button>
+          </div>
+       </div>
+    </div>
   </div>
 </template>
 
@@ -714,6 +797,15 @@ const searchingMembers = ref(false)
 const markingForMember = ref(null)
 const unmarkingForMember = ref(null)
 const currentUser = ref(null)
+const searchTimer = ref(null)
+const throttleCooldown = ref(0)
+const throttleTimer = ref(null)
+
+const showBulkConfirmModal = ref(false)
+const bulkActionPreview = ref({ total: 0, eligible: 0, ineligible: 0, alreadyPresent: 0 })
+const showUnmarkReasonModal = ref(false)
+const unmarkReason = ref('')
+const pendingUnmarkMember = ref(null)
 const markedByMeList = ref([])
 const loadingMarkedByMe = ref(false)
 const showReportModal = ref(false)
@@ -738,6 +830,13 @@ const showFilters = ref(false)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 const isNative = Capacitor.isNativePlatform()
 const canScan = true // Always true now as we have web fallback
+
+watch([memberSearchQuery, searchBranchId, searchGender, expectedOnly], () => {
+  if (searchTimer.value) clearTimeout(searchTimer.value)
+  searchTimer.value = setTimeout(() => {
+    searchMembers()
+  }, 400)
+})
 
 watch(quickMark, (val) => {
   localStorage.setItem('attendance_quick_mark', val)
@@ -795,6 +894,33 @@ const canMarkForOthers = computed(() => {
   if (!currentUser.value) return false
   return currentUser.value.permission_names?.includes('mark_attendance') || currentUser.value.is_admin
 })
+
+const hasAnyBranchScope = computed(() => {
+  const u = currentUser.value
+  if (!u) return false
+  return u.is_admin || (u.permission_names || []).includes('mark_attendance_any_branch')
+})
+
+const meetingHasBranches = computed(() => !!(meeting.value?.branches?.length))
+
+const getMemberEligibility = (m) => {
+  if (!meetingHasBranches.value) return { eligible: true, label: 'All branches' }
+  const isEligible = meeting.value.branches.some(b => b.id === m.branch_id)
+  if (isEligible) return { eligible: true, label: 'Eligible' }
+  if (hasAnyBranchScope.value) return { eligible: true, label: 'Override', isOverride: true }
+  return { eligible: false, label: 'Not eligible' }
+}
+
+const startThrottleCooldown = (seconds = 5) => {
+  throttleCooldown.value = seconds
+  if (throttleTimer.value) clearInterval(throttleTimer.value)
+  throttleTimer.value = setInterval(() => {
+    throttleCooldown.value--
+    if (throttleCooldown.value <= 0) {
+      clearInterval(throttleTimer.value)
+    }
+  }, 1000)
+}
 
 const fetchMarkedByMe = async () => {
   if (!meeting.value || !canMarkForOthers.value) return
@@ -1049,6 +1175,8 @@ const scrollToLetter = (letter) => {
 }
 
 const markForMemberAction = async (member, forceQuick = false) => {
+  if (throttleCooldown.value > 0) return
+
   if (!quickMark.value && !forceQuick) {
     const confirm = await modal.confirm(`Mark attendance for ${member.name} ${member.surname}?`)
     if (!confirm) return
@@ -1074,6 +1202,9 @@ const markForMemberAction = async (member, forceQuick = false) => {
       modal.alert(res.data.message || "Failed to mark attendance", "Attendance Error")
     }
   } catch (err) {
+    if (err.response?.status === 429) {
+      startThrottleCooldown(10)
+    }
     const errorMsg = err.response?.data?.message || "Failed to mark attendance for member"
     modal.alert(errorMsg, "Attendance Error")
   } finally {
@@ -1082,14 +1213,23 @@ const markForMemberAction = async (member, forceQuick = false) => {
 }
 
 const bulkMarkAction = async () => {
-  if (selectedMembers.value.length === 0) return
+  if (selectedMembers.value.length === 0 || throttleCooldown.value > 0) return
   
-  const count = selectedMembers.value.length
-  if (!quickMark.value) {
-    const confirm = await modal.confirm(`Mark attendance for ${count} selected members?`)
-    if (!confirm) return
+  const selected = memberSearchResults.value.filter(m => selectedMembers.value.includes(m.id))
+  bulkActionPreview.value = {
+    total: selectedMembers.value.length,
+    eligible: selected.filter(m => getMemberEligibility(m).eligible && !m.is_present).length,
+    ineligible: selected.filter(m => !getMemberEligibility(m).eligible && !m.is_present).length,
+    alreadyPresent: selected.filter(m => m.is_present).length
   }
+  
+  showBulkConfirmModal.value = true
+}
 
+const confirmBulkMark = async () => {
+  showBulkConfirmModal.value = false
+  const count = selectedMembers.value.length
+  
   bulkMarking.value = true
   try {
     const res = await axios.post(`/api/meetings/${meeting.value.id}/bulk-mark-attendance`, {
@@ -1097,7 +1237,7 @@ const bulkMarkAction = async () => {
     })
     
     if (res.data.success) {
-      modal.alert(res.data.message || `Successfully marked ${count} members.`)
+      modal.alert(res.data.message || `Successfully processed ${count} members.`)
       
       // Update local state for all selected members
       selectedMembers.value.forEach(id => {
@@ -1108,18 +1248,6 @@ const bulkMarkAction = async () => {
         }
       })
       
-      // Keep selectedThoseWhoWereAlreadyPresent if any
-      selectedMembers.value = selectedMembers.value.filter(id => {
-        const m = memberSearchResults.value.find(m => m.id === id)
-        return m && m.is_present // Actually we should probably just clear or filter carefully
-      })
-      // Simpler: just remove those we just marked
-      selectedMembers.value = selectedMembers.value.filter(id => {
-         const m = memberSearchResults.value.find(item => item.id === id)
-         return m ? false : true // if we found it in search results, it was probably marked
-      })
-      // Actually the backend response might be better. 
-      // Let's just clear for now or filter by those who are now present
       selectedMembers.value = []
       fetchMarkedByMe()
       fetchMeetingStats()
@@ -1127,6 +1255,9 @@ const bulkMarkAction = async () => {
       modal.alert(res.data.message || "Failed to bulk mark attendance", "Attendance Error")
     }
   } catch (err) {
+    if (err.response?.status === 429) {
+      startThrottleCooldown(15)
+    }
     modal.alert(err.response?.data?.message || "Error during bulk marking", "Attendance Error")
   } finally {
     bulkMarking.value = false
@@ -1171,16 +1302,22 @@ const bulkUnmarkAction = async () => {
 }
 
 const unmarkForMemberAction = async (memberOrRecord) => {
-  const memberId = memberOrRecord.user_id || memberOrRecord.id
-  const name = memberOrRecord.user ? `${memberOrRecord.user.name} ${memberOrRecord.user.surname}` : `${memberOrRecord.name} ${memberOrRecord.surname}`
-  
-  const confirm = await modal.confirm(`Are you sure you want to UNMARK attendance for ${name}? This will remove their presence record.`)
-  if (!confirm) return
+  pendingUnmarkMember.value = memberOrRecord
+  unmarkReason.value = ''
+  showUnmarkReasonModal.value = true
+}
 
+const confirmUnmark = async () => {
+  const memberOrRecord = pendingUnmarkMember.value
+  if (!memberOrRecord) return
+
+  const memberId = memberOrRecord.user_id || memberOrRecord.id
+  showUnmarkReasonModal.value = false
   unmarkingForMember.value = memberId
   try {
     const res = await axios.post(`/api/meetings/${meeting.value.id}/unmark-member-attendance`, {
-      user_id: memberId
+      user_id: memberId,
+      reason: unmarkReason.value
     })
     
     if (res.data.success) {
@@ -1198,6 +1335,7 @@ const unmarkForMemberAction = async (memberOrRecord) => {
     modal.alert(err.response?.data?.message || "Error unmarking attendance")
   } finally {
     unmarkingForMember.value = null
+    pendingUnmarkMember.value = null
   }
 }
 
@@ -1654,6 +1792,26 @@ onMounted(async () => {
           })
       }
     }
+
+    if (meeting.value) {
+      const channel = echo.channel(`attendance-qr.${meeting.value.id}`)
+      channel.listen('.meeting_deleted', () => {
+        memberSearchResults.value = []
+        modal.alert('The current meeting has been deleted by an admin.')
+        fetchCurrentMeeting()
+      })
+      channel.listen('.marked', (e) => {
+        const record = e.record
+        if (record && record.user_id) {
+          const m = memberSearchResults.value.find(x => x.id === record.user_id)
+          if (m) {
+            m.is_present = true
+            addToRecent(m)
+          }
+          fetchMeetingStats()
+        }
+      })
+    }
   } catch (err) {
     console.error('Failed to initialize real-time listener in Attendance:', err)
   }
@@ -1667,6 +1825,9 @@ onUnmounted(() => {
     const userId = localStorage.getItem('user_id')
     if (echo && userId) {
       echo.leave(`user.${userId}`)
+    }
+    if (echo && meeting.value) {
+      echo.leave(`attendance-qr.${meeting.value.id}`)
     }
   } catch (_) {}
 })
