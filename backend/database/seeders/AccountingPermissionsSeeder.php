@@ -35,7 +35,7 @@ class AccountingPermissionsSeeder extends Seeder
 
             // FX & Ops
             'fx.realized_posting',
-            'ops.year_end_close', 'ops.auto_reverse', 'ops.rebuild_monthly', 'ops.fx_revalue',
+            'ops.year_end_close', 'ops.auto_reverse', 'ops.rebuild_monthly', 'ops.fx_revalue', 'ops.financial_reconcile',
 
             // Tax
             'tax.manage_rates', 'tax.map_products', 'tax.run_settlement',

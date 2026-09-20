@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\YearEndCloseService;
 use App\Services\MonthlyBalanceService;
 use App\Services\FxRevaluationService;
+use App\Services\FinancialReconciliationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
@@ -70,5 +71,19 @@ class AccountingOpsController extends Controller
         $dry = $request->boolean('dry_run', true);
         $res = $svc->run($date, $ccy, $request->user()->id ?? null, $dry);
         return response()->json($res);
+    }
+
+    public function reconcile(Request $request, FinancialReconciliationService $svc)
+    {
+        $this->authorize('ops.financial_reconcile');
+        $fix = $request->boolean('fix', false);
+        $userId = $request->input('user_id');
+
+        $res = $svc->run($fix, $userId);
+
+        return response()->json([
+            'message' => $fix ? 'Financial reconciliation completed with fixes.' : 'Financial reconciliation report generated.',
+            'data' => $res
+        ]);
     }
 }

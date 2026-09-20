@@ -180,6 +180,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin')->gro
         Route::post('/ops/auto-reverse', [AccountingOpsController::class, 'autoReverse']);
         Route::post('/ops/rebuild-monthly', [AccountingOpsController::class, 'rebuildMonthly']);
         Route::post('/ops/fx/revalue', [AccountingOpsController::class, 'fxRevalue']);
+        Route::post('/ops/financial/reconcile', [AccountingOpsController::class, 'reconcile']);
 
         // FX realized difference posting
         Route::post('/fx/realized', [CurrencyAdminController::class, 'realized']);

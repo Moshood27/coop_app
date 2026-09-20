@@ -102,6 +102,27 @@
         </div>
       </section>
 
+      <!-- Financial Reconciliation -->
+      <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-shield-check"></span></div>
+          <div>
+            <h3 class="text-sm font-black text-slate-800">Financial Reconciliation</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Audit and Repair Ledger/Wallet/Loan Gaps</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input type="number" v-model.number="recon.user_id" class="input" placeholder="Specific User ID (optional)"/>
+          <label class="flex items-center gap-2 text-xs"><input type="checkbox" v-model="recon.fix"/> Apply Fixes (Destructive)</label>
+        </div>
+        <div class="flex gap-3">
+          <button @click="runReconcile" :disabled="reconciling" class="btn bg-rose-600 text-white flex items-center gap-2">
+            <span v-if="reconciling" class="i-mdi-loading animate-spin"></span>
+            {{ reconciling ? 'Running Audit...' : 'Start Reconciliation Audit' }}
+          </button>
+        </div>
+      </section>
+
       <!-- CSV Exports -->
       <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-3">
         <h3 class="text-sm font-black text-slate-800">CSV Exports</h3>
@@ -132,8 +153,10 @@ const yec = ref({ period_id: '', retained_code: '', dry_run: true, close: true }
 const rev = ref({ date: new Date().toISOString().slice(0,10), journal: '', dry_run: false })
 const mb = ref({ from: '', to: '', branch_id: '', truncate: false })
 const fx = ref({ date: new Date().toISOString().slice(0,10), currency: '', dry_run: true })
+const recon = ref({ user_id: '', fix: false })
 const exports = ref({ from: '', to: '', as_of: new Date().toISOString().slice(0,10) })
 
+const reconciling = ref(false)
 const notice = (type, title, message) => { banner.value = { type, title, message } ; setTimeout(() => banner.value=null, 8000) }
 
 const load = async () => {
@@ -186,6 +209,22 @@ const runFxRevalue = async () => {
   } catch (e) {
     const msg = e?.response?.data?.message || e.message
     notice('error', 'Failed', msg)
+  }
+}
+
+const runReconcile = async () => {
+  reconciling.value = true
+  try {
+    const payload = { ...recon.value }
+    if (!payload.user_id) delete payload.user_id
+    const { data } = await axios.post('/api/admin/accounting/ops/financial/reconcile', payload)
+    notice('success', 'Reconciliation', data.message || 'Audit complete')
+    console.log('Recon Data:', data.data)
+  } catch (e) {
+    const msg = e?.response?.data?.message || e.message
+    notice('error', 'Failed', msg)
+  } finally {
+    reconciling.value = false
   }
 }
 

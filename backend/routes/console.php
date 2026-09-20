@@ -73,6 +73,7 @@ Schedule::command('vtu:check-balances')
     ->timezone('Africa/Lagos')
     ->when(fn() => Feature::for('global')->active('airtime-data-enabled'));
 Schedule::job(ReconcileUtilityTransactions::class)->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('financials:reconcile --fix')->dailyAt('01:00')->timezone('Africa/Lagos');
 Schedule::command('reconcile:contributions')->everyThirtyMinutes();
 
 // Meeting & Attendance Tasks
