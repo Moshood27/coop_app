@@ -109,8 +109,9 @@
           <button 
             @click="submitAllocation" 
             :disabled="submitting || totalAllocated <= 0 || totalAllocated > balance"
-            class="w-full bg-amber-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all disabled:opacity-50"
+            class="w-full bg-amber-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
+            <span v-if="!submitting" class="i-mdi-check-bold text-lg"></span>
             {{ submitting ? 'Processing...' : 'Confirm Allocation' }}
           </button>
         </div>
@@ -199,7 +200,8 @@
 
         <div class="flex gap-3 pt-4">
           <button @click="showEditModal = false" class="flex-1 py-4 text-sm font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
-          <button @click="submitEditTransaction" :disabled="submitting" class="flex-1 bg-amber-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all disabled:opacity-50">
+          <button @click="submitEditTransaction" :disabled="submitting" class="flex-1 bg-amber-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+            <span v-if="!submitting" class="i-mdi-content-save text-lg"></span>
             {{ submitting ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>
@@ -221,8 +223,9 @@
         <button 
           @click="initializeFunding" 
           :disabled="submitting || fundAmount < 100"
-          class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50"
+          class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
+          <span v-if="!submitting" class="i-mdi-credit-card-outline text-lg"></span>
           {{ submitting ? 'Initializing...' : 'Pay with Paystack' }}
         </button>
       </div>
@@ -273,8 +276,9 @@
         <button 
           @click="assignDva" 
           :disabled="submitting || !dvaForm.bvn"
-          class="w-full bg-indigo-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-indigo-200 active:scale-95 transition-all disabled:opacity-50"
+          class="w-full bg-indigo-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
+          <span v-if="!submitting" class="i-mdi-bank-plus text-lg"></span>
           {{ submitting ? 'Processing...' : (user?.virtual_account?.dva_account_number ? 'Regenerate Account' : 'Assign Virtual Account') }}
         </button>
       </div>
@@ -288,7 +292,8 @@
           <h3 class="text-xl font-black text-slate-800 tracking-tight">Admin Allocation</h3>
           <div class="mt-2 flex items-center justify-center gap-2">
             <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Your Balance: ₦{{ formatMoney(adminBalance) }}</p>
-            <button @click="showAdminFundModal = true" class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase rounded-md hover:bg-emerald-100 transition-colors">
+            <button @click="showAdminFundModal = true" class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase rounded-md hover:bg-emerald-100 transition-colors flex items-center gap-1">
+              <span class="i-mdi-plus"></span>
               Topup
             </button>
           </div>
@@ -330,8 +335,9 @@
           <button 
             @click="submitAdminAllocation" 
             :disabled="submitting || totalAdminAllocated <= 0 || totalAdminAllocated > adminBalance"
-            class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50"
+            class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
+            <span v-if="!submitting" class="i-mdi-account-arrow-right text-lg"></span>
             {{ submitting ? 'Processing...' : 'Confirm Admin Allocation' }}
           </button>
         </div>
@@ -352,8 +358,9 @@
         <button 
           @click="initializeAdminFunding" 
           :disabled="submitting || adminFundAmount < 100"
-          class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all disabled:opacity-50"
+          class="w-full bg-emerald-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
+          <span v-if="!submitting" class="i-mdi-wallet-plus text-lg"></span>
           {{ submitting ? 'Initializing...' : 'Pay Now' }}
         </button>
       </div>

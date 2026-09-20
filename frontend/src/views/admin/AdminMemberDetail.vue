@@ -10,7 +10,8 @@
           <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">Manage member funds & loans</p>
         </div>
       </div>
-      <button v-if="user" @click="openEditModal" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+      <button v-if="user" @click="openEditModal" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all flex items-center gap-2">
+        <span class="i-mdi-account-edit text-sm"></span>
         Edit Profile
       </button>
     </header>
@@ -169,8 +170,9 @@
             <button 
               @click="handleCreateLoan" 
               :disabled="creatingLoan"
-              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all disabled:opacity-50"
+              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
+              <span v-if="!creatingLoan" class="i-mdi-cash-check text-lg"></span>
               {{ creatingLoan ? 'Creating Loan...' : 'Disburse Loan' }}
             </button>
           </div>
@@ -243,8 +245,9 @@
             <button 
               @click="handleUpdateProfile" 
               :disabled="updatingProfile"
-              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all disabled:opacity-50"
+              class="w-full bg-emerald-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
+              <span v-if="!updatingProfile" class="i-mdi-content-save text-lg"></span>
               {{ updatingProfile ? 'Saving Changes...' : 'Save Changes' }}
             </button>
           </div>
