@@ -63,7 +63,7 @@ class GuarantorController extends Controller
             ->whereHas('guarantors', function ($q) use ($user) {
                 $q->where('qard_hasan_guarantors.guarantor_id', $user->id);
             })
-            ->orderByDesc('created_at')
+            ->orderByDesc('qard_hasans.created_at')
             ->get()
             ->map(function (QardHasan $loan) use ($user) {
                 // Extract the pivot for the current guarantor only

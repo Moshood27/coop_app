@@ -58,6 +58,7 @@ class PassbookService
         $loanYearTotals = []; // [loan_id => [month_idx => amount]]
         $unlinkedLoanBf = 0;
         $unlinkedLoanYear = array_fill(1, 12, 0);
+        $collectedYearContributions = collect();
 
         $loanRepaymentScheme = $schemes->first(fn($s) => $s->name === 'Loan Repayment');
 
@@ -73,6 +74,7 @@ class PassbookService
         }
 
         foreach ($yearContributions as $con) {
+            $collectedYearContributions->push($con);
             $amount = (float) $con->amount;
             $date = $con->paid_at ?? $con->created_at;
             $key = $date->format('Y-m');
@@ -145,6 +147,7 @@ class PassbookService
             'month_labels' => $monthLabels,
             'grand_total' => $matrix->reject(fn($r) => $r['is_exceptional'])->sum('total'),
             'bf_total' => $matrix->reject(fn($r) => $r['is_exceptional'])->sum('bf'),
+            'year_contributions' => $collectedYearContributions,
         ];
     }
 }
