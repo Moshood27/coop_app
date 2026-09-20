@@ -135,24 +135,24 @@ class SyncLoanRepaymentCommand extends Command
                       ->from('contributions')
                       ->whereColumn('contributions.reference', 'qard_hasan_repayments.reference');
             })
-            ->with('loan.user')
+            ->with('qardHasan.user')
             ->get();
 
         $this->info("Found " . $repayments->count() . " repayments to sync to Passbook.");
 
         $syncedCount = 0;
         foreach ($repayments as $rep) {
-            if (!$rep->loan || !$rep->loan->user) {
+            if (!$rep->qardHasan || !$rep->qardHasan->user) {
                 $this->warn("Skipping repayment ID {$rep->id}: Loan or User not found.");
                 continue;
             }
 
-            $this->line("Syncing Repayment ID: {$rep->id} (Ref: {$rep->reference}, User: {$rep->loan->user->full_name})");
+            $this->line("Syncing Repayment ID: {$rep->id} (Ref: {$rep->reference}, User: {$rep->qardHasan->user->full_name})");
 
             DB::beginTransaction();
             try {
                 Contribution::create([
-                    'user_id' => $rep->loan->user_id,
+                    'user_id' => $rep->qardHasan->user_id,
                     'scheme_id' => $loanScheme->id,
                     'amount' => $rep->amount,
                     'status' => 'success',

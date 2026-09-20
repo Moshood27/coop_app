@@ -43,7 +43,7 @@ class QardHasanRepaymentObserver
     protected function syncWithContribution(QardHasanRepayment $repayment): void
     {
         try {
-            $loan = $repayment->loan;
+            $loan = $repayment->qardHasan;
             if (!$loan) return;
 
             $contribution = Contribution::where('reference', $repayment->reference)->first();
