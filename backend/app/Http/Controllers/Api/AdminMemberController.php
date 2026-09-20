@@ -16,8 +16,10 @@ use Illuminate\Support\Facades\DB;
 use App\Services\AdministrativeChargeService;
 use App\Services\PassbookService;
 use App\Services\AttendanceService;
+use App\Services\PaystackService;
 use App\Models\AttendanceRecord;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 use Illuminate\Validation\Rule;
 
@@ -273,6 +275,212 @@ class AdminMemberController extends Controller
         });
 
         return response()->json(['message' => 'Contribution deleted successfully.']);
+    }
+
+    /**
+     * Allocate funds from Admin's wallet to a member's schemes (passbook).
+     */
+    public function allocateFromAdminWallet(Request $request, User $user)
+    {
+        $admin = $request->user();
+        if (!$admin->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $data = $request->validate([
+            'allocations' => 'required|array',
+            'allocations.*.scheme_id' => 'required|exists:schemes,id',
+            'allocations.*.amount' => 'required|numeric|min:0.01',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $totalRequested = collect($data['allocations'])->sum('amount');
+        $notes = $data['notes'] ?? 'Allocation from Admin Wallet';
+
+        if ($admin->balance < $totalRequested) {
+            return response()->json(['message' => 'Insufficient admin wallet balance.'], 422);
+        }
+
+        $reference = 'ADMIN_ALLOC_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+
+        DB::transaction(function () use ($admin, $user, $data, $reference, $totalRequested, $notes) {
+            $lockedAdmin = User::where('id', $admin->id)->lockForUpdate()->first();
+            $lockedMember = User::where('id', $user->id)->lockForUpdate()->first();
+
+            if ($lockedAdmin->balance < $totalRequested) {
+                throw new \Exception('Insufficient admin wallet balance.');
+            }
+
+            $items = [];
+            foreach ($data['allocations'] as $alloc) {
+                if ($alloc['amount'] <= 0) continue;
+
+                $scheme = Scheme::find($alloc['scheme_id']);
+
+                // 1. Create contribution record for member
+                $lockedMember->contributions()->create([
+                    'scheme_id' => $scheme->id,
+                    'amount' => $alloc['amount'],
+                    'status' => 'success',
+                    'paid_at' => now(),
+                    'payment_method' => 'admin_wallet',
+                    'reference' => $reference,
+                    'notes' => $notes,
+                ]);
+
+                // 2. Sync scheme balance for member
+                $lockedMember->syncSchemeBalance($scheme->name);
+
+                $items[] = [
+                    'scheme_id' => $scheme->id,
+                    'scheme_name' => $scheme->name,
+                    'amount' => $alloc['amount'],
+                    'category' => 'deposit',
+                ];
+            }
+
+            // 3. Deduct from Admin's wallet
+            $lockedAdmin->decrement('balance', $totalRequested);
+
+            // 4. Create wallet transaction record for Admin (Debit)
+            $lockedAdmin->walletTransactions()->create([
+                'amount' => $totalRequested,
+                'type' => 'debit',
+                'reference' => $reference,
+                'source' => 'admin_allocation_debit',
+                'meta' => [
+                    'member_id' => $user->id,
+                    'member_name' => $user->full_name,
+                    'description' => "Allocation to Member: {$user->full_name}",
+                    'notes' => $notes,
+                    'distribution' => $items,
+                ]
+            ]);
+
+            // 5. Create wallet transaction record for Member (Credit - representing the inflow)
+            // Even though it goes straight to schemes, we record it in wallet history for visibility
+            $lockedMember->walletTransactions()->create([
+                'amount' => $totalRequested,
+                'type' => 'credit',
+                'reference' => $reference,
+                'source' => 'admin_allocation_credit',
+                'meta' => [
+                    'admin_id' => $admin->id,
+                    'admin_name' => $admin->full_name,
+                    'description' => "Allocation from Admin: {$admin->full_name}",
+                    'notes' => $notes,
+                    'distribution' => $items,
+                ]
+            ]);
+        });
+
+        return response()->json(['message' => 'Funds allocated from admin wallet successfully.']);
+    }
+
+    /**
+     * Assign a Paystack Virtual Account to a member (triggered by admin).
+     */
+    public function assignVirtualAccount(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $validated = $request->validate([
+            'preferred_bank' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'bvn' => 'nullable|string|digits:11',
+        ]);
+
+        $bvn = $validated['bvn'] ?? $user->bvn;
+        $phone = $validated['phone'] ?? $user->phone;
+
+        if (empty($bvn)) return response()->json(['message' => 'Member BVN is required.'], 422);
+        if (empty($phone)) return response()->json(['message' => 'Member phone number is required.'], 422);
+
+        $paystack = app(PaystackService::class);
+
+        // Sync Customer
+        $sync = $paystack->syncCustomer($user, $phone);
+        if (!$sync['success']) {
+            return response()->json(['message' => $sync['message']], 502);
+        }
+
+        $customerCode = $sync['customer_code'];
+        $paystackData = $sync['data'];
+        $isIdentified = $paystackData['identified'] ?? false;
+
+        // Identification
+        if (!$isIdentified) {
+            $ident = $paystack->submitIdentification($user, $customerCode, $bvn);
+            if (!$ident['success']) {
+                return response()->json(['message' => $ident['message']], 422);
+            }
+            sleep(3);
+        }
+
+        // Assign DVA
+        $assign = $paystack->assignDva($user, $customerCode, $validated['preferred_bank'] ?? 'wema-bank');
+
+        if ($assign['success']) {
+            $user->update(['bvn' => $bvn]);
+            return response()->json([
+                'message' => 'Virtual account assigned successfully.',
+                'virtual_account' => $user->fresh()->virtualAccount
+            ]);
+        }
+
+        return response()->json(['message' => $assign['message']], 502);
+    }
+
+    /**
+     * Initialize Paystack checkout for a member's wallet (triggered by admin).
+     */
+    public function initializeWalletFunding(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:100',
+            'callback_url' => 'nullable|url',
+        ]);
+
+        $secret = config('services.paystack.secret_key');
+        if (!$secret) {
+            return response()->json(['message' => 'Payment provider not configured'], 500);
+        }
+
+        $reference = 'ADMIN_TOPUP_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+
+        $payload = [
+            'email' => $user->email,
+            'amount' => (int) round($data['amount'] * 100),
+            'reference' => $reference,
+            'currency' => 'NGN',
+            'metadata' => [
+                'user_id' => $user->id,
+                'admin_id' => $request->user()->id,
+                'type' => 'admin_initiated_topup',
+            ],
+        ];
+
+        if ($request->filled('callback_url')) {
+            $payload['callback_url'] = $data['callback_url'];
+        }
+
+        $response = Http::withToken($secret)
+            ->acceptJson()
+            ->post('https://api.paystack.co/transaction/initialize', $payload);
+
+        if (!$response->ok() || !($response->json('status') === true)) {
+            Log::error('Paystack Admin Wallet Initialize failed', ['user_id' => $user->id, 'body' => $response->json()]);
+            return response()->json(['message' => 'Failed to initialize payment'], 502);
+        }
+
+        $resData = $response->json('data');
+        return response()->json([
+            'authorization_url' => $resData['authorization_url'],
+            'reference' => $reference,
+            'amount' => $data['amount'],
+        ]);
     }
 
     /**

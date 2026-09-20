@@ -86,8 +86,8 @@
               <span class="i-mdi-wallet"></span>
             </div>
             <div>
-              <p class="text-sm font-black text-slate-800">Wallet Allocation</p>
-              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Distribute wallet to schemes</p>
+              <p class="text-sm font-black text-slate-800">Wallet Management</p>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Fund wallet & allocate to schemes</p>
             </div>
             <span class="ml-auto i-mdi-chevron-right text-slate-300"></span>
           </button>

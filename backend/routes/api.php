@@ -588,6 +588,9 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     Route::get('/{user}/contributions', [\App\Http\Controllers\Api\AdminMemberController::class, 'contributions']);
     Route::post('/{user}/distribute-funds', [\App\Http\Controllers\Api\AdminMemberController::class, 'distributeFunds']);
     Route::post('/{user}/allocate-wallet', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
+    Route::post('/{user}/allocate-from-admin', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateFromAdminWallet']);
+    Route::post('/{user}/assign-virtual-account', [\App\Http\Controllers\Api\AdminMemberController::class, 'assignVirtualAccount']);
+    Route::post('/{user}/initialize-funding', [\App\Http\Controllers\Api\AdminMemberController::class, 'initializeWalletFunding']);
     Route::get('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);
     Route::get('/{user}/wallet-transactions', [\App\Http\Controllers\Api\AdminMemberController::class, 'walletTransactions']);
     Route::get('/{user}/fines', [\App\Http\Controllers\Api\AdminMemberController::class, 'fines']);
