@@ -453,51 +453,35 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
     {
         try {
             if ($broadcast) {
-                // Trigger real-time dashboard update (message + payload)
+                // Trigger real-time dashboard update
                 event(new \App\Events\UserAccountUpdated($this, $message, $data));
             }
 
-            $resolved = $channels ?: array_values(array_filter([
+            $resolved = $channels ?: [
                 ($this->notify_email ? 'mail' : null),
                 ($this->notify_sms ? 'sms' : null),
                 ($this->notify_push ? 'push' : null),
                 'database',
-            ]));
+            ];
+            $resolved = array_filter($resolved);
 
-            $useMail = in_array('mail', $resolved, true) && (bool) ($this->notify_email ?? true) && !empty($this->email) && filter_var($this->email, FILTER_VALIDATE_EMAIL);
-            $useDb = in_array('database', $resolved, true);
+            $useMail = in_array('mail', $resolved);
+            $useDb = in_array('database', $resolved);
+            $usePush = in_array('push', $resolved);
+            $useSms = in_array('sms', $resolved);
 
-            // Use Laravel notification for database/email (disable push here as we handle it manually below)
-            try {
-                $this->notify(new \App\Notifications\GeneralNotification($title, $message, $data, $useMail, $useDb, false));
-            } catch (\Throwable $e) {
-                // avoid breaking caller flow
-            }
-
-            // SMS
-            if (in_array('sms', $resolved, true) && (bool) ($this->notify_sms ?? true) && !empty($this->phone)) {
-                try {
-                    app(\App\Services\SmsService::class)->send($this->phone, $message);
-                } catch (\Throwable $e) {
-                }
-            }
-
-            // Push
-            if (in_array('push', $resolved, true) && (bool) ($this->notify_push ?? true)) {
-                $token = $this->fcm_token ?: ($this->device_token ?? null);
-                if (!empty($token)) {
-                    try {
-                        $pushBody = $message;
-                        if (!empty($data['note']) && !str_contains($message, (string) $data['note'])) {
-                            $pushBody .= "\nNote: " . $data['note'];
-                        }
-                        app(\App\Services\PushService::class)->send($token, $title, $pushBody, $data ?? [], $this);
-                    } catch (\Throwable $e) {
-                    }
-                }
-            }
+            // Use queued Laravel notification for all channels
+            $this->notify(new \App\Notifications\GeneralNotification(
+                $title,
+                $message,
+                $data,
+                $useMail,
+                $useDb,
+                $usePush,
+                $useSms
+            ));
         } catch (\Throwable $e) {
-            // swallow all errors
+            \Log::error("Failed to notify member: " . $e->getMessage());
         }
     }
 

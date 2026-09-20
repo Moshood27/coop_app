@@ -29,6 +29,8 @@ class AttendanceRecord extends Model
         'excuse_type',
         'excuse_proof_path',
         'excused_at',
+        'correction_reason',
+        'unmarked_by_id',
         'verified_biometrically',
         'verified_via_beacon',
         'is_offline_sync',
@@ -53,7 +55,7 @@ class AttendanceRecord extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'fine_paid_at', 'lateness_fine_paid', 'lateness_fine_amount', 'fine_amount', 'marked_by_id', 'attended_at'])
+            ->logOnly(['status', 'fine_paid_at', 'lateness_fine_paid', 'lateness_fine_amount', 'fine_amount', 'marked_by_id', 'attended_at', 'correction_reason', 'unmarked_by_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -71,5 +73,10 @@ class AttendanceRecord extends Model
     public function markedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'marked_by_id');
+    }
+
+    public function unmarkedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'unmarked_by_id');
     }
 }

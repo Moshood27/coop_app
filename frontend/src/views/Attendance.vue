@@ -435,8 +435,14 @@
                    </div>
                  </div>
 
-                 <div v-if="filteredSearchResults.length === 0" class="py-12 text-center bg-white/50 rounded-3xl border-2 border-dashed border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">No members match this filter</p>
+                 <div v-if="filteredSearchResults.length === 0" class="py-16 text-center bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-100">
+                    <div class="text-3xl mb-3 opacity-30">🔍</div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-8 leading-relaxed">
+                       No members found matching your search. Try different keywords or scan their ID.
+                    </p>
+                    <button v-if="appStatusStore.adminAttendanceQrEnabled" @click="adminScanQr" class="mt-4 text-[9px] font-black text-amber-600 uppercase border border-amber-200 px-4 py-2 rounded-full active:scale-95 transition-all">
+                       Scan Member QR
+                    </button>
                  </div>
 
                  <div v-for="member in filteredSearchResults" :key="member.id" :id="`member-${member.id}`"
@@ -719,8 +725,12 @@
        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
           <div class="p-8">
              <div class="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">↩️</div>
-             <h3 class="text-xl font-black text-slate-800 text-center uppercase tracking-tight">Unmark Attendance</h3>
-             <p class="text-slate-500 text-xs mt-2 text-center font-medium">Please provide a reason for this correction</p>
+             <h3 class="text-xl font-black text-slate-800 text-center uppercase tracking-tight">
+                {{ isBulkUnmark ? 'Bulk Unmark' : 'Unmark Attendance' }}
+             </h3>
+             <p class="text-slate-500 text-xs mt-2 text-center font-medium">
+                {{ isBulkUnmark ? `Please provide a reason for unmarking selected members` : 'Please provide a reason for this correction' }}
+             </p>
              
              <div class="mt-6">
                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Reason (Optional)</label>
@@ -804,6 +814,7 @@ const throttleTimer = ref(null)
 const showBulkConfirmModal = ref(false)
 const bulkActionPreview = ref({ total: 0, eligible: 0, ineligible: 0, alreadyPresent: 0 })
 const showUnmarkReasonModal = ref(false)
+const isBulkUnmark = ref(false)
 const unmarkReason = ref('')
 const pendingUnmarkMember = ref(null)
 const markedByMeList = ref([])
@@ -1268,46 +1279,24 @@ const bulkUnmarkAction = async () => {
   const toUnmark = memberSearchResults.value.filter(m => selectedMembers.value.includes(m.id) && m.is_present)
   if (toUnmark.length === 0) return
   
-  const count = toUnmark.length
-  if (!quickMark.value) {
-    const confirm = await modal.confirm(`Remove attendance for ${count} selected members?`)
-    if (!confirm) return
-  }
-
-  bulkMarking.value = true
-  try {
-    const res = await axios.post(`/api/meetings/${meeting.value.id}/bulk-unmark-attendance`, {
-      user_ids: toUnmark.map(m => m.id)
-    })
-    
-    if (res.data.success) {
-      if (!quickMark.value) modal.alert(res.data.message || `Successfully unmarked ${count} members.`)
-      
-      // Update local state
-      toUnmark.forEach(m => {
-        m.is_present = false
-      })
-      
-      selectedMembers.value = selectedMembers.value.filter(id => !toUnmark.map(m => m.id).includes(id))
-      fetchMarkedByMe()
-      fetchMeetingStats()
-    } else {
-      modal.alert(res.data.message || "Failed to bulk unmark attendance", "Attendance Error")
-    }
-  } catch (err) {
-    modal.alert(err.response?.data?.message || "Error during bulk unmarking", "Attendance Error")
-  } finally {
-    bulkMarking.value = false
-  }
+  isBulkUnmark.value = true
+  unmarkReason.value = ''
+  showUnmarkReasonModal.value = true
 }
 
 const unmarkForMemberAction = async (memberOrRecord) => {
+  isBulkUnmark.value = false
   pendingUnmarkMember.value = memberOrRecord
   unmarkReason.value = ''
   showUnmarkReasonModal.value = true
 }
 
 const confirmUnmark = async () => {
+  if (isBulkUnmark.value) {
+    await confirmBulkUnmark()
+    return
+  }
+  
   const memberOrRecord = pendingUnmarkMember.value
   if (!memberOrRecord) return
 
@@ -1336,6 +1325,40 @@ const confirmUnmark = async () => {
   } finally {
     unmarkingForMember.value = null
     pendingUnmarkMember.value = null
+  }
+}
+
+const confirmBulkUnmark = async () => {
+  const toUnmark = memberSearchResults.value.filter(m => selectedMembers.value.includes(m.id) && m.is_present)
+  const count = toUnmark.length
+  
+  showUnmarkReasonModal.value = false
+  bulkMarking.value = true
+  try {
+    const res = await axios.post(`/api/meetings/${meeting.value.id}/bulk-unmark-attendance`, {
+      user_ids: toUnmark.map(m => m.id),
+      reason: unmarkReason.value
+    })
+    
+    if (res.data.success) {
+      modal.alert(res.data.message || `Successfully unmarked ${count} members.`)
+      
+      // Update local state
+      toUnmark.forEach(m => {
+        m.is_present = false
+      })
+      
+      selectedMembers.value = selectedMembers.value.filter(id => !toUnmark.map(m => m.id).includes(id))
+      fetchMarkedByMe()
+      fetchMeetingStats()
+    } else {
+      modal.alert(res.data.message || "Failed to bulk unmark attendance", "Attendance Error")
+    }
+  } catch (err) {
+    modal.alert(err.response?.data?.message || "Error during bulk unmarking", "Attendance Error")
+  } finally {
+    bulkMarking.value = false
+    isBulkUnmark.value = false
   }
 }
 

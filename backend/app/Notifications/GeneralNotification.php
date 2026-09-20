@@ -18,6 +18,7 @@ class GeneralNotification extends Notification implements ShouldQueue
         public bool $useMail = true,
         public bool $useDatabase = true,
         public bool $usePush = true,
+        public bool $useSms = false,
     ) {}
 
     /**
@@ -34,8 +35,11 @@ class GeneralNotification extends Notification implements ShouldQueue
         if ($this->useMail && (bool)($notifiable->notify_email ?? true) && !empty($notifiable->email) && filter_var(trim($notifiable->email), FILTER_VALIDATE_EMAIL)) {
             $channels[] = 'mail';
         }
-        if ($this->usePush && (!empty($notifiable->fcm_token) || !empty($notifiable->device_token))) {
+        if ($this->usePush && (bool)($notifiable->notify_push ?? true) && (!empty($notifiable->fcm_token) || !empty($notifiable->device_token))) {
             $channels[] = \App\Channels\PushChannel::class;
+        }
+        if ($this->useSms && (bool)($notifiable->notify_sms ?? true) && !empty($notifiable->phone)) {
+            $channels[] = \App\Channels\SmsChannel::class;
         }
         return $channels;
     }
@@ -55,6 +59,18 @@ class GeneralNotification extends Notification implements ShouldQueue
             'body' => $body,
             'data' => array_merge(['type' => 'general'], $this->data),
         ];
+    }
+
+    /**
+     * SMS representation.
+     */
+    public function toSms(object $notifiable): string
+    {
+        $body = $this->message;
+        if (!empty($this->data['note']) && !str_contains($this->message, (string) $this->data['note'])) {
+            $body .= " Note: " . $this->data['note'];
+        }
+        return $body;
     }
 
     /**

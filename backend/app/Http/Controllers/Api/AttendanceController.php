@@ -440,7 +440,8 @@ class AttendanceController extends Controller
                     "Attendance Marked",
                     "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
                     ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
-                    ['push', 'database']
+                    ['push', 'database'],
+                    false
                 );
             } catch (\Throwable $e) {
                 Log::warning('Attendance side-effects failed: ' . $e->getMessage(), [
@@ -521,7 +522,8 @@ class AttendanceController extends Controller
                                 "Attendance Marked",
                                 "Your attendance for '{$meeting->name}' has been marked by an authorized officer.",
                                 ['type' => 'attendance_marked', 'meeting_id' => (string) $meeting->id],
-                                ['push', 'database']
+                                ['push', 'database'],
+                                false
                             );
                         } catch (\Throwable $e) {
                             Log::warning('Bulk side-effects failed: ' . $e->getMessage());
@@ -557,10 +559,25 @@ class AttendanceController extends Controller
         }
 
         $userIds = $request->user_ids;
-        // Set status back to 'absent' and clear attended_at to preserve audit trail
-        $count = AttendanceRecord::where('meeting_id', $meeting->id)
-            ->whereIn('user_id', $userIds)
-            ->update(['status' => 'absent', 'attended_at' => null]);
+        $count = 0;
+        $requester = $request->user();
+
+        foreach (array_chunk($userIds, 100) as $chunk) {
+            DB::transaction(function () use ($chunk, $meeting, $requester, &$count) {
+                $records = AttendanceRecord::where('meeting_id', $meeting->id)
+                    ->whereIn('user_id', $chunk)
+                    ->get();
+
+                foreach ($records as $record) {
+                    $record->status = 'absent';
+                    $record->attended_at = null;
+                    $record->unmarked_by_id = $requester->id;
+                    $record->correction_reason = $request->reason ?? 'Bulk unmark by admin';
+                    $record->save();
+                    $count++;
+                }
+            });
+        }
 
         return response()->json([
             'success' => true,
@@ -590,6 +607,8 @@ class AttendanceController extends Controller
             if ($record) {
                 $record->status = 'absent';
                 $record->attended_at = null;
+                $record->correction_reason = $request->reason;
+                $record->unmarked_by_id = $request->user()->id;
                 $record->save();
 
                 return response()->json([
