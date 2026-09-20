@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Models\QardHasanRepayment;
+use App\Models\Contribution;
+use App\Models\Scheme;
 use App\Services\LedgerService;
 
 class QardHasanRepaymentObserver
@@ -16,8 +18,11 @@ class QardHasanRepaymentObserver
     public function updated(QardHasanRepayment $repayment): void
     {
         \Log::info("QardHasanRepaymentObserver: updated event for repayment #{$repayment->id}, status: {$repayment->status}");
-        if ($repayment->wasChanged('status') && $repayment->status === 'success' && !$repayment->ledger_journal_id) {
-            $this->recordToLedger($repayment);
+        if ($repayment->wasChanged('status') && $repayment->status === 'success') {
+            $this->syncWithContribution($repayment);
+            if (!$repayment->ledger_journal_id) {
+                $this->recordToLedger($repayment);
+            }
         }
     }
 
@@ -27,8 +32,51 @@ class QardHasanRepaymentObserver
     public function created(QardHasanRepayment $repayment): void
     {
         \Log::info("QardHasanRepaymentObserver: created event for repayment #{$repayment->id}, status: {$repayment->status}");
-        if ($repayment->status === 'success' && !$repayment->ledger_journal_id) {
-            $this->recordToLedger($repayment);
+        if ($repayment->status === 'success') {
+            $this->syncWithContribution($repayment);
+            if (!$repayment->ledger_journal_id) {
+                $this->recordToLedger($repayment);
+            }
+        }
+    }
+
+    protected function syncWithContribution(QardHasanRepayment $repayment): void
+    {
+        try {
+            $loan = $repayment->loan;
+            if (!$loan) return;
+
+            $contribution = Contribution::where('reference', $repayment->reference)->first();
+
+            if (!$contribution) {
+                $scheme = Scheme::where('name', 'Loan Repayment')->first();
+                if ($scheme) {
+                    Contribution::create([
+                        'user_id' => $loan->user_id,
+                        'scheme_id' => $scheme->id,
+                        'amount' => $repayment->amount,
+                        'status' => 'success',
+                        'paid_at' => $repayment->paid_at ?? $repayment->created_at,
+                        'payment_method' => $repayment->payment_method,
+                        'reference' => $repayment->reference,
+                        'category' => 'loan_repayment',
+                        'qard_hasan_id' => $loan->id,
+                        'notes' => $repayment->notes ?? "Repayment for Loan QH-{$loan->id}",
+                    ]);
+                    \Log::info("QardHasanRepaymentObserver: Created contribution for repayment #{$repayment->id}");
+                }
+            } else {
+                // Ensure existing contribution is linked to the loan
+                if (!$contribution->qard_hasan_id || $contribution->category !== 'loan_repayment') {
+                    $contribution->updateQuietly([
+                        'qard_hasan_id' => $loan->id,
+                        'category' => 'loan_repayment'
+                    ]);
+                    \Log::info("QardHasanRepaymentObserver: Linked existing contribution #{$contribution->id} to loan #{$loan->id}");
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error("Failed to sync repayment with contribution: " . $e->getMessage());
         }
     }
 
