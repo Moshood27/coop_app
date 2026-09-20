@@ -346,7 +346,7 @@ class AdminMemberController extends Controller
             $lockedAdmin->walletTransactions()->create([
                 'amount' => $totalRequested,
                 'type' => 'debit',
-                'reference' => $reference,
+                'reference' => $reference . '_DR',
                 'source' => 'admin_allocation_debit',
                 'meta' => [
                     'member_id' => $user->id,
@@ -362,7 +362,7 @@ class AdminMemberController extends Controller
             $lockedMember->walletTransactions()->create([
                 'amount' => $totalRequested,
                 'type' => 'credit',
-                'reference' => $reference,
+                'reference' => $reference . '_CR',
                 'source' => 'admin_allocation_credit',
                 'meta' => [
                     'admin_id' => $admin->id,
