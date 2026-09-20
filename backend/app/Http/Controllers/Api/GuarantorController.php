@@ -61,7 +61,7 @@ class GuarantorController extends Controller
         $loans = QardHasan::query()
             ->with(['user.branch', 'guarantors'])
             ->whereHas('guarantors', function ($q) use ($user) {
-                $q->where('guarantor_id', $user->id);
+                $q->where('qard_hasan_guarantors.guarantor_id', $user->id);
             })
             ->orderByDesc('created_at')
             ->get()
@@ -109,7 +109,7 @@ class GuarantorController extends Controller
         }
 
         $loan = QardHasan::with('guarantors')->findOrFail($loanId);
-        $pivot = $loan->guarantors()->where('guarantor_id', $user->id)->first();
+        $pivot = $loan->guarantors()->where('qard_hasan_guarantors.guarantor_id', $user->id)->first();
         if (!$pivot) {
             return response()->json(['message' => 'Not a guarantor on this loan'], 403);
         }
@@ -185,7 +185,7 @@ class GuarantorController extends Controller
     {
         $user = $request->user();
         $loan = QardHasan::with('guarantors')->findOrFail($loanId);
-        $pivot = $loan->guarantors()->where('guarantor_id', $user->id)->first();
+        $pivot = $loan->guarantors()->where('qard_hasan_guarantors.guarantor_id', $user->id)->first();
         if (!$pivot) {
             return response()->json(['message' => 'Not a guarantor on this loan'], 403);
         }

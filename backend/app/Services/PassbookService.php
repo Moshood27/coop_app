@@ -27,7 +27,7 @@ class PassbookService
             })
             ->where('status', 'success')
             ->orderByRaw('COALESCE(paid_at, created_at)')
-            ->get();
+            ->cursor();
 
         $bfContributions = $user->contributions()
             ->where(function($query) use ($startDate) {
@@ -37,7 +37,7 @@ class PassbookService
                       });
             })
             ->where('status', 'success')
-            ->get();
+            ->cursor();
 
         $monthMap = [];
         $monthLabels = [];
@@ -51,112 +51,91 @@ class PassbookService
         $userSchemeIds = $user->contributions()->where('status', 'success')->distinct()->pluck('scheme_id');
         $schemes = Scheme::where('active', true)->orWhereIn('id', $userSchemeIds)->orderBy('name')->get();
 
-        $matrix = $schemes->filter(fn($s) => $s->name !== 'Loan Repayment')->map(function ($scheme) use ($yearContributions, $bfContributions, $monthMap) {
-            $row = [
+        // Aggregators to avoid memory-heavy collections
+        $bfTotals = []; // [scheme_id => amount]
+        $loanBfTotals = []; // [loan_id => amount]
+        $yearTotals = []; // [scheme_id => [month_idx => amount]]
+        $loanYearTotals = []; // [loan_id => [month_idx => amount]]
+        $unlinkedLoanBf = 0;
+        $unlinkedLoanYear = array_fill(1, 12, 0);
+
+        $loanRepaymentScheme = $schemes->first(fn($s) => $s->name === 'Loan Repayment');
+
+        foreach ($bfContributions as $con) {
+            $amount = (float) $con->amount;
+            if ($con->qard_hasan_id) {
+                $loanBfTotals[$con->qard_hasan_id] = ($loanBfTotals[$con->qard_hasan_id] ?? 0) + $amount;
+            } elseif ($loanRepaymentScheme && $con->scheme_id == $loanRepaymentScheme->id) {
+                $unlinkedLoanBf += $amount;
+            } else {
+                $bfTotals[$con->scheme_id] = ($bfTotals[$con->scheme_id] ?? 0) + $amount;
+            }
+        }
+
+        foreach ($yearContributions as $con) {
+            $amount = (float) $con->amount;
+            $date = $con->paid_at ?? $con->created_at;
+            $key = $date->format('Y-m');
+            $mIdx = $monthMap[$key] ?? null;
+
+            if ($mIdx) {
+                if ($con->qard_hasan_id) {
+                    if (!isset($loanYearTotals[$con->qard_hasan_id])) {
+                        $loanYearTotals[$con->qard_hasan_id] = array_fill(1, 12, 0);
+                    }
+                    $loanYearTotals[$con->qard_hasan_id][$mIdx] += $amount;
+                } elseif ($loanRepaymentScheme && $con->scheme_id == $loanRepaymentScheme->id) {
+                    $unlinkedLoanYear[$mIdx] += $amount;
+                } else {
+                    if (!isset($yearTotals[$con->scheme_id])) {
+                        $yearTotals[$con->scheme_id] = array_fill(1, 12, 0);
+                    }
+                    $yearTotals[$con->scheme_id][$mIdx] += $amount;
+                }
+            }
+        }
+
+        $matrix = $schemes->filter(fn($s) => $s->name !== 'Loan Repayment')->map(function ($scheme) use ($bfTotals, $yearTotals) {
+            $bf = $bfTotals[$scheme->id] ?? 0.0;
+            $months = $yearTotals[$scheme->id] ?? array_fill(1, 12, 0);
+            return [
                 'scheme_name' => $scheme->name,
-                'months' => array_fill(1, 12, 0),
-                'bf' => 0.0,
-                'total' => 0.0,
+                'months' => $months,
+                'bf' => $bf,
+                'total' => $bf + array_sum($months),
                 'is_exceptional' => false,
             ];
-
-            foreach ($bfContributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $row['bf'] += (float) $con->amount;
-                }
-            }
-
-            $row['total'] = $row['bf'];
-
-            foreach ($yearContributions as $con) {
-                if ($con->scheme_id == $scheme->id) {
-                    $date = $con->paid_at ?? $con->created_at;
-                    $key = $date->format('Y-m');
-                    if (isset($monthMap[$key])) {
-                        $mIdx = $monthMap[$key];
-                        $row['months'][$mIdx] += (float) $con->amount;
-                        $row['total'] += (float) $con->amount;
-                    }
-                }
-            }
-
-            return $row;
         })->values();
 
-        // Handle Loan Repayments Exceptionally
-        $loanRepaymentScheme = $schemes->first(fn($s) => $s->name === 'Loan Repayment');
         if ($loanRepaymentScheme) {
             $activeLoans = $user->qardHasans()
                 ->whereIn('status', ['active', 'defaulted', 'completed'])
                 ->get();
 
             foreach ($activeLoans as $loan) {
-                $row = [
-                    'scheme_name' => "Loan: " . ($loan->description ?: $loan->qard_id_string ?: "QH-{$loan->id}"),
-                    'months' => array_fill(1, 12, 0),
-                    'bf' => 0.0,
-                    'total' => 0.0,
-                    'is_exceptional' => true,
-                ];
+                $bf = $loanBfTotals[$loan->id] ?? 0.0;
+                $months = $loanYearTotals[$loan->id] ?? array_fill(1, 12, 0);
+                $hasMonthlyActivity = array_sum($months) > 0;
 
-                // Repayments before start date
-                $row['bf'] = (float) $yearContributions->where('qard_hasan_id', $loan->id)->where('paid_at', '<', $startDate)->sum('amount')
-                             + (float) $bfContributions->where('qard_hasan_id', $loan->id)->sum('amount');
-
-                // Wait, yearContributions are already filtered by date range.
-                // bfContributions are those before startDate.
-                // So bf is just sum of bfContributions for this loan.
-                $row['bf'] = (float) $bfContributions->where('qard_hasan_id', $loan->id)->sum('amount');
-                $row['total'] = $row['bf'];
-
-                foreach ($yearContributions as $con) {
-                    if ($con->qard_hasan_id == $loan->id) {
-                        $date = $con->paid_at ?? $con->created_at;
-                        $key = $date->format('Y-m');
-                        if (isset($monthMap[$key])) {
-                            $mIdx = $monthMap[$key];
-                            $row['months'][$mIdx] += (float) $con->amount;
-                            $row['total'] += (float) $con->amount;
-                        }
-                    }
-                }
-
-                $hasMonthlyActivity = array_sum($row['months']) > 0;
                 if (in_array($loan->status, ['active', 'defaulted']) || $hasMonthlyActivity) {
-                    $matrix->push($row);
+                    $matrix->push([
+                        'scheme_name' => "Loan: " . ($loan->description ?: $loan->qard_id_string ?: "QH-{$loan->id}"),
+                        'months' => $months,
+                        'bf' => $bf,
+                        'total' => $bf + array_sum($months),
+                        'is_exceptional' => true,
+                    ]);
                 }
             }
 
-            // Handle unlinked loan repayments
-            $unlinkedRow = [
-                'scheme_name' => 'Loan Repayment (Other)',
-                'months' => array_fill(1, 12, 0),
-                'bf' => 0.0,
-                'total' => 0.0,
-                'is_exceptional' => true,
-            ];
-
-            foreach ($bfContributions as $con) {
-                if ($con->scheme_id == $loanRepaymentScheme->id && empty($con->qard_hasan_id)) {
-                    $unlinkedRow['bf'] += (float) $con->amount;
-                }
-            }
-            $unlinkedRow['total'] = $unlinkedRow['bf'];
-
-            foreach ($yearContributions as $con) {
-                if ($con->scheme_id == $loanRepaymentScheme->id && empty($con->qard_hasan_id)) {
-                    $date = $con->paid_at ?? $con->created_at;
-                    $key = $date->format('Y-m');
-                    if (isset($monthMap[$key])) {
-                        $mIdx = $monthMap[$key];
-                        $unlinkedRow['months'][$mIdx] += (float) $con->amount;
-                        $unlinkedRow['total'] += (float) $con->amount;
-                    }
-                }
-            }
-
-            if (array_sum($unlinkedRow['months']) > 0) {
-                $matrix->push($unlinkedRow);
+            if (array_sum($unlinkedLoanYear) > 0 || $unlinkedLoanBf > 0) {
+                $matrix->push([
+                    'scheme_name' => 'Loan Repayment (Other)',
+                    'months' => $unlinkedLoanYear,
+                    'bf' => $unlinkedLoanBf,
+                    'total' => $unlinkedLoanBf + array_sum($unlinkedLoanYear),
+                    'is_exceptional' => true,
+                ]);
             }
         }
 
@@ -166,7 +145,6 @@ class PassbookService
             'month_labels' => $monthLabels,
             'grand_total' => $matrix->reject(fn($r) => $r['is_exceptional'])->sum('total'),
             'bf_total' => $matrix->reject(fn($r) => $r['is_exceptional'])->sum('bf'),
-            'year_contributions' => $yearContributions,
         ];
     }
 }
