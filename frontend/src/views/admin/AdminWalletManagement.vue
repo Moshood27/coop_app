@@ -547,7 +547,7 @@ const initializeFunding = async () => {
   try {
     const { data } = await axios.post(`/api/admin/members/${route.params.id}/initialize-funding`, {
       amount: fundAmount.value,
-      callback_url: window.location.origin + `/admin/members/${route.params.id}/wallet`
+      callback_url: window.location.href
     })
     if (data.authorization_url) {
       window.location.href = data.authorization_url

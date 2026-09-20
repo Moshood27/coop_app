@@ -510,6 +510,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import axios from '../http'
 import { useAppStatusStore } from '../stores/appStatus'
@@ -521,6 +522,7 @@ import { verifyBiometricIdentity, isBiometricAvailable } from '../services/biome
 import { getEcho } from '../realtime/echo'
 
 const appStatusStore = useAppStatusStore()
+const router = useRouter()
 
 // Policy defaults for admin fees (can be overridden via environment variables)
 const DEFAULT_ADMIN_FEE_FLAT = Number(import.meta.env.VITE_DEFAULT_ADMIN_FEE_FLAT ?? 0)
@@ -861,10 +863,11 @@ const pay = async (loan) => {
   paying.value[loan.id] = true
   try {
     const token = localStorage.getItem('token')
+    const callback_url = new URL(router.resolve({ name: 'loans' }).href, window.location.origin).href
     const payload = {
       amount: amt,
       source: 'auto',
-      callback_url: window.location.origin + '/loans'
+      callback_url
     }
     const { data } = await axios.post(`/api/loans/${loan.id}/repay`, { ...payload, source: paySource.value[loan.id] || 'auto' }, {
       headers: { Authorization: `Bearer ${token}` }
