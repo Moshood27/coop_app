@@ -564,11 +564,27 @@ class AdminMemberController extends Controller
             $lockedLoan->repayments()->create([
                 'amount' => $amount,
                 'payment_method' => $data['method'],
-                'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
+                'reference' => 'QH-REP-' . ($reference = strtoupper(Str::random(12))),
                 'paid_at' => Carbon::parse($data['paid_at']),
                 'notes' => $data['notes'] ?? null,
                 'status' => 'success',
             ]);
+
+            // Create a corresponding contribution record for the passbook
+            $loanRepaymentScheme = Scheme::where('name', 'Loan Repayment')->first();
+            if ($loanRepaymentScheme) {
+                $lockedUser->contributions()->create([
+                    'scheme_id' => $loanRepaymentScheme->id,
+                    'amount' => $amount,
+                    'status' => 'success',
+                    'paid_at' => Carbon::parse($data['paid_at']),
+                    'payment_method' => $data['method'],
+                    'reference' => 'QH-REP-' . $reference,
+                    'category' => 'loan_repayment',
+                    'qard_hasan_id' => $lockedLoan->id,
+                    'notes' => $data['notes'] ?? "Repayment for Loan QH-{$lockedLoan->id}",
+                ]);
+            }
 
             $lockedLoan->increment('paid_amount', $amount);
 

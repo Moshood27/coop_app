@@ -88,8 +88,8 @@ class Contribution extends Model
                 $model->paid_at = now();
             }
 
-            // Auto-infer category if scheme changed or category is missing
-            if ($model->isDirty('scheme_id') || (empty($model->category) && $model->scheme_id)) {
+            // Auto-infer category if scheme changed or category is missing/default
+            if ($model->isDirty('scheme_id') || (in_array($model->category, [null, '', 'deposit']) && $model->scheme_id)) {
                 $scheme = $model->scheme ?: Scheme::find($model->scheme_id);
                 $schemeName = $scheme?->name;
 
@@ -162,8 +162,10 @@ class Contribution extends Model
                             ->first();
                     }
 
-                    if ($q && in_array($q->status, ['active', 'defaulted'])) {
-                        if (!QardHasanRepayment::where('reference', $model->reference)->exists()) {
+                    if ($q && in_array($q->status, ['active', 'defaulted', 'completed'])) {
+                        $repayment = QardHasanRepayment::where('reference', $model->reference)->first();
+
+                        if (!$repayment) {
                             $before = (float) $q->paid_amount;
                             $remaining = max(0, (float) $q->principal_amount - $before);
                             $applied = round(min((float) $model->amount, $remaining), 2);
@@ -185,6 +187,11 @@ class Contribution extends Model
                                 }
                                 $q->save();
                             }
+                        }
+
+                        // Ensure contribution is linked to the loan for passbook
+                        if ($model->qard_hasan_id != $q->id) {
+                            $model->updateQuietly(['qard_hasan_id' => $q->id]);
                         }
                     }
                 } catch (\Throwable $e) {
