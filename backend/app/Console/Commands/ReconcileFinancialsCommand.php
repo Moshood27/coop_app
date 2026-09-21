@@ -18,7 +18,7 @@ class ReconcileFinancialsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'financials:reconcile {--fix : Attempt to automatically fix discrepancies} {--user= : Reconcile for a specific user ID}';
+    protected $signature = 'financials:reconcile {--fix : Attempt to automatically fix discrepancies} {--user= : Reconcile for a specific user ID} {--branch= : Reconcile for a specific branch ID} {--rollback : Rollback records created by the automatic sync command}';
 
     /**
      * The console command description.
@@ -34,17 +34,31 @@ class ReconcileFinancialsCommand extends Command
     {
         $fix = $this->option('fix');
         $userId = $this->option('user');
+        $branchId = $this->option('branch');
+        $rollback = $this->option('rollback');
+
+        if ($rollback) {
+            $this->info("--- Rolling Back Synced Financial Records ---");
+            if ($fix) {
+                $this->warn("!!! FIX MODE ENABLED - Synced records will be DELETED !!!");
+            }
+            $results = $service->rollbackSync($fix, $branchId);
+            $this->info("Repayments deleted: " . $results['repayments_deleted']);
+            $this->info("Contributions deleted: " . $results['contributions_deleted']);
+            $this->info("Loans updated: " . $results['loans_updated']);
+            return 0;
+        }
 
         $this->info("--- Starting Comprehensive Financial Reconciliation ---");
         if ($fix) {
             $this->warn("!!! FIX MODE ENABLED - Changes will be written to the database !!!");
         }
 
-        $results = $service->run($fix, $userId);
+        $results = $service->run($fix, $userId, $branchId);
 
         $this->displayReport($results);
 
-        if (!$userId) {
+        if (!$userId && !$branchId) {
             $this->comment("\n4. Verifying General Ledger Integrity...");
             $this->call('audit:verify-ledger');
         }

@@ -78,8 +78,18 @@ class AccountingOpsController extends Controller
         $this->authorize('ops.financial_reconcile');
         $fix = $request->boolean('fix', false);
         $userId = $request->input('user_id');
+        $branchId = $request->input('branch_id');
+        $rollback = $request->boolean('rollback', false);
 
-        $res = $svc->run($fix, $userId);
+        if ($rollback) {
+            $res = $svc->rollbackSync($fix, $branchId);
+            return response()->json([
+                'message' => $fix ? 'Sync rollback completed.' : 'Sync rollback report generated.',
+                'data' => $res
+            ]);
+        }
+
+        $res = $svc->run($fix, $userId, $branchId);
 
         return response()->json([
             'message' => $fix ? 'Financial reconciliation completed with fixes.' : 'Financial reconciliation report generated.',

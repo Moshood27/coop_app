@@ -113,12 +113,14 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input type="number" v-model.number="recon.user_id" class="input" placeholder="Specific User ID (optional)"/>
+          <input type="number" v-model.number="recon.branch_id" class="input" placeholder="Specific Branch ID (optional)"/>
           <label class="flex items-center gap-2 text-xs"><input type="checkbox" v-model="recon.fix"/> Apply Fixes (Destructive)</label>
+          <label class="flex items-center gap-2 text-xs"><input type="checkbox" v-model="recon.rollback"/> Rollback Sync Records</label>
         </div>
         <div class="flex gap-3">
           <button @click="runReconcile" :disabled="reconciling" class="btn bg-rose-600 text-white flex items-center gap-2">
             <span v-if="reconciling" class="i-mdi-loading animate-spin"></span>
-            {{ reconciling ? 'Running Audit...' : 'Start Reconciliation Audit' }}
+            {{ reconciling ? 'Processing...' : (recon.rollback ? 'Start Rollback' : 'Start Reconciliation Audit') }}
           </button>
         </div>
       </section>
@@ -153,7 +155,7 @@ const yec = ref({ period_id: '', retained_code: '', dry_run: true, close: true }
 const rev = ref({ date: new Date().toISOString().slice(0,10), journal: '', dry_run: false })
 const mb = ref({ from: '', to: '', branch_id: '', truncate: false })
 const fx = ref({ date: new Date().toISOString().slice(0,10), currency: '', dry_run: true })
-const recon = ref({ user_id: '', fix: false })
+const recon = ref({ user_id: '', branch_id: '', fix: false, rollback: false })
 const exports = ref({ from: '', to: '', as_of: new Date().toISOString().slice(0,10) })
 
 const reconciling = ref(false)
@@ -217,6 +219,7 @@ const runReconcile = async () => {
   try {
     const payload = { ...recon.value }
     if (!payload.user_id) delete payload.user_id
+    if (!payload.branch_id) delete payload.branch_id
     const { data } = await axios.post('/api/admin/accounting/ops/financial/reconcile', payload)
     notice('success', 'Reconciliation', data.message || 'Audit complete')
     console.log('Recon Data:', data.data)

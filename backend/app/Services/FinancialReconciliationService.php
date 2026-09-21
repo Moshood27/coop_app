@@ -23,23 +23,27 @@ class FinancialReconciliationService
     /**
      * Run the full financial reconciliation process.
      */
-    public function run(bool $fix = false, $userId = null)
+    public function run(bool $fix = false, $userId = null, $branchId = null)
     {
         return [
-            'wallet' => $this->reconcileWallet($fix, $userId),
-            'contributions' => $this->reconcileContributions($fix, $userId),
-            'loans' => $this->reconcileLoans($fix, $userId),
+            'wallet' => $this->reconcileWallet($fix, $userId, $branchId),
+            'contributions' => $this->reconcileContributions($fix, $userId, $branchId),
+            'loans' => $this->reconcileLoans($fix, $userId, $branchId),
             'timestamp' => now()->toDateTimeString(),
         ];
     }
 
-    protected function reconcileWallet(bool $fix, $userId)
+    protected function reconcileWallet(bool $fix, $userId, $branchId = null)
     {
         $report = ['missing_ledger' => 0, 'balance_mismatches' => 0, 'fixed' => 0, 'errors' => []];
 
         // A. Missing Ledger Journals for Wallet Transactions
         $query = WalletTransaction::whereNull('ledger_journal_id');
-        if ($userId) $query->where('user_id', $userId);
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } elseif ($branchId) {
+            $query->whereHas('user', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         $missing = $query->get();
         $report['missing_ledger'] = $missing->count();
@@ -61,8 +65,13 @@ class FinancialReconciliationService
 
         // B. User Wallet Balance Consistency
         $userQuery = User::query();
-        if ($userId) $userQuery->where('id', $userId);
-        else $userQuery->where('is_admin', false);
+        if ($userId) {
+            $userQuery->where('id', $userId);
+        } elseif ($branchId) {
+            $userQuery->where('branch_id', $branchId);
+        } else {
+            $userQuery->where('is_admin', false);
+        }
 
         $userQuery->chunk(100, function ($users) use (&$report, $fix) {
             foreach ($users as $user) {
@@ -85,13 +94,17 @@ class FinancialReconciliationService
         return $report;
     }
 
-    protected function reconcileContributions(bool $fix, $userId)
+    protected function reconcileContributions(bool $fix, $userId, $branchId = null)
     {
         $report = ['missing_ledger' => 0, 'scheme_mismatches' => 0, 'fixed' => 0, 'errors' => []];
 
         // A. Missing Ledger Journals for Contributions
         $query = Contribution::where('status', 'success')->whereNull('ledger_journal_id');
-        if ($userId) $query->where('user_id', $userId);
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } elseif ($branchId) {
+            $query->whereHas('user', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         $missing = $query->get();
         $report['missing_ledger'] = $missing->count();
@@ -120,22 +133,41 @@ class FinancialReconciliationService
 
         // B. Scheme Balance Consistency (Savings, Shares, etc.)
         $userQuery = User::query();
-        if ($userId) $userQuery->where('id', $userId);
-        else $userQuery->where('is_admin', false);
+        if ($userId) {
+            $userQuery->where('id', $userId);
+        } elseif ($branchId) {
+            $userQuery->where('branch_id', $branchId);
+        } else {
+            $userQuery->where('is_admin', false);
+        }
 
         $userQuery->chunk(100, function ($users) use (&$report, $fix) {
-            $columnMap = [
-                'Savings' => 'ordinary_savings',
-                'Ordinary Savings' => 'ordinary_savings',
-                'Shares' => 'shares_capital',
-                'Share Capital' => 'shares_capital',
-                'Special Savings' => 'special_savings_balance',
+            $columnToSchemes = [
+                'ordinary_savings' => ['Savings', 'Ordinary Savings'],
+                'shares_capital' => ['Shares', 'Share Capital'],
+                'special_savings_balance' => ['Special Savings'],
+                'building_balance' => ['Building'],
+                'development_fund_balance' => ['Development'],
+                'agm_balance' => ['AGM'],
+                'loan_repayment_balance' => ['Loan Repayment'],
+                'fine_balance' => ['Fine'],
+                'welfare_balance' => ['Welfare'],
+                'lateness_balance' => ['Lateness'],
+                'stationery_balance' => ['Stationery'],
+                'loan_form_balance' => ['Loan Form'],
+                'others_balance' => ['Others'],
+                'id_card_balance' => ['ID Card'],
+                'emergency_balance' => ['Emergency'],
+                'entrance_balance' => ['Entrance'],
+                'h_savings_balance' => ['H Savings'],
+                'investment_balance' => ['Investment'],
+                'group_savings_balance' => ['Group Savings'],
             ];
 
             foreach ($users as $user) {
-                foreach ($columnMap as $schemeName => $column) {
+                foreach ($columnToSchemes as $column => $schemeNames) {
                     $actual = (float) $user->contributions()
-                        ->whereHas('scheme', fn($q) => $q->where('name', $schemeName))
+                        ->whereHas('scheme', fn($q) => $q->whereIn('name', $schemeNames))
                         ->where('status', 'success')
                         ->sum('amount');
                     $stored = (float) $user->{$column};
@@ -143,7 +175,8 @@ class FinancialReconciliationService
                     if (abs($actual - $stored) > 0.01) {
                         $report['scheme_mismatches']++;
                         if ($fix) {
-                            $user->syncSchemeBalance($schemeName);
+                            $user->{$column} = $actual;
+                            $user->saveQuietly();
                             $report['fixed']++;
                         }
                     }
@@ -154,7 +187,7 @@ class FinancialReconciliationService
         return $report;
     }
 
-    protected function reconcileLoans(bool $fix, $userId)
+    protected function reconcileLoans(bool $fix, $userId, $branchId = null)
     {
         $report = ['missing_ledger' => 0, 'missing_passbook' => 0, 'balance_mismatches' => 0, 'fixed' => 0, 'errors' => []];
 
@@ -162,6 +195,8 @@ class FinancialReconciliationService
         $repQuery = QardHasanRepayment::where('status', 'success')->whereNull('ledger_journal_id');
         if ($userId) {
             $repQuery->whereHas('qardHasan', fn($q) => $q->where('user_id', $userId));
+        } elseif ($branchId) {
+            $repQuery->whereHas('qardHasan.user', fn($q) => $q->where('branch_id', $branchId));
         }
         $missing = $repQuery->get();
         $report['missing_ledger'] = $missing->count();
@@ -180,7 +215,11 @@ class FinancialReconciliationService
 
         // B. Repayment vs Passbook (Contribution) linkage
         $repQuery2 = QardHasanRepayment::where('status', 'success');
-        if ($userId) $repQuery2->whereHas('qardHasan', fn($q) => $q->where('user_id', $userId));
+        if ($userId) {
+            $repQuery2->whereHas('qardHasan', fn($q) => $q->where('user_id', $userId));
+        } elseif ($branchId) {
+            $repQuery2->whereHas('qardHasan.user', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         $repQuery2->chunk(100, function ($repayments) use (&$report, $fix) {
             foreach ($repayments as $r) {
@@ -201,7 +240,11 @@ class FinancialReconciliationService
 
         // C. Loan Paid Amount vs Repayment Total
         $loanQuery = QardHasan::whereIn('status', ['active', 'defaulted', 'completed']);
-        if ($userId) $loanQuery->where('user_id', $userId);
+        if ($userId) {
+            $loanQuery->where('user_id', $userId);
+        } elseif ($branchId) {
+            $loanQuery->whereHas('user', fn($q) => $q->where('branch_id', $branchId));
+        }
 
         $loanQuery->chunk(100, function ($loans) use (&$report, $fix) {
             foreach ($loans as $loan) {
@@ -221,6 +264,60 @@ class FinancialReconciliationService
                 }
             }
         });
+
+        return $report;
+    }
+
+    /**
+     * Rollback records created by the automatic sync command.
+     */
+    public function rollbackSync(bool $fix = false, $branchId = null)
+    {
+        $report = ['repayments_deleted' => 0, 'contributions_deleted' => 0, 'loans_updated' => 0];
+
+        // 1. Identify synced repayments (Part 1 of Sync Command)
+        $repQuery = QardHasanRepayment::where('notes', 'Repayment via Wallet (Synced)');
+        if ($branchId) {
+            $repQuery->whereHas('qardHasan.user', fn($q) => $q->where('branch_id', $branchId));
+        }
+
+        $repayments = $repQuery->get();
+        $report['repayments_deleted'] = $repayments->count();
+
+        if ($fix) {
+            $affectedLoans = [];
+            foreach ($repayments as $r) {
+                $loan = $r->qardHasan;
+                $r->delete();
+                if ($loan && !isset($affectedLoans[$loan->id])) {
+                    $affectedLoans[$loan->id] = $loan;
+                }
+            }
+
+            foreach ($affectedLoans as $loan) {
+                $loan->paid_amount = (float) $loan->repayments()->where('status', 'success')->sum('amount');
+                if ($loan->paid_amount < $loan->principal_amount && $loan->status === 'completed') {
+                    $loan->status = 'active';
+                }
+                $loan->saveQuietly();
+                $report['loans_updated']++;
+            }
+        }
+
+        // 2. Identify synced contributions (Part 2 of Sync Command)
+        $conQuery = Contribution::where('notes', 'like', 'Repayment for Loan QH-% (Synced)');
+        if ($branchId) {
+            $conQuery->whereHas('user', fn($q) => $q->where('branch_id', $branchId));
+        }
+
+        $contributions = $conQuery->get();
+        $report['contributions_deleted'] = $contributions->count();
+
+        if ($fix) {
+            foreach ($contributions as $c) {
+                $c->delete();
+            }
+        }
 
         return $report;
     }

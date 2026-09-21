@@ -23,9 +23,12 @@ class FinancialReconciliationPage extends Page
 
     public function mount(): void
     {
+        $admin = auth()->user();
         $this->form->fill([
             'fix' => false,
             'user_id' => null,
+            'branch_id' => $admin->branch_id,
+            'rollback' => false,
         ]);
     }
 
@@ -39,9 +42,17 @@ class FinancialReconciliationPage extends Page
                         ->label('Specific User ID')
                         ->numeric()
                         ->helperText('Leave blank to run for all members.'),
+                    Forms\Components\Select::make('branch_id')
+                        ->label('Specific Branch')
+                        ->options(\App\Models\Branch::pluck('name', 'id'))
+                        ->searchable()
+                        ->helperText('Restrict audit to a specific branch.'),
                     Forms\Components\Toggle::make('fix')
                         ->label('Apply Fixes')
-                        ->helperText('If enabled, the system will attempt to repair identified discrepancies (e.g., updating balances, creating missing journals).')
+                        ->helperText('If enabled, the system will attempt to repair identified discrepancies (e.g., updating balances, creating missing journals).'),
+                    Forms\Components\Toggle::make('rollback')
+                        ->label('Rollback Sync Records')
+                        ->helperText('If enabled, will identify and (if Fix is ON) delete records created by the problematic automatic sync script.')
                         ->columnSpanFull(),
                 ])->columns(2)
         ])->statePath('data');
@@ -53,15 +64,28 @@ class FinancialReconciliationPage extends Page
         $state = $this->form->getState();
 
         try {
-            $this->lastResult = $service->run(
-                $state['fix'] ?? false,
-                $state['user_id'] ? (int)$state['user_id'] : null
-            );
+            if ($state['rollback'] ?? false) {
+                $this->lastResult = $service->rollbackSync(
+                    $state['fix'] ?? false,
+                    $state['branch_id'] ? (int)$state['branch_id'] : null
+                );
 
-            Notification::make()
-                ->title($state['fix'] ? 'Reconciliation Fixed' : 'Audit Completed')
-                ->success()
-                ->send();
+                Notification::make()
+                    ->title($state['fix'] ? 'Sync Records Rolled Back' : 'Rollback Audit Completed')
+                    ->success()
+                    ->send();
+            } else {
+                $this->lastResult = $service->run(
+                    $state['fix'] ?? false,
+                    $state['user_id'] ? (int)$state['user_id'] : null,
+                    $state['branch_id'] ? (int)$state['branch_id'] : null
+                );
+
+                Notification::make()
+                    ->title($state['fix'] ? 'Reconciliation Fixed' : 'Audit Completed')
+                    ->success()
+                    ->send();
+            }
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Reconciliation Failed')
