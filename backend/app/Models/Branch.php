@@ -39,7 +39,7 @@ class Branch extends Model
         return (float) $this->users()
             ->join('contributions', 'users.id', '=', 'contributions.user_id')
             ->join('schemes', 'contributions.scheme_id', '=', 'schemes.id')
-            ->where('schemes.name', 'Savings')
+            ->whereIn('schemes.name', ['Savings', 'Ordinary Savings'])
             ->where('contributions.status', 'success')
             ->sum('contributions.amount');
     }

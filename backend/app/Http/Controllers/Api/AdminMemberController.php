@@ -172,8 +172,12 @@ class AdminMemberController extends Controller
                 $halfAmount = $data['amount'] / 2;
 
                 // Find Savings and Shares schemes
-                $savingsScheme = Scheme::where('name', 'like', '%Savings%')->first();
-                $sharesScheme = Scheme::where('name', 'like', '%Share%')->first();
+                $savingsScheme = Scheme::where('name', 'Ordinary Savings')
+                    ->orWhere('name', 'Savings')
+                    ->first();
+                $sharesScheme = Scheme::where('name', 'Shares')
+                    ->orWhere('name', 'Share Capital')
+                    ->first();
 
                 if (!$savingsScheme || !$sharesScheme) {
                     throw new \Exception('Savings or Shares scheme not found for split.');
