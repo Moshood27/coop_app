@@ -631,7 +631,9 @@ class AttendanceController extends Controller
 
         $records = AttendanceRecord::where('meeting_id', $meeting->id)
             ->where('marked_by_id', auth()->id())
-            ->with(['user:id,name,surname,membership_number,phone'])
+            ->with(['user' => function($q) {
+                $q->withTrashed()->select('id', 'name', 'surname', 'membership_number', 'phone');
+            }])
             ->orderBy('attended_at', 'desc')
             ->get();
 
@@ -649,14 +651,19 @@ class AttendanceController extends Controller
         }
 
         $records = AttendanceRecord::where('meeting_id', $meeting->id)
-            ->with(['user:id,name,surname,membership_number,phone,branch_id', 'user.branch:id,name'])
+            ->with([
+                'user' => function($q) {
+                    $q->withTrashed()->select('id', 'name', 'surname', 'membership_number', 'phone', 'branch_id');
+                },
+                'user.branch:id,name'
+            ])
             ->get()
             ->map(function ($record) {
                 return [
                     'id' => $record->id,
-                    'user_name' => $record->user->full_name,
-                    'membership_number' => $record->user->membership_number,
-                    'branch' => $record->user->branch?->name,
+                    'user_name' => $record->user?->full_name ?? 'Unknown Member',
+                    'membership_number' => $record->user?->membership_number ?? 'N/A',
+                    'branch' => $record->user?->branch?->name ?? 'N/A',
                     'status' => $record->status,
                     'attended_at' => $record->attended_at?->format('H:i'),
                     'verified_biometrically' => $record->verified_biometrically,
