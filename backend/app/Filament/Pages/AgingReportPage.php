@@ -23,6 +23,7 @@ class AgingReportPage extends Page
 
     public function mount(): void
     {
+        $this->form->fill();
         if (!Schema::hasTable('ledger_entries')) {
             Notification::make()->title('Migrations pending')
                 ->body('Run php artisan migrate after deployment to enable Aging Reports.')

@@ -22,6 +22,7 @@ class FxOperationsPage extends Page
 
     public function mount(): void
     {
+        $this->form->fill();
         if (!Schema::hasTable('ledger_journals')) {
             Notification::make()->title('Migrations pending')
                 ->body('Run migrations after deployment to enable FX operations.')

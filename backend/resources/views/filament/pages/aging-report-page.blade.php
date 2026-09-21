@@ -5,9 +5,10 @@
         {{ $this->form }}
         <div class="mt-4">
             <x-filament::button wire:click="generate">Generate</x-filament::button>
+            @php($formData = $this->data)
             <a
                 class="ms-2 text-primary-600 hover:underline"
-                href="{{ url('/api/admin/accounting/reports/aging') }}?type={{ data_get($this->form->getState(),'type','ar') }}&asOf={{ \Illuminate\Support\Carbon::parse(data_get($this->form->getState(),'asOf', now()))->toDateString() }}&buckets={{ data_get($this->form->getState(),'buckets','30,60,90') }}&accounts={{ data_get($this->form->getState(),'accounts','') }}&branch_id={{ data_get($this->form->getState(),'branch_id','') }}&format=csv"
+                href="{{ url('/api/admin/accounting/reports/aging') }}?type={{ data_get($formData,'type','ar') }}&asOf={{ \Illuminate\Support\Carbon::parse(data_get($formData,'asOf', now()))->toDateString() }}&buckets={{ data_get($formData,'buckets','30,60,90') }}&accounts={{ data_get($formData,'accounts','') }}&branch_id={{ data_get($formData,'branch_id','') }}&format=csv"
                 target="_blank"
             >Download CSV</a>
         </div>

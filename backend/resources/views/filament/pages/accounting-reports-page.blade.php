@@ -3,7 +3,7 @@
 <x-filament::page>
     <div>
         {{ $this->form }}
-        @php($state = $this->form->getState())
+        @php($state = $this->data)
         @php($from = \Illuminate\Support\Carbon::parse(($state['from'] ?? now()))->toDateString())
         @php($to = \Illuminate\Support\Carbon::parse(($state['to'] ?? now()))->toDateString())
         @php($branch = $state['branch_id'] ?? '')
