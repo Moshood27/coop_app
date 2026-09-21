@@ -197,7 +197,146 @@ class WebhookController extends Controller
                 ->where('status', 'pending')
                 ->get();
 
-            if ($contributions->isEmpty()) {
+            if ($contributions->isNotEmpty()) {
+                $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
+                $user = User::find($contributions->first()->user_id);
+
+                // Identify if admin-initiated
+                $rawMeta = $vd['metadata'] ?? null;
+                $metadata = is_string($rawMeta) ? json_decode($rawMeta, true) : (array)$rawMeta;
+                $isAdminInitiated = ($metadata['type'] ?? '') === 'admin_initiated_scheme_payment';
+
+                if ($isAdminInitiated && $user) {
+                    DB::transaction(function () use ($user, $amountNgn, $reference, $contributions) {
+                        // 1. Credit GROSS amount to member wallet first
+                        $user->increment('balance', $amountNgn);
+                        WalletTransaction::create([
+                            'user_id' => $user->id,
+                            'type' => 'credit',
+                            'amount' => $amountNgn,
+                            'reference' => $reference . '_GROSS',
+                            'source' => 'paystack_scheme_funding',
+                            'meta' => ['description' => 'Gross funding from Paystack before deductions']
+                        ]);
+
+                        // 2. Apply deductions (Maintenance, Fines, Admin Charges)
+                        $chargeService = app(AdministrativeChargeService::class);
+                        $remainingToAllocate = $amountNgn;
+                        try {
+                            $exclude = [];
+                            foreach ($contributions as $c) {
+                                if ($c->category === 'fine') $exclude[] = 'FINE';
+                                if ($c->scheme && strtoupper($c->scheme->name) === 'SITTING') $exclude[] = 'SITTING';
+                            }
+                            $result = $chargeService->applyDeductionsFromWallet($user, $amountNgn, true, $reference, $exclude);
+                            $remainingToAllocate = $result['net_amount'];
+                        } catch (\Throwable $e) {
+                            Log::error("Automated deductions failed in admin-initiated payment: " . $e->getMessage());
+                        }
+
+                        // 3. Allocate remaining amount to contributions
+                        foreach ($contributions as $contribution) {
+                            if ($remainingToAllocate <= 0) {
+                                $contribution->status = 'failed';
+                                $contribution->notes = 'Deducted for fines/charges. Remaining balance insufficient.';
+                            } else {
+                                $applied = min($remainingToAllocate, (float)$contribution->amount);
+                                $contribution->amount = $applied;
+                                $contribution->status = 'success';
+                                $contribution->paid_at = now();
+                                $remainingToAllocate -= $applied;
+
+                                // Debit the wallet for each successful allocation
+                                $user->decrement('balance', $applied);
+                                WalletTransaction::create([
+                                    'user_id' => $user->id,
+                                    'type' => 'debit',
+                                    'amount' => $applied,
+                                    'reference' => $reference . '_' . $contribution->id,
+                                    'source' => 'scheme_allocation',
+                                    'meta' => ['scheme_id' => $contribution->scheme_id, 'scheme_name' => $contribution->scheme?->name]
+                                ]);
+                            }
+                            $contribution->save();
+                        }
+                    });
+                } else {
+                    DB::transaction(function () use ($contributions, $user, $amountNgn, $reference) {
+                        foreach ($contributions as $contribution) {
+                            $contribution->status = 'success';
+                            $contribution->paid_at = now();
+                            $contribution->save();
+                        }
+
+                        // Handle automated recovery for member's own funding (Fines, Admin Charges)
+                        // This applies even if it's not admin-initiated, to prevent bypass of fees.
+                        try {
+                            $chargeService = app(AdministrativeChargeService::class);
+                            // If it's a wallet topup, maintenance charge is already handled by Contribution model boot logic.
+                            // For other direct scheme payments, we apply it here to prevent bypass.
+                            $hasWalletTopup = $contributions->contains('category', 'wallet_topup');
+
+                            $exclude = [];
+                            foreach ($contributions as $c) {
+                                if ($c->category === 'fine') $exclude[] = 'FINE';
+                                if ($c->scheme && strtoupper($c->scheme->name) === 'SITTING') $exclude[] = 'SITTING';
+                            }
+
+                            $chargeService->applyDeductionsFromWallet($user, $amountNgn, !$hasWalletTopup, $reference, $exclude);
+                        } catch (\Throwable $e) {
+                            Log::error("Automated deductions failed in member payment: " . $e->getMessage());
+                        }
+                    });
+                }
+
+                // Post-processing for successful contributions (Zakat, notifications)
+                foreach ($contributions->where('status', 'success') as $contribution) {
+                    $schemeName = $contribution->scheme?->name;
+                    if ($schemeName && in_array($schemeName, ['Zakat', 'Zakat Al-Fitr'])) {
+                        \App\Models\CharityEntry::create([
+                            'user_id' => $contribution->user_id,
+                            'source' => $schemeName,
+                            'amount' => $contribution->amount,
+                            'note' => "Payment for {$schemeName} via Paystack (Ref: {$reference})",
+                        ]);
+
+                        $zakatProject = SadaqahProject::firstOrCreate(
+                            ['name' => 'General Zakat Fund'],
+                            ['description' => 'Automated Zakat Fund', 'active' => true]
+                        );
+
+                        SadaqahContribution::create([
+                            'user_id' => $contribution->user_id,
+                            'sadaqah_project_id' => $zakatProject->id,
+                            'amount' => $contribution->amount,
+                            'status' => 'success',
+                            'reference' => 'ZAKAT_FUND_MOVE_EXT_' . now()->format('YmdHis'),
+                        ]);
+
+                        $zakatProject->increment('raised_amount', $contribution->amount);
+                        if ($schemeName === 'Zakat' && $user) {
+                            $user->update(['zakat_last_paid_at' => now(), 'zakat_nisab_crossed_at' => now()]);
+                        }
+                    }
+                }
+
+                if ($user) {
+                    $actualTotal = $contributions->where('status', 'success')->sum('amount');
+                    $user->notifyMember(
+                        'Payment Successful',
+                        'Your payment of ₦' . number_format($amountNgn, 2) . ' has been processed. Total allocated to schemes: ₦' . number_format($actualTotal, 2),
+                        [
+                            'type' => 'scheme_payment',
+                            'amount' => (float) $actualTotal,
+                            'reference' => (string) $reference,
+                            'route' => '/passbook',
+                        ]
+                    );
+                }
+
+                Log::info('Paystack payment processed', ['reference' => $reference, 'user_id' => optional($user)->id]);
+                return response()->json(['status' => 'success']);
+            }
                 // Check if this is a Sadaqah Contribution
                 $sadaqahContrib = SadaqahContribution::where('reference', $reference)->first();
                 if ($sadaqahContrib) {
@@ -408,9 +547,6 @@ class WebhookController extends Controller
                 $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
                 $currency = $vd['currency'] ?? 'NGN';
 
-                $maintenanceCharge = $this->calculateMaintenanceCharge($amountNgn);
-                $netAmount = round(max(0, $amountNgn - $maintenanceCharge), 2);
-
                 if ($currency !== 'NGN' || $amountNgn <= 0) {
                     Log::warning('Paystack webhook: invalid currency/amount for wallet topup', [
                         'reference' => $reference,
@@ -428,11 +564,41 @@ class WebhookController extends Controller
                     return response()->json(['status' => 'ok']);
                 }
 
-                DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
-                    // Persist Paystack customer code and authorization code for future lookups/charges
+                DB::transaction(function () use ($topupUser, $amountNgn, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
+                    // 1. Credit GROSS amount to wallet first
+                    $topupUser->increment('balance', $amountNgn);
+
+                    // Detect autosave via metadata
+                    $isAutosave = is_array($metadata) && (($metadata['type'] ?? null) === 'autosave');
+                    $source = $vdChannel === 'bank_transfer' ? 'paystack_dva' : ($isAutosave ? 'paystack_autosave' : 'paystack_charge');
+
+                    WalletTransaction::create([
+                        'user_id' => $topupUser->id,
+                        'type' => 'credit',
+                        'amount' => $amountNgn,
+                        'reference' => $reference,
+                        'source' => $source,
+                        'meta' => [
+                            'paystack_id' => $paystackId,
+                            'channel' => $vdChannel,
+                            'customer_code' => $vd['customer']['customer_code'] ?? null,
+                            'receiver_account' => $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null),
+                            'gross_amount' => $amountNgn,
+                            'metadata' => $metadata,
+                        ],
+                    ]);
+
+                    // 2. Apply deductions (Maintenance + Fines + Admin Charges)
+                    try {
+                        $chargeService = app(AdministrativeChargeService::class);
+                        $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                    } catch (\Throwable $e) {
+                        Log::error("Automated deductions failed in DVA/Direct payment: " . $e->getMessage());
+                    }
+
+                    // 3. Persist Paystack customer code and authorization code
                     $vaData = [];
                     $existingVA = $topupUser->virtualAccount;
-
                     if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($customerCode)) {
                         $vaData['paystack_customer_code'] = $customerCode;
                     }
@@ -443,32 +609,6 @@ class WebhookController extends Controller
                     if (!empty($vaData)) {
                         $topupUser->virtualAccount()->updateOrCreate([], $vaData);
                     }
-
-                    // Credit wallet
-                    $topupUser->balance += $netAmount;
-                    $topupUser->save();
-
-                    // Detect autosave via metadata
-                    $isAutosave = is_array($metadata) && (($metadata['type'] ?? null) === 'autosave');
-                    $source = $vdChannel === 'bank_transfer' ? 'paystack_dva' : ($isAutosave ? 'paystack_autosave' : 'paystack_charge');
-
-                    // Record wallet credit transaction
-                    WalletTransaction::create([
-                        'user_id' => $topupUser->id,
-                        'type' => 'credit',
-                        'amount' => $netAmount,
-                        'reference' => $reference,
-                        'source' => $source,
-                        'meta' => [
-                            'paystack_id' => $paystackId,
-                            'channel' => $vdChannel,
-                            'customer_code' => $vd['customer']['customer_code'] ?? null,
-                            'receiver_account' => $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null),
-                            'maintenance_charge' => $maintenanceCharge,
-                            'gross_amount' => $amountNgn,
-                            'metadata' => $metadata,
-                        ],
-                    ]);
                 });
 
                 Log::info('Paystack wallet top-up processed', [
@@ -478,12 +618,13 @@ class WebhookController extends Controller
                 ]);
 
                 // Notify user via unified method (triggers real-time, push, mail, sms as per prefs)
+                $topupUser->refresh();
                 $topupUser->notifyMember(
                     'Wallet Top-up Successful',
-                    "Your wallet has been credited with ₦" . number_format($netAmount, 2) . " after a maintenance charge of ₦" . number_format($maintenanceCharge, 2) . ".",
+                    "Your wallet has been credited with ₦" . number_format($amountNgn, 2) . " (Gross). Applicable charges and fines have been deducted from this amount.",
                     [
                         'type' => 'wallet_topup',
-                        'amount' => (float) $netAmount,
+                        'amount' => (float) $amountNgn,
                         'reference' => (string) $reference,
                         'route' => '/wallet',
                     ]

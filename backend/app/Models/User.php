@@ -1119,6 +1119,8 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             'investment_balance',
             'group_savings_balance',
             'takaful_balance',
+            'dawah_fund_balance',
+            'sitting_balance',
         ];
 
         $total = 0.0;

@@ -34,6 +34,7 @@ class AdministrativeChargeService
         $sittingFee = Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300));
         $meetingFee = Setting::get('meeting_fee_amount', 1000);
         $period = Carbon::now()->format('Y-m');
+        $sittingScheme = Scheme::where('name', 'SITTING')->first();
 
         $stats = [
             'total_users' => 0,
@@ -49,9 +50,24 @@ class AdministrativeChargeService
                 $query->whereNull('last_admin_charge_at')
                       ->orWhere('last_admin_charge_at', '<', Carbon::now()->startOfMonth());
             })
-            ->chunkById(100, function ($users) use ($sittingFee, $meetingFee, $period, &$stats) {
+            ->chunkById(100, function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, &$stats) {
                 foreach ($users as $user) {
                     $stats['total_users']++;
+
+                    // Safety Check: Avoid double charging if they already paid this month (via old system or manual entry)
+                    if ($sittingScheme) {
+                        $alreadyPaid = Contribution::where('user_id', $user->id)
+                            ->where('scheme_id', $sittingScheme->id)
+                            ->where('status', 'success')
+                            ->where('paid_at', '>=', Carbon::now()->startOfMonth())
+                            ->exists();
+
+                        if ($alreadyPaid) {
+                            $user->update(['last_admin_charge_at' => Carbon::now()]);
+                            continue;
+                        }
+                    }
+
                     $amount = $user->is_distant ? $meetingFee : $sittingFee;
 
                     DB::transaction(function () use ($user, $amount, $period, &$stats) {
@@ -293,6 +309,139 @@ class AdministrativeChargeService
                 'amount_paid' => $amountToPay,
                 'remaining_due' => (float) $user->admin_charge_balance,
                 'transaction' => $transaction
+            ];
+        });
+    }
+
+    /**
+     * Calculate and apply all applicable deductions to an incoming amount.
+     * Returns the net amount and a summary of deductions.
+     * This method DEBITS the user's wallet balance for the deductions.
+     * The caller is responsible for CREDITING the user's wallet with the GROSS amount first.
+     */
+    public function applyDeductionsFromWallet(User $user, float $grossAmount, bool $applyMaintenanceCharge = true, string $referenceBase = 'INFLOW', array $excludeSchemes = []): array
+    {
+        return DB::transaction(function () use ($user, $grossAmount, $applyMaintenanceCharge, $referenceBase, $excludeSchemes) {
+            $deductions = [];
+            $currentAmount = $grossAmount;
+
+            $excludeSchemesUpper = array_map('strtoupper', $excludeSchemes);
+
+            // 1. Maintenance Charge (if applicable)
+            if ($applyMaintenanceCharge) {
+                try {
+                    $mCharge = $this->calculateMaintenanceCharge($grossAmount);
+                    if ($mCharge > 0) {
+                        $deductionAmount = min($mCharge, $currentAmount);
+                        if ($deductionAmount > 0) {
+                            $user->decrement('balance', $deductionAmount);
+                            WalletTransaction::create([
+                                'user_id' => $user->id,
+                                'type' => 'debit',
+                                'amount' => $deductionAmount,
+                                'reference' => $referenceBase . '_MTC',
+                                'source' => 'maintenance_charge',
+                                'meta' => ['description' => 'System maintenance charge', 'gross_amount' => $grossAmount]
+                            ]);
+                            $currentAmount -= $deductionAmount;
+                            $deductions['maintenance_charge'] = $deductionAmount;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::error("Failed to apply maintenance charge: " . $e->getMessage());
+                }
+            }
+
+            // 2. Fines Recovery
+            try {
+                $finesDue = (float) $user->outstanding_fines;
+                if ($finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
+                    $fineDeduction = min($finesDue, $currentAmount);
+
+                    $user->decrement('outstanding_fines', $fineDeduction);
+                    $user->decrement('balance', $fineDeduction);
+
+                    WalletTransaction::create([
+                        'user_id' => $user->id,
+                        'type' => 'debit',
+                        'amount' => $fineDeduction,
+                        'reference' => $referenceBase . '_FINE',
+                        'source' => 'attendance_fine_collection',
+                        'meta' => ['description' => 'Fine recovery from inflow', 'gross_inflow' => $grossAmount]
+                    ]);
+
+                    CharityEntry::create([
+                        'user_id' => $user->id,
+                        'source' => 'Attendance Fine Collection',
+                        'amount' => $fineDeduction,
+                        'note' => 'Recovery from inflow',
+                        'status' => 'processed',
+                        'processed_at' => now(),
+                    ]);
+
+                    app(\App\Services\AttendanceService::class)->settleOutstandingFines($user, $fineDeduction);
+
+                    $currentAmount -= $fineDeduction;
+                    $deductions['fines'] = $fineDeduction;
+                }
+            } catch (\Throwable $e) {
+                Log::error("Failed to recover fines during inflow: " . $e->getMessage());
+            }
+
+            // 3. Administrative Charges (Sitting Fees)
+            try {
+                $adminDue = (float) $user->admin_charge_balance;
+                if ($adminDue > 0 && $currentAmount > 0 && !in_array('SITTING', $excludeSchemesUpper)) {
+                    $adminDeduction = min($adminDue, $currentAmount);
+
+                    $scheme = Scheme::where('name', 'SITTING')->first();
+                    if ($scheme) {
+                        $description = ($user->is_distant ? 'Meeting Fee (Distant)' : 'Sitting Fee (Regular)') . ' (Inflow Recovery)';
+                        $ref = $referenceBase . '_ADM';
+
+                        Contribution::create([
+                            'user_id' => $user->id,
+                            'scheme_id' => $scheme->id,
+                            'amount' => $adminDeduction,
+                            'reference' => $ref,
+                            'status' => 'success',
+                            'payment_method' => 'inflow_deduction',
+                            'notes' => $description,
+                            'paid_at' => now(),
+                        ]);
+
+                        // NOTE: admin_charge_balance is decremented by ContributionObserver/booted method
+                        // We ONLY decrement the wallet balance here
+                        $user->decrement('balance', $adminDeduction);
+
+                        // We also record a separate wallet transaction for clarity if needed,
+                        // but Contribution::created might already record one?
+                        // Actually, regular contributions don't record wallet transactions automatically.
+                        WalletTransaction::create([
+                            'user_id' => $user->id,
+                            'type' => 'debit',
+                            'amount' => $adminDeduction,
+                            'reference' => $ref,
+                            'source' => 'admin_charge',
+                            'meta' => [
+                                'description' => $description,
+                                'gross_inflow' => $grossAmount,
+                                'remaining_due' => (float)$user->admin_charge_balance // This will be updated after commit
+                            ]
+                        ]);
+
+                        $currentAmount -= $adminDeduction;
+                        $deductions['admin_charges'] = $adminDeduction;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::error("Failed to recover admin charges during inflow: " . $e->getMessage());
+            }
+
+            return [
+                'gross_amount' => $grossAmount,
+                'net_amount' => round(max(0, $currentAmount), 2),
+                'deductions' => $deductions
             ];
         });
     }

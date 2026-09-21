@@ -137,7 +137,7 @@
       <div class="space-y-4 pt-4">
         <div class="flex items-center justify-between px-4">
           <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Transaction History</h3>
-          <button @click="fetchTransactions" class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Refresh</button>
+          <button @click="fetchTransactions(1)" class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Refresh</button>
         </div>
         
         <div class="space-y-3">

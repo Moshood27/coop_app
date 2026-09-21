@@ -320,38 +320,20 @@ class AdminMemberController extends Controller
                 throw new \Exception('Insufficient admin wallet balance.');
             }
 
-            $items = [];
+            // 1. Deduct full requested amount from Admin's wallet
+            $lockedAdmin->decrement('balance', $totalRequested);
+
+            // Record Debit for Admin
+            $adminItems = [];
             foreach ($data['allocations'] as $alloc) {
-                if ($alloc['amount'] <= 0) continue;
-
                 $scheme = Scheme::find($alloc['scheme_id']);
-
-                // 1. Create contribution record for member
-                $lockedMember->contributions()->create([
-                    'scheme_id' => $scheme->id,
-                    'amount' => $alloc['amount'],
-                    'status' => 'success',
-                    'paid_at' => now(),
-                    'payment_method' => 'admin_wallet',
-                    'reference' => $reference,
-                    'notes' => $notes,
-                ]);
-
-                // 2. Sync scheme balance for member
-                $lockedMember->syncSchemeBalance($scheme->name);
-
-                $items[] = [
+                $adminItems[] = [
                     'scheme_id' => $scheme->id,
                     'scheme_name' => $scheme->name,
                     'amount' => $alloc['amount'],
-                    'category' => 'deposit',
                 ];
             }
 
-            // 3. Deduct from Admin's wallet
-            $lockedAdmin->decrement('balance', $totalRequested);
-
-            // 4. Create wallet transaction record for Admin (Debit)
             $lockedAdmin->walletTransactions()->create([
                 'amount' => $totalRequested,
                 'type' => 'debit',
@@ -362,25 +344,75 @@ class AdminMemberController extends Controller
                     'member_name' => $user->full_name,
                     'description' => "Allocation to Member: {$user->full_name}",
                     'notes' => $notes,
-                    'distribution' => $items,
+                    'distribution' => $adminItems,
                 ]
             ]);
 
-            // 5. Create wallet transaction record for Member (Credit - representing the inflow)
-            // Even though it goes straight to schemes, we record it in wallet history for visibility
+            // 2. Credit GROSS amount to Member wallet (representing the inflow)
+            $lockedMember->increment('balance', $totalRequested);
             $lockedMember->walletTransactions()->create([
                 'amount' => $totalRequested,
                 'type' => 'credit',
-                'reference' => $reference . '_CR',
+                'reference' => $reference . '_GROSS',
                 'source' => 'admin_allocation_credit',
                 'meta' => [
                     'admin_id' => $admin->id,
                     'admin_name' => $admin->full_name,
-                    'description' => "Allocation from Admin: {$admin->full_name}",
+                    'description' => "Gross allocation from Admin: {$admin->full_name}",
                     'notes' => $notes,
-                    'distribution' => $items,
                 ]
             ]);
+
+            // 3. Apply deductions (Fines + Admin Charges) from Member's wallet
+            $chargeService = app(\App\Services\AdministrativeChargeService::class);
+
+            $exclude = [];
+            foreach ($data['allocations'] as $alloc) {
+                $scheme = Scheme::find($alloc['scheme_id']);
+                if ($scheme) {
+                    if (strtoupper($scheme->name) === 'SITTING') $exclude[] = 'SITTING';
+                    if (strtoupper($scheme->name) === 'FINE') $exclude[] = 'FINE';
+                }
+            }
+
+            $deductionResult = $chargeService->applyDeductionsFromWallet($lockedMember, $totalRequested, false, $reference, $exclude);
+            $remainingToAllocate = $deductionResult['net_amount'];
+            $totalDeducted = $totalRequested - $remainingToAllocate;
+
+            // 4. Allocate remaining funds to member's schemes
+            $actualAllocations = [];
+            foreach ($data['allocations'] as $alloc) {
+                if ($remainingToAllocate <= 0) break;
+
+                $scheme = Scheme::find($alloc['scheme_id']);
+                $applied = min($remainingToAllocate, (float)$alloc['amount']);
+
+                $lockedMember->contributions()->create([
+                    'scheme_id' => $scheme->id,
+                    'amount' => $applied,
+                    'status' => 'success',
+                    'paid_at' => now(),
+                    'payment_method' => 'admin_wallet',
+                    'reference' => $reference . '_' . $scheme->id,
+                    'notes' => $notes . ($totalDeducted > 0 ? " (Net after deductions)" : ""),
+                ]);
+
+                $lockedMember->syncSchemeBalance($scheme->name);
+
+                // Debit the wallet for the amount allocated to scheme
+                $lockedMember->decrement('balance', $applied);
+                WalletTransaction::create([
+                    'user_id' => $lockedMember->id,
+                    'type' => 'debit',
+                    'amount' => $applied,
+                    'reference' => $reference . '_ALC_' . $scheme->id,
+                    'source' => 'scheme_allocation',
+                    'meta' => ['scheme_id' => $scheme->id, 'scheme_name' => $scheme->name, 'notes' => $notes]
+                ]);
+
+                $remainingToAllocate -= $applied;
+                $actualAllocations[] = ['scheme_id' => $scheme->id, 'scheme_name' => $scheme->name, 'amount' => $applied];
+            }
         });
 
         return response()->json(['message' => 'Funds allocated from admin wallet successfully.']);
