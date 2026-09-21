@@ -289,6 +289,27 @@ class WebhookController extends Controller
                     });
                 }
 
+                // Persist Paystack customer/authorization codes on user for future autosave charges
+                try {
+                    if ($user) {
+                        $vaData = [];
+                        $existingVA = $user->virtualAccount;
+                        $custCode = $vd['customer']['customer_code'] ?? null;
+                        if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($custCode)) {
+                            $vaData['paystack_customer_code'] = $custCode;
+                        }
+                        $authCode = $vd['authorization']['authorization_code'] ?? null;
+                        if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
+                            $vaData['paystack_authorization_code'] = $authCode;
+                        }
+                        if (!empty($vaData)) {
+                            $user->virtualAccount()->updateOrCreate([], $vaData);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // ignore persistence error; not critical for payment finalization
+                }
+
                 // Post-processing for successful contributions (Zakat, notifications)
                 foreach ($contributions->where('status', 'success') as $contribution) {
                     $schemeName = $contribution->scheme?->name;
@@ -316,420 +337,321 @@ class WebhookController extends Controller
                         $zakatProject->increment('raised_amount', $contribution->amount);
                         if ($schemeName === 'Zakat' && $user) {
                             $user->update(['zakat_last_paid_at' => now(), 'zakat_nisab_crossed_at' => now()]);
-                        }
-                    }
-                }
-
-                if ($user) {
-                    $actualTotal = $contributions->where('status', 'success')->sum('amount');
-                    $user->notifyMember(
-                        'Payment Successful',
-                        'Your payment of ₦' . number_format($amountNgn, 2) . ' has been processed. Total allocated to schemes: ₦' . number_format($actualTotal, 2),
-                        [
-                            'type' => 'scheme_payment',
-                            'amount' => (float) $actualTotal,
-                            'reference' => (string) $reference,
-                            'route' => '/passbook',
-                        ]
-                    );
-                }
-
-                Log::info('Paystack payment processed', ['reference' => $reference, 'user_id' => optional($user)->id]);
-                return response()->json(['status' => 'success']);
-            }
-                // Check if this is a Sadaqah Contribution
-                $sadaqahContrib = SadaqahContribution::where('reference', $reference)->first();
-                if ($sadaqahContrib) {
-                    $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
-                    $paidCurrency = $vd['currency'] ?? 'NGN';
-                    if ($paidCurrency !== 'NGN' || ($amountNgn + 0.005) < (float) $sadaqahContrib->amount) {
-                        Log::warning('Paystack webhook: amount/currency mismatch for sadaqah', [
-                            'reference' => $reference,
-                            'paid_amount' => $amountNgn,
-                            'expected' => (float) $sadaqahContrib->amount,
-                            'currency' => $paidCurrency,
-                        ]);
-                        return response()->json(['message' => 'Amount mismatch'], 400);
-                    }
-
-                    if ($sadaqahContrib->status === 'success') {
-                        return response()->json(['status' => 'ok']);
-                    }
-
-                    DB::transaction(function () use ($sadaqahContrib) {
-                        $sadaqahContrib->status = 'success';
-                        $sadaqahContrib->save();
-
-                        $project = SadaqahProject::lockForUpdate()->find($sadaqahContrib->sadaqah_project_id);
-                        if ($project) {
-                            $project->raised_amount = (float) $project->raised_amount + (float) $sadaqahContrib->amount;
-                            $project->save();
-                        }
-                    });
-
-                    // Notify user via unified method (triggers real-time update)
-                    try {
-                        $user = User::find($sadaqahContrib->user_id);
-                        if ($user) {
-                            $project = SadaqahProject::find($sadaqahContrib->sadaqah_project_id);
-                            $user->notifyMember(
-                                'Sadaqah Contribution Successful',
-                                "Your contribution of ₦" . number_format($sadaqahContrib->amount, 2) . " to " . ($project->name ?? 'Project') . " was successful. Jazakallah Khair.",
-                                [
-                                    'type' => 'sadaqah_contribution',
-                                    'amount' => (float) $sadaqahContrib->amount,
-                                    'reference' => $sadaqahContrib->reference,
-                                    'route' => '/sadaqah',
-                                ]
-                            );
-                        }
-                    } catch (\Throwable $e) {
-                        Log::warning('Failed to send Sadaqah webhook notification (Paystack)', ['error' => $e->getMessage()]);
-                    }
-
-                    return response()->json(['status' => 'success']);
-                }
-
-                // First, check if this is a pending loan repayment reference
-                $loanRep = QardHasanRepayment::where('reference', $reference)->first();
-                if ($loanRep) {
-                    $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
-                    $paidCurrency = $vd['currency'] ?? 'NGN';
-                    if ($paidCurrency !== 'NGN' || ($amountNgn + 0.005) < (float) $loanRep->amount) {
-                        Log::warning('Paystack webhook: amount/currency mismatch for loan repayment', [
-                            'reference' => $reference,
-                            'paid_amount' => $amountNgn,
-                            'expected' => (float) $loanRep->amount,
-                            'currency' => $paidCurrency,
-                        ]);
-                        return response()->json(['message' => 'Amount mismatch'], 400);
-                    }
-
-                    if ($loanRep->status === 'success') {
-                        return response()->json(['status' => 'ok']);
-                    }
-
-                    DB::transaction(function () use ($loanRep) {
-                        $loan = QardHasan::lockForUpdate()->find($loanRep->qard_hasan_id);
-                        if ($loan) {
-                            $loanRep->status = 'success';
-                            $loanRep->payment_method = 'paystack';
-                            $loanRep->paid_at = now();
-                            $loanRep->save();
-
-                            $loan->paid_amount = (float) $loan->paid_amount + (float) $loanRep->amount;
-                            if ($loan->paid_amount >= $loan->principal_amount) {
-                                $loan->status = 'completed';
-                            }
-                            $loan->save();
-                        } else {
-                            // If loan missing, mark repayment as success to avoid repeated retries (but log)
-                            $loanRep->status = 'success';
-                            $loanRep->payment_method = 'paystack';
-                            $loanRep->paid_at = now();
-                            $loanRep->save();
-                            Log::warning('Loan not found when finalizing loan repayment from Paystack', [
-                                'repayment_id' => $loanRep->id,
-                                'qard_hasan_id' => $loanRep->qard_hasan_id,
-                            ]);
-                        }
-                    });
-
-                    // Send repayment receipt to user (best-effort)
-                    try {
-                        $loanRep->refresh();
-                        $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
-                        if ($loan && $loan->user && ($email = SecurityUtils::filterEmail($loan->user->email))) {
-                            Mail::to($email)->send(new RepaymentReceiptUser($loan, $loanRep));
-                        }
-                    } catch (\Throwable $e) {
-                        Log::warning('Failed to send repayment receipt email (paystack webhook)', [
-                            'repayment_id' => $loanRep->id,
-                            'loan_id' => $loanRep->qard_hasan_id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-
-                    // Unified real-time/push/email/sms notification
-                    try {
-                        $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
-                        if ($loan && $loan->user) {
-                            $remaining = max(0, (float) $loan->principal_amount - (float) $loan->paid_amount);
-                            $msg = 'Loan repayment received: ₦'.number_format((float)$loanRep->amount, 2).' for '.($loan->qard_id_string).'. Remaining: ₦'.number_format($remaining, 2).'.';
-                            $loan->user->notifyMember(
-                                'Repayment Received',
-                                $msg,
-                                [
-                                    'type' => 'loan_repayment',
-                                    'loan_id' => $loan->id,
-                                    'qard_id_string' => $loan->qard_id_string,
-                                    'remaining_balance' => $remaining,
-                                    'reference' => (string) $loanRep->reference,
-                                    'route' => '/loan/' . $loan->id,
-                                ]
-                            );
-                        }
-                    } catch (\Throwable $e) {
-                        Log::warning('Failed to send loan repayment notification (paystack path)', ['error' => $e->getMessage()]);
-                    }
-
-                    return response()->json(['status' => 'success']);
-                }
-
-                // No pending contributions found for this reference.
-                // This could be a Dedicated Virtual Account (DVA) bank transfer top-up.
-                $vdChannel = $vd['channel'] ?? ($vd['authorization']['channel'] ?? null); // e.g., "bank_transfer", "card", "bank"
-                $customerCode = $vd['customer']['customer_code'] ?? null;
-                $receiverAccount = $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null);
-
-                // Normalize metadata from Paystack (can be array, object, or JSON string)
-                $rawMeta = $vd['metadata'] ?? null;
-                $metadata = null;
-                if (is_array($rawMeta)) {
-                    $metadata = $rawMeta;
-                } elseif (is_string($rawMeta)) {
-                    $decoded = json_decode($rawMeta, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $metadata = $decoded;
-                    }
-                } elseif (is_object($rawMeta)) {
-                    $metadata = (array) $rawMeta;
-                }
-                if (! $metadata) {
-                    $rm = $request->input('data.metadata');
-                    if (is_array($rm)) {
-                        $metadata = $rm;
-                    } elseif (is_string($rm)) {
-                        $decoded = json_decode($rm, true);
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            $metadata = $decoded;
-                        }
-                    } elseif (is_object($rm)) {
-                        $metadata = (array) $rm;
-                    }
-                }
-
-                $metaUserId = $metadata['user_id'] ?? null;
-                if (is_string($metaUserId) && ctype_digit($metaUserId)) {
-                    $metaUserId = (int) $metaUserId;
-                }
-
-                $topupUser = null;
-
-                // Priority 1: Metadata User ID (Explicit attribution, e.g. for card/checkout payments)
-                if ($metaUserId) {
-                    $topupUser = User::find($metaUserId);
-                }
-
-                // Priority 2: Receiver Bank Account (For Dedicated Virtual Account / DVA transfers)
-                if (! $topupUser && $receiverAccount) {
-                    $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('dva_account_number', $receiverAccount))->first();
-                }
-
-                // Priority 3: Paystack Customer Code (Profile matching) - ONLY if no metadata or metadata user not found
-                if (! $topupUser && $customerCode) {
-                    $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('paystack_customer_code', $customerCode))->first();
-                }
-
-                if (! $topupUser) {
-                    Log::info('Paystack webhook: reference has no contributions and no matching user', [
-                        'reference' => $reference,
-                        'customer_code' => $customerCode,
-                        'receiver_account' => $receiverAccount,
-                        'metadata_present' => (bool) $metadata,
-                        'metadata_user_id' => $metaUserId,
-                        'channel' => $vdChannel,
-                    ]);
-                    return response()->json(['status' => 'ignored']);
-                }
-
-                // Amount in Naira
-                $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
-                $currency = $vd['currency'] ?? 'NGN';
-
-                if ($currency !== 'NGN' || $amountNgn <= 0) {
-                    Log::warning('Paystack webhook: invalid currency/amount for wallet topup', [
-                        'reference' => $reference,
-                        'amount_ngn' => $amountNgn,
-                        'currency' => $currency,
-                    ]);
-                    return response()->json(['status' => 'ignored']);
-                }
-
-                // Idempotency: if we've already recorded this reference or Paystack ID as a wallet transaction, skip
-                $paystackId = $vd['id'] ?? null;
-                $alreadyProcessed = $paystackId ? WalletTransaction::where('meta->paystack_id', $paystackId)->exists() : false;
-
-                if ($alreadyProcessed || WalletTransaction::where('reference', $reference)->exists()) {
-                    return response()->json(['status' => 'ok']);
-                }
-
-                DB::transaction(function () use ($topupUser, $amountNgn, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
-                    // 1. Credit GROSS amount to wallet first
-                    $topupUser->increment('balance', $amountNgn);
-
-                    // Detect autosave via metadata
-                    $isAutosave = is_array($metadata) && (($metadata['type'] ?? null) === 'autosave');
-                    $source = $vdChannel === 'bank_transfer' ? 'paystack_dva' : ($isAutosave ? 'paystack_autosave' : 'paystack_charge');
-
-                    WalletTransaction::create([
-                        'user_id' => $topupUser->id,
-                        'type' => 'credit',
-                        'amount' => $amountNgn,
-                        'reference' => $reference,
-                        'source' => $source,
-                        'meta' => [
-                            'paystack_id' => $paystackId,
-                            'channel' => $vdChannel,
-                            'customer_code' => $vd['customer']['customer_code'] ?? null,
-                            'receiver_account' => $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null),
-                            'gross_amount' => $amountNgn,
-                            'metadata' => $metadata,
-                        ],
-                    ]);
-
-                    // 2. Apply deductions (Maintenance + Fines + Admin Charges)
-                    try {
-                        $chargeService = app(AdministrativeChargeService::class);
-                        $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
-                    } catch (\Throwable $e) {
-                        Log::error("Automated deductions failed in DVA/Direct payment: " . $e->getMessage());
-                    }
-
-                    // 3. Persist Paystack customer code and authorization code
-                    $vaData = [];
-                    $existingVA = $topupUser->virtualAccount;
-                    if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($customerCode)) {
-                        $vaData['paystack_customer_code'] = $customerCode;
-                    }
-                    $authCode = $vd['authorization']['authorization_code'] ?? null;
-                    if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
-                        $vaData['paystack_authorization_code'] = $authCode;
-                    }
-                    if (!empty($vaData)) {
-                        $topupUser->virtualAccount()->updateOrCreate([], $vaData);
-                    }
-                });
-
-                Log::info('Paystack wallet top-up processed', [
-                    'reference' => $reference,
-                    'user_id' => $topupUser->id,
-                    'channel' => $vdChannel,
-                ]);
-
-                // Notify user via unified method (triggers real-time, push, mail, sms as per prefs)
-                $topupUser->refresh();
-                $topupUser->notifyMember(
-                    'Wallet Top-up Successful',
-                    "Your wallet has been credited with ₦" . number_format($amountNgn, 2) . " (Gross). Applicable charges and fines have been deducted from this amount.",
-                    [
-                        'type' => 'wallet_topup',
-                        'amount' => (float) $amountNgn,
-                        'reference' => (string) $reference,
-                        'route' => '/wallet',
-                    ]
-                );
-
-                return response()->json(['status' => 'success']);
-            }
-
-            $expectedTotal = (float) $contributions->sum('amount');
-            $paidAmountKobo = (int) ($vd['amount'] ?? 0); // in kobo
-            $paidCurrency = $vd['currency'] ?? 'NGN';
-
-            if ($paidCurrency !== 'NGN' || $paidAmountKobo < (int) round($expectedTotal * 100)) {
-                Log::warning('Paystack amount/currency mismatch', [
-                    'reference' => $reference,
-                    'expected' => $expectedTotal,
-                    'paid_kobo' => $paidAmountKobo,
-                    'currency' => $paidCurrency,
-                ]);
-                return response()->json(['message' => 'Amount mismatch'], 400);
-            }
-
-            $user = User::find($contributions->first()->user_id);
-
-            // Persist Paystack customer/authorization codes on user for future autosave charges
-            try {
-                if ($user) {
-                    $vaData = [];
-                    $existingVA = $user->virtualAccount;
-                    $custCode = $vd['customer']['customer_code'] ?? null;
-                    if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($custCode)) {
-                        $vaData['paystack_customer_code'] = $custCode;
-                    }
-                    $authCode = $vd['authorization']['authorization_code'] ?? null;
-                    if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
-                        $vaData['paystack_authorization_code'] = $authCode;
-                    }
-                    if (!empty($vaData)) {
-                        $user->virtualAccount()->updateOrCreate([], $vaData);
-                    }
-                }
-            } catch (\Throwable $e) {
-                // ignore persistence error; not critical for payment finalization
-            }
-
-            foreach ($contributions as $contribution) {
-                $contribution->status = 'success';
-                $contribution->paid_at = now();
-                $contribution->save();
-
-                // If this is Zakat or Zakat Al-Fitr, record it in the Charity Ledger and move to Fund
-                $schemeName = $contribution->scheme?->name;
-                if ($schemeName && in_array($schemeName, ['Zakat', 'Zakat Al-Fitr'])) {
-                    \App\Models\CharityEntry::create([
-                        'user_id' => $contribution->user_id,
-                        'source' => $schemeName,
-                        'amount' => $contribution->amount,
-                        'note' => "Payment for {$schemeName} via Paystack (Ref: {$reference})",
-                    ]);
-
-                    // Move to Zakat Fund (SadaqahProject)
-                    $zakatProject = SadaqahProject::firstOrCreate(
-                        ['name' => 'General Zakat Fund'],
-                        ['description' => 'Automated Zakat Fund', 'active' => true]
-                    );
-
-                    SadaqahContribution::create([
-                        'user_id' => $contribution->user_id,
-                        'sadaqah_project_id' => $zakatProject->id,
-                        'amount' => $contribution->amount,
-                        'status' => 'success',
-                        'reference' => 'ZAKAT_FUND_MOVE_EXT_' . now()->format('YmdHis'),
-                    ]);
-
-                    $zakatProject->increment('raised_amount', $contribution->amount);
-
-                    if ($schemeName === 'Zakat') {
-                        $user->update([
-                            'zakat_last_paid_at' => now(),
-                            'zakat_nisab_crossed_at' => now(), // Start next Hawl cycle
-                        ]);
                     }
                 }
             }
 
-            // Notify user via unified method (triggers real-time update)
-            // Note: Individual contributions also trigger their own notifications via model observers.
-            // This global notification covers the total payment.
             if ($user) {
+                $actualTotal = $contributions->where('status', 'success')->sum('amount');
                 $user->notifyMember(
                     'Payment Successful',
-                    'Your payment of ₦' . number_format($expectedTotal, 2) . ' has been received and allocated to your schemes.',
+                    'Your payment of ₦' . number_format($amountNgn, 2) . ' has been processed. Total allocated to schemes: ₦' . number_format($actualTotal, 2),
                     [
                         'type' => 'scheme_payment',
-                        'amount' => (float) $expectedTotal,
+                        'amount' => (float) $actualTotal,
                         'reference' => (string) $reference,
                         'route' => '/passbook',
                     ]
                 );
             }
 
-            // Do not credit wallet here. Contributions were paid directly to schemes via this reference.
-            // Wallet top-ups are handled in the branch above when no pending contributions exist.
-
             Log::info('Paystack payment processed', ['reference' => $reference, 'user_id' => optional($user)->id]);
+            return response()->json(['status' => 'success']);
+        }
+            // Check if this is a Sadaqah Contribution
+            $sadaqahContrib = SadaqahContribution::where('reference', $reference)->first();
+            if ($sadaqahContrib) {
+                $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
+                $paidCurrency = $vd['currency'] ?? 'NGN';
+                if ($paidCurrency !== 'NGN' || ($amountNgn + 0.005) < (float) $sadaqahContrib->amount) {
+                    Log::warning('Paystack webhook: amount/currency mismatch for sadaqah', [
+                        'reference' => $reference,
+                        'paid_amount' => $amountNgn,
+                        'expected' => (float) $sadaqahContrib->amount,
+                        'currency' => $paidCurrency,
+                    ]);
+                    return response()->json(['message' => 'Amount mismatch'], 400);
+                }
+
+                if ($sadaqahContrib->status === 'success') {
+                    return response()->json(['status' => 'ok']);
+                }
+
+                DB::transaction(function () use ($sadaqahContrib) {
+                    $sadaqahContrib->status = 'success';
+                    $sadaqahContrib->save();
+
+                    $project = SadaqahProject::lockForUpdate()->find($sadaqahContrib->sadaqah_project_id);
+                    if ($project) {
+                        $project->raised_amount = (float) $project->raised_amount + (float) $sadaqahContrib->amount;
+                        $project->save();
+                    }
+                });
+
+                // Notify user via unified method (triggers real-time update)
+                try {
+                    $user = User::find($sadaqahContrib->user_id);
+                    if ($user) {
+                        $project = SadaqahProject::find($sadaqahContrib->sadaqah_project_id);
+                        $user->notifyMember(
+                            'Sadaqah Contribution Successful',
+                            "Your contribution of ₦" . number_format($sadaqahContrib->amount, 2) . " to " . ($project->name ?? 'Project') . " was successful. Jazakallah Khair.",
+                            [
+                                'type' => 'sadaqah_contribution',
+                                'amount' => (float) $sadaqahContrib->amount,
+                                'reference' => $sadaqahContrib->reference,
+                                'route' => '/sadaqah',
+                            ]
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send Sadaqah webhook notification (Paystack)', ['error' => $e->getMessage()]);
+                }
+
+                return response()->json(['status' => 'success']);
+            }
+
+            // First, check if this is a pending loan repayment reference
+            $loanRep = QardHasanRepayment::where('reference', $reference)->first();
+            if ($loanRep) {
+                $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
+                $paidCurrency = $vd['currency'] ?? 'NGN';
+                if ($paidCurrency !== 'NGN' || ($amountNgn + 0.005) < (float) $loanRep->amount) {
+                    Log::warning('Paystack webhook: amount/currency mismatch for loan repayment', [
+                        'reference' => $reference,
+                        'paid_amount' => $amountNgn,
+                        'expected' => (float) $loanRep->amount,
+                        'currency' => $paidCurrency,
+                    ]);
+                    return response()->json(['message' => 'Amount mismatch'], 400);
+                }
+
+                if ($loanRep->status === 'success') {
+                    return response()->json(['status' => 'ok']);
+                }
+
+                DB::transaction(function () use ($loanRep) {
+                    $loan = QardHasan::lockForUpdate()->find($loanRep->qard_hasan_id);
+                    if ($loan) {
+                        $loanRep->status = 'success';
+                        $loanRep->payment_method = 'paystack';
+                        $loanRep->paid_at = now();
+                        $loanRep->save();
+
+                        $loan->paid_amount = (float) $loan->paid_amount + (float) $loanRep->amount;
+                        if ($loan->paid_amount >= $loan->principal_amount) {
+                            $loan->status = 'completed';
+                        }
+                        $loan->save();
+                    } else {
+                        // If loan missing, mark repayment as success to avoid repeated retries (but log)
+                        $loanRep->status = 'success';
+                        $loanRep->payment_method = 'paystack';
+                        $loanRep->paid_at = now();
+                        $loanRep->save();
+                        Log::warning('Loan not found when finalizing loan repayment from Paystack', [
+                            'repayment_id' => $loanRep->id,
+                            'qard_hasan_id' => $loanRep->qard_hasan_id,
+                        ]);
+                    }
+                });
+
+                // Send repayment receipt to user (best-effort)
+                try {
+                    $loanRep->refresh();
+                    $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
+                    if ($loan && $loan->user && ($email = SecurityUtils::filterEmail($loan->user->email))) {
+                        Mail::to($email)->send(new RepaymentReceiptUser($loan, $loanRep));
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send repayment receipt email (paystack webhook)', [
+                        'repayment_id' => $loanRep->id,
+                        'loan_id' => $loanRep->qard_hasan_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                // Unified real-time/push/email/sms notification
+                try {
+                    $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
+                    if ($loan && $loan->user) {
+                        $remaining = max(0, (float) $loan->principal_amount - (float) $loan->paid_amount);
+                        $msg = 'Loan repayment received: ₦'.number_format((float)$loanRep->amount, 2).' for '.($loan->qard_id_string).'. Remaining: ₦'.number_format($remaining, 2).'.';
+                        $loan->user->notifyMember(
+                            'Repayment Received',
+                            $msg,
+                            [
+                                'type' => 'loan_repayment',
+                                'loan_id' => $loan->id,
+                                'qard_id_string' => $loan->qard_id_string,
+                                'remaining_balance' => $remaining,
+                                'reference' => (string) $loanRep->reference,
+                                'route' => '/loan/' . $loan->id,
+                            ]
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send loan repayment notification (paystack path)', ['error' => $e->getMessage()]);
+                }
+
+                return response()->json(['status' => 'success']);
+            }
+
+            // No pending contributions found for this reference.
+            // This could be a Dedicated Virtual Account (DVA) bank transfer top-up.
+            $vdChannel = $vd['channel'] ?? ($vd['authorization']['channel'] ?? null); // e.g., "bank_transfer", "card", "bank"
+            $customerCode = $vd['customer']['customer_code'] ?? null;
+            $receiverAccount = $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null);
+
+            // Normalize metadata from Paystack (can be array, object, or JSON string)
+            $rawMeta = $vd['metadata'] ?? null;
+            $metadata = null;
+            if (is_array($rawMeta)) {
+                $metadata = $rawMeta;
+            } elseif (is_string($rawMeta)) {
+                $decoded = json_decode($rawMeta, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $metadata = $decoded;
+                }
+            } elseif (is_object($rawMeta)) {
+                $metadata = (array) $rawMeta;
+            }
+            if (! $metadata) {
+                $rm = $request->input('data.metadata');
+                if (is_array($rm)) {
+                    $metadata = $rm;
+                } elseif (is_string($rm)) {
+                    $decoded = json_decode($rm, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $metadata = $decoded;
+                    }
+                } elseif (is_object($rm)) {
+                    $metadata = (array) $rm;
+                }
+            }
+
+            $metaUserId = $metadata['user_id'] ?? null;
+            if (is_string($metaUserId) && ctype_digit($metaUserId)) {
+                $metaUserId = (int) $metaUserId;
+            }
+
+            $topupUser = null;
+
+            // Priority 1: Metadata User ID (Explicit attribution, e.g. for card/checkout payments)
+            if ($metaUserId) {
+                $topupUser = User::find($metaUserId);
+            }
+
+            // Priority 2: Receiver Bank Account (For Dedicated Virtual Account / DVA transfers)
+            if (! $topupUser && $receiverAccount) {
+                $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('dva_account_number', $receiverAccount))->first();
+            }
+
+            // Priority 3: Paystack Customer Code (Profile matching) - ONLY if no metadata or metadata user not found
+            if (! $topupUser && $customerCode) {
+                $topupUser = User::whereHas('virtualAccount', fn($q) => $q->where('paystack_customer_code', $customerCode))->first();
+            }
+
+            if (! $topupUser) {
+                Log::info('Paystack webhook: reference has no contributions and no matching user', [
+                    'reference' => $reference,
+                    'customer_code' => $customerCode,
+                    'receiver_account' => $receiverAccount,
+                    'metadata_present' => (bool) $metadata,
+                    'metadata_user_id' => $metaUserId,
+                    'channel' => $vdChannel,
+                ]);
+                return response()->json(['status' => 'ignored']);
+            }
+
+            // Amount in Naira
+            $amountNgn = round(((int) ($vd['amount'] ?? 0)) / 100, 2);
+            $currency = $vd['currency'] ?? 'NGN';
+
+            if ($currency !== 'NGN' || $amountNgn <= 0) {
+                Log::warning('Paystack webhook: invalid currency/amount for wallet topup', [
+                    'reference' => $reference,
+                    'amount_ngn' => $amountNgn,
+                    'currency' => $currency,
+                ]);
+                return response()->json(['status' => 'ignored']);
+            }
+
+            // Idempotency: if we've already recorded this reference or Paystack ID as a wallet transaction, skip
+            $paystackId = $vd['id'] ?? null;
+            $alreadyProcessed = $paystackId ? WalletTransaction::where('meta->paystack_id', $paystackId)->exists() : false;
+
+            if ($alreadyProcessed || WalletTransaction::where('reference', $reference)->exists()) {
+                return response()->json(['status' => 'ok']);
+            }
+
+            DB::transaction(function () use ($topupUser, $amountNgn, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
+                // 1. Credit GROSS amount to wallet first
+                $topupUser->increment('balance', $amountNgn);
+
+                // Detect autosave via metadata
+                $isAutosave = is_array($metadata) && (($metadata['type'] ?? null) === 'autosave');
+                $source = $vdChannel === 'bank_transfer' ? 'paystack_dva' : ($isAutosave ? 'paystack_autosave' : 'paystack_charge');
+
+                WalletTransaction::create([
+                    'user_id' => $topupUser->id,
+                    'type' => 'credit',
+                    'amount' => $amountNgn,
+                    'reference' => $reference,
+                    'source' => $source,
+                    'meta' => [
+                        'paystack_id' => $paystackId,
+                        'channel' => $vdChannel,
+                        'customer_code' => $vd['customer']['customer_code'] ?? null,
+                        'receiver_account' => $vd['authorization']['receiver_bank_account_number'] ?? ($vd['authorization']['account_number'] ?? null),
+                        'gross_amount' => $amountNgn,
+                        'metadata' => $metadata,
+                    ],
+                ]);
+
+                // 2. Apply deductions (Maintenance + Fines + Admin Charges)
+                try {
+                    $chargeService = app(AdministrativeChargeService::class);
+                    $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                } catch (\Throwable $e) {
+                    Log::error("Automated deductions failed in DVA/Direct payment: " . $e->getMessage());
+                }
+
+                // 3. Persist Paystack customer code and authorization code
+                $vaData = [];
+                $existingVA = $topupUser->virtualAccount;
+                if ((!$existingVA || empty($existingVA->paystack_customer_code)) && !empty($customerCode)) {
+                    $vaData['paystack_customer_code'] = $customerCode;
+                }
+                $authCode = $vd['authorization']['authorization_code'] ?? null;
+                if ((!$existingVA || empty($existingVA->paystack_authorization_code)) && !empty($authCode)) {
+                    $vaData['paystack_authorization_code'] = $authCode;
+                }
+                if (!empty($vaData)) {
+                    $topupUser->virtualAccount()->updateOrCreate([], $vaData);
+                }
+            });
+
+            Log::info('Paystack wallet top-up processed', [
+                'reference' => $reference,
+                'user_id' => $topupUser->id,
+                'channel' => $vdChannel,
+            ]);
+
+            // Notify user via unified method (triggers real-time, push, mail, sms as per prefs)
+            $topupUser->refresh();
+            $topupUser->notifyMember(
+                'Wallet Top-up Successful',
+                "Your wallet has been credited with ₦" . number_format($amountNgn, 2) . " (Gross). Applicable charges and fines have been deducted from this amount.",
+                [
+                    'type' => 'wallet_topup',
+                    'amount' => (float) $amountNgn,
+                    'reference' => (string) $reference,
+                    'route' => '/wallet',
+                ]
+            );
+
+            return response()->json(['status' => 'success']);
         }
 
         // Handle Transfer Webhooks (for Expenses and Payouts)
