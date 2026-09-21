@@ -28,6 +28,7 @@ class SavingsGoalController extends Controller
             });
         return response()->json([
             'balance' => (float) $user->balance,
+            'admin_charge_balance' => (float) ($user->admin_charge_balance ?? 0),
             'goals' => $goals,
             'default_commission_rate' => (float) config('services.goals.commission_rate', 0.05),
         ]);

@@ -107,8 +107,11 @@
           <div class="space-y-4">
             <div class="flex justify-between items-center mb-1">
               <label class="text-[10px] font-bold text-slate-400 uppercase">Amount (NGN)</label>
-              <div v-if="balance !== null" class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                Wallet: ₦ {{ formatMoney(balance) }}
+              <div v-if="balance !== null" class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex flex-col items-end">
+                <span :class="{'text-rose-400': netBalance < 0}">Wallet: ₦ {{ formatMoney(netBalance) }}</span>
+                <span v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="text-[8px] opacity-60">
+                  Gross: ₦ {{ formatMoney(balance) }} | Charges: ₦ {{ formatMoney(adminChargeBalance) }}
+                </span>
               </div>
             </div>
             <div>
@@ -131,7 +134,7 @@
             <div class="grid grid-cols-2 gap-3 mt-4">
               <button 
                 @click="initiateContribution('wallet')"
-                :disabled="submitting || !form.amount || (balance !== null && form.amount > balance)"
+                :disabled="submitting || !form.amount || (balance !== null && form.amount > netBalance)"
                 class="bg-white text-slate-900 rounded-2xl py-4 font-black text-[9px] uppercase tracking-tighter hover:bg-emerald-50 active:scale-95 transition-all disabled:opacity-50"
               >
                 Wallet
@@ -187,6 +190,12 @@ const project = ref(null)
 const loading = ref(false)
 const submitting = ref(false)
 const balance = ref(null)
+const adminChargeBalance = ref(0)
+const netBalance = computed(() => {
+  if (balance.value === null) return 0
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return balance.value
+  return balance.value - adminChargeBalance.value
+})
 
 const enabledGateways = computed(() => {
   const gws = appStatusStore.paymentGateways || {}
@@ -202,6 +211,7 @@ const fetchProfile = async () => {
   try {
     const { data } = await axios.get('/api/dashboard')
     balance.value = data.balance
+    adminChargeBalance.value = data.admin_charge_balance || 0
   } catch (e) {
     console.warn('Failed to load profile for balance', e)
   }

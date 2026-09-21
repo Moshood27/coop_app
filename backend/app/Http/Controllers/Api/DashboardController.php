@@ -224,6 +224,7 @@ class DashboardController extends Controller
             'membership_id' => $user->membership_number,
             'passport_url' => $passportUrl,
             'balance' => (float) $user->balance,
+            'admin_charge_balance' => (float) ($user->admin_charge_balance ?? 0),
             'joined_at' => optional($user->created_at)->toISOString(),
             'branch' => $user->branch ? [
                 'id' => $user->branch->id,
@@ -325,6 +326,7 @@ class DashboardController extends Controller
                 'agm-voting-enabled' => Feature::for('global')->active('agm-voting-enabled'),
                 'airtime-data-enabled' => Feature::for('global')->active('airtime-data-enabled'),
                 'digital-id-card-enabled' => Feature::for('global')->active('digital-id-card-enabled'),
+                'display-admin-charge-in-wallet' => (bool) \App\Models\Setting::get('display_admin_charge_in_wallet', false),
             ],
             'is_ramadan' => $this->priceService->isRamadan(),
             'is_admin' => (bool) $user->is_admin,

@@ -44,9 +44,15 @@
 
       <!-- Financial Summary -->
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
           <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Wallet Balance</p>
-          <p class="text-lg font-black text-slate-800">₦{{ formatMoney(balance) }}</p>
+          <p class="text-lg font-black" :class="adminSettings.display_admin_charge_in_wallet && user.admin_charge_balance > 0 && (balance - user.admin_charge_balance) < 0 ? 'text-rose-600' : 'text-slate-800'">
+            ₦{{ formatMoney(adminSettings.display_admin_charge_in_wallet && user.admin_charge_balance > 0 ? (balance - user.admin_charge_balance) : balance) }}
+          </p>
+          <div v-if="adminSettings.display_admin_charge_in_wallet && user.admin_charge_balance > 0" class="mt-2 pt-2 border-t border-slate-50">
+             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Gross: ₦{{ formatMoney(balance) }}</p>
+             <p class="text-[9px] font-bold text-rose-400 uppercase tracking-tighter">Debt: -₦{{ formatMoney(user.admin_charge_balance) }}</p>
+          </div>
         </div>
         <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Savings</p>
@@ -274,6 +280,9 @@ const total_shares = ref(0)
 const total_balance = ref(0)
 const outstanding_loans = ref(0)
 const loading = ref(true)
+const adminSettings = ref({
+  display_admin_charge_in_wallet: true
+})
 
 const showLoanModal = ref(false)
 const creatingLoan = ref(false)
@@ -382,6 +391,16 @@ const fetchData = async () => {
     total_shares.value = data.total_shares
     total_balance.value = data.total_balance
     outstanding_loans.value = data.outstanding_loans
+
+    // Fetch Admin Settings for display preferences
+    try {
+      const adminRes = await axios.get('/api/admin/profile')
+      if (adminRes.data.settings) {
+        adminSettings.value = adminRes.data.settings
+      }
+    } catch (e) {
+      console.warn('Failed to fetch admin settings', e)
+    }
   } catch (e) {
     console.error('Failed to fetch member details', e)
   } finally {

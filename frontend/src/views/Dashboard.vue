@@ -37,9 +37,15 @@
             </button>
           </div>
         </div>
-        <h1 class="text-3xl sm:text-4xl leading-tight font-bold relative z-10 tracking-tight">
-          ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.balance) }}
+        <h1 class="text-3xl sm:text-4xl leading-tight font-bold relative z-10 tracking-tight" :class="{'text-rose-300': netBalance < 0}">
+          ₦ {{ hideBalances ? '***,***.**' : formatMoney(netBalance) }}
         </h1>
+        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && dashboardData.admin_charge_balance > 0" 
+             class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
+           <span>Gross: ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.balance) }}</span>
+           <span>|</span>
+           <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.admin_charge_balance) }}</span>
+        </div>
         <div class="mt-8 flex items-center justify-between flex-wrap gap-2 relative z-10">
           <div class="flex items-center gap-2">
             <p class="text-xs text-emerald-100 font-mono tracking-widest">ID: {{ dashboardData.membership_id }}</p>
@@ -871,6 +877,11 @@ const pinSaving = ref(false)
 const pinErrors = ref({})
 
 const { hideBalances, toggleBalances } = useBalanceVisibility()
+const netBalance = computed(() => {
+  const d = dashboardData.value || {}
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return d.balance || 0
+  return (d.balance || 0) - (d.admin_charge_balance || 0)
+})
 
 const baseRaw = import.meta?.env?.BASE_URL || '/'
 const basePath = (baseRaw && baseRaw.endsWith('/')) ? baseRaw : `${baseRaw}/`

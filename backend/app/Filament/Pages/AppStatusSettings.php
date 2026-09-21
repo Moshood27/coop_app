@@ -87,6 +87,7 @@ class AppStatusSettings extends Page
             'admin_attendance_stats_enabled' => (bool) Setting::get('admin_attendance_stats_enabled', true),
             'admin_allocation_enabled' => (bool) Setting::get('admin_allocation_enabled', true),
             'admin_member_funding_enabled' => (bool) Setting::get('admin_member_funding_enabled', true),
+            'display_admin_charge_in_wallet' => (bool) Setting::get('display_admin_charge_in_wallet', true),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
@@ -378,7 +379,11 @@ class AppStatusSettings extends Page
                             ->label('Enable Admin-Initiated Member Funding')
                             ->helperText('Allow administrators to top-up member wallets via payment gateway and manage member DVAs.')
                             ->default(true),
-                    ])->columns(2),
+                        Toggle::make('display_admin_charge_in_wallet')
+                            ->label('Display Admin Charges in Wallet')
+                            ->helperText('If enabled, pending administrative charges will be displayed as a debt in the member wallet balance.')
+                            ->default(true),
+                    ])->columns(3),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')
                     ->schema([

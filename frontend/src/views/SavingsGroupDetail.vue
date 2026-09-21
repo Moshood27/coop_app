@@ -182,7 +182,12 @@
               <div class="text-xl">💳</div>
               <div class="text-left">
                 <p class="text-xs font-bold uppercase tracking-widest">Pay via Wallet</p>
-                <p class="text-[10px] opacity-60">Balance: ₦ {{ formatMoney(userBalance) }}</p>
+                <p class="text-[10px] opacity-60" :class="{'text-rose-300': netBalance < 0}">Balance: ₦ {{ formatMoney(netBalance) }}</p>
+                <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="text-[8px] opacity-40 uppercase font-black flex gap-2 items-center">
+                   <span>Gross: ₦ {{ formatMoney(userBalance) }}</span>
+                   <span>|</span>
+                   <span>Charges: ₦ {{ formatMoney(adminChargeBalance) }}</span>
+                </div>
               </div>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-40"><path d="m9 18 6-6-6-6"/></svg>
@@ -300,6 +305,11 @@ const joining = ref(false)
 const paying = ref(false)
 const inviting = ref(false)
 const userBalance = ref(0)
+const adminChargeBalance = ref(0)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return userBalance.value
+  return userBalance.value - adminChargeBalance.value
+})
 const showContributeModal = ref(false)
 const showInviteModal = ref(false)
 const inviteIdentifier = ref('')
@@ -323,6 +333,7 @@ const fetchData = async () => {
     // Fetch user balance for modal
     const profile = await axios.get('/api/profile')
     userBalance.value = profile.data.balance
+    adminChargeBalance.value = profile.data.admin_charge_balance || 0
   } catch (e) {
     console.error('Failed to load group details', e)
   } finally {

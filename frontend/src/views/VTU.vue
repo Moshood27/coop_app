@@ -22,10 +22,15 @@
           <div>
             <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Available Balance</p>
             <div class="flex items-center gap-2">
-              <h2 class="text-3xl font-black text-slate-800 tracking-tight">₦ {{ formatMoney(balance) }}</h2>
+              <h2 class="text-3xl font-black text-slate-800 tracking-tight" :class="{'text-rose-600': netBalance < 0}">₦ {{ formatMoney(netBalance) }}</h2>
               <button @click="loadWallet" class="p-1 text-slate-300 hover:text-emerald-600 transition-colors">
                 <span class="material-icons text-lg">refresh</span>
               </button>
+            </div>
+            <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="mt-1 text-slate-400 text-[9px] uppercase font-bold flex gap-2 items-center">
+               <span>Gross: ₦ {{ formatMoney(balance) }}</span>
+               <span>|</span>
+               <span class="text-rose-500">Charges: ₦ {{ formatMoney(adminChargeBalance) }}</span>
             </div>
           </div>
           <router-link to="/wallet/topup" class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all">
@@ -322,6 +327,11 @@ import { useAppStatusStore } from '../stores/appStatus'
 // State
 const appStatusStore = useAppStatusStore()
 const balance = ref(0)
+const adminChargeBalance = ref(0)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return balance.value
+  return balance.value - adminChargeBalance.value
+})
 const tab = ref('airtime')
 
 const services = [
@@ -444,6 +454,7 @@ const loadWallet = async () => {
   try {
     const { data } = await axios.get('/api/wallet')
     balance.value = data.balance || 0
+    adminChargeBalance.value = data.admin_charge_balance || 0
   } catch (e) { console.error('Wallet error', e) }
 }
 

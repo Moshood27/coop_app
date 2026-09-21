@@ -10,7 +10,12 @@
       <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-lg relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full"></div>
         <p class="text-emerald-100 text-sm font-medium mb-1 relative z-10">Available Wallet Balance</p>
-        <h2 class="text-3xl font-black relative z-10">₦ {{ formatMoney(balance) }}</h2>
+        <h2 class="text-3xl font-black relative z-10" :class="{'text-rose-300': netBalance < 0}">₦ {{ formatMoney(netBalance) }}</h2>
+        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
+           <span>Gross: ₦ {{ formatMoney(balance) }}</span>
+           <span>|</span>
+           <span class="text-rose-200">Charges: ₦ {{ formatMoney(adminChargeBalance) }}</span>
+        </div>
       </div>
 
       <div class="bg-emerald-50/50 border border-emerald-100 text-emerald-900 rounded-2xl p-4 flex gap-3">
@@ -124,6 +129,11 @@ import axios from '../http'
 
 const goals = ref([])
 const balance = ref(0)
+const adminChargeBalance = ref(0)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return balance.value
+  return balance.value - adminChargeBalance.value
+})
 const commissionRate = ref(0)
 const loading = ref(false)
 
@@ -166,6 +176,7 @@ async function load() {
   try {
     const { data } = await axios.get('/api/goals')
     balance.value = data.balance || 0
+    adminChargeBalance.value = data.admin_charge_balance || 0
     commissionRate.value = Number(data.default_commission_rate || 0)
     goals.value = data.goals || []
   } catch (e) {

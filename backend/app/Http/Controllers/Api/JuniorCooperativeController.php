@@ -16,6 +16,7 @@ class JuniorCooperativeController extends Controller
         return response()->json([
             'accounts' => $request->user()->juniorAccounts,
             'balance' => $request->user()->balance,
+            'admin_charge_balance' => (float) ($request->user()->admin_charge_balance ?? 0),
         ]);
     }
 

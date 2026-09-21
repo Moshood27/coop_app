@@ -26,7 +26,14 @@
             </button>
           </div>
         </div>
-        <h2 class="text-4xl font-bold mt-1 relative z-10">₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.balance) }}</h2>
+        <h2 class="text-4xl font-bold mt-1 relative z-10" :class="{'text-rose-300': netBalance < 0}">₦ {{ hideBalances ? '***,***.**' : formatMoney(netBalance) }}</h2>
+        
+        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && wallet.admin_charge_balance > 0" class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
+           <span>Gross: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.balance) }}</span>
+           <span>|</span>
+           <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.admin_charge_balance) }}</span>
+        </div>
+
         <div class="mt-2 text-emerald-100 text-xs flex justify-between gap-2 relative z-10">
           <span>Available for Withdrawal</span>
           <span class="font-bold">₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.available_for_withdrawal || 0) }}</span>
@@ -831,6 +838,10 @@ const searchQuery = ref('')
 const wallet = ref({ balance: 0, virtual_account: {}, admin_charge_balance: 0 })
 const refreshingBalance = ref(false)
 const transactions = ref([])
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return wallet.value.balance
+  return wallet.value.balance - (wallet.value.admin_charge_balance || 0)
+})
 const filteredTransactions = computed(() => {
   if (!searchQuery.value) return transactions.value
   const q = searchQuery.value.toLowerCase()

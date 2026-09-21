@@ -188,6 +188,7 @@ class WalletController extends Controller
                 'payment-provider-failover' => Feature::for('global')->active('payment-provider-failover'),
                 'receive-qr-enabled' => Feature::for('global')->active('receive-qr-enabled'),
                 'merchant-pay-enabled' => Feature::for('global')->active('merchant-pay-enabled'),
+                'display-admin-charge-in-wallet' => (bool) Setting::get('display_admin_charge_in_wallet', false),
             ],
             'gateways' => [
                 'paystack' => (bool) Setting::get('gateway_paystack_enabled', true),

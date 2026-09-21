@@ -24,8 +24,37 @@
     <div v-else class="p-6 space-y-6 max-w-lg mx-auto">
       <div class="bg-amber-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-amber-200 text-center relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-        <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Available Wallet Balance</p>
-        <p class="text-3xl font-black">₦{{ formatMoney(balance) }}</p>
+        
+        <template v-if="adminSettings.display_admin_charge_in_wallet && user?.admin_charge_balance > 0">
+          <div class="relative z-10 space-y-2">
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Gross Wallet Balance</p>
+              <p class="text-xl font-black">₦{{ formatMoney(balance) }}</p>
+            </div>
+            
+            <div class="flex items-center justify-center gap-4 py-1">
+              <div class="h-px flex-1 bg-white/20"></div>
+              <span class="text-[10px] font-black opacity-40 uppercase tracking-widest">Pending Charges</span>
+              <div class="h-px flex-1 bg-white/20"></div>
+            </div>
+
+            <div>
+              <p class="text-xl font-black text-amber-200">-₦{{ formatMoney(user.admin_charge_balance) }}</p>
+            </div>
+
+            <div class="pt-2">
+              <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Net Available Balance</p>
+              <p class="text-3xl font-black" :class="{ 'text-rose-200': (balance - user.admin_charge_balance) < 0 }">
+                ₦{{ formatMoney(balance - user.admin_charge_balance) }}
+              </p>
+            </div>
+          </div>
+        </template>
+        
+        <template v-else>
+          <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Available Wallet Balance</p>
+          <p class="text-3xl font-black">₦{{ formatMoney(balance) }}</p>
+        </template>
       </div>
 
       <!-- Quick Actions for Admin -->

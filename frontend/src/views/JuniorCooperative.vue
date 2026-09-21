@@ -103,9 +103,16 @@
         </div>
         <p class="text-sm font-medium text-slate-500 mb-6">Adding to <span class="text-slate-800 font-bold">{{ activeAccount?.child_name }}'s</span> account</p>
         
-        <div class="bg-blue-50 p-4 rounded-2xl mb-6 flex justify-between items-center">
-          <span class="text-xs font-bold text-blue-800 uppercase tracking-wider">Your Wallet Balance</span>
-          <span class="font-black text-blue-900">₦ {{ formatMoney(walletBalance) }}</span>
+        <div class="bg-blue-50 p-4 rounded-2xl mb-6 flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-blue-800 uppercase tracking-wider">Your Wallet Balance</span>
+            <span class="font-black text-blue-900" :class="{'text-rose-600': netBalance < 0}">₦ {{ formatMoney(netBalance) }}</span>
+          </div>
+          <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="text-[9px] text-blue-400 uppercase font-bold flex gap-2 items-center">
+             <span>Gross: ₦ {{ formatMoney(walletBalance) }}</span>
+             <span>|</span>
+             <span class="text-rose-400">Charges: ₦ {{ formatMoney(adminChargeBalance) }}</span>
+          </div>
         </div>
 
         <div class="space-y-4">
@@ -189,6 +196,11 @@ import axios from '../http'
 
 const accounts = ref([])
 const walletBalance = ref(0)
+const adminChargeBalance = ref(0)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return walletBalance.value
+  return walletBalance.value - adminChargeBalance.value
+})
 const loading = ref(false)
 
 const totalBalance = computed(() => {
@@ -264,6 +276,7 @@ async function load() {
     const { data } = await axios.get('/api/junior-cooperative')
     accounts.value = data.accounts || []
     walletBalance.value = data.balance || 0
+    adminChargeBalance.value = data.admin_charge_balance || 0
   } catch (e) {
     alert(e?.response?.data?.message || 'Failed to load junior accounts')
   }

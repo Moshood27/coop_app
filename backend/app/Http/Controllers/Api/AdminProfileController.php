@@ -30,6 +30,7 @@ class AdminProfileController extends Controller
             'settings' => [
                 'admin_allocation_enabled' => (bool) Setting::get('admin_allocation_enabled', true),
                 'admin_member_funding_enabled' => (bool) Setting::get('admin_member_funding_enabled', true),
+                'display_admin_charge_in_wallet' => (bool) Setting::get('display_admin_charge_in_wallet', true),
             ]
         ]);
     }

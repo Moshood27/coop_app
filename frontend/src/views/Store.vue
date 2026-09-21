@@ -365,7 +365,14 @@
                         </svg>
                       </button>
                     </div>
-                    <span :class="hasInsufficient ? 'text-rose-600' : 'text-emerald-700'" class="text-xs font-bold">₦ {{ money(walletBalance) }}</span>
+                    <span :class="hasInsufficient ? 'text-rose-600' : 'text-emerald-700'" class="text-xs font-bold" :title="netBalance < 0 ? 'Net balance is negative due to pending charges' : ''">
+                      ₦ {{ money(netBalance) }}
+                    </span>
+                    <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="mt-1 text-slate-400 text-[8px] uppercase font-bold flex gap-2 items-center">
+                       <span>Gross: ₦ {{ money(walletBalance) }}</span>
+                       <span>|</span>
+                       <span class="text-rose-400">Charges: ₦ {{ money(adminChargeBalance) }}</span>
+                    </div>
                   </div>
                   
                   <div v-if="hasInsufficient" class="p-3 bg-amber-50 rounded-xl border border-amber-100 space-y-3">
@@ -557,7 +564,12 @@ const totalItems = ref(0)
 const vendor = ref(null)
 const isAdmin = ref(false)
 const walletBalance = ref(0)
+const adminChargeBalance = ref(0)
 const refreshingBalance = ref(false)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return walletBalance.value
+  return walletBalance.value - adminChargeBalance.value
+})
 const eligData = ref(null)
 
 const showCart = ref(false)
@@ -625,6 +637,7 @@ const loadWallet = async () => {
     refreshingBalance.value = true
     const { data } = await axios.get('/api/wallet')
     walletBalance.value = Number(data?.balance || 0)
+    adminChargeBalance.value = Number(data?.admin_charge_balance || 0)
   } catch (_) {
   } finally {
     refreshingBalance.value = false
@@ -725,7 +738,7 @@ watch(cart, persistCart, { deep: true })
 const cartList = computed(() => Object.values(cart.value))
 const totalQty = computed(() => cartList.value.reduce((s, it) => s + (it.qty || 0), 0))
 const subtotal = computed(() => cartList.value.reduce((s, it) => s + (Number(it.selling_price || 0) * (it.qty || 0)), 0))
-const shortfall = computed(() => Math.max(0, Number(subtotal.value) - Number(walletBalance.value)))
+const shortfall = computed(() => Math.max(0, Number(subtotal.value) - Number(netBalance.value)))
 const hasInsufficient = computed(() => shortfall.value > 0)
 
 const canUseFinancing = computed(() => {

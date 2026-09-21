@@ -13,7 +13,14 @@
             </svg>
           </button>
         </div>
-        <p class="text-3xl font-extrabold tracking-tight mt-1">₦ {{ Number(walletBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</p>
+        <p class="text-3xl font-extrabold tracking-tight mt-1" :class="{'text-rose-200': netBalance < 0}">
+          ₦ {{ Number(netBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}
+        </p>
+        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="mt-2 text-blue-100/80 text-[9px] uppercase font-bold flex gap-2 items-center">
+           <span>Gross: ₦ {{ Number(walletBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</span>
+           <span>|</span>
+           <span class="text-rose-200">Charges: ₦ {{ Number(adminChargeBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</span>
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -256,7 +263,12 @@ watch(() => appStatusStore.paymentGateways?.primary, (newVal) => {
   if (newVal) selectedGateway.value = newVal
 })
 const walletBalance = ref(0)
+const adminChargeBalance = ref(0)
 const refreshingBalance = ref(false)
+const netBalance = computed(() => {
+  if (!appStatusStore.features['display-admin-charge-in-wallet']) return walletBalance.value
+  return walletBalance.value - adminChargeBalance.value
+})
 const summaryEnd = ref(null)
 
 const totalAmount = computed(() => paymentList.value.reduce((sum, i) => sum + Number(i.amount || 0), 0))
@@ -382,6 +394,7 @@ const loadWallet = async () => {
     refreshingBalance.value = true
     const { data } = await axios.get('/api/wallet')
     walletBalance.value = data.balance || 0
+    adminChargeBalance.value = data.admin_charge_balance || 0
     specialSavingsBalance.value = data.special_savings_balance || 0
   } catch (_) {
   } finally {
