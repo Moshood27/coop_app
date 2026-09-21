@@ -17,7 +17,7 @@ class AgingReportPage extends Page
     protected static ?string $navigationLabel = 'AR/AP Aging';
 
     // Holds Filament form state (statePath: 'data')
-    public ?array $data = [];
+    public array $data = [];
 
     public ?array $result = null;
 

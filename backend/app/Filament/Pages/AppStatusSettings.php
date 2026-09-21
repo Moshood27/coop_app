@@ -24,7 +24,7 @@ class AppStatusSettings extends Page
 
     protected static string $view = 'filament.pages.app-status-settings';
 
-    public ?array $data = [];
+    public array $data = [];
 
     public function mount(): void
     {

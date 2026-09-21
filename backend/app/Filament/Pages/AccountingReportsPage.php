@@ -15,7 +15,7 @@ class AccountingReportsPage extends Page
     protected static ?string $navigationLabel = 'Report Exports';
     protected static ?int $navigationSort = 86;
 
-    public ?array $data = [];
+    public array $data = [];
 
     public function mount(): void
     {

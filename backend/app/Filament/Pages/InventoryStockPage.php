@@ -18,7 +18,7 @@ class InventoryStockPage extends Page
     protected static ?string $navigationLabel = 'Inventory Stock';
     protected static ?int $navigationSort = 77;
 
-    public ?array $data = [];
+    public array $data = [];
     public ?array $rows = null;
 
     public function mount(): void
