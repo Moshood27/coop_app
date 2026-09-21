@@ -1053,6 +1053,7 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
         $columnMap = [
             'Savings' => 'ordinary_savings',
             'Ordinary Savings' => 'ordinary_savings',
+            'Sav' => 'ordinary_savings',
             'Shares' => 'shares_capital',
             'Share Capital' => 'shares_capital',
             'Development' => 'development_fund_balance',
@@ -1074,13 +1075,18 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             'Special Savings' => 'special_savings_balance',
             'Takaful' => 'takaful_balance',
             'Digital Gold' => 'gold_balance',
+            'Dawah Fund' => 'dawah_fund_balance',
+            'SITTING' => 'sitting_balance',
         ];
 
         if (isset($columnMap[$schemeName])) {
             $column = $columnMap[$schemeName];
 
+            // Safely sum all schemes that map to the same column
+            $relatedSchemes = array_keys(array_filter($columnMap, fn($c) => $c === $column));
+
             $actualTotal = (float) $this->contributions()
-                ->whereHas('scheme', fn($q) => $q->where('name', $schemeName))
+                ->whereHas('scheme', fn($q) => $q->whereIn('name', $relatedSchemes))
                 ->where('status', 'success')
                 ->sum('amount');
 

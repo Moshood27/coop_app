@@ -9,6 +9,7 @@ use App\Models\QardHasanRepayment;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Scheme;
 
 class FinancialReconciliationService
@@ -143,7 +144,7 @@ class FinancialReconciliationService
 
         $userQuery->chunk(100, function ($users) use (&$report, $fix) {
             $columnToSchemes = [
-                'ordinary_savings' => ['Savings', 'Ordinary Savings'],
+                'ordinary_savings' => ['Savings', 'Ordinary Savings', 'Sav'],
                 'shares_capital' => ['Shares', 'Share Capital'],
                 'special_savings_balance' => ['Special Savings'],
                 'building_balance' => ['Building'],
@@ -162,10 +163,15 @@ class FinancialReconciliationService
                 'h_savings_balance' => ['H Savings'],
                 'investment_balance' => ['Investment'],
                 'group_savings_balance' => ['Group Savings'],
+                'takaful_balance' => ['Takaful'],
+                'gold_balance' => ['Digital Gold'],
+                'dawah_fund_balance' => ['Dawah Fund'],
+                'sitting_balance' => ['SITTING'],
             ];
 
             foreach ($users as $user) {
                 foreach ($columnToSchemes as $column => $schemeNames) {
+                    if (!\Schema::hasColumn('users', $column)) continue;
                     $actual = (float) $user->contributions()
                         ->whereHas('scheme', fn($q) => $q->whereIn('name', $schemeNames))
                         ->where('status', 'success')
