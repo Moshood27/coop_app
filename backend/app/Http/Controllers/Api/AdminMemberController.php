@@ -488,6 +488,74 @@ class AdminMemberController extends Controller
     }
 
     /**
+     * Initialize Paystack checkout for specific scheme payments (triggered by admin).
+     */
+    public function initializeSchemeFunding(Request $request, User $user)
+    {
+        $this->authorizeAdminAccess($request->user(), $user);
+
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.scheme_id' => 'required|exists:schemes,id',
+            'items.*.amount' => 'required|numeric|min:1',
+            'callback_url' => 'nullable|url',
+        ]);
+
+        $secret = config('services.paystack.secret_key');
+        if (!$secret) {
+            return response()->json(['message' => 'Payment provider not configured'], 500);
+        }
+
+        $reference = 'ADMIN_SCHEME_PAY_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+        $totalAmount = collect($validated['items'])->sum('amount');
+
+        // Pre-create pending contributions for member
+        foreach ($validated['items'] as $item) {
+            $user->contributions()->create([
+                'scheme_id' => $item['scheme_id'],
+                'amount' => $item['amount'],
+                'reference' => $reference,
+                'status' => 'pending',
+                'category' => 'deposit',
+                'notes' => 'Admin-initiated scheme payment'
+            ]);
+        }
+
+        $payload = [
+            'email' => $user->email,
+            'amount' => (int) round($totalAmount * 100), // Kobo
+            'reference' => $reference,
+            'currency' => 'NGN',
+            'metadata' => [
+                'user_id' => $user->id,
+                'admin_id' => $request->user()->id,
+                'type' => 'admin_initiated_scheme_payment',
+                'distribution' => $validated['items']
+            ],
+        ];
+
+        if ($request->filled('callback_url')) {
+            $payload['callback_url'] = $validated['callback_url'];
+        }
+
+        $response = Http::withToken($secret)
+            ->acceptJson()
+            ->post('https://api.paystack.co/transaction/initialize', $payload);
+
+        if (!$response->ok() || !($response->json('status') === true)) {
+            Log::error('Paystack Admin Scheme Initialize failed', ['user_id' => $user->id, 'body' => $response->json()]);
+            return response()->json(['message' => 'Failed to initialize payment'], 502);
+        }
+
+        $resData = $response->json('data');
+        return response()->json([
+            'authorization_url' => $resData['authorization_url'],
+            'reference' => $reference,
+            'total' => $totalAmount,
+        ]);
+    }
+
+    /**
      * Manage member wallet allocation.
      */
     public function allocateWallet(Request $request, User $user)

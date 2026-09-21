@@ -24,11 +24,12 @@ use Spatie\Activitylog\LogOptions;          // Required for v4/v5
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity; // Clean Namespace
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication;
+    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
     {

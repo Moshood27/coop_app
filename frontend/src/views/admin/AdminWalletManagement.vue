@@ -86,6 +86,7 @@
             
             <div class="space-y-3">
               <select v-model="alloc.scheme_id" class="w-full bg-white border-none rounded-2xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+                <option v-if="hasSharesAndSavings" value="combined">Shares & Savings (50/50 Split)</option>
                 <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
               </select>
               <div class="relative">
@@ -106,14 +107,24 @@
             <p class="text-lg font-black" :class="totalAllocated > balance ? 'text-rose-500' : 'text-slate-800'">₦{{ formatMoney(totalAllocated) }}</p>
           </div>
 
-          <button 
-            @click="submitAllocation" 
-            :disabled="submitting || totalAllocated <= 0 || totalAllocated > balance"
-            class="w-full bg-amber-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <span v-if="!submitting" class="i-mdi-check-bold text-lg"></span>
-            {{ submitting ? 'Processing...' : 'Confirm Allocation' }}
-          </button>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button 
+              @click="submitAllocation" 
+              :disabled="submitting || totalAllocated <= 0 || totalAllocated > balance"
+              class="w-full bg-amber-600 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <span v-if="!submitting" class="i-mdi-check-bold text-lg"></span>
+              {{ submitting ? 'Processing...' : 'Confirm Allocation' }}
+            </button>
+            <button 
+              @click="initializeSchemePayment" 
+              :disabled="submitting || totalAllocated <= 0"
+              class="w-full bg-slate-800 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <span v-if="!submitting" class="i-mdi-credit-card-outline text-lg"></span>
+              {{ submitting ? 'Processing...' : 'Pay via Gateway' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -312,6 +323,7 @@
             
             <div class="space-y-3">
               <select v-model="alloc.scheme_id" class="w-full bg-white border-none rounded-2xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                <option v-if="hasSharesAndSavings" value="combined">Shares & Savings (50/50 Split)</option>
                 <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
               </select>
               <div class="relative">
@@ -387,6 +399,15 @@ const transactions = ref([])
 const pagination = ref({ current_page: 1, next_page_url: null })
 const submitting = ref(false)
 const notes = ref('')
+
+const hasSharesAndSavings = computed(() => {
+  const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
+  const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
+  return !!(shares && savings)
+})
+
+const sharesScheme = computed(() => schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share')))
+const savingsScheme = computed(() => schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving')))
 
 const showFundModal = ref(false)
 const fundAmount = ref(0)
@@ -529,14 +550,58 @@ const removeAllocation = (index) => {
 const submitAllocation = async () => {
   submitting.value = true
   try {
+    const expanded = []
+    allocations.value.forEach(alloc => {
+      if (alloc.scheme_id === 'combined') {
+        const half = (parseFloat(alloc.amount) || 0) / 2
+        if (sharesScheme.value) expanded.push({ scheme_id: sharesScheme.value.id, amount: half })
+        if (savingsScheme.value) expanded.push({ scheme_id: savingsScheme.value.id, amount: half })
+      } else {
+        expanded.push(alloc)
+      }
+    })
+
     await axios.post(`/api/admin/members/${route.params.id}/allocate-wallet`, {
-      allocations: allocations.value,
+      allocations: expanded,
       notes: notes.value
     })
     alert('Wallet funds allocated successfully', 'Success')
     router.push(`/admin/members/${route.params.id}`)
   } catch (e) {
     alert(e.response?.data?.message || 'Failed to allocate wallet funds', 'Error')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const initializeSchemePayment = async () => {
+  submitting.value = true
+  try {
+    const expanded = []
+    allocations.value.forEach(alloc => {
+      if (alloc.scheme_id === 'combined') {
+        const half = (parseFloat(alloc.amount) || 0) / 2
+        if (sharesScheme.value) expanded.push({ scheme_id: sharesScheme.value.id, amount: half })
+        if (savingsScheme.value) expanded.push({ scheme_id: savingsScheme.value.id, amount: half })
+      } else {
+        expanded.push(alloc)
+      }
+    })
+
+    if (expanded.length === 0) {
+      alert('Please add at least one scheme allocation', 'Warning')
+      return
+    }
+
+    const { data } = await axios.post(`/api/admin/members/${route.params.id}/initialize-scheme-funding`, {
+      items: expanded,
+      callback_url: window.location.href
+    })
+    if (data.authorization_url) {
+      window.location.href = data.authorization_url
+    }
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to initialize payment', 'Error')
   } finally {
     submitting.value = false
   }
@@ -597,8 +662,19 @@ const assignDva = async () => {
 const submitAdminAllocation = async () => {
   submitting.value = true
   try {
+    const expanded = []
+    adminAllocations.value.forEach(alloc => {
+      if (alloc.scheme_id === 'combined') {
+        const half = (parseFloat(alloc.amount) || 0) / 2
+        if (sharesScheme.value) expanded.push({ scheme_id: sharesScheme.value.id, amount: half })
+        if (savingsScheme.value) expanded.push({ scheme_id: savingsScheme.value.id, amount: half })
+      } else {
+        expanded.push(alloc)
+      }
+    })
+
     await axios.post(`/api/admin/members/${route.params.id}/allocate-from-admin`, {
-      allocations: adminAllocations.value,
+      allocations: expanded,
       notes: adminNotes.value
     })
     alert('Funds allocated from admin wallet successfully', 'Success')

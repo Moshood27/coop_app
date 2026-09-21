@@ -682,6 +682,7 @@ class UserResource extends Resource
                 Tables\Filters\Filter::make('has_admin_charge_balance')
                     ->label('Has Outstanding Admin Charge')
                     ->query(fn (Builder $query) => $query->where('admin_charge_balance', '>', 0)),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
                 Action::make('exportGmailMembers')
@@ -806,6 +807,10 @@ class UserResource extends Resource
                     }),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn () => auth()->user()->hasRole('super_admin')), // Only visible to Super Admin
+                Tables\Actions\RestoreAction::make()
+                    ->visible(fn () => auth()->user()->hasRole('super_admin')),
+                Tables\Actions\ForceDeleteAction::make()
+                    ->visible(fn () => auth()->user()->hasRole('super_admin')),
                 Action::make('creditWallet')
                     ->label('Credit Wallet')
                     ->icon('heroicon-o-banknotes')
