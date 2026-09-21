@@ -29,8 +29,9 @@
       </div>
 
       <!-- Quick Actions for Admin -->
-      <div class="grid grid-cols-2 gap-4">
+      <div v-if="adminSettings.admin_member_funding_enabled || adminSettings.admin_allocation_enabled" class="grid grid-cols-2 gap-4">
         <button 
+          v-if="adminSettings.admin_member_funding_enabled"
           @click="showFundModal = true" 
           class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all"
         >
@@ -41,6 +42,7 @@
         </button>
 
         <button 
+          v-if="adminSettings.admin_member_funding_enabled"
           @click="showDvaModal = true" 
           class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-all"
         >
@@ -51,8 +53,10 @@
         </button>
 
         <button 
+          v-if="adminSettings.admin_allocation_enabled"
           @click="showAdminAllocModal = true" 
           class="col-span-2 bg-emerald-600 p-6 rounded-[2rem] text-white shadow-lg shadow-emerald-100 flex items-center justify-between active:scale-95 transition-all"
+          :class="{ 'col-span-2': true }"
         >
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl">
@@ -107,7 +111,7 @@
             <p class="text-lg font-black" :class="totalAllocated > balance ? 'text-rose-500' : 'text-slate-800'">₦{{ formatMoney(totalAllocated) }}</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="grid gap-3" :class="{ 'grid-cols-2': adminSettings.admin_member_funding_enabled }">
             <button 
               @click="submitAllocation" 
               :disabled="submitting || totalAllocated <= 0 || totalAllocated > balance"
@@ -117,6 +121,7 @@
               {{ submitting ? 'Processing...' : 'Confirm Allocation' }}
             </button>
             <button 
+              v-if="adminSettings.admin_member_funding_enabled"
               @click="initializeSchemePayment" 
               :disabled="submitting || totalAllocated <= 0"
               class="w-full bg-slate-800 py-5 rounded-[2rem] text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
@@ -431,6 +436,10 @@ const showAdminAllocModal = ref(false)
 const showAdminFundModal = ref(false)
 const adminFundAmount = ref(0)
 const adminBalance = ref(0)
+const adminSettings = ref({
+  admin_allocation_enabled: true,
+  admin_member_funding_enabled: true
+})
 const adminAllocations = ref([{ scheme_id: null, amount: 0 }])
 const adminNotes = ref('')
 
@@ -473,9 +482,12 @@ const fetchData = async () => {
 
     dvaForm.value.bvn = user.value.bvn || ''
     
-    // Fetch Admin Balance
+    // Fetch Admin Balance & Settings
     const adminRes = await axios.get('/api/admin/profile')
     adminBalance.value = adminRes.data.balance
+    if (adminRes.data.settings) {
+      adminSettings.value = adminRes.data.settings
+    }
     
     fetchTransactions()
   } catch (e) {

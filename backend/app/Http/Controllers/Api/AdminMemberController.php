@@ -9,6 +9,7 @@ use App\Models\Contribution;
 use App\Models\QardHasan;
 use App\Models\QardHasanRepayment;
 use App\Models\WalletTransaction;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -286,6 +287,10 @@ class AdminMemberController extends Controller
      */
     public function allocateFromAdminWallet(Request $request, User $user)
     {
+        if (!Setting::get('admin_allocation_enabled', true)) {
+            return response()->json(['message' => 'Admin allocation is currently disabled.'], 403);
+        }
+
         $admin = $request->user();
         if (!$admin->isAdmin()) {
             return response()->json(['message' => 'Unauthorized.'], 403);
@@ -386,6 +391,10 @@ class AdminMemberController extends Controller
      */
     public function assignVirtualAccount(Request $request, User $user)
     {
+        if (!Setting::get('admin_member_funding_enabled', true)) {
+            return response()->json(['message' => 'Admin-initiated member funding is currently disabled.'], 403);
+        }
+
         $this->authorizeAdminAccess($request->user(), $user);
 
         $validated = $request->validate([
@@ -440,6 +449,10 @@ class AdminMemberController extends Controller
      */
     public function initializeWalletFunding(Request $request, User $user)
     {
+        if (!Setting::get('admin_member_funding_enabled', true)) {
+            return response()->json(['message' => 'Admin-initiated member funding is currently disabled.'], 403);
+        }
+
         $this->authorizeAdminAccess($request->user(), $user);
 
         $data = $request->validate([
@@ -492,6 +505,10 @@ class AdminMemberController extends Controller
      */
     public function initializeSchemeFunding(Request $request, User $user)
     {
+        if (!Setting::get('admin_member_funding_enabled', true)) {
+            return response()->json(['message' => 'Admin-initiated member funding is currently disabled.'], 403);
+        }
+
         $this->authorizeAdminAccess($request->user(), $user);
 
         $validated = $request->validate([

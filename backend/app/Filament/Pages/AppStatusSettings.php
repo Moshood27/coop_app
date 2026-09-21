@@ -85,6 +85,8 @@ class AppStatusSettings extends Page
             'admin_attendance_recent_list_enabled' => (bool) Setting::get('admin_attendance_recent_list_enabled', true),
             'admin_attendance_smart_search_enabled' => (bool) Setting::get('admin_attendance_smart_search_enabled', true),
             'admin_attendance_stats_enabled' => (bool) Setting::get('admin_attendance_stats_enabled', true),
+            'admin_allocation_enabled' => (bool) Setting::get('admin_allocation_enabled', true),
+            'admin_member_funding_enabled' => (bool) Setting::get('admin_member_funding_enabled', true),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
             'meeting_fee_amount' => Setting::get('meeting_fee_amount', 1000),
@@ -365,6 +367,18 @@ class AppStatusSettings extends Page
                             ->helperText('Visual breakdown of attendance status by branch and gender.')
                             ->default(true),
                     ])->columns(3),
+                Section::make('Administrative Financial Controls')
+                    ->description('Manage administrator ability to perform financial actions for members.')
+                    ->schema([
+                        Toggle::make('admin_allocation_enabled')
+                            ->label('Enable Admin Wallet Allocation')
+                            ->helperText('Allow administrators to allocate funds from their own wallet to members.')
+                            ->default(true),
+                        Toggle::make('admin_member_funding_enabled')
+                            ->label('Enable Admin-Initiated Member Funding')
+                            ->helperText('Allow administrators to top-up member wallets via payment gateway and manage member DVAs.')
+                            ->default(true),
+                    ])->columns(2),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')
                     ->schema([

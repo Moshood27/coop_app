@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,10 @@ class AdminProfileController extends Controller
             'role' => 'Admin',
             'balance' => $user->balance,
             'created_at' => $user->created_at ? $user->created_at->toDateTimeString() : null,
+            'settings' => [
+                'admin_allocation_enabled' => (bool) Setting::get('admin_allocation_enabled', true),
+                'admin_member_funding_enabled' => (bool) Setting::get('admin_member_funding_enabled', true),
+            ]
         ]);
     }
 
