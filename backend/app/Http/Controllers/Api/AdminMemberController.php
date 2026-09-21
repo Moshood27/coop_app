@@ -413,6 +413,20 @@ class AdminMemberController extends Controller
                 $remainingToAllocate -= $applied;
                 $actualAllocations[] = ['scheme_id' => $scheme->id, 'scheme_name' => $scheme->name, 'amount' => $applied];
             }
+
+            // 5. Notify Member
+            $lockedMember->notifyMember(
+                'Funds Allocated by Admin',
+                "An administrator has allocated ₦" . number_format($totalRequested, 2) . " to your account. Gross: ₦" . number_format($totalRequested, 2) . ". Net after mandatory deductions: ₦" . number_format($deductionResult['net_amount'], 2) . ".",
+                [
+                    'type' => 'admin_allocation',
+                    'amount' => (float) $totalRequested,
+                    'net_amount' => (float) $deductionResult['net_amount'],
+                    'deductions' => $deductionResult['deductions'],
+                    'route' => '/passbook',
+                    'action_text' => 'View Passbook'
+                ]
+            );
         });
 
         return response()->json(['message' => 'Funds allocated from admin wallet successfully.']);

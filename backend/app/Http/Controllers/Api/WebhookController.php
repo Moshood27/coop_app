@@ -89,6 +89,7 @@ class WebhookController extends Controller
                         'amount' => $amountNgn,
                         'reference' => (string) ($reference ?? ''),
                         'route' => $reference && \App\Models\Contribution::where('reference', $reference)->exists() ? '/pay' : '/wallet',
+                        'action_text' => 'Check Status'
                     ], ['push', 'database']);
                 } catch (\Throwable $e) {
                     Log::warning('Failed to send Paystack failure notification', ['reference' => $reference, 'error' => $e->getMessage()]);
@@ -112,7 +113,7 @@ class WebhookController extends Controller
                     $user->notifyMember(
                         'Action Required: KYC Failed',
                         "Your bank rejected the BVN identification. Reason: {$reason}. Please ensure your profile name matches the name on your BVN exactly.",
-                        ['type' => 'kyc_failed', 'route' => '/profile']
+                        ['type' => 'kyc_failed', 'route' => '/profile', 'action_text' => 'View Profile']
                     );
                 }
             }
@@ -147,7 +148,7 @@ class WebhookController extends Controller
                     $user->notifyMember(
                         'Virtual Account Ready',
                         "Your Paystack Virtual Account has been successfully assigned and is ready for use.",
-                        ['type' => 'dva_assigned', 'route' => '/wallet']
+                        ['type' => 'dva_assigned', 'route' => '/wallet', 'action_text' => 'View Wallet']
                     );
                 }
             }
@@ -164,7 +165,7 @@ class WebhookController extends Controller
                     $user->notifyMember(
                         'Virtual Account Failed',
                         "{$reason} Please try again later or contact support.",
-                        ['type' => 'dva_failed', 'route' => '/wallet']
+                        ['type' => 'dva_failed', 'route' => '/wallet', 'action_text' => 'View Wallet']
                     );
                 }
             }
@@ -345,12 +346,13 @@ class WebhookController extends Controller
                 $actualTotal = $contributions->where('status', 'success')->sum('amount');
                 $user->notifyMember(
                     'Payment Successful',
-                    'Your payment of ₦' . number_format($amountNgn, 2) . ' has been processed. Total allocated to schemes: ₦' . number_format($actualTotal, 2),
+                    'Your payment of ₦' . number_format($amountNgn, 2) . ' (Gross) has been processed. Total allocated to schemes: ₦' . number_format($actualTotal, 2) . ' after applicable charges.',
                     [
                         'type' => 'scheme_payment',
                         'amount' => (float) $actualTotal,
                         'reference' => (string) $reference,
                         'route' => '/passbook',
+                        'action_text' => 'View Passbook'
                     ]
                 );
             }
@@ -401,6 +403,7 @@ class WebhookController extends Controller
                                 'amount' => (float) $sadaqahContrib->amount,
                                 'reference' => $sadaqahContrib->reference,
                                 'route' => '/sadaqah',
+                                'action_text' => 'View Sadaqah'
                             ]
                         );
                     }
@@ -487,6 +490,7 @@ class WebhookController extends Controller
                                 'remaining_balance' => $remaining,
                                 'reference' => (string) $loanRep->reference,
                                 'route' => '/loan/' . $loan->id,
+                                'action_text' => 'View Loan'
                             ]
                         );
                     }
@@ -585,7 +589,10 @@ class WebhookController extends Controller
                 return response()->json(['status' => 'ok']);
             }
 
-            DB::transaction(function () use ($topupUser, $amountNgn, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId) {
+            $deductionSummary = "";
+            $netAmount = $amountNgn;
+
+            DB::transaction(function () use ($topupUser, $amountNgn, $reference, $vdChannel, $vd, $customerCode, $metadata, $paystackId, &$deductionSummary, &$netAmount) {
                 // 1. Credit GROSS amount to wallet first
                 $topupUser->increment('balance', $amountNgn);
 
@@ -612,7 +619,16 @@ class WebhookController extends Controller
                 // 2. Apply deductions (Maintenance + Fines + Admin Charges)
                 try {
                     $chargeService = app(AdministrativeChargeService::class);
-                    $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                    $result = $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                    $netAmount = $result['net_amount'];
+                    if (!empty($result['deductions'])) {
+                        $deductionParts = [];
+                        foreach ($result['deductions'] as $key => $val) {
+                            $name = str_replace('_', ' ', ucfirst($key));
+                            $deductionParts[] = "{$name}: ₦" . number_format($val, 2);
+                        }
+                        $deductionSummary = " Deductions: " . implode(', ', $deductionParts) . ".";
+                    }
                 } catch (\Throwable $e) {
                     Log::error("Automated deductions failed in DVA/Direct payment: " . $e->getMessage());
                 }
@@ -640,14 +656,22 @@ class WebhookController extends Controller
 
             // Notify user via unified method (triggers real-time, push, mail, sms as per prefs)
             $topupUser->refresh();
+            $msg = "Your wallet has been funded with ₦" . number_format($amountNgn, 2) . " (Gross).";
+            if (!empty($deductionSummary)) {
+                $msg .= $deductionSummary . " Net credited: ₦" . number_format($netAmount, 2) . ".";
+            } else {
+                $msg .= " Net credited: ₦" . number_format($amountNgn, 2) . ".";
+            }
+
             $topupUser->notifyMember(
-                'Wallet Top-up Successful',
-                "Your wallet has been credited with ₦" . number_format($amountNgn, 2) . " (Gross). Applicable charges and fines have been deducted from this amount.",
+                'Wallet Funded Successfully',
+                $msg,
                 [
                     'type' => 'wallet_topup',
-                    'amount' => (float) $amountNgn,
+                    'amount' => (float) $netAmount,
                     'reference' => (string) $reference,
                     'route' => '/wallet',
+                    'action_text' => 'View Wallet'
                 ]
             );
 
@@ -824,6 +848,7 @@ class WebhookController extends Controller
                             'amount' => (float) ($vd['charged_amount'] ?? $vd['amount'] ?? 0),
                             'reference' => (string) $reference,
                             'route' => $contrib ? '/pay' : '/wallet',
+                            'action_text' => 'Check Status'
                         ], ['push', 'database']);
                     }
                 } catch (\Throwable $e) {
@@ -912,6 +937,7 @@ class WebhookController extends Controller
                             'remaining_balance' => $remaining,
                             'reference' => (string) $loanRep->reference,
                             'route' => '/loan/' . $loan->id,
+                            'action_text' => 'View Loan'
                         ]
                     );
                 }
@@ -991,6 +1017,7 @@ class WebhookController extends Controller
                         'amount' => (float) $expectedTotal,
                         'reference' => (string) $reference,
                         'route' => '/passbook',
+                        'action_text' => 'View Passbook'
                     ]
                 );
             }
@@ -1041,6 +1068,7 @@ class WebhookController extends Controller
                             'amount' => (float) $sadaqahContrib->amount,
                             'reference' => $sadaqahContrib->reference,
                             'route' => '/sadaqah',
+                            'action_text' => 'View Sadaqah'
                         ]
                     );
                 }
@@ -1109,26 +1137,44 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $dbReference, $vd, $isDva) {
-            $topupUser->balance += $netAmount;
-            $topupUser->save();
+        // 2. Apply deductions (Maintenance + Fines + Admin Charges)
+        $deductionSummary = "";
+        $netAmountAfterDeductions = $amountNgn;
+
+        DB::transaction(function () use ($topupUser, $amountNgn, $dbReference, $vd, $isDva, &$deductionSummary, &$netAmountAfterDeductions) {
+            // 1. Credit GROSS amount to wallet first
+            $topupUser->increment('balance', $amountNgn);
 
             $source = $isDva ? 'flutterwave_dva' : 'flutterwave_charge';
-
             WalletTransaction::create([
                 'user_id' => $topupUser->id,
                 'type' => 'credit',
-                'amount' => $netAmount,
+                'amount' => $amountNgn,
                 'reference' => $dbReference,
                 'source' => $source,
                 'meta' => [
                     'channel' => $vd['payment_type'] ?? null,
                     'flw_ref' => $vd['flw_ref'] ?? null,
                     'processor' => 'flutterwave',
-                    'maintenance_charge' => $maintenanceCharge,
                     'gross_amount' => $amountNgn,
                 ],
             ]);
+
+            try {
+                $chargeService = app(AdministrativeChargeService::class);
+                $result = $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $dbReference);
+                $netAmountAfterDeductions = $result['net_amount'];
+                if (!empty($result['deductions'])) {
+                    $deductionParts = [];
+                    foreach ($result['deductions'] as $key => $val) {
+                        $name = str_replace('_', ' ', ucfirst($key));
+                        $deductionParts[] = "{$name}: ₦" . number_format($val, 2);
+                    }
+                    $deductionSummary = " Deductions: " . implode(', ', $deductionParts) . ".";
+                }
+            } catch (\Throwable $e) {
+                Log::error("Automated deductions failed in Flutterwave payment: " . $e->getMessage());
+            }
         });
 
         Log::info('Flutterwave wallet top-up processed', [
@@ -1137,14 +1183,22 @@ class WebhookController extends Controller
         ]);
 
         // Notify user via unified method (triggers real-time, push, mail, sms as per prefs)
+        $msg = "Your wallet has been funded with ₦" . number_format($amountNgn, 2) . " (Gross).";
+        if (!empty($deductionSummary)) {
+            $msg .= $deductionSummary . " Net credited: ₦" . number_format($netAmountAfterDeductions, 2) . ".";
+        } else {
+            $msg .= " Net credited: ₦" . number_format($amountNgn, 2) . ".";
+        }
+
         $topupUser->notifyMember(
-            'Wallet Top-up Successful',
-            "Your wallet has been credited with ₦" . number_format($netAmount, 2) . " after a maintenance charge of ₦" . number_format($maintenanceCharge, 2) . ".",
+            'Wallet Funded Successfully',
+            $msg,
             [
                 'type' => 'wallet_topup',
-                'amount' => (float) $netAmount,
+                'amount' => (float) $netAmountAfterDeductions,
                 'reference' => (string) $reference,
                 'route' => '/wallet',
+                'action_text' => 'View Wallet'
             ]
         );
 
@@ -1235,6 +1289,7 @@ class WebhookController extends Controller
                             'amount' => (float) $amountNgn,
                             'reference' => $reference,
                             'route' => '/pay',
+                            'action_text' => 'View History'
                         ]
                     );
                 }
@@ -1261,6 +1316,28 @@ class WebhookController extends Controller
                     $project->increment('raised_amount', (float) $sadaqahContrib->amount);
                 }
             });
+
+            // Notify user
+            try {
+                $user = User::find($sadaqahContrib->user_id);
+                if ($user) {
+                    $project = SadaqahProject::find($sadaqahContrib->sadaqah_project_id);
+                    $user->notifyMember(
+                        'Sadaqah Contribution Successful',
+                        "Your contribution of ₦" . number_format($sadaqahContrib->amount, 2) . " to " . ($project->name ?? 'Project') . " was successful. Jazakallah Khair.",
+                        [
+                            'type' => 'sadaqah_contribution',
+                            'amount' => (float) $sadaqahContrib->amount,
+                            'reference' => $sadaqahContrib->reference,
+                            'route' => '/sadaqah',
+                            'action_text' => 'View Sadaqah'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send Sadaqah webhook notification (Monnify)', ['error' => $e->getMessage()]);
+            }
+
             return response()->json(['status' => 'success']);
         }
 
@@ -1283,6 +1360,30 @@ class WebhookController extends Controller
                     }
                 }
             });
+
+            // Notify user
+            try {
+                $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
+                if ($loan && $loan->user) {
+                    $remaining = max(0, (float) $loan->principal_amount - (float) $loan->paid_amount);
+                    $loan->user->notifyMember(
+                        'Repayment Received',
+                        'Loan repayment received: ₦'.number_format((float)$loanRep->amount, 2).' for '.($loan->qard_id_string).'. Remaining: ₦'.number_format($remaining, 2).'.',
+                        [
+                            'type' => 'loan_repayment',
+                            'loan_id' => $loan->id,
+                            'qard_id_string' => $loan->qard_id_string,
+                            'remaining_balance' => $remaining,
+                            'reference' => (string) $loanRep->reference,
+                            'route' => '/loan/' . $loan->id,
+                            'action_text' => 'View Loan'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send loan repayment notification (Monnify)', ['error' => $e->getMessage()]);
+            }
+
             return response()->json(['status' => 'success']);
         }
 
@@ -1320,33 +1421,60 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $verifiedData) {
-            $topupUser->balance += $netAmount;
-            $topupUser->save();
+        // 2. Apply deductions (Maintenance + Fines + Admin Charges)
+        $deductionSummary = "";
+        $netAmountAfterDeductions = $amountNgn;
+
+        DB::transaction(function () use ($topupUser, $amountNgn, $reference, $verifiedData, &$deductionSummary, &$netAmountAfterDeductions) {
+            // 1. Credit GROSS amount to wallet first
+            $topupUser->increment('balance', $amountNgn);
 
             WalletTransaction::create([
                 'user_id' => $topupUser->id,
                 'type' => 'credit',
-                'amount' => $netAmount,
+                'amount' => $amountNgn,
                 'reference' => $reference,
                 'source' => 'monnify_topup',
                 'meta' => [
                     'processor' => 'monnify',
-                    'maintenance_charge' => $maintenanceCharge,
                     'gross_amount' => $amountNgn,
                     'payment_method' => $verifiedData['paymentMethod'] ?? null,
                 ],
             ]);
+
+            try {
+                $chargeService = app(AdministrativeChargeService::class);
+                $result = $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                $netAmountAfterDeductions = $result['net_amount'];
+                if (!empty($result['deductions'])) {
+                    $deductionParts = [];
+                    foreach ($result['deductions'] as $key => $val) {
+                        $name = str_replace('_', ' ', ucfirst($key));
+                        $deductionParts[] = "{$name}: ₦" . number_format($val, 2);
+                    }
+                    $deductionSummary = " Deductions: " . implode(', ', $deductionParts) . ".";
+                }
+            } catch (\Throwable $e) {
+                Log::error("Automated deductions failed in Monnify payment: " . $e->getMessage());
+            }
         });
 
+        $msg = "Your wallet has been funded with ₦" . number_format($amountNgn, 2) . " (Gross).";
+        if (!empty($deductionSummary)) {
+            $msg .= $deductionSummary . " Net credited: ₦" . number_format($netAmountAfterDeductions, 2) . ".";
+        } else {
+            $msg .= " Net credited: ₦" . number_format($amountNgn, 2) . ".";
+        }
+
         $topupUser->notifyMember(
-            'Wallet Top-up Successful',
-            "Your wallet has been credited with ₦" . number_format($netAmount, 2) . " after a maintenance charge of ₦" . number_format($maintenanceCharge, 2) . ".",
+            'Wallet Funded Successfully',
+            $msg,
             [
                 'type' => 'wallet_topup',
-                'amount' => (float) $netAmount,
+                'amount' => (float) $netAmountAfterDeductions,
                 'reference' => $reference,
                 'route' => '/wallet',
+                'action_text' => 'View Wallet'
             ]
         );
 
@@ -1440,6 +1568,7 @@ class WebhookController extends Controller
                             'amount' => (float) $amountNgn,
                             'reference' => $reference,
                             'route' => '/pay',
+                            'action_text' => 'View History'
                         ]
                     );
                 }
@@ -1466,6 +1595,28 @@ class WebhookController extends Controller
                     $project->increment('raised_amount', (float) $sadaqahContrib->amount);
                 }
             });
+
+            // Notify user
+            try {
+                $user = User::find($sadaqahContrib->user_id);
+                if ($user) {
+                    $project = SadaqahProject::find($sadaqahContrib->sadaqah_project_id);
+                    $user->notifyMember(
+                        'Sadaqah Contribution Successful',
+                        "Your contribution of ₦" . number_format($sadaqahContrib->amount, 2) . " to " . ($project->name ?? 'Project') . " was successful. Jazakallah Khair.",
+                        [
+                            'type' => 'sadaqah_contribution',
+                            'amount' => (float) $sadaqahContrib->amount,
+                            'reference' => $sadaqahContrib->reference,
+                            'route' => '/sadaqah',
+                            'action_text' => 'View Sadaqah'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send Sadaqah webhook notification (Opay)', ['error' => $e->getMessage()]);
+            }
+
             return response()->json(['status' => 'success']);
         }
 
@@ -1488,6 +1639,30 @@ class WebhookController extends Controller
                     }
                 }
             });
+
+            // Notify user
+            try {
+                $loan = QardHasan::with('user')->find($loanRep->qard_hasan_id);
+                if ($loan && $loan->user) {
+                    $remaining = max(0, (float) $loan->principal_amount - (float) $loan->paid_amount);
+                    $loan->user->notifyMember(
+                        'Repayment Received',
+                        'Loan repayment received: ₦'.number_format((float)$loanRep->amount, 2).' for '.($loan->qard_id_string).'. Remaining: ₦'.number_format($remaining, 2).'.',
+                        [
+                            'type' => 'loan_repayment',
+                            'loan_id' => $loan->id,
+                            'qard_id_string' => $loan->qard_id_string,
+                            'remaining_balance' => $remaining,
+                            'reference' => (string) $loanRep->reference,
+                            'route' => '/loan/' . $loan->id,
+                            'action_text' => 'View Loan'
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send loan repayment notification (Opay)', ['error' => $e->getMessage()]);
+            }
+
             return response()->json(['status' => 'success']);
         }
 
@@ -1526,33 +1701,59 @@ class WebhookController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        DB::transaction(function () use ($topupUser, $amountNgn, $netAmount, $maintenanceCharge, $reference, $verifiedData) {
-            $topupUser->balance += $netAmount;
-            $topupUser->save();
+        // 2. Apply deductions (Maintenance + Fines + Admin Charges)
+        $deductionSummary = "";
+        $netAmountAfterDeductions = $amountNgn;
+
+        DB::transaction(function () use ($topupUser, $amountNgn, $reference, $verifiedData, &$deductionSummary, &$netAmountAfterDeductions) {
+            // 1. Credit GROSS amount to wallet first
+            $topupUser->increment('balance', $amountNgn);
 
             WalletTransaction::create([
                 'user_id' => $topupUser->id,
                 'type' => 'credit',
-                'amount' => $netAmount,
+                'amount' => $amountNgn,
                 'reference' => $reference,
                 'source' => 'opay_topup',
                 'meta' => [
                     'processor' => 'opay',
-                    'maintenance_charge' => $maintenanceCharge,
                     'gross_amount' => $amountNgn,
-                    'payment_method' => $verifiedData['instrumentType'] ?? null,
                 ],
             ]);
+
+            try {
+                $chargeService = app(AdministrativeChargeService::class);
+                $result = $chargeService->applyDeductionsFromWallet($topupUser, $amountNgn, true, $reference);
+                $netAmountAfterDeductions = $result['net_amount'];
+                if (!empty($result['deductions'])) {
+                    $deductionParts = [];
+                    foreach ($result['deductions'] as $key => $val) {
+                        $name = str_replace('_', ' ', ucfirst($key));
+                        $deductionParts[] = "{$name}: ₦" . number_format($val, 2);
+                    }
+                    $deductionSummary = " Deductions: " . implode(', ', $deductionParts) . ".";
+                }
+            } catch (\Throwable $e) {
+                Log::error("Automated deductions failed in Opay payment: " . $e->getMessage());
+            }
         });
 
+        $msg = "Your wallet has been funded with ₦" . number_format($amountNgn, 2) . " (Gross).";
+        if (!empty($deductionSummary)) {
+            $msg .= $deductionSummary . " Net credited: ₦" . number_format($netAmountAfterDeductions, 2) . ".";
+        } else {
+            $msg .= " Net credited: ₦" . number_format($amountNgn, 2) . ".";
+        }
+
         $topupUser->notifyMember(
-            'Wallet Top-up Successful',
-            "Your wallet has been credited with ₦" . number_format($netAmount, 2) . " after a maintenance charge of ₦" . number_format($maintenanceCharge, 2) . ".",
+            'Wallet Funded Successfully',
+            $msg,
             [
                 'type' => 'wallet_topup',
-                'amount' => (float) $netAmount,
+                'amount' => (float) $netAmountAfterDeductions,
                 'reference' => $reference,
                 'route' => '/wallet',
+                'action_text' => 'View Wallet'
             ]
         );
 

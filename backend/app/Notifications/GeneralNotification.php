@@ -92,7 +92,8 @@ class GeneralNotification extends Notification implements ShouldQueue
         if (is_string($route) && !empty($route)) {
             $appUrl = config('app.url');
             $url = str_starts_with($route, 'http') ? $route : rtrim($appUrl, '/').'/'.ltrim($route, '/');
-            $mail->action('Open', $url);
+            $actionText = $this->data['action_text'] ?? 'Open';
+            $mail->action($actionText, $url);
         }
 
         $mail->line('Regards,')->line(config('app.name'));
