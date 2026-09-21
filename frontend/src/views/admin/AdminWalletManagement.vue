@@ -87,7 +87,7 @@
             <div class="space-y-3">
               <select v-model="alloc.scheme_id" class="w-full bg-white border-none rounded-2xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-amber-500 transition-all">
                 <option v-if="hasSharesAndSavings" value="combined">Shares & Savings (50/50 Split)</option>
-                <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
+                <option v-for="scheme in filteredSchemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
               </select>
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">₦</span>
@@ -324,7 +324,7 @@
             <div class="space-y-3">
               <select v-model="alloc.scheme_id" class="w-full bg-white border-none rounded-2xl px-4 py-3 text-xs font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                 <option v-if="hasSharesAndSavings" value="combined">Shares & Savings (50/50 Split)</option>
-                <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
+                <option v-for="scheme in filteredSchemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
               </select>
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">₦</span>
@@ -333,7 +333,7 @@
             </div>
           </div>
 
-          <button @click="adminAllocations.push({ scheme_id: schemes[0]?.id, amount: 0 })" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:border-emerald-300 hover:text-emerald-500 transition-all">
+          <button @click="adminAllocations.push({ scheme_id: hasSharesAndSavings ? 'combined' : schemes[0]?.id, amount: 0 })" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:border-emerald-300 hover:text-emerald-500 transition-all">
             + Add Another Scheme
           </button>
         </div>
@@ -409,6 +409,15 @@ const hasSharesAndSavings = computed(() => {
 const sharesScheme = computed(() => schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share')))
 const savingsScheme = computed(() => schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving')))
 
+const filteredSchemes = computed(() => {
+  if (!hasSharesAndSavings.value) return schemes.value
+  return schemes.value.filter(s => {
+    const isShares = s.id === sharesScheme.value?.id
+    const isSavings = s.id === savingsScheme.value?.id
+    return !isShares && !isSavings
+  })
+})
+
 const showFundModal = ref(false)
 const fundAmount = ref(0)
 
@@ -454,7 +463,10 @@ const fetchData = async () => {
     user.value = userRes.data.user
     balance.value = userRes.data.balance
     schemes.value = schemeRes.data
-    if (schemes.value.length > 0) {
+    if (hasSharesAndSavings.value) {
+      allocations.value[0].scheme_id = 'combined'
+      adminAllocations.value[0].scheme_id = 'combined'
+    } else if (schemes.value.length > 0) {
       allocations.value[0].scheme_id = schemes.value[0].id
       adminAllocations.value[0].scheme_id = schemes.value[0].id
     }
@@ -537,8 +549,9 @@ const submitEditTransaction = async () => {
 }
 
 const addAllocation = () => {
+  const defaultScheme = hasSharesAndSavings.value ? 'combined' : (schemes.value.length > 0 ? schemes.value[0].id : null)
   allocations.value.push({ 
-    scheme_id: schemes.value.length > 0 ? schemes.value[0].id : null, 
+    scheme_id: defaultScheme, 
     amount: 0 
   })
 }

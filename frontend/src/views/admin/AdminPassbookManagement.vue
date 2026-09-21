@@ -126,7 +126,7 @@
           <div v-if="!form.split_50_50">
             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Select Scheme</label>
             <select v-model="form.scheme_id" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-              <option v-for="scheme in schemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
+              <option v-for="scheme in filteredSchemes" :key="scheme.id" :value="scheme.id">{{ scheme.name }}</option>
             </select>
           </div>
 
@@ -196,6 +196,23 @@ const loading = ref(true)
 const selectedYear = ref(new Date().getFullYear())
 const schemes = ref([])
 const showAddModal = ref(false)
+
+const hasSharesAndSavings = computed(() => {
+  const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
+  const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
+  return !!(shares && savings)
+})
+
+const filteredSchemes = computed(() => {
+  if (!hasSharesAndSavings.value) return schemes.value
+  const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
+  const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
+  return schemes.value.filter(s => {
+    if (shares && s.id === shares.id) return false
+    if (savings && s.id === savings.id) return false
+    return true
+  })
+})
 const submitting = ref(false)
 const editingCon = ref(null)
 const form = ref({
@@ -257,7 +274,11 @@ const fetchSchemes = async () => {
   try {
     const { data } = await axios.get('/api/schemes')
     schemes.value = data
-    if (data.length > 0) form.value.scheme_id = data[0].id
+    if (hasSharesAndSavings.value) {
+      form.value.split_50_50 = true
+    } else if (filteredSchemes.value.length > 0) {
+      form.value.scheme_id = filteredSchemes.value[0].id
+    }
   } catch (e) {
     console.error('Failed to fetch schemes', e)
   }
@@ -282,12 +303,12 @@ const closeModal = () => {
   showAddModal.value = false
   editingCon.value = null
   form.value = {
-    scheme_id: schemes.value.length > 0 ? schemes.value[0].id : null,
+    scheme_id: filteredSchemes.value.length > 0 ? filteredSchemes.value[0].id : null,
     amount: 0,
     paid_at: new Date().toISOString().split('T')[0],
     method: 'transfer',
     notes: '',
-    split_50_50: false,
+    split_50_50: hasSharesAndSavings.value,
     is_debit: false,
     status: 'success'
   }

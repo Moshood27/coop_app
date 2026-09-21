@@ -226,6 +226,8 @@ const hasSharesAndSavings = computed(() => {
   return !!(shares && savings)
 })
 const filteredSchemes = computed(() => {
+  if (!hasSharesAndSavings.value) return schemes.value
+  
   const shares = schemes.value.find(s => s.name === 'Shares') || schemes.value.find(s => s.name.toLowerCase().includes('share'))
   const savings = schemes.value.find(s => s.name === 'Savings') || schemes.value.find(s => s.name.toLowerCase().includes('saving'))
   
