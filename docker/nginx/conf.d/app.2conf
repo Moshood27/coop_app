@@ -34,7 +34,12 @@ server {
     }
 
     # PHP handling
-    location ~ \.php$ {
+    location = /index.php {
+        # Redirect direct access to /index.php to /
+        if ($request_uri ~* "^/index\.php") {
+            return 301 /;
+        }
+
         include fastcgi_params;
         fastcgi_pass app:9000; # PHP-FPM service name from docker-compose
         fastcgi_index index.php;
@@ -42,6 +47,13 @@ server {
         fastcgi_param DOCUMENT_ROOT $realpath_root;
         fastcgi_buffers 16 16k;
         fastcgi_buffer_size 32k;
+    }
+
+    # Block all other .php files and disable their logging
+    location ~ \.php$ {
+        return 404;
+        access_log off;
+        log_not_found off;
     }
 
     # Security headers (adjust as needed)
