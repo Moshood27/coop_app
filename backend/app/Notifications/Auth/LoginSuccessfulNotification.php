@@ -38,9 +38,9 @@ class LoginSuccessfulNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Security Alert: New Login to Your Account')
+            ->subject('Security Alert: Unrecognized Login to Your Account')
             ->greeting('Assalāmu ‘alaykum ' . $notifiable->name . ',')
-            ->line('Your account was just accessed from a new device.')
+            ->line('Your account was just accessed from an unrecognized device or location.')
             ->line('**Login Details:**')
             ->line('**Time:** ' . $this->time->toDayDateTimeString() . ' (WAT)')
             ->line('**IP Address:** ' . $this->ip)
