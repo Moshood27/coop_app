@@ -734,6 +734,7 @@ import AppHeader from '../components/AppHeader.vue'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
+import { useMemberStore } from '../stores/member'
 import axios from '../http'
 import getImageUrl from '../utils/image'
 import { parseOptions, publicKeyCredentialToJSON } from '../utils/webauthn'
@@ -746,6 +747,7 @@ const quickLoginBusy = ref(false)
 const router = useRouter()
 const route = useRoute()
 const appStatusStore = useAppStatusStore()
+const memberStore = useMemberStore()
 
 const activeTab = ref('account')
 const searchQuery = ref('')
@@ -778,7 +780,7 @@ const visibleSections = computed(() => {
 
 const isSectionVisible = (id) => visibleSections.value.some(s => s.id === id)
 
-const profile = ref({})
+const profile = computed(() => memberStore.profile || {})
 const bvnAssigned = ref(false)
 const uploading = ref(false)
 const fileInput = ref(null)
@@ -1318,9 +1320,7 @@ onMounted(async () => {
   // Load profile
   try {
     checkBiometricStatus()
-    const { data } = await axios.get('/api/profile')
-    profile.value = data
-    emailForm.value.email = data?.email || ''
+    const data = await memberStore.fetchProfile(true)
     
     // Sync notification preferences
     notifPrefs.value.notify_email = !!data?.notify_email

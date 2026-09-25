@@ -4,45 +4,19 @@
 
     <div class="max-w-5xl mx-auto p-4 pb-32 space-y-6">
       <!-- Balance Card -->
-      <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
-        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
-        <div class="flex items-center gap-2 mb-2 relative z-10">
-          <p class="text-emerald-100 text-sm font-medium">Available Balance</p>
-          <div class="flex items-center gap-1">
-            <button @click="hideBalances = !hideBalances" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors">
-              <svg v-if="hideBalances" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m3.313-3.313A9.959 9.959 0 0112 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-1.447 0-2.811-.31-4.04-.864m1.107-1.107l1.107-1.107m2.774-2.774l.553-.553m2.21-2.21l.553-.553" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
-              </svg>
-            </button>
-            <button @click="refreshWalletBalance" :disabled="refreshingBalance" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" :class="{'animate-spin': refreshingBalance}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <h2 class="text-4xl font-bold mt-1 relative z-10" :class="{'text-rose-300': netBalance < 0}">₦ {{ hideBalances ? '***,***.**' : formatMoney(netBalance) }}</h2>
-        
-        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && wallet.admin_charge_balance > 0" class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
-           <span>Gross: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.balance) }}</span>
-           <span>|</span>
-           <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.admin_charge_balance) }}</span>
-        </div>
-
-        <div class="mt-2 text-emerald-100 text-xs flex justify-between gap-2 relative z-10">
-          <span>Available for Withdrawal</span>
-          <span class="font-bold">₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.available_for_withdrawal || 0) }}</span>
-        </div>
-        <div class="mt-6 flex gap-2 flex-wrap relative z-10">
-          <button @click="goAllocate" class="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-xl text-xs font-bold backdrop-blur-md transition-all border border-white/10">Allocate Funds</button>
-          <button @click="activeTab = 'fund'" class="bg-white text-emerald-900 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95">Fund Wallet</button>
-        </div>
-      </div>
+      <WalletBalanceCard 
+        :netBalance="netBalance"
+        :balance="wallet.balance"
+        :adminChargeBalance="wallet.admin_charge_balance"
+        :availableForWithdrawal="wallet.available_for_withdrawal || 0"
+        :hideBalances="hideBalances"
+        :refreshing="refreshingBalance"
+        :showAdminCharge="appStatusStore.features['display-admin-charge-in-wallet']"
+        @toggleHide="hideBalances = !hideBalances"
+        @refresh="refreshWalletBalance"
+        @allocate="goAllocate"
+        @fund="activeTab = 'fund'"
+      />
 
       <div class="grid grid-cols-2 gap-3">
 
@@ -53,65 +27,10 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="flex p-1.5 bg-slate-200/50 rounded-[1.5rem] gap-1 shadow-inner overflow-x-auto no-scrollbar">
-        <button 
-          v-for="tab in ['overview', 'fund', 'transfer', 'withdraw', 'merchant', 'transactions', 'requests'].filter(t => {
-            if (t === 'withdraw') return appStatusStore.features['withdrawals-enabled'];
-            if (t === 'merchant') return appStatusStore.features['merchant-pay-enabled'] || appStatusStore.features['receive-qr-enabled'];
-            return true;
-          })" 
-          :key="tab"
-          @click="activeTab = tab; searchQuery = ''"
-          :class="activeTab === tab ? 'bg-white text-emerald-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/30'"
-          class="flex-1 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ease-out whitespace-nowrap"
-        >
-          {{ tab }}
-        </button>
-      </div>
+      <WalletTabs v-model="activeTab" :features="appStatusStore.features" @update:modelValue="searchQuery = ''" />
 
       <div v-if="activeTab === 'merchant'" class="space-y-6">
-        <!-- Merchant Pay (QR) Tab Content -->
-        <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center relative overflow-hidden">
-          <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
-          <div class="relative z-10 space-y-6">
-            <div class="w-20 h-20 bg-emerald-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner">
-              📱
-            </div>
-            <div>
-              <h3 class="text-xl font-black text-slate-800">Merchant Pay (QR)</h3>
-              <p class="text-sm text-slate-500 mt-2 leading-relaxed px-4">Scan to pay at any Attaqwa Merchant or generate your own QR to receive payments instantly.</p>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <button v-if="appStatusStore.features['merchant-pay-enabled']" @click="$router.push('/merchant/pay')" class="bg-emerald-700 text-white p-4 rounded-2xl font-bold shadow-lg shadow-emerald-700/20 active:scale-95 transition-all flex flex-col items-center gap-2">
-                <span class="text-xl">🔍</span>
-                <span class="text-xs uppercase tracking-widest">Scan & Pay</span>
-              </button>
-              <button v-if="appStatusStore.features['receive-qr-enabled']" @click="$router.push('/merchant/receive')" class="bg-white text-emerald-700 border-2 border-emerald-100 p-4 rounded-2xl font-bold active:scale-95 transition-all flex flex-col items-center gap-2">
-                <span class="text-xl">📥</span>
-                <span class="text-xs uppercase tracking-widest">Receive</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-emerald-900 p-6 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
-           <div class="absolute left-0 bottom-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-           <h4 class="font-bold text-emerald-200 text-[10px] uppercase tracking-widest mb-2">How it works</h4>
-           <ul class="space-y-3">
-             <li class="flex gap-3 text-xs">
-               <span class="font-black text-emerald-400">01.</span>
-               <span class="opacity-90">Open "Scan & Pay" to scan a merchant's Attaqwa QR code.</span>
-             </li>
-             <li class="flex gap-3 text-xs">
-               <span class="font-black text-emerald-400">02.</span>
-               <span class="opacity-90">Confirm the amount and merchant details.</span>
-             </li>
-             <li class="flex gap-3 text-xs">
-               <span class="font-black text-emerald-400">03.</span>
-               <span class="opacity-90">Funds are transferred instantly from your wallet.</span>
-             </li>
-           </ul>
-        </div>
+        <MerchantTab :features="appStatusStore.features" />
       </div>
 
       <div v-if="activeTab === 'overview'" class="space-y-6">
@@ -802,9 +721,19 @@
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import axios from '../http.js'
+import WalletBalanceCard from '../components/wallet/WalletBalanceCard.vue'
+import WalletTabs from '../components/wallet/WalletTabs.vue'
+import OverviewTab from '../components/wallet/OverviewTab.vue'
+import FundTab from '../components/wallet/FundTab.vue'
+import TransferTab from '../components/wallet/TransferTab.vue'
+import WithdrawTab from '../components/wallet/WithdrawTab.vue'
+import RequestsTab from '../components/wallet/RequestsTab.vue'
+import TransactionsTab from '../components/wallet/TransactionsTab.vue'
+import MerchantTab from '../components/wallet/MerchantTab.vue'
+import axios from '../http'
 import { useRouter } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
+import { useWalletStore } from '../stores/wallet'
 import { openBlob } from '../utils/download'
 import { useBalanceVisibility } from '../composables/useBalanceVisibility'
 import CustomNotice from '../components/CustomNotice.vue'
@@ -814,6 +743,7 @@ import { getEcho } from '../realtime/echo'
 
 const router = useRouter()
 const appStatusStore = useAppStatusStore()
+const walletStore = useWalletStore()
 const baseRaw = import.meta?.env?.BASE_URL || '/'
 const basePath = (baseRaw && baseRaw.startsWith('./')) ? '/' : (baseRaw.endsWith('/') ? baseRaw : `${baseRaw}/`)
 const isNative = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
@@ -835,9 +765,9 @@ watch(() => appStatusStore.paymentGateways?.primary, (newVal) => {
 })
 const searchQuery = ref('')
 
-const wallet = ref({ balance: 0, virtual_account: {}, admin_charge_balance: 0 })
+const wallet = computed(() => walletStore.wallet || { balance: 0, virtual_account: {}, admin_charge_balance: 0 })
 const refreshingBalance = ref(false)
-const transactions = ref([])
+const transactions = computed(() => walletStore.transactions)
 const netBalance = computed(() => {
   if (!appStatusStore.features['display-admin-charge-in-wallet']) return wallet.value.balance
   return wallet.value.balance - (wallet.value.admin_charge_balance || 0)
@@ -989,13 +919,10 @@ const titleFor = (tx) => {
 }
 
 const loadWallet = async () => {
-  const { data } = await axios.get('/api/wallet')
-  wallet.value = data
+  const data = await walletStore.fetchWallet(true)
   if (data.features) {
     appStatusStore.setFeatures(data.features)
   }
-  // Prefer server-provided recent list
-  transactions.value = data.recent_transactions || []
 }
 
 const refreshWalletBalance = async () => {

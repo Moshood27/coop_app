@@ -107,7 +107,7 @@
         </div>
       </section>
 
-      <!-- Management Modules -->
+      <!-- Management Modules (Focused for Mobile Admin/Field Officers) -->
       <section class="space-y-4">
         <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Mobile Management</h3>
         <div class="grid grid-cols-2 gap-4">
@@ -156,41 +156,56 @@
             </div>
             <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Imports</span>
           </button>
+        </div>
+      </section>
 
-          <!-- Accounting Modules -->
-          <button @click="$router.push('/admin/accounting/bank-reconciliation')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+      <!-- Advanced Accounting (Restricted to Super Admins) -->
+      <section v-if="isGlobalSuperAdmin" class="space-y-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Advanced Accounting</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <button @click="$router.push('/admin/accounting/bank-reconciliation')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all text-center">
             <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-bank-outline"></span>
             </div>
-            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Bank Reconciliation</span>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Bank Recon</span>
           </button>
 
-          <button @click="$router.push('/admin/accounting/fixed-assets')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+          <button @click="$router.push('/admin/accounting/fixed-assets')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all text-center">
             <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-factory"></span>
             </div>
             <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Fixed Assets</span>
           </button>
 
-          <button @click="$router.push('/admin/accounting/branch-trial-balance')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+          <button @click="$router.push('/admin/accounting/branch-trial-balance')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all text-center">
             <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-scale-balance"></span>
             </div>
-            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Branch Trial Balance</span>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Trial Balance</span>
           </button>
 
-          <button @click="$router.push('/admin/accounting/ops')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all">
+          <button @click="$router.push('/admin/accounting/ops')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 active:scale-95 transition-all text-center">
             <div class="w-14 h-14 bg-yellow-50 text-yellow-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-cog-refresh-outline"></span>
             </div>
             <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Accounting Ops</span>
           </button>
+        </div>
+      </section>
 
-          <button @click="openFilament('')" class="bg-slate-800 p-6 rounded-[2.5rem] shadow-xl flex flex-col items-center gap-3 active:scale-95 transition-all">
+      <!-- Full Administrative Access -->
+      <section class="space-y-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Advanced Tasks</h3>
+        <div class="grid grid-cols-1">
+          <button @click="openFilament('')" class="bg-slate-800 p-6 rounded-[2.5rem] shadow-xl flex items-center gap-4 active:scale-95 transition-all">
             <div class="w-14 h-14 bg-white/10 text-white rounded-3xl flex items-center justify-center text-2xl shadow-inner">
               <span class="i-mdi-monitor-dashboard"></span>
             </div>
-            <span class="text-xs font-black text-white uppercase tracking-wider">Full Filament</span>
+            <div class="text-left">
+              <p class="text-sm font-black text-white uppercase tracking-wider">Open Filament Panel</p>
+              <p class="text-[10px] text-white/50 font-bold uppercase tracking-widest">Full Desktop Admin Access</p>
+            </div>
+            <span class="ml-auto i-mdi-open-in-new text-white/30 text-xl"></span>
           </button>
         </div>
       </section>

@@ -12,6 +12,7 @@ import IslamicChat from './components/IslamicChat.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppBottomNav from './components/AppBottomNav.vue'
 import { useAppStatusStore } from './stores/appStatus'
+import { useAuthStore } from './stores/auth'
 import router from './router/index.js'
 import axios from './http.js'
 import { getEcho } from './realtime/echo.js'
@@ -26,11 +27,12 @@ const supportRoomId = ref(null)
 const loadingSupport = ref(false)
 const unreadCount = ref(0)
 const isInputFocused = ref(false)
-const authToken = ref(localStorage.getItem('token'))
-const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
-const isLoggedIn = computed(() => !!authToken.value)
-const route = useRoute()
+const authStore = useAuthStore()
 const appStatusStore = useAppStatusStore()
+
+const isLoggedIn = computed(() => authStore.isAuthenticated)
+const user = computed(() => authStore.user || {})
+const route = useRoute()
 
 const showNav = computed(() => {
   const noNavRoutes = ['landing', 'login', 'register', 'forgot', 'onboarding', 'maintenance', 'update-required', 'pin-lock']
@@ -56,10 +58,10 @@ async function toggleSupportChat() {
 
 window.addEventListener('storage', (e) => {
   if (e.key === 'token') {
-    authToken.value = e.newValue
+    authStore.token = e.newValue
   }
   if (e.key === 'user') {
-    user.value = JSON.parse(e.newValue || '{}')
+    authStore.user = JSON.parse(e.newValue || '{}')
   }
 })
 let unreadTimer = null
@@ -167,14 +169,8 @@ watch(isLoggedIn, async (val) => {
 }, { immediate: true })
 
 router.afterEach((to) => {
-  // Sync token state on route change (covers same-tab login/logout)
-  const currentToken = localStorage.getItem('token')
-  if (authToken.value !== currentToken) {
-    authToken.value = currentToken
-  }
-
   if (isLoggedIn.value) {
-    const userId = localStorage.getItem('user_id')
+    const userId = authStore.user?.id
     try {
       const echo = getEcho()
       if (echo) {
@@ -258,13 +254,10 @@ onMounted(async () => {
   }
 
   // 0. Ensure user_id is in localStorage if logged in (for real-time tracking)
-  if (isLoggedIn.value && !localStorage.getItem('user_id')) {
+  if (isLoggedIn.value && !authStore.user?.id) {
     try {
       const { data } = await axios.get('/api/profile')
-      if (data?.id) {
-        localStorage.setItem('user_id', data.id)
-        localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false')
-      }
+      authStore.setUser(data, authStore.token)
     } catch (_) {}
   }
 

@@ -6,7 +6,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class PaystackService
+use App\Contracts\PaymentProvider;
+
+class PaystackService implements PaymentProvider
 {
     protected string $secret;
 
@@ -47,8 +49,12 @@ class PaystackService
                 $paystackData = $fetchResp->json('data');
                 $customerCode = $paystackData['customer_code'];
 
-                // Update local copy if needed
+                // Update local copies
                 $user->virtualAccount()->updateOrCreate([], ['paystack_customer_code' => $customerCode]);
+                $user->providerAccounts()->updateOrCreate(
+                    ['provider' => 'paystack'],
+                    ['provider_customer_code' => $customerCode, 'metadata' => $paystackData]
+                );
 
                 return [
                     'success' => true,
@@ -71,6 +77,10 @@ class PaystackService
 
             $customerCode = $createResp->json('data.customer_code');
             $user->virtualAccount()->updateOrCreate([], ['paystack_customer_code' => $customerCode]);
+            $user->providerAccounts()->updateOrCreate(
+                ['provider' => 'paystack'],
+                ['provider_customer_code' => $customerCode, 'metadata' => $createResp->json('data')]
+            );
 
             return [
                 'success' => true,
@@ -134,11 +144,27 @@ class PaystackService
                 if ($assignResp->successful()) {
                     $accData = $assignResp->json('data');
 
+                    $updateData = [
+                        'account_number' => $accData['account_number'],
+                        'account_name'   => $accData['account_name'],
+                        'bank_name'      => $accData['bank']['name'] ?? ($accData['provider']['name'] ?? 'Bank'),
+                    ];
+
                     $user->virtualAccount()->updateOrCreate([], [
-                        'dva_account_number' => $accData['account_number'],
-                        'dva_account_name'   => $accData['account_name'],
-                        'dva_bank_name'      => $accData['bank']['name'] ?? ($accData['provider']['name'] ?? 'Bank'),
+                        'dva_account_number' => $updateData['account_number'],
+                        'dva_account_name'   => $updateData['account_name'],
+                        'dva_bank_name'      => $updateData['bank_name'],
                     ]);
+
+                    $user->providerAccounts()->updateOrCreate(
+                        ['provider' => 'paystack'],
+                        [
+                            'account_number' => $updateData['account_number'],
+                            'account_name'   => $updateData['account_name'],
+                            'bank_name'      => $updateData['bank_name'],
+                            'metadata'       => $accData
+                        ]
+                    );
 
                     return ['success' => true, 'data' => $accData];
                 }
@@ -198,5 +224,17 @@ class PaystackService
             Log::error('Paystack verifyTransaction exception', ['reference' => $reference, 'error' => $e->getMessage()]);
             return ['success' => false, 'message' => 'An unexpected error occurred during verification.'];
         }
+    }
+    public function createVirtualAccount(User $user): array
+    {
+        $sync = $this->syncCustomer($user);
+        if (!$sync['success']) return $sync;
+
+        return $this->assignDva($user, $sync['customer_code']);
+    }
+
+    public function getProviderName(): string
+    {
+        return 'paystack';
     }
 }

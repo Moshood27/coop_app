@@ -61,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
+
         // Load broadcasting channels
         require base_path('routes/channels.php');
 
@@ -249,20 +251,20 @@ class AppServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('two-factor-page', \Jeffgreco13\FilamentBreezy\Pages\TwoFactorPage::class);
         \Livewire\Livewire::component('admin-notification-listener', \App\Livewire\AdminNotificationListener::class);
 
-        \App\Models\StoreOrder::observe(\App\Observers\StoreOrderObserver::class);
+        \App\Models\StoreOrder::observe([\App\Observers\StoreOrderObserver::class, \App\Observers\ShariahAuditObserver::class]);
         \App\Models\ProjectProfit::observe(\App\Observers\ProjectProfitObserver::class);
-        \App\Models\ProjectProfitPayout::observe(\App\Observers\ProjectProfitPayoutObserver::class);
+        \App\Models\ProjectProfitPayout::observe([\App\Observers\ProjectProfitPayoutObserver::class, \App\Observers\ShariahAuditObserver::class]);
         \App\Models\SadaqahProject::observe(\App\Observers\SadaqahProjectObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
         \App\Models\IncomeEntry::observe(\App\Observers\IncomeEntryObserver::class);
         \App\Models\ExpenseEntry::observe(\App\Observers\ExpenseEntryObserver::class);
         \App\Models\CharityEntry::observe(\App\Observers\CharityEntryObserver::class);
-        \App\Models\WalletTransaction::observe(\App\Observers\WalletTransactionObserver::class);
-        \App\Models\Contribution::observe(\App\Observers\ContributionObserver::class);
-        \App\Models\QardHasan::observe(\App\Observers\QardHasanObserver::class);
-        \App\Models\QardHasanRepayment::observe(\App\Observers\QardHasanRepaymentObserver::class);
-        \App\Models\TakafulContribution::observe(\App\Observers\TakafulContributionObserver::class);
-        \App\Models\SadaqahContribution::observe(\App\Observers\SadaqahContributionObserver::class);
+        \App\Models\WalletTransaction::observe([\App\Observers\WalletTransactionObserver::class, \App\Observers\ShariahAuditObserver::class]);
+        \App\Models\Contribution::observe([\App\Observers\ContributionObserver::class, \App\Observers\ShariahAuditObserver::class]);
+        \App\Models\QardHasan::observe([\App\Observers\QardHasanObserver::class, \App\Observers\ShariahAuditObserver::class]);
+        \App\Models\QardHasanRepayment::observe([\App\Observers\QardHasanRepaymentObserver::class, \App\Observers\ShariahAuditObserver::class]);
+        \App\Models\TakafulContribution::observe([\App\Observers\TakafulContributionObserver::class, \App\Observers\ShariahAuditObserver::class]);
+        \App\Models\SadaqahContribution::observe([\App\Observers\SadaqahContributionObserver::class, \App\Observers\ShariahAuditObserver::class]);
         \App\Models\Meeting::observe(\App\Observers\MeetingObserver::class);
 
         $checks = [

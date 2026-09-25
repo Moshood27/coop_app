@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import { checkAppStatus } from '../services/appStatus'
 import { useAppStatusStore } from '../stores/appStatus'
+import { useAuthStore } from '../stores/auth'
 
 // Views (lazy-loaded)
 const Landing = () => import('../views/Landing.vue')
@@ -217,9 +218,10 @@ router.beforeEach(async (to) => {
     }
   }
 
-  const token = localStorage.getItem('token')
-  const adminToken = localStorage.getItem('admin_token')
-  const isAdmin = localStorage.getItem('is_admin') === 'true'
+  const authStore = useAuthStore()
+  const token = authStore.token
+  const adminToken = authStore.adminToken
+  const isAdmin = authStore.isAdmin
   const appStatusStore = useAppStatusStore()
 
   // 0. Onboarding gate for first-time users (skip for admin and explicit skips)
@@ -228,7 +230,7 @@ router.beforeEach(async (to) => {
     const isAdminRoute = to.path?.startsWith('/admin')
     const isOnboarding = to.name === 'onboarding'
     const skip = !!to.meta?.skipOnboarding
-    const isAuthed = !!localStorage.getItem('token')
+    const isAuthed = authStore.isAuthenticated
     if (!hasSeen && !isAdminRoute && !isOnboarding && !skip && !isAuthed && appStatusStore.onboardingSwiperEnabled) {
       return { name: 'onboarding', query: { redirect: to.fullPath } }
     }

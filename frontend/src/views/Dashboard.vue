@@ -15,60 +15,15 @@
       <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
         <!-- Left Column: Primary Info & Warnings -->
         <div class="lg:col-span-7 space-y-4">
-          <div id="balance-card" class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
-        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
-        <div class="flex items-center gap-2 mb-2 relative z-10">
-          <p class="text-emerald-100 text-sm font-medium">Available Balance</p>
-          <div class="flex items-center gap-1">
-            <button @click="toggleBalances()" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors" title="Toggle visibility">
-              <svg v-if="hideBalances" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m3.313-3.313A9.959 9.959 0 0112 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-1.447 0-2.811-.31-4.04-.864m1.107-1.107l1.107-1.107m2.774-2.774l.553-.553m2.21-2.21l.553-.553" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
-              </svg>
-            </button>
-            <button @click="load()" :disabled="refreshing" class="text-lg opacity-80 p-1 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-40" title="Refresh balance">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-50" :class="{'animate-spin': refreshing}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <h1 class="text-3xl sm:text-4xl leading-tight font-bold relative z-10 tracking-tight" :class="{'text-rose-300': netBalance < 0}">
-          ₦ {{ hideBalances ? '***,***.**' : formatMoney(netBalance) }}
-        </h1>
-        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && dashboardData.admin_charge_balance > 0" 
-             class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
-           <span>Gross: ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.balance) }}</span>
-           <span>|</span>
-           <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(dashboardData.admin_charge_balance) }}</span>
-        </div>
-        <div class="mt-8 flex items-center justify-between flex-wrap gap-2 relative z-10">
-          <div class="flex items-center gap-2">
-            <p class="text-xs text-emerald-100 font-mono tracking-widest">ID: {{ dashboardData.membership_id }}</p>
-            <button v-if="appStatusStore.features['digital-id-card-enabled']" 
-                    @click="$router.push('/digital-id')"
-                    class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border border-white/5">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-              </svg>
-              Show ID
-            </button>
-            <button v-else @click="copy(dashboardData.membership_id)" class="text-xs text-white/80 underline">Copy</button>
-          </div>
-          <div class="flex gap-2">
-            <button @click="$router.push('/pay')" class="bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg border border-emerald-400">
-              Allocate Fund
-            </button>
-            <button @click="$router.push('/wallet')" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-xs font-bold backdrop-blur-md transition-all">
-              + Fund Wallet
-            </button>
-          </div>
-        </div>
-      </div>
+          <BalanceCard 
+            :user="dashboardData" 
+            :netBalance="netBalance" 
+            :hideBalances="hideBalances" 
+            :refreshing="refreshing" 
+            @toggle-visibility="toggleBalances" 
+            @refresh="load" 
+            @copy="copy" 
+          />
 
       <!-- Dashboard Swiper (First Login) -->
       <div v-if="appStatusStore.onboardingSwiperEnabled && !hasSeenDashboardSwiper && appStatusStore.onboardingSwiperSlides.length > 0"
@@ -96,180 +51,23 @@
         </button>
       </div>
 
-      <!-- PIN Warning -->
-      <div v-if="appStatusStore.setTransactionPinEnabled && dashboardData.kpis && !dashboardData.kpis.has_pin"
-           class="mt-4 p-4 rounded-3xl bg-amber-50 border border-amber-200 flex items-center gap-3"
-           @click="$router.push('/profile')">
-        <div class="text-2xl">🔑</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold text-amber-900">Transaction PIN not set</p>
-          <p class="text-xs text-amber-700">You need a PIN to transfer or withdraw funds.</p>
-        </div>
-        <div class="text-amber-400">➡️</div>
-      </div>
-
-      <!-- Attendance Reminder -->
-      <div v-if="dashboardData.kpis && dashboardData.kpis.has_ongoing_meeting"
-           class="mt-4 p-4 rounded-3xl bg-emerald-900 text-white flex items-center gap-3 shadow-lg shadow-emerald-200 cursor-pointer"
-           @click="$router.push('/attendance')">
-        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-pulse">📍</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold">Meeting Ongoing</p>
-          <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Tap to mark attendance</p>
-        </div>
-        <div class="text-white/40">➡️</div>
-      </div>
-
-      <!-- Outstanding Fines Warning -->
-      <div v-if="dashboardData.kpis && dashboardData.kpis.outstanding_fines > 0"
-           class="mt-4 p-4 rounded-3xl bg-rose-50 border border-rose-200 flex items-center gap-3"
-           @click="$router.push('/passbook')">
-        <div class="text-2xl">⚠️</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold text-rose-900">Outstanding Fines: ₦{{ formatMoney(dashboardData.kpis.outstanding_fines) }}</p>
-          <p class="text-xs text-rose-700">These will be deducted from your next wallet funding.</p>
-        </div>
-        <div class="text-rose-400">➡️</div>
-      </div>
-
-      <!-- Tahkim Dispute Warning -->
-      <div v-if="kpis.active_disputes_count > 0"
-           class="mt-4 p-4 rounded-3xl bg-slate-900 text-white flex items-center gap-3 shadow-lg shadow-slate-200 cursor-pointer"
-           @click="$router.push('/sharia-board/history')">
-        <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-xl">⚖️</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold">Active Tahkim ({{ kpis.active_disputes_count }})</p>
-          <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Sharia Board Mediation in progress</p>
-        </div>
-        <div class="text-white/40">➡️</div>
-      </div>
-
-      <!-- Shura Voting Banner -->
-      <div v-if="appStatusStore.features['shura-voting-active']"
-           class="mt-4 p-4 rounded-3xl bg-indigo-600 text-white flex items-center gap-3 shadow-lg shadow-indigo-200 cursor-pointer"
-           @click="$router.push('/agm')">
-        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-bounce">🗳️</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold">AGM Voting Live</p>
-          <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Cast your vote for the Shura Council</p>
-        </div>
-        <div class="text-white/40">➡️</div>
-      </div>
-
-      <!-- Migration Discrepancy Banner -->
-      <div v-if="dashboardData.migration?.discrepancy_reported_at && !dashboardData.migration?.verified_at"
-           class="mt-4 p-4 rounded-3xl bg-blue-50 border border-blue-200 flex items-center gap-3">
-        <div class="text-2xl">⏳</div>
-        <div class="flex-1">
-          <p class="text-sm font-bold text-blue-900">Balance Under Review</p>
-          <p class="text-xs text-blue-700">You reported a discrepancy. Our officers are currently reconciling your records.</p>
-        </div>
-      </div>
-
-      <!-- Next Due Installment Banner -->
-      <div v-if="kpis.next_due_date"
-           class="mt-4 p-4 rounded-3xl bg-white border border-slate-100 flex items-center gap-3 shadow-sm cursor-pointer"
-           @click="$router.push('/loans')">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-             :class="kpis.total_due_amount > 0 ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'">
-          {{ kpis.total_due_amount > 0 ? '🚨' : '🔔' }}
-        </div>
-        <div class="flex-1">
-          <div class="flex justify-between items-start">
-            <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-               :class="kpis.total_due_amount > 0 ? 'text-rose-600' : 'text-amber-600'">
-              Next Due Installment
-            </p>
-            <span v-if="kpis.total_due_amount > 0" class="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Action Required</span>
-          </div>
-          <p class="text-sm font-black text-slate-800">
-            {{ formatDate(kpis.next_due_date) }} • {{ currency }} {{ hideBalances ? '***,***.**' : formatMoney(kpis.next_due_amount) }}
-          </p>
-          <p v-if="kpis.total_due_amount > 0" class="text-[10px] text-rose-500 font-bold mt-1 uppercase tracking-tighter">
-            Overdue Amount: {{ currency }} {{ hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount) }}
-          </p>
-          <p v-if="kpis.expected_amount_to_pay > 0" class="text-[10px] text-blue-500 font-bold mt-1 uppercase tracking-tighter">
-            Expected to Pay: {{ currency }} {{ hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay) }}
-          </p>
-        </div>
-        <div class="text-slate-300">➡️</div>
-      </div>
+          <StatusBanners 
+            :kpis="kpis" 
+            :migration="dashboardData.migration" 
+            :hideBalances="hideBalances" 
+            :currency="currency" 
+            :formatMoney="formatMoney" 
+            :formatDate="formatDate" 
+          />
     </div> <!-- end left col -->
 
     <!-- Right Column: Status & Performance -->
     <div class="lg:col-span-5 space-y-6 mt-6 lg:mt-0">
-      <!-- Qard Hasan Status & Savings Section -->
-      <div class="bg-white rounded-[2.5rem] p-7 shadow-sm border border-slate-100">
-        <div class="flex justify-between items-center mb-6 cursor-pointer" @click="$router.push('/loans')">
-          <h3 class="text-slate-800 font-bold text-lg">Qard Hasan (Loan) Status</h3>
-          <div class="flex items-center gap-3">
-            <router-link v-if="appStatusStore.features['apply-for-loan']" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
-          </div>
-          <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
-        </div>
-        
-        <div class="flex items-end gap-1 mb-8 cursor-pointer" v-if="kpis.has_active_loan || kpis.total_due_amount > 0" @click="$router.push('/loans')">
-          <template v-if="kpis.total_due_amount > 0">
-            <span class="text-3xl font-black text-rose-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount) }}</span>
-            <span class="text-[10px] text-rose-500 font-bold uppercase mb-2 ml-1 tracking-wider">Overdue Amount</span>
-          </template>
-          <template v-else-if="kpis.is_defaulted">
-            <span class="text-3xl font-black text-rose-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount) }}</span>
-            <span class="text-[10px] text-rose-500 font-bold uppercase mb-2 ml-1 tracking-wider">Defaulted Amount</span>
-          </template>
-          <template v-else-if="kpis.has_active_loan">
-            <span class="text-3xl font-black text-amber-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.loans) }}</span>
-            <span class="text-[10px] text-amber-500 font-bold uppercase mb-2 ml-1 tracking-wider">Outstanding Balance</span>
-          </template>
-        </div>
-
-        <!-- Progress Bar for Loan -->
-        <div v-if="kpis.has_active_loan && kpis.total_loan_principal > 0" class="mb-6">
-          <div class="flex justify-between items-center mb-2">
-             <p class="text-[10px] text-slate-400 uppercase font-black">Repayment Progress</p>
-             <p class="text-[10px] text-emerald-600 font-black">{{ Math.round((kpis.total_loan_paid / kpis.total_loan_principal) * 100) }}%</p>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div class="bg-emerald-500 h-full transition-all duration-1000" :style="{ width: (kpis.total_loan_paid / kpis.total_loan_principal * 100) + '%' }"></div>
-          </div>
-          <div class="flex justify-between mt-1">
-            <p class="text-[9px] text-slate-400">Paid: ₦{{ formatMoney(kpis.total_loan_paid) }}</p>
-            <p class="text-[9px] text-slate-400">Total: ₦{{ formatMoney(kpis.total_loan_principal) }}</p>
-          </div>
-        </div>
-
-        <div v-if="kpis.expected_amount_to_pay > 0" class="mb-6 cursor-pointer" @click="$router.push('/loans')">
-           <p class="text-[10px] text-slate-400 uppercase font-black mb-1">Expected Amount to Pay (To Date)</p>
-           <p class="text-lg font-black text-blue-600">₦ {{ hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay) }}</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" />
-          <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" />
-        </div>
-        
-        <div v-if="kpis.is_defaulted" class="mt-6 flex items-center gap-3 bg-rose-50 p-4 rounded-3xl border border-rose-100">
-          <div class="text-lg">🛑</div>
-          <div>
-            <p class="text-[10px] text-rose-700 leading-tight font-medium">
-              Your account is currently <span class="font-bold">in default</span> due to an unpaid Qard Hasan (Loan) repayment. You must clear your outstanding balance before you can access further credit.
-            </p>
-            <p v-if="kpis.default_duration" class="text-[10px] text-rose-600 mt-1 font-bold">
-              Duration of Default: {{ kpis.default_duration }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI row -->
-      <div class="mt-4 grid grid-cols-2 gap-3">
-        <StatPill label="Contributions" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.contributions))" hint="Total" intent="success" icon="💰" />
-        <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
-        <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" @click="$router.push('/loans')" class="cursor-pointer" />
-        <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
-      </div>
+      <LoanStatusCard 
+        :kpis="kpis" 
+        :hideBalances="hideBalances" 
+        :currency="currency" 
+      />
     </div> <!-- end right col -->
   </div> <!-- end grid -->
 
@@ -281,104 +79,11 @@
         <TrendChart :series="chart.series" :categories="chart.categories" :currency="currency" />
       </FinCard>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-8">
-      <button v-if="appStatusStore.features['chat-help-enabled']" @click="$router.push('/chat')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">💬</div>
-        <span class="text-sm font-bold text-slate-700">Chat & Help</span>
-      </button>
-      <button v-if="appStatusStore.features['projects-enabled']" @click="$router.push('/projects')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-2xl">📦</div>
-        <span class="text-sm font-bold text-slate-700">Projects</span>
-      </button>
-      <button v-if="appStatusStore.features['sadaq-enabled']" @click="$router.push('/sadaqah')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl">🌙</div>
-        <span class="text-sm font-bold text-slate-700">Sadaqah</span>
-      </button>
-      <button @click="$router.push('/attendance')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">📍</div>
-        <span class="text-sm font-bold text-slate-700">Attendance</span>
-      </button>
-      <button v-if="appStatusStore.features['group-savings-enabled']" @click="$router.push('/savings-groups')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">🤝</div>
-        <span class="text-sm font-bold text-slate-700">Group Savings</span>
-      </button>
-      <button v-if="appStatusStore.features['airtime-data-enabled']" @click="$router.push('/vtu')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📶</div>
-        <span class="text-sm font-bold text-slate-700">Airtime/Data</span>
-      </button>
-      <button id="loan-btn" @click="$router.push('/loans')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📊</div>
-        <span class="text-sm font-bold text-slate-700">Qard Hasan (Loan) Records</span>
-      </button>
-      <button @click="$router.push('/reports')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">📈</div>
-        <span class="text-sm font-bold text-slate-700">Reports</span>
-      </button>
-      <button v-if="appStatusStore.features['takaful-enabled']" @click="$router.push('/takaful')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center text-2xl">🛡️</div>
-        <span class="text-sm font-bold text-slate-700">Takaful</span>
-      </button>
-      <button @click="$router.push('/transparency')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-lime-50 rounded-2xl flex items-center justify-center text-2xl">🧾</div>
-        <span class="text-sm font-bold text-slate-700">Transparency</span>
-      </button>
-      <button v-if="appStatusStore.features['store-enabled']" @click="$router.push('/store')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-2xl">🛒</div>
-        <span class="text-sm font-bold text-slate-700">Store</span>
-      </button>
-      <button v-if="appStatusStore.features['gold-savings-enabled'] || appStatusStore.features['gold-savings-beta']" @click="$router.push('/gold')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-2xl">🪙</div>
-        <span class="text-sm font-bold text-slate-700">Gold Savings</span>
-      </button>
-      <button v-if="appStatusStore.features['merchant-pay-enabled']" @click="$router.push('/merchant/pay')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">📸</div>
-        <span class="text-sm font-bold text-slate-700">Pay Merchant</span>
-      </button>
-      <button v-if="appStatusStore.features['receive-qr-enabled']" @click="$router.push('/merchant/receive')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl">🔲</div>
-        <span class="text-sm font-bold text-slate-700">Receive QR</span>
-      </button>
-      <button v-if="appStatusStore.features['agm-voting-enabled']" @click="$router.push('/agm')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-2xl">🗳️</div>
-        <span class="text-sm font-bold text-slate-700">AGM & Voting</span>
-      </button>
-      <button v-if="appStatusStore.features['zakat-enabled']" @click="checkZakat" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl">🕌</div>
-        <span class="text-sm font-bold text-slate-700">Zakat</span>
-      </button>
-      <button v-if="dashboardData.is_ramadan && appStatusStore.features['zakat-enabled']" @click="payZakatFitr" class="bg-emerald-50 p-5 rounded-3xl shadow-sm border border-emerald-100 flex flex-col items-center gap-2 active:bg-emerald-100 transition-all">
-        <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-2xl">🥣</div>
-        <span class="text-sm font-bold text-emerald-800">Zakat Al-Fitr</span>
-      </button>
-      <button v-if="appStatusStore.features['hajj-umrah-enabled']" @click="$router.push('/goals')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">🕋</div>
-        <span class="text-sm font-bold text-slate-700">Hajj & Umrah</span>
-      </button>
-      <button v-if="appStatusStore.features['junior-coop-enabled']" @click="$router.push('/junior-cooperative')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl">👶</div>
-        <span class="text-sm font-bold text-slate-700">Junior Coop</span>
-      </button>
-      <button v-if="appStatusStore.features['wassiyah-enabled']" @click="$router.push('/wasiyyah')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">📋</div>
-        <span class="text-sm font-bold text-slate-700">Wasiyyah</span>
-      </button>
-      <button v-if="appStatusStore.features['vendor-enabled'] && kpis.vendor && kpis.vendor.is_vendor" @click="$router.push('/vendor/dashboard')" class="bg-emerald-50 p-5 rounded-3xl shadow-sm border border-emerald-100 flex flex-col items-center gap-2 active:bg-emerald-100 transition-all">
-        <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-2xl">🏪</div>
-        <span class="text-sm font-bold text-emerald-800">Vendor Portal</span>
-      </button>
-      <button v-else-if="appStatusStore.features['vendor-enabled']" @click="$router.push('/vendor/apply')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">🏪</div>
-        <span class="text-sm font-bold text-slate-700">Become a Vendor</span>
-      </button>
-      <button @click="$router.push('/sharia-board')" class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl">⚖️</div>
-        <span class="text-sm font-bold text-slate-700">Sharia Board</span>
-      </button>
-      <button v-if="dashboardData.is_admin" @click="$router.push('/admin/portal')" class="bg-rose-50 p-5 rounded-3xl shadow-sm border border-rose-100 flex flex-col items-center gap-2 active:bg-rose-100 transition-all">
-        <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-2xl">👮</div>
-        <span class="text-sm font-bold text-rose-800">Admin Portal</span>
-      </button>
-    </div>
+      <QuickActions 
+        :user="dashboardData" 
+        @check-zakat="checkZakat" 
+        @pay-zakat-fitr="payZakatFitr" 
+      />
 
     <!-- Quick guide links -->
     <div class="mt-6 text-[12px] text-slate-600">
@@ -393,174 +98,20 @@
       </p>
     </div>
 
-    <!-- Tabs Navigation -->
-    <div class="mt-12">
-      <div class="flex p-1.5 bg-slate-200/50 rounded-[1.5rem] gap-1 shadow-inner mb-6">
-        <button 
-          v-for="tab in ['transactions', 'passbook', 'vtu']" 
-          :key="tab"
-          @click="switchTab(tab)"
-          :class="activeTab === tab ? 'bg-white text-emerald-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/30'"
-          class="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ease-out"
-        >
-          {{ tab }}
-        </button>
-      </div>
-
-      <!-- Search Bar -->
-      <div v-if="activeTab !== 'passbook'" class="relative group mb-6">
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          :placeholder="activeTab === 'transactions' ? 'Search transactions...' : 'Search airtime/data...'"
-          class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm"
-        >
-        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-      </div>
-
-      <!-- Transactions Tab -->
-      <div v-if="activeTab === 'transactions'" class="space-y-6">
-        <!-- Live Activity Feed -->
-        <div v-if="liveActions.length" class="animate-in fade-in slide-in-from-bottom duration-500">
-          <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
-            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-            Live Activity
-          </h3>
-          <div class="space-y-3">
-            <div v-for="action in liveActions" :key="action.id" 
-                 class="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 border-2 border-emerald-100 shadow-sm animate-bounce-in">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shrink-0">
-                  🔔
-                </div>
-                <div>
-                  <p class="font-bold text-slate-800 text-sm">{{ action.message }}</p>
-                  <p class="text-[10px] text-emerald-600 font-mono uppercase tracking-widest font-black">{{ action.time }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 text-lg">Recent Transactions</h3>
-          <button class="text-emerald-700 text-sm font-bold" @click="$router.push('/passbook')">See All</button>
-        </div>
-
-        <div v-if="filteredTransactions.length" class="space-y-3">
-          <div v-for="tx in filteredTransactions" :key="tx.id"
-               class="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 overflow-hidden border border-slate-100 shadow-sm">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div :class="tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'"
-                   class="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0">
-                {{ tx.type === 'credit' ? '+' : '−' }}
-              </div>
-              <div class="min-w-0 overflow-hidden">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <p class="font-bold text-slate-800 text-sm truncate max-w-[160px] sm:max-w-none">{{ txTitle(tx) }}</p>
-                  <span v-if="isFine(tx)" class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase">Fine</span>
-                </div>
-                <p class="text-[10px] text-gray-500 uppercase font-medium">{{ formatDate(tx.created_at) }}</p>
-                <p class="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-emerald-600 transition-colors flex items-center gap-1" @click="copy(txPrefix(tx))" title="Click to copy">
-                  {{ txPrefix(tx).length > 15 ? txPrefix(tx).substring(0, 12) + '...' : txPrefix(tx) }}
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                  </svg>
-                </p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="font-bold text-slate-800">₦ {{ hideBalances ? '***,***.**' : formatMoney(tx.amount) }}</p>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-10 text-gray-400 bg-white rounded-3xl border border-dashed border-slate-200">
-          <p>No transactions found.</p>
-        </div>
-      </div>
-
-      <!-- Passbook Tab -->
-      <div v-if="activeTab === 'passbook'" class="space-y-6">
-        <div v-if="isLoadingPassbook" class="space-y-4">
-          <div class="h-32 bg-slate-200 rounded-[2rem] animate-pulse"></div>
-          <div class="h-20 bg-slate-100 rounded-3xl animate-pulse"></div>
-        </div>
-        <div v-else-if="passbookSummary" class="space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
-          <!-- Yearly Summary Card -->
-          <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-7 text-white shadow-xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full"></div>
-            <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Yearly Cumulative</p>
-            <h2 class="text-4xl font-black tracking-tight">₦ {{ formatMoney(passbookSummary.grand_total) }}</h2>
-            
-            <div class="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
-              <div>
-                <p class="text-slate-400 text-[10px] uppercase font-bold">Current Year</p>
-                <p class="text-sm font-bold">{{ new Date().getFullYear() }}</p>
-              </div>
-              <button @click="$router.push('/passbook')" class="bg-emerald-600 hover:bg-emerald-500 px-6 py-3 rounded-2xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/20">
-                View Full Passbook
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Stats Grid -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-              <p class="text-[10px] text-slate-400 uppercase font-black mb-1">Schemes</p>
-              <p class="text-xl font-black text-slate-800">{{ passbookSummary.matrix?.length || 0 }}</p>
-            </div>
-            <div v-if="passbookSummary.agm_fee_amount" class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-              <p class="text-[10px] text-slate-400 uppercase font-black mb-1">AGM Fee</p>
-              <div class="flex items-center gap-2">
-                <p class="text-xl font-black text-slate-800">₦{{ formatMoney(passbookSummary.agm_fee_amount) }}</p>
-                <span :class="passbookSummary.agm_fee_paid ? 'text-emerald-500' : 'text-amber-500'" class="text-xs">
-                  {{ passbookSummary.agm_fee_paid ? '✓' : '⌛' }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-10 text-gray-400 bg-white rounded-3xl border border-dashed border-slate-200">
-          <p>Could not load passbook summary.</p>
-          <button @click="fetchPassbookSummary" class="mt-4 text-emerald-700 font-bold underline">Retry</button>
-        </div>
-      </div>
-
-      <!-- VTU Tab -->
-      <div v-if="activeTab === 'vtu'" class="space-y-6">
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 text-lg">Recent Airtime/Data</h3>
-          <button class="text-emerald-700 text-sm font-bold" @click="$router.push('/vtu/history')">See All</button>
-        </div>
-
-        <div v-if="filteredUtilityTransactions.length" class="space-y-3">
-          <div v-for="ux in filteredUtilityTransactions" :key="ux.id"
-               class="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 overflow-hidden border border-slate-100 shadow-sm">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div :class="ux.status === 'success' ? 'bg-emerald-100 text-emerald-600' : (ux.status === 'failed' ? 'bg-rose-100 text-rose-600' : 'bg-yellow-100 text-yellow-600')"
-                   class="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0">
-                {{ ux.status === 'success' ? '✓' : (ux.status === 'failed' ? '✕' : '⌛') }}
-              </div>
-              <div class="min-w-0 overflow-hidden">
-                <p class="font-bold text-slate-800 text-sm capitalize truncate max-w-[180px] sm:max-w-none">{{ utilLabel(ux) }}</p>
-                <p class="text-[10px] text-gray-500 uppercase font-medium">{{ formatDate(ux.created_at) }}</p>
-                <p class="text-[10px] text-slate-400 font-mono truncate">{{ ux.reference }}</p>
-              </div>
-            </div>
-            <div class="text-right shrink-0">
-              <p class="font-bold text-slate-800">₦ {{ formatMoney(ux.amount) }}</p>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-10 text-gray-400 bg-white rounded-3xl border border-dashed border-slate-200">
-          <p>No VTU activity found.</p>
-        </div>
-      </div>
-    </div> <!-- end tabs container -->
+    <!-- Dashboard Tabs Content -->
+    <DashboardTabs 
+      v-model:activeTab="activeTab"
+      v-model:searchQuery="searchQuery"
+      :liveActions="liveActions"
+      :filteredTransactions="filteredTransactions"
+      :filteredUtilityTransactions="filteredUtilityTransactions"
+      :passbookSummary="passbookSummary"
+      :isLoadingPassbook="isLoadingPassbook"
+      :hideBalances="hideBalances"
+      @switchTab="switchTab"
+      @fetchPassbookSummary="fetchPassbookSummary"
+      @copy="copy"
+    />
   </div> <!-- end max-w container -->
 
     <!-- Reusable Custom Notice Modal for Zakat/info alerts -->
@@ -788,6 +339,10 @@
 
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
+import BalanceCard from '../components/dashboard/BalanceCard.vue'
+import QuickActions from '../components/dashboard/QuickActions.vue'
+import DashboardTabs from '../components/dashboard/DashboardTabs.vue'
+import LoanStatusCard from '../components/dashboard/LoanStatusCard.vue'
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Pagination, Autoplay } from 'swiper/modules'
@@ -805,15 +360,24 @@ import FinCard from '../components/FinCard.vue'
 import StatPill from '../components/StatPill.vue'
 import TrendChart from '../components/TrendChart.vue'
 import SignaturePad from '../components/SignaturePad.vue'
+import StatusBanners from '../components/dashboard/StatusBanners.vue'
+import { useMemberStore } from '../stores/member'
+import { useWalletStore } from '../stores/wallet'
 import { startDashboardTour } from '../utils/tour'
 import { useBalanceVisibility } from '../composables/useBalanceVisibility'
 
+import { useDashboardStore } from '../stores/dashboard'
+import { useAuthStore } from '../stores/auth'
 const modal = useModal()
 const { notice, showNotice, closeNotice } = useNotice()
 const appStatusStore = useAppStatusStore()
+const memberStore = useMemberStore()
+const walletStore = useWalletStore()
+const dashboardStore = useDashboardStore()
+const authStore = useAuthStore()
 
 const currency = '₦'
-const dashboardData = ref({})
+const dashboardData = computed(() => dashboardStore.data || {})
 const refreshing = ref(false)
 const liveActions = ref([])
 const activeTab = ref('transactions')
@@ -1059,10 +623,8 @@ const checkMigration = async () => {
 const load = async () => {
   try {
     refreshing.value = true
-    const token = localStorage.getItem('token')
-    const { data } = await axios.get('/api/dashboard', { headers: { Authorization: `Bearer ${token}` } })
-    dashboardData.value = data
-    localStorage.setItem('is_admin', data.is_admin ? 'true' : 'false')
+    const data = await dashboardStore.fetchDashboard(true)
+    authStore.isAdmin = data.is_admin ? true : false
     
     if (data.features) {
       appStatusStore.setFeatures(data.features)
@@ -1079,7 +641,7 @@ const load = async () => {
       showEmailModal.value = true
       // If the email is clearly invalid (like a membership number or nonsense), clear it for them to type fresh
       emailForm.value.email = '' 
-    } else if (appStatusStore.setTransactionPinEnabled && !data.kpis.has_pin) {
+    } else if (appStatusStore.setTransactionPinEnabled && !data.kpis?.has_pin) {
       // Check PIN
       showPinModal.value = true
     }
