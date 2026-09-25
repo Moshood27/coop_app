@@ -35,7 +35,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy application files
-COPY . .
+COPY backend .
 
 # Ensure bootstrap/cache is clean from any host-leaked files to prevent "CollisionServiceProvider not found" errors
 RUN rm -f bootstrap/cache/*.php
@@ -45,3 +45,10 @@ RUN composer install --no-interaction --no-dev --optimize-autoloader
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Copy entrypoint script
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]

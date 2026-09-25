@@ -12,13 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('meetings', function (Blueprint $table) {
-            $table->dropColumn('apology_fee_amount');
-            $table->timestamp('reminder_sent_at')->nullable();
+            if (Schema::hasColumn('meetings', 'apology_fee_amount')) {
+                $table->dropColumn('apology_fee_amount');
+            }
+            if (!Schema::hasColumn('meetings', 'reminder_sent_at')) {
+                $table->timestamp('reminder_sent_at')->nullable();
+            }
         });
 
         Schema::table('attendance_records', function (Blueprint $table) {
             // Drop apology_paid_at column
-            $table->dropColumn('apology_paid_at');
+            if (Schema::hasColumn('attendance_records', 'apology_paid_at')) {
+                $table->dropColumn('apology_paid_at');
+            }
             // We should ideally change status enum but SQLite doesn't support that easily.
             // Let's just keep the enum as is in migration, but we won't use 'apology_paid' status anymore.
         });

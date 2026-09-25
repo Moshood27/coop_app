@@ -12,13 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('member_applications', function (Blueprint $table) {
-            $table->string('imam_signature_path')->nullable()->after('imam_approved_at');
+            if (!Schema::hasColumn('member_applications', 'imam_signature_path')) {
+                $table->string('imam_signature_path')->nullable()->after('imam_approved_at');
+            }
         });
 
         Schema::table('users', function (Blueprint $table) {
-            $table->string('imam_signature_path')->nullable();
-            $table->string('id_card_path')->nullable();
-            $table->string('proof_of_address_path')->nullable();
+            if (!Schema::hasColumn('users', 'imam_signature_path')) {
+                $table->string('imam_signature_path')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'id_card_path')) {
+                $table->string('id_card_path')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'proof_of_address_path')) {
+                $table->string('proof_of_address_path')->nullable();
+            }
         });
     }
 
