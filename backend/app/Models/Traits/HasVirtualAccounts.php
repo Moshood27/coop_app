@@ -9,6 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait HasVirtualAccounts
 {
+    public static function bootHasVirtualAccounts()
+    {
+        static::saved(function ($model) {
+            if ($model->isRelationPopulated('virtualAccount') && $model->virtualAccount) {
+                $model->virtualAccount->user_id = $model->id;
+                $model->virtualAccount->save();
+            }
+        });
+    }
+
     public function virtualAccount(): HasOne
     {
         return $this->hasOne(UserVirtualAccount::class);

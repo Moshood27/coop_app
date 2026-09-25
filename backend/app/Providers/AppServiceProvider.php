@@ -266,6 +266,15 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\TakafulContribution::observe([\App\Observers\TakafulContributionObserver::class, \App\Observers\ShariahAuditObserver::class]);
         \App\Models\SadaqahContribution::observe([\App\Observers\SadaqahContributionObserver::class, \App\Observers\ShariahAuditObserver::class]);
         \App\Models\Meeting::observe(\App\Observers\MeetingObserver::class);
+        \App\Models\WithdrawalRequest::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\LoanPenalty::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\ProjectInvestment::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\GoalBooking::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\SavingsGoal::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\TransactionApproval::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\UtilityTransaction::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\Asset::observe(\App\Observers\ShariahAuditObserver::class);
+        \App\Models\AssetDepreciation::observe(\App\Observers\ShariahAuditObserver::class);
 
         $checks = [
             UsedDiskSpaceCheck::new(),
