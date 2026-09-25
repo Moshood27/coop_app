@@ -56,30 +56,31 @@ use App\Http\Controllers\Api\ReportExportController;
 use App\Http\Controllers\Api\AgingReportsController;
 use App\Http\Controllers\Api\CurrencyAdminController;
 
-Route::get('/health', function () {
-    return response()
-        ->json(['status' => 'ok'])
-        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        ->header('Pragma', 'no-cache');
-});
+$registerRoutes = function () {
+    Route::get('/health', function () {
+        return response()
+            ->json(['status' => 'ok'])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    });
 
-// Public endpoints (rate limited)
-Route::middleware('throttle:api')->group(function () {
-    Route::get('/status', [AuthController::class, 'status']);
-    Route::get('/branches', [AuthController::class, 'branches']);
+    // Public endpoints (rate limited)
+    Route::middleware('throttle:api')->group(function () {
+        Route::get('/status', [AuthController::class, 'status']);
+        Route::get('/branches', [AuthController::class, 'branches']);
 
-    // Member self-registration (multi-step) endpoints
-    Route::post('/register/start', [MemberRegistrationController::class, 'start']);
-    Route::post('/register/upload', [MemberRegistrationController::class, 'upload']);
-    Route::post('/register/send-otps', [MemberRegistrationController::class, 'sendOtps']);
-    Route::post('/register/verify-email', [MemberRegistrationController::class, 'verifyEmail']);
-    Route::post('/register/verify-sms', [MemberRegistrationController::class, 'verifySms']);
-    Route::get('/register/status', [MemberRegistrationController::class, 'status']);
-    Route::post('/register/finalize', [MemberRegistrationController::class, 'finalize']);
+        // Member self-registration (multi-step) endpoints
+        Route::post('/register/start', [MemberRegistrationController::class, 'start']);
+        Route::post('/register/upload', [MemberRegistrationController::class, 'upload']);
+        Route::post('/register/send-otps', [MemberRegistrationController::class, 'sendOtps']);
+        Route::post('/register/verify-email', [MemberRegistrationController::class, 'verifyEmail']);
+        Route::post('/register/verify-sms', [MemberRegistrationController::class, 'verifySms']);
+        Route::get('/register/status', [MemberRegistrationController::class, 'status']);
+        Route::post('/register/finalize', [MemberRegistrationController::class, 'finalize']);
 
-    // Public guarantor search (used during registration)
-    Route::get('/guarantor/search', [GuarantorController::class, 'search']);
-});
+        // Public guarantor search (used during registration)
+        Route::get('/guarantor/search', [GuarantorController::class, 'search']);
+    });
 // Login endpoints with stricter throttle
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 // Member password reset (email or SMS code)
@@ -526,6 +527,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
         Route::post('/users/{user}/ban', [\App\Http\Controllers\Api\ChatController::class, 'ban']);
         Route::post('/users/{user}/unban', [\App\Http\Controllers\Api\ChatController::class, 'unban']);
     });
+});
 
 // Existing Qard Hasan prototype endpoints (kept)
 Route::prefix('qard-hasan')->group(function () {

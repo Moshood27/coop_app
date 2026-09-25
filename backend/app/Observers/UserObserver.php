@@ -31,20 +31,6 @@ class UserObserver
      */
     public function updated(User $user): void
     {
-        // Audit sensitive changes
-        $sensitiveFields = ['is_admin', 'is_defaulter', 'approval_status', 'membership_number', 'deceased_at', 'major_loss_at'];
-        if ($user->wasChanged($sensitiveFields)) {
-            \App\Models\ShariahAuditLog::log(
-                auth()->user(),
-                'user_sensitive_update',
-                [
-                    'user_id' => $user->id,
-                    'changes' => $user->getChanges(),
-                    'original' => array_intersect_key($user->getOriginal(), array_flip($sensitiveFields))
-                ]
-            );
-        }
-
         // Trigger real-time dashboard update if any balance changed
         // This ensures numbers stay fresh even if no notification message is sent
         if ($user->wasChanged([

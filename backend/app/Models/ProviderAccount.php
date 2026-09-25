@@ -5,9 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ProviderAccount extends Model
+class VirtualAccount extends Model
 {
-    protected $table = 'provider_accounts';
     protected $fillable = [
         'user_id',
         'provider',

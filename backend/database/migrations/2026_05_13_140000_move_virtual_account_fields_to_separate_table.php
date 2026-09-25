@@ -72,9 +72,14 @@ return new class extends Migration
             }
         }
 
-        // 3. Keep columns in users table for backward compatibility during transition
-        // We will not drop them in this migration to ensure zero risk to production data.
-        // A future migration can drop them once the new implementation is verified.
+        // 3. Drop columns from users table
+        Schema::table('users', function (Blueprint $table) use ($columnsToMigrate) {
+            foreach ($columnsToMigrate as $column) {
+                if (Schema::hasColumn('users', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
+        });
     }
 
     /**
@@ -82,6 +87,33 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('paystack_customer_code')->nullable()->unique()->after('membership_number');
+            $table->string('paystack_authorization_code')->nullable()->after('paystack_customer_code');
+            $table->string('dva_account_number')->nullable()->after('paystack_authorization_code');
+            $table->string('dva_bank_name')->nullable()->after('dva_account_number');
+            $table->string('dva_account_name')->nullable()->after('dva_bank_name');
+            $table->json('dva_verification_meta')->nullable()->after('bvn_verified_at');
+            $table->json('flw_dva_data')->nullable()->after('dva_verification_meta');
+            // Monnify fields are NOT added back to 'users' table because it would exceed row size limit.
+            // They will only exist in 'user_virtual_accounts' table.
+        });
+
+        $accounts = DB::table('user_virtual_accounts')->get();
+        foreach ($accounts as $account) {
+            $updateData = [
+                'paystack_customer_code' => $account->paystack_customer_code,
+                'paystack_authorization_code' => $account->paystack_authorization_code,
+                'dva_account_number' => $account->dva_account_number,
+                'dva_bank_name' => $account->dva_bank_name,
+                'dva_account_name' => $account->dva_account_name,
+                'dva_verification_meta' => $account->dva_verification_meta,
+                'flw_dva_data' => $account->flw_dva_data,
+            ];
+
+            DB::table('users')->where('id', $account->user_id)->update($updateData);
+        }
+
         Schema::dropIfExists('user_virtual_accounts');
     }
 };

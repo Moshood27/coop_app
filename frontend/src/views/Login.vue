@@ -218,13 +218,11 @@ import SearchableSelect from '../components/SearchableSelect.vue'
 import SupportContacts from '../components/SupportContacts.vue'
 import brand from '../brand'
 import { useAppStatusStore } from '../stores/appStatus'
-import { useAuthStore } from '../stores/auth'
 import { getBiometricAvailabilityDetails, canQuickLogin as canQuickLoginSvc, quickLoginViaBiometric, storeBiometricCredentials } from '../services/biometric'
 
 const router = useRouter()
 const route = useRoute()
 const appStatusStore = useAppStatusStore()
-const authStore = useAuthStore()
 const branches = ref([])
 const loading = ref(false)
 const showPassword = ref(false)
@@ -295,8 +293,13 @@ onMounted(async () => {
 })
 
 const afterLogin = async (token, user) => {
-  authStore.setUser(user, token)
+  localStorage.setItem('token', token)
   appStatusStore.isPinVerified = false
+  if (user) {
+    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('user_id', user.id)
+    localStorage.setItem('is_admin', user.is_admin ? 'true' : 'false')
+  }
 
   // If we have a pending push token captured earlier, flush it now that we're authenticated
   try {
