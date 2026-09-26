@@ -2,8 +2,6 @@ node_modules/
 frontend/node_modules/
 frontend/node_modules_old/
 backend/public/storage*
-dist/
-frontend/dist/
 .env
 google-services.json*
 backend/storage/app/firebase-auth.json
