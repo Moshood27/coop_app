@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Traits\QardHasanAttributes;
 use App\Models\Traits\QardHasanCalculations;
 use App\Models\Traits\QardHasanMultiSig;
+
 use App\Models\Traits\QardHasanRelations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,8 @@ class QardHasan extends Model
 {
     use HasFactory, LogsActivity;
     use QardHasanRelations, QardHasanAttributes, QardHasanCalculations, QardHasanMultiSig;
+
+    protected array $installmentSchedule = [];
 
     protected $table = 'qard_hasans';
 
@@ -109,3 +112,4 @@ class QardHasan extends Model
         if ($this->user) $this->user->syncLoanDefaulterStatus();
     }
 }
+

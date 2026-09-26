@@ -19,7 +19,10 @@ trait QardHasanCalculations
 
         $total = (int) $this->total_installments;
         if ($total <= 0) {
-            return $this->installmentSchedule[$cacheKey] = [];
+            $schedule = $this->installmentSchedule ?? [];
+            $schedule[$cacheKey] = [];
+            $this->installmentSchedule = $schedule;
+            return [];
         }
 
         $per = (float) $this->per_installment;
@@ -61,7 +64,10 @@ trait QardHasanCalculations
             $item['index'] = $idx + 1;
         }
 
-        return $this->installmentSchedule[$cacheKey] = $items;
+        $schedule = $this->installmentSchedule ?? [];
+        $schedule[$cacheKey] = $items;
+        $this->installmentSchedule = $schedule;
+        return $items;
     }
 
     /**
