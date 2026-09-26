@@ -7,7 +7,6 @@ use App\Models\QardHasanRepayment;
 use App\Models\TransactionApproval;
 use App\Models\LedgerJournal;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Spatie\Activitylog\Models\Activity;
 
 trait QardHasanRelations
 {
@@ -24,11 +23,6 @@ trait QardHasanRelations
     public function repayments()
     {
         return $this->hasMany(QardHasanRepayment::class)->orderByDesc('paid_at');
-    }
-
-    public function activities(): MorphMany
-    {
-        return $this->morphMany(Activity::class, 'subject');
     }
 
     public function guarantors()
