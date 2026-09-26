@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('branch_meeting')) {
-            Schema::create('branch_meeting', function (Blueprint $table) {
-                $table->id();
-                $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-                $table->foreignId('meeting_id')->constrained()->cascadeOnDelete();
-                $table->timestamps();
+        Schema::create('branch_meeting', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('meeting_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
 
-                $table->unique(['branch_id', 'meeting_id']);
-            });
-        }
+            $table->unique(['branch_id', 'meeting_id']);
+        });
     }
 
     public function down(): void

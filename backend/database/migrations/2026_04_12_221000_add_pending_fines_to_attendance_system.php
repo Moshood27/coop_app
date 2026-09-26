@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'outstanding_fines')) {
-                $table->decimal('outstanding_fines', 12, 2)->default(0)->after('balance');
-            }
+            $table->decimal('outstanding_fines', 12, 2)->default(0)->after('balance');
         });
 
         Schema::table('attendance_records', function (Blueprint $table) {
