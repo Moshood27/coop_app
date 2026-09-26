@@ -3,7 +3,7 @@ node_modules/
 .env.dev
 google-services.json*
 backend/storage/app/firebase-auth.json
-docker-compose.yml
+docker-compose.dev.yml
 docker-compose.pro.yml
 *.jks
 *.keystore
