@@ -1,0 +1,277 @@
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import { checkAppStatus } from '../services/appStatus'
+import { useAppStatusStore } from '../stores/appStatus'
+
+// Views (lazy-loaded)
+const Landing = () => import('../views/Landing.vue')
+const Login = () => import('../views/Login.vue')
+import Dashboard from '../views/Dashboard.vue'
+const MakePayment = () => import('../views/MakePayment.vue')
+const Wallet = () => import('../views/Wallet.vue')
+const Passbook = () => import('../views/Passbook.vue')
+const Loans = () => import('../views/Loans.vue')
+const LoanAnalysis = () => import('../views/LoanAnalysis.vue')
+const Settings = () => import('../views/Settings.vue')
+const Profile = () => import('../views/Profile.vue')
+const MembershipDetails = () => import('../views/MembershipDetails.vue')
+const Reports = () => import('../views/Reports.vue')
+const QardHasan = () => import('../components/QardHasan.vue')
+const WalletCallback = () => import('../views/WalletCallback.vue')
+const PaymentCallback = () => import('../views/PaymentCallback.vue')
+const VTU = () => import('../views/VTU.vue')
+const VTUHistory = () => import('../views/VTUHistory.vue')
+const Agm = () => import('../views/Agm.vue')
+const AgmSession = () => import('../views/AgmSession.vue')
+const ProjectProposals = () => import('../views/ProjectProposals.vue')
+const ProjectProposalDetail = () => import('../views/ProjectProposalDetail.vue')
+const ShariaBoard = () => import('../views/ShariaBoard.vue')
+const TahkimHistory = () => import('../views/TahkimHistory.vue')
+const Store = () => import('../views/Store.vue')
+const OrderReceipt = () => import('../views/OrderReceipt.vue')
+const Privacy = () => import('../views/Privacy.vue')
+const Policy = () => import('../views/Policy.vue')
+const Support = () => import('../views/Support.vue')
+const Projects = () => import('../views/Projects.vue')
+const Project = () => import('../views/Project.vue')
+const Takaful = () => import('../views/Takaful.vue')
+const Transparency = () => import('../views/Transparency.vue')
+const Sadaqah = () => import('../views/Sadaqah.vue')
+const SadaqahDetail = () => import('../views/SadaqahDetail.vue')
+const SadaqahHistory = () => import('../views/SadaqahHistory.vue')
+const MerchantReceive = () => import('../views/MerchantReceive.vue')
+const MerchantPay = () => import('../views/MerchantPay.vue')
+const VendorApply = () => import('../views/VendorApply.vue')
+const VendorDashboard = () => import('../views/VendorDashboard.vue')
+const VendorProducts = () => import('../views/VendorProducts.vue')
+const VendorOrders = () => import('../views/VendorOrders.vue')
+const VendorSettlements = () => import('../views/VendorSettlements.vue')
+const Wasiyyah = () => import('../views/Wasiyyah.vue')
+const JuniorCooperative = () => import('../views/JuniorCooperative.vue')
+const GoldSavings = () => import('../views/GoldSavings.vue')
+const Attendance = () => import('../views/Attendance.vue')
+const MaintenanceMode = () => import('../views/MaintenanceMode.vue')
+const UpdateRequired = () => import('../views/UpdateRequired.vue')
+const PinLock = () => import('../views/PinLock.vue')
+const DigitalID = () => import('../views/DigitalID.vue')
+
+const SavingsGroups = () => import('../views/SavingsGroups.vue')
+const SavingsGroupDetail = () => import('../views/SavingsGroupDetail.vue')
+const SavingsGroupCreate = () => import('../views/SavingsGroupCreate.vue')
+const ChatRooms = () => import('../views/ChatRooms.vue')
+
+const AdminLogin = () => import('../views/admin/AdminLogin.vue')
+const AdminRegister = () => import('../views/admin/AdminRegister.vue')
+const AdminForgot = () => import('../views/admin/AdminForgotPassword.vue')
+const AdminImports = () => import('../views/admin/AdminImports.vue')
+const AdminVTU = () => import('../views/admin/AdminVTU.vue')
+const AdminProducts = () => import('../views/admin/AdminProducts.vue')
+const AdminVendors = () => import('../views/admin/AdminVendors.vue')
+const AdminTakaful = () => import('../views/admin/AdminTakaful.vue')
+const AdminDashboard = () => import('../views/admin/AdminDashboard.vue')
+const AdminMemberList = () => import('../views/admin/AdminMemberList.vue')
+const AdminMemberDetail = () => import('../views/admin/AdminMemberDetail.vue')
+const AdminPassbookManagement = () => import('../views/admin/AdminPassbookManagement.vue')
+const AdminWalletManagement = () => import('../views/admin/AdminWalletManagement.vue')
+const AdminLoanManagement = () => import('../views/admin/AdminLoanManagement.vue')
+const AdminFineManagement = () => import('../views/admin/AdminFineManagement.vue')
+// Accounting (new)
+const AdminBankReconciliation = () => import('../views/admin/AdminBankReconciliation.vue')
+const AdminFixedAssets = () => import('../views/admin/AdminFixedAssets.vue')
+const AdminBranchTrialBalance = () => import('../views/admin/AdminBranchTrialBalance.vue')
+const AdminAccountingOps = () => import('../views/admin/AdminAccountingOps.vue')
+
+const routes = [
+  { path: '/', name: 'landing', component: Landing, meta: { guest: true, skipOnboarding: true } },
+  { path: '/onboarding', name: 'onboarding', component: () => import('../views/Onboarding.vue'), meta: { guest: true, skipOnboarding: true } },
+  { path: '/login', name: 'login', component: Login, meta: { guest: true } },
+  { path: '/forgot', name: 'forgot', component: () => import('../views/ForgotPassword.vue'), meta: { guest: true, skipOnboarding: true } },
+  { path: '/register', name: 'register', component: () => import('../views/MemberRegister.vue'), meta: { guest: true, skipOnboarding: true } },
+  { path: '/dashboard', name: 'dashboard', component: Dashboard, meta: { requiresAuth: true } },
+  { path: '/wallet', name: 'wallet', component: Wallet, meta: { requiresAuth: true } },
+  { path: '/pay', name: 'pay', component: MakePayment, meta: { requiresAuth: true } },
+  { path: '/passbook', name: 'passbook', component: Passbook, meta: { requiresAuth: true } },
+  { path: '/reports', name: 'reports', component: Reports, meta: { requiresAuth: true } },
+  { path: '/takaful', name: 'takaful', component: Takaful, meta: { requiresAuth: true, feature: 'takaful-enabled' } },
+  { path: '/settings', name: 'settings', component: Settings, meta: { requiresAuth: true } },
+  { path: '/profile', name: 'profile', component: Profile, meta: { requiresAuth: true } },
+  { path: '/membership-details', name: 'membership.details', component: MembershipDetails, meta: { requiresAuth: true } },
+  { path: '/store', name: 'store', component: Store, meta: { requiresAuth: true, feature: 'store-enabled' } },
+  // Merchant QR pay
+  { path: '/merchant/receive', name: 'merchant.receive', component: MerchantReceive, meta: { requiresAuth: true, feature: 'receive-qr-enabled' } },
+  { path: '/merchant/pay', name: 'merchant.pay', component: MerchantPay, meta: { requiresAuth: true, feature: 'merchant-pay-enabled' } },
+  { path: '/store/orders', name: 'store.orders', component: () => import('../views/StoreOrders.vue'), meta: { requiresAuth: true, feature: 'store-enabled' } },
+  { path: '/store/orders/:id', name: 'store.order', component: OrderReceipt, meta: { requiresAuth: true, feature: 'store-enabled' } },
+
+  // Vendor Portal
+  { path: '/vendor/apply', name: 'vendor.apply', component: VendorApply, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/dashboard', name: 'vendor.dashboard', component: VendorDashboard, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/products', name: 'vendor.products', component: VendorProducts, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/orders', name: 'vendor.orders', component: VendorOrders, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+  { path: '/vendor/settlements', name: 'vendor.settlements', component: VendorSettlements, meta: { requiresAuth: true, feature: 'vendor-enabled' } },
+
+  { path: '/wasiyyah', name: 'wasiyyah', component: Wasiyyah, meta: { requiresAuth: true, feature: 'wassiyah-enabled' } },
+  { path: '/attendance', name: 'attendance', component: Attendance, meta: { requiresAuth: true } },
+  { path: '/digital-id', name: 'digital-id', component: DigitalID, meta: { requiresAuth: true, feature: 'digital-id-card-enabled' } },
+  { path: '/maintenance', name: 'maintenance', component: MaintenanceMode, meta: { skipOnboarding: true, skipStatusCheck: true } },
+  { path: '/update-required', name: 'update-required', component: UpdateRequired, meta: { skipOnboarding: true, skipStatusCheck: true }, props: route => ({ url: route.query.url }) },
+  { path: '/pin-lock', name: 'pin-lock', component: PinLock, meta: { requiresAuth: true, skipPinLock: true } },
+  { path: '/junior-cooperative', name: 'junior.cooperative', component: JuniorCooperative, meta: { requiresAuth: true, feature: 'junior-coop-enabled' } },
+  { path: '/gold', name: 'gold', component: GoldSavings, meta: { requiresAuth: true, feature: 'gold-savings-enabled' } },
+
+  { path: '/goals', name: 'goals', component: () => import('../views/Goals.vue'), meta: { requiresAuth: true, feature: 'hajj-umrah-enabled' } },
+  { path: '/projects', name: 'projects', component: Projects, meta: { requiresAuth: true, feature: 'projects-enabled' } },
+  { path: '/projects/:id', name: 'project', component: Project, meta: { requiresAuth: true, feature: 'projects-enabled' } },
+  { path: '/savings-groups', name: 'savings.groups', component: SavingsGroups, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/savings-groups/create', name: 'savings.group.create', component: SavingsGroupCreate, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/savings-groups/:id', name: 'savings.group.detail', component: SavingsGroupDetail, meta: { requiresAuth: true, feature: 'group-savings-enabled' } },
+  { path: '/chat', name: 'chat', component: ChatRooms, meta: { requiresAuth: true, feature: 'chat-help-enabled' } },
+  { path: '/sadaqah', name: 'sadaqah', component: Sadaqah, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
+  { path: '/sadaqah/history', name: 'sadaqah.history', component: SadaqahHistory, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
+  { path: '/sadaqah/:id', name: 'sadaqah.detail', component: SadaqahDetail, meta: { requiresAuth: true, feature: 'sadaq-enabled' } },
+  { path: '/transparency', name: 'transparency', component: Transparency, meta: { requiresAuth: true } },
+  // VTU
+  { path: '/vtu', name: 'vtu', component: VTU, meta: { requiresAuth: true, feature: 'airtime-data-enabled' } },
+  { path: '/vtu/history', name: 'vtu.history', component: VTUHistory, meta: { requiresAuth: true, feature: 'airtime-data-enabled' } },
+  // AGM Voting
+  { path: '/agm', name: 'agm', component: Agm, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/sessions/:id', name: 'agm.session', component: AgmSession, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/proposals', name: 'agm.proposals', component: ProjectProposals, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/agm/proposals/:id', name: 'agm.proposal_detail', component: ProjectProposalDetail, meta: { requiresAuth: true, feature: 'agm-voting-enabled' } },
+  { path: '/sharia-board', name: 'sharia.board', component: ShariaBoard, meta: { requiresAuth: true } },
+  { path: '/sharia-board/history', name: 'sharia.board.history', component: TahkimHistory, meta: { requiresAuth: true } },
+  // Placeholder: use existing Qard Hasan prototype under /loans for now
+  { path: '/loans', name: 'loans', component: Loans, meta: { requiresAuth: true } },
+  { path: '/loans/analysis', name: 'loans.analysis', component: LoanAnalysis, meta: { requiresAuth: true } },
+  { path: '/qard', name: 'qard', component: QardHasan },
+
+  // Public info pages
+  { path: '/privacy', name: 'privacy', component: Privacy, meta: { skipOnboarding: true } },
+  { path: '/policy', name: 'policy', component: Policy, meta: { skipOnboarding: true } },
+  { path: '/support', name: 'support', component: Support, meta: { skipOnboarding: true } },
+
+  // Paystack callbacks
+  { path: '/wallet-callback', name: 'wallet.callback', component: WalletCallback, meta: { skipOnboarding: true } },
+  { path: '/payment-callback', name: 'payment.callback', component: PaymentCallback, meta: { skipOnboarding: true } },
+
+  // Admin auth (Vue-based)
+  { path: '/admin/login', name: 'admin.login', component: AdminLogin, meta: { guest: true } },
+  { path: '/admin/register', name: 'admin.register', component: AdminRegister, meta: { guest: true } },
+  { path: '/admin/forgot', name: 'admin.forgot', component: AdminForgot, meta: { guest: true } },
+  { path: '/admin/imports', name: 'admin.imports', component: AdminImports, meta: { requiresAdmin: true } },
+  { path: '/admin/vtu', name: 'admin.vtu', component: AdminVTU, meta: { requiresAdmin: true } },
+  { path: '/admin/products', name: 'admin.products', component: AdminProducts, meta: { requiresAdmin: true } },
+  { path: '/admin/vendors', name: 'admin.vendors', component: AdminVendors, meta: { requiresAdmin: true } },
+  { path: '/admin/takaful', name: 'admin.takaful', component: AdminTakaful, meta: { requiresAdmin: true } },
+  { path: '/admin/portal', name: 'admin.portal', component: AdminDashboard, meta: { requiresAdmin: true } },
+  { path: '/admin/members', name: 'admin.members', component: AdminMemberList, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id', name: 'admin.members.show', component: AdminMemberDetail, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/passbook', name: 'admin.members.passbook', component: AdminPassbookManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/wallet', name: 'admin.members.wallet', component: AdminWalletManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/loans', name: 'admin.members.loans', component: AdminLoanManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/fines', name: 'admin.members.fines', component: AdminFineManagement, meta: { requiresAdmin: true } },
+  // Accounting routes (admin)
+  { path: '/admin/accounting/bank-reconciliation', name: 'admin.accounting.bank', component: AdminBankReconciliation, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/fixed-assets', name: 'admin.accounting.assets', component: AdminFixedAssets, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/branch-trial-balance', name: 'admin.accounting.branch_tb', component: AdminBranchTrialBalance, meta: { requiresAdmin: true } },
+  { path: '/admin/accounting/ops', name: 'admin.accounting.ops', component: AdminAccountingOps, meta: { requiresAdmin: true } },
+  { path: '/admin', redirect: '/admin/portal' },
+]
+
+const isNative = typeof window !== 'undefined' && !!(window?.Capacitor?.isNativePlatform?.() || (window?.Capacitor?.getPlatform && window.Capacitor.getPlatform() !== 'web'))
+const history = isNative ? createWebHashHistory() : createWebHistory(import.meta.env.BASE_URL)
+
+const router = createRouter({
+  history,
+  routes,
+  scrollBehavior() {
+    return { top: 0 }
+  }
+})
+
+let lastStatusCheck = 0
+const STATUS_CHECK_INTERVAL = 60000 // 1 minute
+
+router.beforeEach(async (to) => {
+  // 1. App Status Check (Maintenance & Forced Update)
+  const now = Date.now()
+  if (now - lastStatusCheck > STATUS_CHECK_INTERVAL && !to.meta.skipStatusCheck) {
+    const status = await checkAppStatus()
+    lastStatusCheck = now
+
+    // Update global store
+    try {
+      const appStatusStore = useAppStatusStore()
+      appStatusStore.setStatus(status)
+      if (status.features) {
+        appStatusStore.setFeatures(status.features)
+      }
+    } catch (e) {
+      console.error('Failed to update appStatus store', e)
+    }
+
+    if (status.maintenanceMode) {
+      return { name: 'maintenance' }
+    }
+    if (status.isOutdated) {
+      return { name: 'update-required', query: { url: status.playStoreUrl } }
+    }
+  }
+
+  const token = localStorage.getItem('token')
+  const adminToken = localStorage.getItem('admin_token')
+  const isAdmin = localStorage.getItem('is_admin') === 'true'
+  const appStatusStore = useAppStatusStore()
+
+  // 0. Onboarding gate for first-time users (skip for admin and explicit skips)
+  try {
+    const hasSeen = localStorage.getItem('has_seen_onboarding') === 'true'
+    const isAdminRoute = to.path?.startsWith('/admin')
+    const isOnboarding = to.name === 'onboarding'
+    const skip = !!to.meta?.skipOnboarding
+    const isAuthed = !!localStorage.getItem('token')
+    if (!hasSeen && !isAdminRoute && !isOnboarding && !skip && !isAuthed && appStatusStore.onboardingSwiperEnabled) {
+      return { name: 'onboarding', query: { redirect: to.fullPath } }
+    }
+  } catch (_) {}
+
+  if (to.meta.requiresAuth && !token) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.requiresAdmin && !adminToken && !isAdmin) {
+    return { name: 'admin.login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.guest && token) {
+    return { name: 'dashboard' }
+  }
+
+  // 1. PIN Lock gate
+  if (to.meta.requiresAuth && token && appStatusStore.appPinLoginEnabled && !appStatusStore.isPinVerified && !to.meta.skipPinLock) {
+    return { name: 'pin-lock', query: { redirect: to.fullPath } }
+  }
+
+  // 2. Feature Flag Check
+  if (to.meta.feature && token) {
+    const feature = to.meta.feature
+    const isEnabled = appStatusStore.features[feature] || 
+                      appStatusStore.features[`${feature}-beta`] ||
+                      (feature.includes('-enabled') && appStatusStore.features[feature.replace('-enabled', '-beta')])
+    
+    // Only block if features are actually loaded (to avoid blocking on first load/refresh before status check completes)
+    // Note: The status check at the top of beforeEach ensures features are loaded if STATUS_CHECK_INTERVAL has passed.
+    if (Object.keys(appStatusStore.features).length > 0 && !isEnabled) {
+      return { name: 'dashboard' }
+    }
+  }
+
+  // allow navigation
+  return true
+})
+
+router.onError((error, to) => {
+  if (error.message.includes('Failed to fetch dynamically imported module') || 
+      error.message.includes('Importing a module script failed')) {
+    window.location.reload()
+  }
+})
+
+export default router
