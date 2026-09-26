@@ -2,669 +2,110 @@
 
 namespace App\Models;
 
-use App\Support\DurationHelper;
+use App\Models\Traits\QardHasanAttributes;
+use App\Models\Traits\QardHasanCalculations;
+use App\Models\Traits\QardHasanMultiSig;
+use App\Models\Traits\QardHasanRelations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use App\Models\TransactionApproval;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use App\Models\LoanPenalty;
-use App\Models\Setting;
-use Carbon\Carbon;
 use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class QardHasan extends Model
 {
     use HasFactory, LogsActivity;
+    use QardHasanRelations, QardHasanAttributes, QardHasanCalculations, QardHasanMultiSig;
+
+    protected $table = 'qard_hasans';
+
+    protected $fillable = [
+        'user_id', 'qard_id_string', 'description', 'principal_amount', 'total_installments',
+        'per_installment', 'interval', 'admin_fee_flat', 'admin_fee_pct', 'paid_amount',
+        'status', 'approved_by', 'approved_at', 'received_at', 'disbursed_at',
+        'repayment_start_date', 'defaulted_at', 'ledger_journal_id', 'agreement_template',
+        'signed_agreement', 'agreement_uploaded_at', 'agreement_verified_at', 'agreement_rejection_reason',
+        'meeting_attendance_count'
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+        'received_at' => 'datetime',
+        'disbursed_at' => 'datetime',
+        'repayment_start_date' => 'date',
+        'defaulted_at' => 'datetime',
+        'agreement_uploaded_at' => 'datetime',
+        'agreement_verified_at' => 'datetime',
+        'principal_amount' => 'float',
+        'paid_amount' => 'float',
+        'per_installment' => 'float',
+    ];
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()
-            ->logFillable()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
-    }
-
-    /**
-     * Compute the next due date for this loan based on interval, total installments, and progress.
-     * This is a computed helper and does not persist any schedule.
-     */
-    public function getNextDueAtAttribute(): ?string
-    {
-        // If not active (not yet disbursed) or already completed, next due is not applicable
-        if (! in_array($this->status, ['active', 'defaulted', 'pending'], true)) {
-            return null;
-        }
-
-        // For pending loans, only show next due if it has been approved or received OR has payments (migrated loans)
-        if ($this->status === 'pending' && ! $this->approved_at && ! $this->received_at && (float)$this->paid_amount <= 0) {
-            return null;
-        }
-        if ((float) $this->principal_amount <= 0 || (int) $this->total_installments <= 0) {
-            return null;
-        }
-
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            // Derive per installment if not stored or invalid
-            $per = round(((float) $this->principal_amount) / max((int) $this->total_installments, 1), 2);
-        }
-
-        $paid = (float) $this->paid_amount;
-        $installmentsPaid = (int) floor($per > 0 ? ($paid / $per) : 0);
-        if ($installmentsPaid >= (int) $this->total_installments) {
-            return null; // fully paid
-        }
-
-        $schedule = $this->generateInstallmentSchedule();
-        if (empty($schedule)) {
-            return null;
-        }
-
-        // Next installment index is installmentsPaid (0-based)
-        $idx = max(0, min($installmentsPaid, count($schedule) - 1));
-        $next = $schedule[$idx]['due_at'] ?? null;
-
-        return $next instanceof Carbon ? $next->toISOString() : (is_string($next) ? $next : null);
-    }
-
-    protected array $installmentSchedule = [];
-
-    /**
-     * Generate a simple installment schedule as an array of [index, due_at (Carbon), amount].
-     * Start date: approved_at when present, otherwise created_at; first installment is one interval after start.
-     */
-    public function generateInstallmentSchedule(?Carbon $startAt = null): array
-    {
-        $cacheKey = $startAt ? $startAt->timestamp : 'default';
-        if (isset($this->installmentSchedule[$cacheKey])) {
-            return $this->installmentSchedule[$cacheKey];
-        }
-
-        $total = (int) $this->total_installments;
-        if ($total <= 0) {
-            return $this->installmentSchedule[$cacheKey] = [];
-        }
-
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            $per = round(((float) $this->principal_amount) / max($total, 1), 2);
-        }
-
-        $interval = strtolower((string) $this->interval ?: 'monthly');
-        $useExplicitStart = false;
-        if ($startAt) {
-            $start = $startAt->copy();
-        } elseif ($this->repayment_start_date) {
-            $start = $this->repayment_start_date->copy();
-            $useExplicitStart = true;
-        } else {
-            $start = ($this->received_at ?: ($this->approved_at ?: ($this->created_at ?: now())));
-            $start = ($start instanceof Carbon) ? $start->copy() : Carbon::parse((string) $start);
-        }
-
-        $items = [];
-        $cursor = $start->copy();
-        for ($i = 0; $i < $total; $i++) {
-            if ($i > 0 || !$useExplicitStart) {
-                $cursor = $this->addInterval($cursor, $interval); // move by one interval each time
-            }
-            $items[] = [
-                'index' => $i + 1,
-                'due_at' => $cursor->copy(),
-                'due_date' => $cursor->toDateString(),
-                'amount' => $per,
-            ];
-        }
-
-        // Force Ascending Order (Fixes "descending order" issue for migrated loans)
-        usort($items, fn($a, $b) => $a['due_at']->timestamp <=> $b['due_at']->timestamp);
-
-        // Re-index after sort
-        foreach ($items as $idx => &$item) {
-            $item['index'] = $idx + 1;
-        }
-
-        return $this->installmentSchedule[$cacheKey] = $items;
-    }
-
-    /**
-     * Add interval (daily|weekly|monthly) to a Carbon date and return a cloned instance.
-     */
-    public function addInterval(Carbon $date, string $interval): Carbon
-    {
-        $d = $date->copy();
-        $key = strtolower(trim($interval));
-
-        return match ($key) {
-            'daily' => $d->addDay(),
-            'weekly' => $d->addWeek(),
-            'quarterly' => $d->addQuarter(),
-            'yearly' => $d->addYear(),
-            default => $d->addMonth(), // monthly fallback
-        };
-    }
-
-    /**
-     * Subtract interval (daily|weekly|monthly) from a Carbon date and return a cloned instance.
-     */
-    public function subInterval(Carbon $date, string $interval): Carbon
-    {
-        $d = $date->copy();
-        $key = strtolower(trim($interval));
-
-        return match ($key) {
-            'daily' => $d->subDay(),
-            'weekly' => $d->subWeek(),
-            'quarterly' => $d->subQuarter(),
-            'yearly' => $d->subYear(),
-            default => $d->subMonth(), // monthly fallback
-        };
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontSubmitEmptyLogs();
     }
 
     protected static function booted(): void
     {
         static::updating(function (QardHasan $loan) {
-            // If just defaulted
             if ($loan->isDirty('defaulted_at') && !$loan->getOriginal('defaulted_at') && $loan->defaulted_at) {
                 $loan->startPenaltyRecord();
             }
-            // If default cleared
             if ($loan->isDirty('defaulted_at') && $loan->getOriginal('defaulted_at') && !$loan->defaulted_at) {
                 $loan->completePenaltyRecord();
             }
         });
 
         static::saving(function (QardHasan $loan) {
-            \Illuminate\Support\Facades\Log::info("Saving QardHasan: " . $loan->qard_id_string);
-            // Auto-complete if fully paid
             if ($loan->paid_amount >= $loan->principal_amount && $loan->principal_amount > 0) {
-                if (!in_array($loan->status, ['cancelled', 'rejected'])) {
-                    $loan->status = 'completed';
-                }
-                if ($loan->defaulted_at) {
-                    $loan->defaulted_at = null;
-                }
+                if (!in_array($loan->status, ['cancelled', 'rejected'])) $loan->status = 'completed';
+                if ($loan->defaulted_at) $loan->defaulted_at = null;
             }
-
             if ($loan->status !== 'completed' && $loan->defaulted_at && $loan->defaulted_at->year > 1970 && $loan->defaulted_at->lte(now())) {
-                if (in_array($loan->status, ['active', 'pending'])) {
-                    $loan->status = 'defaulted';
-                }
+                if (in_array($loan->status, ['active', 'pending'])) $loan->status = 'defaulted';
             } elseif ($loan->status === 'defaulted') {
-                if (!$loan->defaulted_at || $loan->defaulted_at->gt(now())) {
-                    $loan->status = 'active';
-                }
+                if (!$loan->defaulted_at || $loan->defaulted_at->gt(now())) $loan->status = 'active';
             }
         });
 
-        static::updated(function (QardHasan $loan) {
-            if ($loan->wasChanged(['defaulted_at', 'status', 'paid_amount'])) {
-                $loan->syncUserDefaulterStatus();
-            }
-        });
-
-        static::created(function (QardHasan $loan) {
-            if ($loan->defaulted_at) {
-                $loan->syncUserDefaulterStatus();
-            }
-        });
+        static::updated(fn (QardHasan $loan) => $loan->wasChanged(['defaulted_at', 'status', 'paid_amount']) ? $loan->syncUserDefaulterStatus() : null);
+        static::created(fn (QardHasan $loan) => $loan->defaulted_at ? $loan->syncUserDefaulterStatus() : null);
 
         static::deleting(function (QardHasan $qardHasan) {
-            // Delete repayments and their journals
             $qardHasan->repayments()->each(function ($repayment) {
-                if ($repayment->ledger_journal_id) {
-                    \App\Models\LedgerJournal::find($repayment->ledger_journal_id)?->delete();
-                }
+                if ($repayment->ledger_journal_id) \App\Models\LedgerJournal::find($repayment->ledger_journal_id)?->delete();
                 $repayment->delete();
             });
-
-            // Delete the loan's own ledger journal (disbursement)
-            if ($qardHasan->ledger_journal_id) {
-                \App\Models\LedgerJournal::find($qardHasan->ledger_journal_id)?->delete();
-            }
-
-            // Delete transaction approvals
+            if ($qardHasan->ledger_journal_id) \App\Models\LedgerJournal::find($qardHasan->ledger_journal_id)?->delete();
             $qardHasan->transactionApprovals()->each(fn($a) => $a->delete());
-
-            // Detach guarantors
             $qardHasan->guarantors()->detach();
-
-            // Delete penalties
             \App\Models\LoanPenalty::where('qard_hasan_id', $qardHasan->id)->get()->each(fn($p) => $p->delete());
         });
 
         static::deleted(function (QardHasan $qardHasan) {
-            // Sync user defaulter status
             $qardHasan->syncUserDefaulterStatus();
-
-            // Update Score
             if ($qardHasan->user) {
                 try {
                     app(\App\Services\AttaqwaScoreService::class)->calculateAndUpdateScore($qardHasan->user);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to update score after loan deletion: " . $e->getMessage());
-                }
-            }
-
-            // Audit Log
-            try {
-                \App\Models\ShariahAuditLog::log(auth()->user(), 'delete_qard_hasan', [
-                    'qard_id' => $qardHasan->id,
-                    'qard_id_string' => $qardHasan->qard_id_string,
-                    'member_id' => $qardHasan->user_id,
-                    'principal' => $qardHasan->principal_amount,
-                    'paid_amount' => $qardHasan->paid_amount,
-                ]);
-            } catch (\Throwable $e) {
-                // Ignore audit logging errors in model events to prevent blocking deletion
+                } catch (\Throwable $e) {}
             }
         });
     }
 
-    protected $fillable = [
-        'user_id',
-        'qard_id_string',
-        'description',
-        'principal_amount',
-        'total_installments',
-        'per_installment',
-        'interval',
-        'admin_fee_flat',
-        'admin_fee_pct',
-        'paid_amount',
-        'status',
-        'meeting_attendance_count',
-        'rejection_reason',
-        'approved_by',
-        'approved_at',
-        'received_at',
-        'disbursed_at',
-        'repayment_start_date',
-        'defaulted_at',
-        'agreement_template',
-        'signed_agreement',
-        'agreement_uploaded_at',
-        'agreement_verified_at',
-        'agreement_rejection_reason',
-        'ledger_journal_id',
-    ];
-
-    protected $casts = [
-        'principal_amount' => 'float',
-        'per_installment' => 'float',
-        'admin_fee_flat' => 'float',
-        'admin_fee_pct' => 'float',
-        'paid_amount' => 'float',
-        'approved_at' => 'datetime',
-        'received_at' => 'datetime',
-        'disbursed_at' => 'datetime',
-        'repayment_start_date' => 'datetime',
-        'defaulted_at' => 'datetime',
-        'agreement_uploaded_at' => 'datetime',
-        'agreement_verified_at' => 'datetime',
-    ];
-
-    protected $appends = [
-        'remaining_principal',
-        'progress_pct',
-        'is_completed',
-        'credited_amount',
-        'next_due_at',
-        'next_installment_amount',
-        'overdue_amount',
-        'expected_amount_to_pay',
-        'period_of_default',
-    ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function approvedBy()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function repayments()
-    {
-        return $this->hasMany(QardHasanRepayment::class)->orderByDesc('paid_at');
-    }
-
-    public function activities(): MorphMany
-    {
-        return $this->morphMany(Activity::class, 'subject');
-    }
-
-    public function guarantors()
-    {
-        return $this->belongsToMany(User::class, 'qard_hasan_guarantors', 'qard_hasan_id', 'guarantor_id')
-            ->withTimestamps()
-            ->withPivot(['status', 'token', 'responded_at', 'nudge_count', 'last_nudged_at', 'escalated_at']);
-    }
-
     public function allGuarantorsAccepted(): bool
     {
-        $g = $this->guarantors;
-        if (! $g || $g->isEmpty()) {
-            return false;
-        }
-
-        // Require at least 2 guarantors and all must be accepted
-        return $g->count() >= 2 && $g->every(fn ($u) => ($u->pivot?->status) === 'accepted');
+        $guarantors = $this->guarantors;
+        if ($guarantors->isEmpty()) return false;
+        return $guarantors->every(fn($g) => $g->pivot->status === 'accepted');
     }
 
     public function pendingGuarantorCount(): int
     {
-        return (int) ($this->guarantors?->filter(fn ($u) => ($u->pivot?->status) === 'pending')->count() ?? 0);
+        return $this->guarantors()->wherePivot('status', '!=', 'accepted')->count();
     }
 
-    /**
-     * Sync the user's is_defaulter status based on all their loans.
-     */
     public function syncUserDefaulterStatus(): void
     {
-        if ($this->user) {
-            $this->user->syncLoanDefaulterStatus();
-        }
-    }
-
-    public function getExpectedAmountToPayAttribute(): float
-    {
-        return round(max(0.0, $this->getExpectedAmountTillNextInstallment(now()) - (float)$this->paid_amount), 2);
-    }
-
-    /**
-     * Calculate the expected amount including the next installment after a certain date.
-     */
-    public function getExpectedAmountTillNextInstallment(?Carbon $asAt = null): float
-    {
-        $asAt = $asAt ?: now();
-        $schedule = $this->generateInstallmentSchedule();
-
-        // Find the first installment that is due exactly on or after $asAt
-        $targetDate = $asAt;
-        foreach ($schedule as $item) {
-            if ($item['due_at']->greaterThanOrEqualTo($asAt)) {
-                $targetDate = $item['due_at'];
-                break;
-            }
-        }
-
-        return $this->getExpectedAmountToDate($targetDate);
-    }
-
-    /**
-     * Calculate the expected amount to be paid by a certain date.
-     */
-    public function getExpectedAmountToDate(?Carbon $asAt = null): float
-    {
-        $asAt = $asAt ?: now();
-        if ($this->status === 'pending' && ! $this->approved_at && ! $this->received_at && (float)$this->paid_amount <= 0) return 0.0;
-
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            $per = round(((float)$this->principal_amount) / max((int)$this->total_installments, 1), 2);
-        }
-        if ($per <= 0) return 0.0;
-
-        $schedule = $this->generateInstallmentSchedule();
-        if (empty($schedule)) return 0.0;
-
-        $dueCount = 0;
-        foreach ($schedule as $item) {
-            $dueAt = $item['due_at'] instanceof Carbon ? $item['due_at'] : Carbon::parse((string) $item['due_at']);
-            if ($dueAt->lessThanOrEqualTo($asAt)) {
-                $dueCount++;
-            } else {
-                break;
-            }
-        }
-
-        return round(min($dueCount * $per, (float) $this->principal_amount), 2);
-    }
-
-    /**
-     * Calculate the overdue amount for this loan.
-     */
-    public function getOverdueAmountAttribute(): float
-    {
-        return $this->getOverdueAmount();
-    }
-
-    /**
-     * Calculate the overdue amount for this loan.
-     */
-    public function getOverdueAmount(?Carbon $asAt = null): float
-    {
-        $asAt = $asAt ?: now();
-
-        if (! in_array($this->status, ['active', 'defaulted', 'pending'])) return 0.0;
-
-        // If the loan is marked as defaulted, the full remaining balance is considered overdue (acceleration)
-        if ($this->defaulted_at && $this->defaulted_at->year > 1970) {
-            if ($this->defaulted_at->lessThanOrEqualTo($asAt)) {
-                return (float) $this->remaining_principal;
-            }
-
-            // If the defaulted date is in the future, the amount defaulted should be 0.00
-            return 0.0;
-        }
-
-        $expectedPaid = $this->getExpectedAmountToDate($asAt);
-        $alreadyPaid = (float) $this->paid_amount;
-        $overdue = round(max(0.0, $expectedPaid - $alreadyPaid), 2);
-
-        $remaining = max(0.0, (float) $this->principal_amount - $alreadyPaid);
-        if ($overdue > $remaining) $overdue = $remaining;
-
-        return $overdue;
-    }
-
-    /**
-     * Get the number of days the loan is overdue.
-     */
-    public function getOverdueDays(?Carbon $asAt = null): int
-    {
-        $asAt = $asAt ?: now();
-
-        // If explicitly marked as defaulted, calculate from defaulted_at
-        if ($this->defaulted_at && $this->defaulted_at->year > 1970) {
-            if ($this->defaulted_at->lessThanOrEqualTo($asAt)) {
-                return (int) abs($asAt->diffInDays($this->defaulted_at));
-            }
-        }
-
-        if ($this->getOverdueAmount($asAt) <= 0) return 0;
-
-        $schedule = $this->generateInstallmentSchedule();
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            $per = round(((float)$this->principal_amount) / max((int)$this->total_installments, 1), 2);
-        }
-
-        $paid = (float) $this->paid_amount;
-        $installmentsPaid = (int) floor($per > 0 ? ($paid / $per) : 0);
-
-        // The first installment that is NOT paid but its due_at is in the past
-        if (isset($schedule[$installmentsPaid])) {
-            $dueAt = $schedule[$installmentsPaid]['due_at'];
-            if ($dueAt->lessThan($asAt)) {
-                return (int) abs($asAt->diffInDays($dueAt));
-            }
-        }
-
-        return 0;
-    }
-
-    // Accessors for transparency
-    public function getRemainingPrincipalAttribute(): float
-    {
-        $remaining = (float) $this->principal_amount - (float) $this->paid_amount;
-
-        return $remaining > 0 ? round($remaining, 2) : 0.0;
-    }
-
-    public function getProgressPctAttribute(): float
-    {
-        if ((float) $this->principal_amount <= 0) {
-            return 0.0;
-        }
-        $pct = ((float) $this->paid_amount / (float) $this->principal_amount) * 100;
-        if ($pct > 100) {
-            $pct = 100;
-        }
-        if ($pct < 0) {
-            $pct = 0;
-        }
-
-        return round($pct, 2);
-    }
-
-    public function getIsCompletedAttribute(): bool
-    {
-        return $this->status === 'completed' || $this->remaining_principal <= 0.0;
-    }
-
-    public function getCreditedAmountAttribute(): float
-    {
-        return round((float) $this->principal_amount, 2);
-    }
-
-    public function getNextInstallmentAmountAttribute(): float
-    {
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            $per = round(((float)$this->principal_amount) / max((int)$this->total_installments, 1), 2);
-        }
-
-        $paid = (float) $this->paid_amount;
-        $installmentsPaid = (int) floor($per > 0 ? ($paid / $per) : 0);
-
-        $paidIntoCurrent = $paid - ($installmentsPaid * $per);
-        $remainingOnCurrent = max(0, $per - $paidIntoCurrent);
-
-        if ($remainingOnCurrent > 0.01) {
-            return round(min($remainingOnCurrent, $this->remaining_principal), 2);
-        }
-
-        return round(min($per, $this->remaining_principal), 2);
-    }
-
-    public function getDefaultStartDate(?Carbon $asAt = null): ?Carbon
-    {
-        $asAt = $asAt ?: now();
-        if ($this->defaulted_at && $this->defaulted_at->year > 1970) {
-            if ($this->defaulted_at->lessThanOrEqualTo($asAt)) {
-                return $this->defaulted_at;
-            }
-        }
-
-        if ($this->getOverdueAmount($asAt) <= 0) return null;
-
-        $schedule = $this->generateInstallmentSchedule();
-        $per = (float) $this->per_installment;
-        if ($per <= 0) {
-            $per = round(((float)$this->principal_amount) / max((int)$this->total_installments, 1), 2);
-        }
-
-        $paid = (float) $this->paid_amount;
-        $installmentsPaid = (int) floor($per > 0 ? ($paid / $per) : 0);
-
-        if (isset($schedule[$installmentsPaid])) {
-            $dueAt = $schedule[$installmentsPaid]['due_at'];
-            if ($dueAt->lessThan($asAt)) {
-                return $dueAt;
-            }
-        }
-
-        return null;
-    }
-
-    public function getPeriodOfDefaultAttribute(): string
-    {
-        $startDate = $this->getDefaultStartDate();
-        if (!$startDate) return 'None';
-
-        $days = (int) abs(now()->diffInDays($startDate));
-        $formattedDuration = DurationHelper::format($days);
-        return $startDate->format('d-m-Y') . " ({$formattedDuration})";
-    }
-    public function transactionApprovals(): MorphMany
-    {
-        return $this->morphMany(TransactionApproval::class, 'approvable');
-    }
-
-    public function isHighValue(): bool
-    {
-        $threshold = config('cooperative.approvals.high_value_loan_threshold', 500000);
-        return (float) $this->principal_amount >= (float) $threshold;
-    }
-
-    public function hasSufficientApprovals(): bool
-    {
-        if (!$this->isHighValue()) {
-            return true;
-        }
-
-        $requiredCount = config('cooperative.approvals.required_approvals_count', 2);
-        $approvedCount = $this->transactionApprovals()
-            ->where('status', 'approved')
-            ->count();
-
-        return $approvedCount >= $requiredCount;
-    }
-
-    public function isAwaitingApprovals(): bool
-    {
-        return $this->isHighValue() && !$this->hasSufficientApprovals();
-    }
-
-    public function startPenaltyRecord(): void
-    {
-        if (!$this->defaulted_at) {
-            return;
-        }
-
-        LoanPenalty::create([
-            'user_id' => $this->user_id,
-            'qard_hasan_id' => $this->id,
-            'default_started_at' => $this->defaulted_at,
-        ]);
-    }
-
-    public function completePenaltyRecord(): void
-    {
-        $penalty = LoanPenalty::where('qard_hasan_id', $this->id)
-            ->whereNull('default_cleared_at')
-            ->latest()
-            ->first();
-
-        if (!$penalty) {
-            return;
-        }
-
-        $defaultedAt = $this->getOriginal('defaulted_at') ?: $penalty->default_started_at;
-        if (!$defaultedAt) {
-            return;
-        }
-
-        $now = now();
-        $monthsDefaulted = (int) $defaultedAt->diffInMonths($now);
-        $penaltyUntil = $now->copy()->add($defaultedAt->diff($now));
-
-        $penalty->update([
-            'months_defaulted' => $monthsDefaulted,
-            'default_cleared_at' => $now,
-            'penalty_until' => $penaltyUntil,
-        ]);
-    }
-
-    public function ledgerJournal()
-    {
-        return $this->belongsTo(LedgerJournal::class);
+        if ($this->user) $this->user->syncLoanDefaulterStatus();
     }
 }
