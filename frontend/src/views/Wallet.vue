@@ -757,7 +757,10 @@
               <p class="font-black text-sm" :class="tx.type === 'credit' ? 'text-emerald-700' : 'text-slate-800'">
                 {{ tx.type === 'credit' ? '+' : '-' }}₦{{ formatMoney(tx.amount) }}
               </p>
-              <a :href="getReceiptDownloadUrl(tx)" target="_blank" class="text-emerald-700 text-[9px] font-black uppercase tracking-widest hover:underline">Receipt</a>
+              <div class="flex items-center gap-3 justify-end mt-1">
+                <button @click="previewTx(tx)" class="text-slate-500 hover:text-emerald-700 text-[9px] font-black uppercase tracking-widest">Preview</button>
+                <a :href="getReceiptDownloadUrl(tx)" target="_blank" class="text-emerald-700 text-[9px] font-black uppercase tracking-widest hover:underline">Receipt</a>
+              </div>
             </div>
           </div>
         </div>
@@ -771,6 +774,15 @@
         </div>
       </div>
     </div> <!-- End Transactions Tab -->
+
+      <!-- Transaction Preview Modal -->
+      <TransactionDetailModal
+        :isOpen="showTxModal"
+        :transaction="selectedTx"
+        @close="showTxModal = false"
+        @download="downloadReceipt"
+        @share="shareReceipt"
+      />
 
       <!-- Reusable Notice Modal -->
       <CustomNotice
@@ -811,6 +823,7 @@ import CustomNotice from '../components/CustomNotice.vue'
 import { useNotice } from '../composables/useNotice'
 import { verifyBiometricIdentity, isBiometricAvailable } from '../services/biometric'
 import { getEcho } from '../realtime/echo'
+import TransactionDetailModal from '../components/dashboard/TransactionDetailModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -862,6 +875,8 @@ const searchQuery = ref('')
 const wallet = ref({ balance: 0, virtual_account: {}, admin_charge_balance: 0 })
 const refreshingBalance = ref(false)
 const transactions = ref([])
+const showTxModal = ref(false)
+const selectedTx = ref(null)
 const netBalance = computed(() => {
   if (!appStatusStore.features['display-admin-charge-in-wallet']) return wallet.value.balance
   return wallet.value.balance - (wallet.value.admin_charge_balance || 0)
@@ -1010,6 +1025,17 @@ const titleFor = (tx) => {
     }
   }
   return 'Wallet Top-up'
+}
+
+const previewTx = (tx) => {
+  selectedTx.value = {
+    ...tx,
+    title: titleFor(tx),
+    reference: tx.reference,
+    status: tx.status || 'Successful',
+    isUtility: false,
+  }
+  showTxModal.value = true
 }
 
 const loadWallet = async () => {
@@ -1341,6 +1367,28 @@ const getReceiptDownloadUrl = (tx) => {
   const baseUrl = axios.defaults.baseURL || ''
   const id = tx?.id ?? tx
   return `${baseUrl}/api/wallet/transactions/${id}/receipt?token=${encodeURIComponent(token)}`
+}
+
+const downloadReceipt = (tx) => {
+  const url = getReceiptDownloadUrl(tx)
+  if (url) window.open(url, '_blank')
+}
+
+const shareReceipt = async (tx) => {
+  const title = titleFor(tx)
+  const amount = formatMoney(tx.amount)
+  const ref = tx.reference || tx.id
+  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx.status || 'Successful'}\nDate: ${new Date(tx.created_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}`
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Transaction Receipt', text, url: window.location.origin })
+    } else {
+      await navigator.clipboard.writeText(text)
+      showNotice('Success', 'Receipt details copied to clipboard', 'success')
+    }
+  } catch (_) {
+    try { await navigator.clipboard.writeText(text) } catch (_) {}
+  }
 }
 
 watch([toType, toValue, branchId], () => {

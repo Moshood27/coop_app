@@ -180,6 +180,15 @@
       </div>
     </div>
 
+    <!-- Transaction Preview Modal -->
+    <TransactionDetailModal
+      :isOpen="showTxModal"
+      :transaction="selectedTx"
+      @close="showTxModal = false"
+      @download="downloadReceipt"
+      @share="shareReceipt"
+    />
+
     <!-- Custom Notice Modal -->
     <CustomNotice
       v-model="notice.visible"
@@ -216,6 +225,7 @@ import axios from '../http'
 import { useRouter } from 'vue-router'
 import CustomNotice from '../components/CustomNotice.vue'
 import { useNotice } from '../composables/useNotice'
+import TransactionDetailModal from '../components/dashboard/TransactionDetailModal.vue'
 
 import { useAppStatusStore } from '../stores/appStatus'
 
@@ -278,13 +288,88 @@ const { notice, showNotice, closeNotice: baseCloseNotice } = useNotice()
 const closeNotice = () => {
   const isSuccess = notice.value.type === 'success' && notice.value.title === 'Success'
   baseCloseNotice()
-  if (isSuccess) {
+  // If receipt modal is open, don't navigate away; allow user to preview/download first
+  if (isSuccess && !showTxModal.value) {
     router.replace({ name: 'dashboard' })
   }
 }
 
 // PIN prompt modal state
 const pinPrompt = ref({ visible: false })
+
+// Receipt preview state
+const showTxModal = ref(false)
+const selectedTx = ref(null)
+
+const formatMoney = (val) => Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
+
+const getReceiptDownloadUrl = (tx) => {
+  if (!tx || tx.isUtility) return null
+  const token = localStorage.getItem('token')
+  const baseUrl = axios.defaults.baseURL || ''
+  const id = tx?.id ?? tx
+  return `${baseUrl}/api/wallet/transactions/${id}/receipt?token=${encodeURIComponent(token)}`
+}
+
+const downloadReceipt = (tx) => {
+  const url = getReceiptDownloadUrl(tx)
+  if (url) {
+    window.open(url, '_blank')
+  } else {
+    showNotice('Info', 'Official PDF receipt is not available.', 'info')
+  }
+}
+
+const shareReceipt = async (tx) => {
+  const title = tx?.title || 'Transaction'
+  const amount = formatMoney(tx?.amount)
+  const ref = tx?.reference || tx?.id
+  const created = tx?.created_at ? new Date(tx.created_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }) : ''
+  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx?.status || 'Successful'}${created ? `\nDate: ${created}` : ''}`
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Transaction Receipt', text, url: window.location.origin })
+    } else {
+      await navigator.clipboard.writeText(text)
+      showNotice('Success', 'Receipt details copied to clipboard', 'success')
+    }
+  } catch (_) {
+    try { await navigator.clipboard.writeText(text) } catch (_) {}
+  }
+}
+
+const buildPreviewTxFromResponse = (resp) => {
+  if (!resp) return null
+  const dist = Array.isArray(resp.distribution) ? resp.distribution : []
+  return {
+    type: 'debit',
+    source: 'wallet_allocation',
+    amount: Number(resp.debited || totalAmount.value || 0),
+    reference: resp.reference,
+    status: 'Successful',
+    created_at: new Date().toISOString(),
+    title: 'Allocation to Schemes',
+    meta: {
+      distribution: dist.map(d => ({
+        scheme_id: d.scheme_id,
+        scheme_name: d.scheme_name,
+        amount: d.amount,
+        category: d.category || 'deposit',
+      }))
+    }
+  }
+}
+
+const fetchTxByReference = async (reference) => {
+  try {
+    const { data } = await axios.get('/api/wallet')
+    const list = Array.isArray(data?.recent_transactions) ? data.recent_transactions : []
+    const tx = list.find(t => String(t.reference) === String(reference))
+    return tx || null
+  } catch (e) {
+    return null
+  }
+}
 
 watch(selectedSchemeId, async (newVal) => {
   if (!newVal || newVal === 'combined') {
@@ -447,8 +532,47 @@ const handlePinConfirm = async (val) => {
   loading.value = true
   try {
     const endpoint = source.value === 'special_savings' ? '/api/wallet/allocate-special' : '/api/wallet/allocate'
-    await axios.post(endpoint, { items: paymentList.value, pin })
+    const { data: resp } = await axios.post(endpoint, { items: paymentList.value, pin })
     pinPrompt.value.visible = false
+
+    // Attempt to resolve the created wallet transaction by reference for full details (including id for receipt)
+    let tx = await fetchTxByReference(resp?.reference)
+    if (!tx) {
+      // Fallback: synthesize a minimal tx from response so user can still preview allocations
+      tx = buildPreviewTxFromResponse(resp)
+    } else {
+      // Enrich with title and ensure reference
+      tx = {
+        ...tx,
+        title: 'Allocation to Schemes',
+        reference: tx.reference || resp?.reference,
+        status: tx.status || 'Successful',
+      }
+      // If API tx.meta.distribution is missing scheme_name, enrich from response where possible
+      if (resp?.distribution?.length) {
+        const byId = {}
+        resp.distribution.forEach(d => { if (d?.scheme_id) byId[String(d.scheme_id)] = d })
+        const dist = Array.isArray(tx.meta?.distribution) ? tx.meta.distribution : []
+        tx.meta = {
+          ...(tx.meta || {}),
+          distribution: dist.map(d => {
+            const m = { ...(d || {}) }
+            if (m.scheme_id && !m.scheme_name && byId[String(m.scheme_id)]) {
+              m.scheme_name = byId[String(m.scheme_id)].scheme_name
+            }
+            return m
+          })
+        }
+      }
+    }
+
+    selectedTx.value = tx
+    showTxModal.value = true
+
+    // Clear form and refresh balances
+    paymentList.value = []
+    await loadWallet()
+    // Also show a small success toast; redirect happens only if the user closes the notice and modal isn't open
     showNotice('Success', 'Your funds have been successfully allocated to your passbook.', 'success')
   } catch (e) {
     pinPrompt.value.visible = false
