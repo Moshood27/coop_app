@@ -85,4 +85,40 @@ class UserSchemeBalanceTest extends TestCase
             'balance' => 200.00,
         ]);
     }
+
+    public function test_backfill_skips_contributions_with_invalid_scheme_id()
+    {
+        $user = User::factory()->create();
+        $shares = Scheme::create(['name' => 'Shares', 'active' => true]);
+
+        // Orphan contribution with invalid scheme_id = 0
+        Contribution::create([
+            'user_id' => $user->id,
+            'scheme_id' => 0,
+            'amount' => 100,
+            'status' => 'success',
+        ]);
+
+        // Valid contribution
+        Contribution::create([
+            'user_id' => $user->id,
+            'scheme_id' => $shares->id,
+            'amount' => 50,
+            'status' => 'success',
+        ]);
+
+        // Run backfill; should not throw FK error and should ignore scheme_id 0
+        Artisan::call('balances:backfill', ['--chunk' => 50]);
+
+        $this->assertDatabaseHas('user_scheme_balances', [
+            'user_id' => $user->id,
+            'scheme_id' => $shares->id,
+            'balance' => 50.00,
+        ]);
+
+        $this->assertDatabaseMissing('user_scheme_balances', [
+            'user_id' => $user->id,
+            'scheme_id' => 0,
+        ]);
+    }
 }

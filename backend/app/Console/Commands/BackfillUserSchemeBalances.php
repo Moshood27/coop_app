@@ -51,13 +51,15 @@ class BackfillUserSchemeBalances extends Command
             'SITTING' => 'sitting_balance',
         ];
 
-        $schemes = Scheme::query()->get(['id', 'name'])->keyBy('id');
-        $schemeNameToId = Scheme::query()->pluck('id', 'name');
+        // Include soft-deleted schemes in validation/maps to satisfy FK constraints
+        $schemes = Scheme::withTrashed()->get(['id', 'name'])->keyBy('id');
+        $schemeNameToId = Scheme::withTrashed()->pluck('id', 'name');
+        $validSchemeIds = $schemes->keys()->map(fn($v) => (int)$v)->all();
 
         $totalUsers = User::query()->count();
         $processed = 0;
 
-        User::query()->orderBy('id')->chunk($chunk, function ($users) use (&$processed, $totalUsers, $dryRun, $schemes, $schemeNameToId, $columnMap) {
+        User::query()->orderBy('id')->chunk($chunk, function ($users) use (&$processed, $totalUsers, $dryRun, $schemes, $schemeNameToId, $columnMap, $validSchemeIds) {
             $userIds = $users->pluck('id')->all();
 
             // Preload contributions sums per user per scheme to minimize queries
@@ -75,9 +77,15 @@ class BackfillUserSchemeBalances extends Command
 
                 // Primary source: contributions sums
                 foreach ($byScheme as $row) {
+                    $sid = (int) ($row->scheme_id ?? 0);
+                    // Skip invalid/missing scheme ids (e.g., 0 or non-existent) to avoid FK violations
+                    if ($sid <= 0 || !in_array($sid, $validSchemeIds, true)) {
+                        continue;
+                    }
+
                     $rows[] = [
                         'user_id' => $user->id,
-                        'scheme_id' => (int) $row->scheme_id,
+                        'scheme_id' => $sid,
                         'balance' => (float) $row->total,
                         'meta' => null,
                         'created_at' => now(),
@@ -87,8 +95,8 @@ class BackfillUserSchemeBalances extends Command
 
                 // Fallbacks: if for a given legacy column there is no per-scheme sum, attempt to backfill
                 foreach ($columnMap as $name => $col) {
-                    $schemeId = $schemeNameToId->get($name);
-                    if (!$schemeId) continue;
+                    $schemeId = (int) ($schemeNameToId->get($name) ?? 0);
+                    if ($schemeId <= 0 || !in_array($schemeId, $validSchemeIds, true)) continue;
 
                     $has = collect($rows)->firstWhere('scheme_id', (int) $schemeId);
                     if ($has) continue;
