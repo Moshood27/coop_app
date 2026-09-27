@@ -465,13 +465,18 @@
                       
                       <div class="flex-1 min-w-0" @click="selectedMembers.includes(member.id) ? selectedMembers = selectedMembers.filter(id => id !== member.id) : selectedMembers.push(member.id)">
                         <div class="flex items-center gap-2">
-                          <p class="text-sm font-black text-slate-800 truncate">{{ member.surname }} {{ member.name }}</p>
+                          <p
+                            class="text-sm font-black text-slate-800 whitespace-normal break-words leading-snug"
+                            :title="fullMemberName(member)"
+                          >
+                            {{ fullMemberName(member) }}
+                          </p>
                           <span 
                             :class="[
                               'px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter transition-colors',
                               getMemberEligibility(member).eligible 
                                 ? (getMemberEligibility(member).isOverride ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')
-                                : 'bg-rose-100 text-rose-700'
+                               : 'bg-rose-100 text-rose-700'
                             ]"
                           >
                             {{ getMemberEligibility(member).label }}
