@@ -559,6 +559,37 @@ class WalletController extends Controller
         ]);
     }
 
+    /**
+     * Return authenticated user's per-scheme balances from normalized storage.
+     * Safe, read-only endpoint for UI consumption.
+     */
+    public function mySchemeBalances(Request $request)
+    {
+        $user = $request->user();
+
+        $rows = $user->schemeBalances()
+            ->with(['scheme' => function($q){ $q->withTrashed(); }])
+            ->get()
+            ->map(function($usb){
+                return [
+                    'scheme_id' => (int) $usb->scheme_id,
+                    'scheme_name' => $usb->scheme?->name,
+                    'active' => (bool) ($usb->scheme?->active ?? true),
+                    'balance' => (float) $usb->balance,
+                    'updated_at' => optional($usb->updated_at)->toIso8601String(),
+                ];
+            })
+            ->sortBy('scheme_name')
+            ->values();
+
+        $total = (float) $rows->sum('balance');
+
+        return response()->json([
+            'data' => $rows,
+            'total' => $total,
+        ]);
+    }
+
     public function allocateFromSpecialSavings(Request $request)
     {
         $validated = $request->validate([

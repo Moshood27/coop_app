@@ -226,6 +226,55 @@ class Contribution extends Model
             }
         });
 
+        // Keep normalized balances accurate when a contribution is updated
+        static::updated(function (self $model) {
+            try {
+                $user = $model->user;
+                if (!$user) { return; }
+
+                $dirty = $model->getDirty();
+                $oldStatus = $model->getOriginal('status');
+                $newStatus = $model->status;
+                $oldSchemeId = $model->getOriginal('scheme_id');
+                $newSchemeId = $model->scheme_id;
+
+                // If scheme changed, resync both old and new scheme buckets
+                if ($oldSchemeId && $oldSchemeId != $newSchemeId) {
+                    $oldSchemeName = optional(\App\Models\Scheme::withTrashed()->find($oldSchemeId))->name;
+                    if ($oldSchemeName) {
+                        $user->syncSchemeBalance($oldSchemeName);
+                    }
+                }
+
+                // If amount/status/scheme changed in a way that affects balances, resync the (new) scheme bucket
+                $affectsBalance = array_key_exists('amount', $dirty)
+                    || array_key_exists('scheme_id', $dirty)
+                    || ($oldStatus !== $newStatus && in_array('success', [$oldStatus, $newStatus], true));
+
+                if ($affectsBalance) {
+                    $newSchemeName = optional($model->scheme ?: \App\Models\Scheme::withTrashed()->find($newSchemeId))->name;
+                    if ($newSchemeName) {
+                        $user->syncSchemeBalance($newSchemeName);
+                    }
+                }
+            } catch (\Throwable $e) {}
+        });
+
+        // Keep normalized balances accurate when a contribution is deleted
+        static::deleted(function (self $model) {
+            try {
+                if ($model->status === 'success' && $model->category !== 'fine') {
+                    $user = $model->user;
+                    if ($user) {
+                        $schemeName = optional($model->scheme ?: \App\Models\Scheme::withTrashed()->find($model->scheme_id))->name;
+                        if ($schemeName) {
+                            $user->syncSchemeBalance($schemeName);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {}
+        });
+
         static::updated(function (self $model) {
             // If relevant fields changed and a scheme is associated, resync balances
             try {

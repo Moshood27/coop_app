@@ -1113,6 +1113,18 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
                 );
             }
 
+            // Remove obsolete rows in this scheme group (no longer present in per-scheme sums)
+            $groupSchemeIds = Scheme::whereIn('name', $relatedSchemes)->pluck('id')->map(fn($v) => (int)$v)->all();
+            $existingSchemeIds = $this->schemeBalances()->whereIn('scheme_id', $groupSchemeIds)->pluck('scheme_id')->map(fn($v) => (int)$v)->all();
+            $currentSchemeIds = $perScheme->keys()->map(fn($v) => (int)$v)->all();
+            $toDelete = array_values(array_diff($existingSchemeIds, $currentSchemeIds));
+            if (!empty($toDelete)) {
+                UserSchemeBalance::query()
+                    ->where('user_id', $this->id)
+                    ->whereIn('scheme_id', $toDelete)
+                    ->delete();
+            }
+
             // 2) Also keep legacy column in sync for backward compatibility
             $actualTotal = (float) array_reduce($perScheme->all(), fn($carry, $v) => $carry + (float) $v, 0.0);
             $this->forceFill([$column => $actualTotal])->save();

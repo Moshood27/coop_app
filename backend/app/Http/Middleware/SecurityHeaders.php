@@ -27,7 +27,9 @@ class SecurityHeaders
         // Do not override headers if already set upstream (e.g., reverse proxy)
         $csp = [
             "default-src 'self'",
+            // Explicitly set both script-src and script-src-elem to avoid browser fallbacks
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co https://static.cloudflareinsights.com https://attaqwacooposg.com https://checkout.flutterwave.com",
+            "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://js.paystack.co https://static.cloudflareinsights.com https://attaqwacooposg.com https://checkout.flutterwave.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
             "img-src 'self' data: https: blob: https://attaqwacooposg.com",
