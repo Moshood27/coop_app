@@ -125,7 +125,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import axios from '../../http'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -235,6 +236,59 @@ const allocationItems = computed(() => {
   return dist.filter(i => i && (i.amount || i.category || i.scheme_name || i.scheme_id))
 })
 
+// Lightweight cache of schemes so we can resolve scheme_id -> scheme name in preview
+const schemeMap = ref({})
+const schemesLoaded = ref(false)
+const loadingSchemes = ref(false)
+
+const buildSchemeMap = (list) => {
+  const map = {}
+  ;(list || []).forEach(s => {
+    if (s && (s.id !== undefined && s.id !== null)) {
+      map[String(s.id)] = s.name || s.title || s.code || `Scheme #${s.id}`
+    }
+  })
+  schemeMap.value = map
+}
+
+const ensureSchemes = async () => {
+  if (schemesLoaded.value || loadingSchemes.value) return
+  try {
+    loadingSchemes.value = true
+    const { data } = await axios.get('/api/schemes')
+    // Accept either {data: [...]} or plain array
+    const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : [])
+    buildSchemeMap(list)
+    schemesLoaded.value = true
+  } catch (e) {
+    // Fail silently; we will keep showing (#id) fallback
+  } finally {
+    loadingSchemes.value = false
+  }
+}
+
+// When modal opens for a wallet_allocation and some items lack scheme_name, load schemes once
+const needsSchemeNames = computed(() => {
+  if (!allocationItems.value?.length) return false
+  return allocationItems.value.some(i => i && !i.scheme_name && i.scheme_id)
+})
+
+watch(
+  () => [props.isOpen, isWalletAllocation.value, needsSchemeNames.value],
+  async ([open, isAlloc, needs]) => {
+    if (open && isAlloc && needs) {
+      await ensureSchemes()
+    }
+  },
+  { immediate: false }
+)
+
+onMounted(async () => {
+  if (props.isOpen && isWalletAllocation.value && needsSchemeNames.value) {
+    await ensureSchemes()
+  }
+})
+
 const allocationLabel = (item) => {
   const cat = item?.category || 'deposit'
   let label = ''
@@ -246,7 +300,11 @@ const allocationLabel = (item) => {
 
   // Prefer pre-resolved scheme_name from API if available, else show (#id)
   if (item?.scheme_name) return `${label} (${item.scheme_name})`
-  if (item?.scheme_id) return `${label} (#${item.scheme_id})`
+  if (item?.scheme_id) {
+    const resolved = schemeMap.value[String(item.scheme_id)]
+    if (resolved) return `${label} (${resolved})`
+    return `${label} (#${item.scheme_id})`
+  }
   return label
 }
 
