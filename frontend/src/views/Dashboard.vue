@@ -4,13 +4,7 @@
 
     <div class="max-w-5xl mx-auto px-4 pb-32">
       <!-- Global System Announcement -->
-      <div v-if="appStatusStore.systemAnnouncement" 
-           class="mt-4 bg-emerald-600 text-white px-4 py-3 rounded-2xl text-center text-xs font-bold flex items-center justify-center gap-3 shadow-md animate-in fade-in slide-in-from-top duration-500 mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.007.51.011.77.011h3.39c.8 0 1.545-.466 1.89-1.159L18.42 12l-1.12-2.25c-.345-.693-1.09-1.159-1.89-1.159h-3.39c-.26 0-.517.004-.77.011m0 9.18c.612.016 1.221.031 1.83.042m-1.83-9.222c.61-.011 1.218-.026 1.83-.042m-1.83 9.222v-9.18m1.83 9.138A17.944 17.944 0 0 1 12 18c-1.353 0-2.65-.148-3.903-.432m10.343-9.43A17.944 17.944 0 0 0 12 6c-1.353 0-2.65.148-3.903.432" />
-        </svg>
-        <p class="leading-tight">{{ appStatusStore.systemAnnouncement }}</p>
-      </div>
+      <SystemAnnouncement :message="appStatusStore.systemAnnouncement" />
 
       <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
         <!-- Left Column: Primary Info & Warnings -->
@@ -27,30 +21,11 @@
           />
 
           <!-- Dashboard Swiper (First Login) -->
-          <div v-if="appStatusStore.onboardingSwiperEnabled && !hasSeenDashboardSwiper && appStatusStore.onboardingSwiperSlides.length > 0"
-               class="mt-4 relative group">
-            <Swiper
-                :modules="[Pagination, Autoplay]"
-                :pagination="{ clickable: true }"
-                :autoplay="{ delay: 5000, disableOnInteraction: false }"
-                class="rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100 bg-white"
-            >
-              <SwiperSlide v-for="(s, i) in appStatusStore.onboardingSwiperSlides" :key="i">
-                <div class="p-6 flex items-center gap-4">
-                  <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center bg-emerald-50 rounded-2xl" v-html="s.icon"></div>
-                  <div class="flex-1 pr-4">
-                    <h3 class="font-bold text-slate-800 text-sm">{{ s.title }}</h3>
-                    <p class="text-[10px] text-slate-500 leading-tight mt-0.5">{{ s.description || s.desc }}</p>
-                  </div>
-                </div>
-              </SwiperSlide>
-            </Swiper>
-            <button @click="dismissSwiper" class="absolute top-3 right-3 z-10 p-1 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-400 transition-colors shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          <OnboardingSwiper
+            :visible="appStatusStore.onboardingSwiperEnabled && !hasSeenDashboardSwiper"
+            :slides="appStatusStore.onboardingSwiperSlides"
+            @dismiss="dismissSwiper"
+          />
 
           <ActionBanners
             :dashboardData="dashboardData"
@@ -73,13 +48,12 @@
     </div> <!-- end right col -->
   </div> <!-- end grid -->
 
-      <!-- Trend chart -->
-      <FinCard class="mt-6" :padded="true" :elevated="true">
-        <template #title>
-          Activity Trend
-        </template>
-        <TrendChart :series="chart.series" :categories="chart.categories" :currency="currency" />
-      </FinCard>
+      <!-- Trend chart section -->
+      <TrendChartSection
+        :series="chart.series"
+        :categories="chart.categories"
+        :currency="currency"
+      />
 
     <QuickActions
       :dashboardData="dashboardData"
@@ -121,6 +95,7 @@
       @close="showTxModal = false"
       @download="downloadReceipt"
       @share="shareReceipt"
+      @copy="(text) => showNotice('success', 'Copied', 'Reference copied to clipboard')"
     />
 
     <GuarantorRequestModal
@@ -165,10 +140,6 @@
 <script setup>
 import AppHeader from '../components/AppHeader.vue'
 import { ref, onMounted, computed, onUnmounted, nextTick } from 'vue'
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Pagination, Autoplay } from 'swiper/modules'
-import 'swiper/css'
-import 'swiper/css/pagination'
 import { isValidEmail } from '../utils/validation'
 import { getEcho } from '../realtime/echo'
 import { useAppStatusStore } from '../stores/appStatus'
@@ -177,9 +148,7 @@ import getImageUrl from '../utils/image'
 import { useModal } from '../composables/useModal'
 import CustomNotice from '../components/CustomNotice.vue'
 import { useNotice } from '../composables/useNotice'
-import FinCard from '../components/FinCard.vue'
 import StatPill from '../components/StatPill.vue'
-import TrendChart from '../components/TrendChart.vue'
 import SignaturePad from '../components/SignaturePad.vue'
 import { startDashboardTour } from '../utils/tour'
 import { useBalanceVisibility } from '../composables/useBalanceVisibility'
@@ -193,6 +162,9 @@ import GuarantorRequestModal from '../components/dashboard/GuarantorRequestModal
 import GenderUpdateModal from '../components/dashboard/GenderUpdateModal.vue'
 import EmailUpdateModal from '../components/dashboard/EmailUpdateModal.vue'
 import PinSetupModal from '../components/dashboard/PinSetupModal.vue'
+import SystemAnnouncement from '../components/dashboard/SystemAnnouncement.vue'
+import OnboardingSwiper from '../components/dashboard/OnboardingSwiper.vue'
+import TrendChartSection from '../components/dashboard/TrendChartSection.vue'
 
 const modal = useModal()
 const { notice, showNotice, closeNotice } = useNotice()
@@ -220,7 +192,9 @@ const previewTx = (tx) => {
   selectedTx.value = {
     ...tx,
     title: txTitle(tx),
-    reference: txPrefix(tx)
+    reference: txPrefix(tx),
+    status: tx.status || 'Successful',
+    isUtility: false
   }
   showTxModal.value = true
 }
@@ -229,30 +203,37 @@ const previewUx = (ux) => {
   selectedTx.value = {
     ...ux,
     title: utilLabel(ux),
-    type: ux.status === 'success' ? 'credit' : 'debit', // use colors for status
-    description: `Utility purchase for ${ux.phone_number}`
+    type: 'debit',
+    status: ux.status || 'Pending',
+    reference: ux.reference,
+    description: `Utility purchase for ${ux.phone_number} (${(ux.network || '').toUpperCase()})`,
+    isUtility: true
   }
   showTxModal.value = true
 }
 
 const getReceiptDownloadUrl = (tx) => {
+  if (tx.isUtility) return null
   const id = tx.id
   const token = localStorage.getItem('token')
   const baseUrl = axios.defaults.baseURL || ''
-  // Based on Wallet.vue logic
   return `${baseUrl}/api/wallet/transactions/${id}/receipt?token=${encodeURIComponent(token)}`
 }
 
 const downloadReceipt = (tx) => {
   const url = getReceiptDownloadUrl(tx)
-  window.open(url, '_blank')
+  if (url) {
+    window.open(url, '_blank')
+  } else {
+    showNotice('info', 'Not Available', 'Official PDF receipt is not available for utility transactions. Please use the "Share" option instead.')
+  }
 }
 
 const shareReceipt = async (tx) => {
-  const title = txTitle(tx)
+  const title = tx.title || 'Transaction'
   const amount = formatMoney(tx.amount)
-  const ref = txPrefix(tx)
-  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nDate: ${formatDate(tx.created_at)}`
+  const ref = tx.reference || tx.id
+  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx.status || 'Successful'}\nDate: ${formatDate(tx.created_at)}`
   
   if (navigator.share) {
     try {
@@ -518,8 +499,6 @@ const load = async () => {
     } else if (!isValidEmail(data.email)) {
       // Check Email
       showEmailModal.value = true
-      // If the email is clearly invalid (like a membership number or nonsense), clear it for them to type fresh
-      emailForm.value.email = '' 
     } else if (appStatusStore.setTransactionPinEnabled && !data.kpis.has_pin) {
       // Check PIN
       showPinModal.value = true
