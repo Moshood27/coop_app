@@ -137,5 +137,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 });
 
 // Explicit broadcasting routes registration to resolve 404s on broadcasting/auth
-// Supported guards: sanctum (API/Mobile/Vue) and web (Filament/Sessions)
-\Illuminate\Support\Facades\Broadcast::routes(['middleware' => ['auth:sanctum,web']]);
+// Use Sanctum personal access tokens for SPA/mobile and API requests.
+// We intentionally avoid relying on the session (web) guard here to prevent
+// 403s when no session cookie is present and only a Bearer token is used.
+\Illuminate\Support\Facades\Broadcast::routes([
+    'middleware' => ['auth:sanctum'],
+]);
