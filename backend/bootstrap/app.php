@@ -25,9 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust proxies (e.g., ngrok) so Laravel honors X-Forwarded-* headers
         $middleware->trustProxies(at: '*');
 
-        // Exclude Paystack webhook from CSRF verification
+        // Exclude Paystack webhook and broadcasting auth from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/paystack',
+            'broadcasting/auth',
         ]);
 
         // Alias custom middleware
