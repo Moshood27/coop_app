@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Scheme;
+use App\Models\UserSchemeBalance;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
@@ -1092,13 +1093,50 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
             // Safely sum all schemes that map to the same column
             $relatedSchemes = array_keys(array_filter($columnMap, fn($c) => $c === $column));
 
-            $actualTotal = (float) $this->contributions()
-                ->whereHas('scheme', fn($q) => $q->whereIn('name', $relatedSchemes))
+            // 1) Upsert per-scheme balances into the normalized table
+            $perScheme = $this->contributions()
+                ->selectRaw('scheme_id, SUM(amount) as total')
                 ->where('status', 'success')
-                ->sum('amount');
+                ->whereHas('scheme', fn($q) => $q->whereIn('name', $relatedSchemes))
+                ->groupBy('scheme_id')
+                ->pluck('total', 'scheme_id');
 
+            foreach ($perScheme as $schemeId => $total) {
+                UserSchemeBalance::query()->updateOrCreate(
+                    [
+                        'user_id' => $this->id,
+                        'scheme_id' => (int) $schemeId,
+                    ],
+                    [
+                        'balance' => (float) $total,
+                    ]
+                );
+            }
+
+            // 2) Also keep legacy column in sync for backward compatibility
+            $actualTotal = (float) array_reduce($perScheme->all(), fn($carry, $v) => $carry + (float) $v, 0.0);
             $this->forceFill([$column => $actualTotal])->save();
         }
+    }
+
+    public function schemeBalances()
+    {
+        return $this->hasMany(UserSchemeBalance::class);
+    }
+
+    public function schemeBalanceFor($scheme)
+    {
+        if (is_numeric($scheme)) {
+            return $this->schemeBalances()->where('scheme_id', (int) $scheme)->first();
+        }
+
+        $schemeModel = $scheme instanceof Scheme
+            ? $scheme
+            : Scheme::where('name', (string) $scheme)->first();
+
+        return $schemeModel
+            ? $this->schemeBalances()->where('scheme_id', $schemeModel->id)->first()
+            : null;
     }
 
     public function getTotalBalance(): float

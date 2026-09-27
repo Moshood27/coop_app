@@ -227,6 +227,27 @@ class Contribution extends Model
         });
 
         static::updated(function (self $model) {
+            // If relevant fields changed and a scheme is associated, resync balances
+            try {
+                if ($model->scheme && ($model->wasChanged('amount') || $model->wasChanged('status') || $model->wasChanged('scheme_id'))) {
+                    if ($model->category !== 'fine') {
+                        $schemeName = $model->scheme->name;
+                        $model->user->syncSchemeBalance($schemeName);
+                    }
+                }
+            } catch (\Throwable $e) {}
+        });
+
+        static::deleted(function (self $model) {
+            // On deletion, resync if applicable
+            try {
+                if ($model->scheme && $model->category !== 'fine') {
+                    $model->user->syncSchemeBalance($model->scheme->name);
+                }
+            } catch (\Throwable $e) {}
+        });
+
+        static::updated(function (self $model) {
             // When a contribution tied to a project is marked successful, create a ProjectInvestment once
             try {
                 if ($model->status === 'success' && ($model->wasChanged('status') || $model->wasChanged('amount'))) {
