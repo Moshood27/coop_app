@@ -104,11 +104,12 @@ class BackfillUserSchemeBalances extends Command
                     $legacyValue = (float) ($user->{$col} ?? 0);
                     if ($legacyValue <= 0) continue;
 
+                    // Note: Builder::upsert bypasses model casting, so encode arrays to JSON manually for JSON column
                     $rows[] = [
                         'user_id' => $user->id,
                         'scheme_id' => (int) $schemeId,
                         'balance' => $legacyValue,
-                        'meta' => ['source' => 'legacy_column', 'column' => $col],
+                        'meta' => json_encode(['source' => 'legacy_column', 'column' => $col]),
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
