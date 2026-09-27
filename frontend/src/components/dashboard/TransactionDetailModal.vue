@@ -5,14 +5,14 @@
       <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="close"></div>
       
       <!-- Modal Content -->
-      <div class="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+      <div class="relative w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
         <!-- Header/Status Icon -->
-        <div class="pt-10 pb-6 flex flex-col items-center">
-          <div class="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
-             <span class="text-4xl">{{ statusIcon }}</span>
+        <div class="pt-8 sm:pt-10 pb-4 sm:pb-6 flex flex-col items-center">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
+             <span class="text-3xl sm:text-4xl">{{ statusIcon }}</span>
           </div>
-          <h3 class="text-xl font-black text-slate-800 text-center px-6 leading-tight">{{ txTitle }}</h3>
-          <p class="text-3xl font-black mt-2 tracking-tight" :class="amountClass">
+          <h3 class="text-lg sm:text-xl font-black text-slate-800 text-center px-6 leading-tight">{{ txTitle }}</h3>
+          <p class="text-2xl sm:text-3xl font-black mt-2 tracking-tight" :class="amountClass">
              {{ amountPrefix }} ₦{{ formatMoney(transaction.amount) }}
           </p>
           <div class="mt-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border border-slate-50" :class="statusBadgeClass">
@@ -21,8 +21,8 @@
         </div>
 
         <!-- Details -->
-        <div class="px-8 pb-8 space-y-4">
-          <div class="bg-slate-50/50 rounded-[2rem] p-6 space-y-4 border border-slate-100">
+        <div class="px-6 sm:px-8 pb-6 sm:pb-8 space-y-4 overflow-y-auto flex-1">
+          <div class="bg-slate-50/50 rounded-[2rem] p-4 sm:p-6 space-y-4 border border-slate-100">
             <div class="flex justify-between items-center">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference</span>
               <div class="flex items-center gap-2">
@@ -87,7 +87,7 @@
           </div>
 
           <!-- Allocation Details (wallet_allocation) -->
-          <div v-if="isWalletAllocation && allocationItems.length" class="bg-white rounded-[2rem] p-6 space-y-3 border border-slate-100 shadow-sm">
+          <div v-if="isWalletAllocation && allocationItems.length" class="bg-white rounded-[2rem] p-4 sm:p-6 space-y-3 border border-slate-100 shadow-sm">
             <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Allocation Details</div>
             <div class="divide-y divide-slate-100">
               <div v-for="(item, idx) in allocationItems" :key="idx" class="py-2 flex items-center justify-between">
