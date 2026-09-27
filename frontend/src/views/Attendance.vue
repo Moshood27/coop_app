@@ -927,6 +927,16 @@ const getMemberEligibility = (m) => {
   return { eligible: false, label: 'Not eligible' }
 }
 
+// Compose a member's full name including other names without truncation
+const fullMemberName = (m) => {
+  if (!m) return ''
+  const parts = [m.surname, m.name, m.other_names]
+    .map(p => (p == null ? '' : String(p)))
+    .map(p => p.trim())
+    .filter(p => p.length > 0)
+  return parts.join(' ')
+}
+
 const startThrottleCooldown = (seconds = 5) => {
   throttleCooldown.value = seconds
   if (throttleTimer.value) clearInterval(throttleTimer.value)
