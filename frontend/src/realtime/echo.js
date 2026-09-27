@@ -56,14 +56,34 @@ export function getEcho() {
         authorizer: (channel, options) => {
             return {
                 authorize: (socketId, callback) => {
-                    axios.post(authEndpoint, {
-                        socket_id: socketId,
-                        channel_name: channel.name
-                    })
+                    // Always fetch the freshest token and send explicit JSON headers
+                    const token = (typeof window !== 'undefined')
+                        ? (localStorage.getItem('token') || localStorage.getItem('admin_token'))
+                        : null
+
+                    axios.post(
+                        authEndpoint,
+                        { socket_id: socketId, channel_name: channel.name },
+                        {
+                            headers: {
+                                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            withCredentials: false,
+                        }
+                    )
                     .then(response => {
                         callback(false, response.data)
                     })
                     .catch(error => {
+                        try {
+                            // Surface a concise reason in the console to aid debugging
+                            const status = error?.response?.status
+                            const data = error?.response?.data
+                            // eslint-disable-next-line no-console
+                            console.error('Broadcast auth failed:', status, data)
+                        } catch (_) {}
                         callback(true, error)
                     })
                 }
