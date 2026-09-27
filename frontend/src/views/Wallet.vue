@@ -803,7 +803,7 @@
 import AppHeader from '../components/AppHeader.vue'
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import axios from '../http.js'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStatusStore } from '../stores/appStatus'
 import { openBlob } from '../utils/download'
 import { useBalanceVisibility } from '../composables/useBalanceVisibility'
@@ -813,6 +813,7 @@ import { verifyBiometricIdentity, isBiometricAvailable } from '../services/biome
 import { getEcho } from '../realtime/echo'
 
 const router = useRouter()
+const route = useRoute()
 const appStatusStore = useAppStatusStore()
 const baseRaw = import.meta?.env?.BASE_URL || '/'
 const basePath = (baseRaw && baseRaw.startsWith('./')) ? '/' : (baseRaw.endsWith('/') ? baseRaw : `${baseRaw}/`)
@@ -825,6 +826,29 @@ const { notice, showNotice, closeNotice } = useNotice()
 const { hideBalances } = useBalanceVisibility()
 
 const activeTab = ref('overview')
+
+// Allow deep-linking into a specific wallet tab via query, e.g. /wallet?tab=transactions
+const validTabs = ['overview', 'fund', 'transfer', 'withdraw', 'merchant', 'transactions', 'requests']
+const activateTabFromRoute = () => {
+  const qtab = String(route.query.tab || '').toLowerCase()
+  if (validTabs.includes(qtab)) {
+    activeTab.value = qtab
+    // optional: clear search when switching via route
+    searchQuery.value = ''
+    // smooth scroll to tabs nav
+    setTimeout(() => {
+      try {
+        document.querySelector('.no-scrollbar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch (_) {}
+    }, 0)
+  }
+}
+
+onMounted(() => {
+  activateTabFromRoute()
+})
+
+watch(() => route.query.tab, () => activateTabFromRoute())
 const enabledGateways = computed(() => {
   const gws = appStatusStore.paymentGateways || {}
   return Object.keys(gws).filter(k => k !== 'primary' && gws[k])

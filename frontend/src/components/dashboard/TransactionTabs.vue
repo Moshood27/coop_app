@@ -55,7 +55,12 @@
 
       <div class="flex justify-between items-center">
         <h3 class="font-bold text-slate-800 text-lg">Recent Transactions</h3>
-        <button class="text-emerald-700 text-sm font-bold" @click="$router.push('/passbook')">See All</button>
+        <button
+          class="text-emerald-700 text-sm font-bold"
+          @click="$router.push({ path: '/wallet', query: { tab: 'transactions' } })"
+        >
+          See All
+        </button>
       </div>
 
       <div v-if="filteredTransactions.length" class="space-y-3">
