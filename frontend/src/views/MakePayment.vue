@@ -285,12 +285,23 @@ const totalAmount = computed(() => paymentList.value.reduce((sum, i) => sum + Nu
 
 // Custom notice (shared)
 const { notice, showNotice, closeNotice: baseCloseNotice } = useNotice()
-const closeNotice = () => {
+// Queue flag to open the receipt preview AFTER the success notice is dismissed
+const pendingPreview = ref(false)
+const closeNotice = async () => {
   const isSuccess = notice.value.type === 'success' && notice.value.title === 'Success'
   baseCloseNotice()
-  // If receipt modal is open, don't navigate away; allow user to preview/download first
-  if (isSuccess && !showTxModal.value) {
-    router.replace({ name: 'dashboard' })
+  if (isSuccess) {
+    // If a preview is queued, open the transaction detail modal next and skip redirect
+    if (pendingPreview.value && selectedTx.value) {
+      try { await nextTick() } catch (_) {}
+      showTxModal.value = true
+      pendingPreview.value = false
+      return
+    }
+    // If no preview is pending and receipt modal isn't open, navigate away
+    if (!showTxModal.value) {
+      router.replace({ name: 'dashboard' })
+    }
   }
 }
 
@@ -567,12 +578,13 @@ const handlePinConfirm = async (val) => {
     }
 
     selectedTx.value = tx
-    showTxModal.value = true
+    // Show success first; open the receipt preview after the success notice is dismissed
+    pendingPreview.value = true
 
     // Clear form and refresh balances
     paymentList.value = []
     await loadWallet()
-    // Also show a small success toast; redirect happens only if the user closes the notice and modal isn't open
+    // Show a success notice first; upon closing it, the queued receipt preview will open automatically
     showNotice('Success', 'Your funds have been successfully allocated to your passbook.', 'success')
   } catch (e) {
     pinPrompt.value.visible = false

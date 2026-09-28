@@ -25,9 +25,21 @@
           <div class="bg-slate-50/50 rounded-[2rem] p-4 sm:p-6 space-y-4 border border-slate-100">
             <div class="flex justify-between items-center">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference</span>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-black text-slate-700">{{ transaction.reference || transaction.id }}</span>
-                <button @click="copy(transaction.reference || transaction.id)" class="text-emerald-600 hover:text-emerald-700">
+              <!-- Right side container is shrinkable so long refs don't break layout -->
+              <div class="flex items-center gap-2 min-w-0 max-w-[70%] sm:max-w-[75%] md:max-w-[80%] justify-end">
+                <!-- Truncate visually, keep full value in title for hover and copy button for exact value -->
+                <span
+                  class="text-xs font-black text-slate-700 font-mono truncate max-w-full select-text"
+                  :title="transaction.reference || transaction.id"
+                >
+                  {{ transaction.reference || transaction.id }}
+                </span>
+                <button
+                  @click="copy(transaction.reference || transaction.id)"
+                  class="text-emerald-600 hover:text-emerald-700 shrink-0"
+                  :aria-label="`Copy reference ${transaction.reference || transaction.id}`"
+                  :title="'Copy reference'"
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                   </svg>
