@@ -9,6 +9,7 @@ use App\Models\Contribution;
 use App\Models\Scheme;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class AdministrativeChargeService
@@ -52,51 +53,65 @@ class AdministrativeChargeService
             })
             ->chunkById(100, function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, &$stats) {
                 foreach ($users as $user) {
-                    $stats['total_users']++;
+                    try {
+                        $stats['total_users']++;
 
-                    // Safety Check: Avoid double charging if they already paid this month (via old system or manual entry)
-                    if ($sittingScheme) {
-                        $alreadyPaid = Contribution::where('user_id', $user->id)
-                            ->where('scheme_id', $sittingScheme->id)
-                            ->where('status', 'success')
-                            ->where('paid_at', '>=', Carbon::now()->startOfMonth())
-                            ->exists();
+                        $amount = $user->is_distant ? $meetingFee : $sittingFee;
 
-                        if ($alreadyPaid) {
-                            $user->update(['last_admin_charge_at' => Carbon::now()]);
-                            continue;
-                        }
+                        DB::transaction(function () use ($user, $amount, $period, $sittingScheme, &$stats) {
+                            // Lock the user record to prevent concurrent processing
+                            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+
+                            if (!$lockedUser) return;
+
+                            // Double check if already charged this month (in case another process just finished)
+                            if ($lockedUser->last_admin_charge_at && $lockedUser->last_admin_charge_at >= Carbon::now()->startOfMonth()) {
+                                return;
+                            }
+
+                            // Safety Check: Avoid double charging if they already paid this month (via old system or manual entry)
+                            if ($sittingScheme) {
+                                $alreadyPaid = Contribution::where('user_id', $lockedUser->id)
+                                    ->where('scheme_id', $sittingScheme->id)
+                                    ->where('status', 'success')
+                                    ->where('paid_at', '>=', Carbon::now()->startOfMonth())
+                                    ->exists();
+
+                                if ($alreadyPaid) {
+                                    $lockedUser->update(['last_admin_charge_at' => Carbon::now()]);
+                                    return;
+                                }
+                            }
+
+                            // 1. Accrue the charge
+                            $lockedUser->admin_charge_balance += $amount;
+                            $lockedUser->last_admin_charge_at = Carbon::now();
+                            $lockedUser->save();
+                            $stats['accrued']++;
+
+                            // 2. Auto-deduct (Mandatory if funds available)
+                            if ($lockedUser->admin_charge_balance > 0) {
+                                $this->attemptDeduction($lockedUser, $stats);
+                            }
+
+                            // 3. Notify about accumulation if not fully settled
+                            $lockedUser->refresh();
+                            if ($lockedUser->admin_charge_balance > 0) {
+                                $lockedUser->notifyMember(
+                                    "Administrative Charge Accumulated",
+                                    "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($lockedUser->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
+                                    [
+                                        'type' => 'admin_charge_accumulation',
+                                        'amount' => $amount,
+                                        'total_pending' => $lockedUser->admin_charge_balance,
+                                        'period' => $period
+                                    ]
+                                );
+                            }
+                        });
+                    } catch (\Throwable $e) {
+                        Log::error("Failed to process monthly charge for user {$user->id}: " . $e->getMessage());
                     }
-
-                    $amount = $user->is_distant ? $meetingFee : $sittingFee;
-
-                    DB::transaction(function () use ($user, $amount, $period, &$stats) {
-                        // 1. Accrue the charge
-                        $user->admin_charge_balance += $amount;
-                        $user->last_admin_charge_at = Carbon::now();
-                        $user->save();
-                        $stats['accrued']++;
-
-                        // 2. Auto-deduct (Mandatory if funds available)
-                        if ($user->admin_charge_balance > 0) {
-                            $this->attemptDeduction($user, $stats);
-                        }
-
-                        // 3. Notify about accumulation if not fully settled
-                        $user->refresh();
-                        if ($user->admin_charge_balance > 0) {
-                            $user->notifyMember(
-                                "Administrative Charge Accumulated",
-                                "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($user->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
-                                [
-                                    'type' => 'admin_charge_accumulation',
-                                    'amount' => $amount,
-                                    'total_pending' => $user->admin_charge_balance,
-                                    'period' => $period
-                                ]
-                            );
-                        }
-                    });
                 }
             });
 
@@ -119,16 +134,20 @@ class AdministrativeChargeService
             ->where('balance', '>', 0)
             ->chunkById(100, function ($users) use (&$stats) {
                 foreach ($users as $user) {
-                    $stats['total_users_checked']++;
-                    $beforeBalance = (float) $user->balance;
+                    try {
+                        $stats['total_users_checked']++;
+                        $beforeBalance = (float) $user->balance;
 
-                    if ($this->attemptDeduction($user)) {
-                        $user->refresh();
-                        $deducted = $beforeBalance - (float) $user->balance;
-                        if ($deducted > 0) {
-                            $stats['settled_users']++;
-                            $stats['total_deducted_amount'] += $deducted;
+                        if ($this->attemptDeduction($user)) {
+                            $user->refresh();
+                            $deducted = $beforeBalance - (float) $user->balance;
+                            if ($deducted > 0) {
+                                $stats['settled_users']++;
+                                $stats['total_deducted_amount'] += $deducted;
+                            }
                         }
+                    } catch (\Throwable $e) {
+                        Log::error("Failed to settle outstanding charges for user {$user->id}: " . $e->getMessage());
                     }
                 }
             });
@@ -141,24 +160,27 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
-        $user->refresh();
+        return DB::transaction(function () use ($user, &$stats) {
+            // Lock the user record to prevent concurrent deductions
+            $user = User::where('id', $user->id)->lockForUpdate()->first();
 
-        $due = (float) $user->admin_charge_balance;
-        if ($due <= 0) return true;
+            if (!$user) return false;
 
-        $balance = (float) $user->balance;
-        if ($balance <= 0) {
-            if (isset($stats['failed_auto_deduct'])) $stats['failed_auto_deduct']++;
-            return false;
-        }
+            $due = (float) $user->admin_charge_balance;
+            if ($due <= 0) return true;
 
-        $amountToDeduct = min($due, $balance);
+            $balance = (float) $user->balance;
+            if ($balance <= 0) {
+                if (isset($stats['failed_auto_deduct'])) $stats['failed_auto_deduct']++;
+                return false;
+            }
 
-        if ($amountToDeduct <= 0) {
-            return false;
-        }
+            $amountToDeduct = min($due, $balance);
 
-        return DB::transaction(function () use ($user, $amountToDeduct, $due, &$stats) {
+            if ($amountToDeduct <= 0) {
+                return false;
+            }
+
             // Deduct from wallet
             $user->decrement('balance', $amountToDeduct);
             $user->refresh();
@@ -174,7 +196,7 @@ class AdministrativeChargeService
                 $description .= ' (Accumulated)';
             }
 
-            $reference = 'ADMIN-CHG-' . $user->id . '-' . time();
+            $reference = 'ADMIN-CHG-' . $user->id . '-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4));
 
             Contribution::create([
                 'user_id' => $user->id,
@@ -232,7 +254,13 @@ class AdministrativeChargeService
     public function settleAdminChargeManually(User $user, ?float $amount = null): array
     {
         return DB::transaction(function () use ($user, $amount) {
-            $user->refresh();
+            // Lock the user record
+            $user = User::where('id', $user->id)->lockForUpdate()->first();
+
+            if (!$user) {
+                throw new \Exception("Member not found.");
+            }
+
             $due = (float) $user->admin_charge_balance;
 
             if ($due <= 0) {

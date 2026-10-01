@@ -61,6 +61,7 @@ Schedule::command('savings-groups:charge')
 Schedule::command('admin-charges:collect')
     ->monthlyOn(1, '08:30')
     ->timezone('Africa/Lagos')
+    ->withoutOverlapping()
     ->when(fn() => Setting::get('monthly_fees_enabled', true));
 Schedule::command('zakat:check-nisab-hawl')
     ->daily()
