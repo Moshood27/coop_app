@@ -9,8 +9,8 @@
       <div v-else class="space-y-4">
               <!-- Feature Disabled Alert -->
               <div v-if="appStatusStore.features['apply-for-loan'] === false" class="card bg-amber-50 border-amber-200 p-8 rounded-[2rem] text-center space-y-4 shadow-sm mb-6">
-                <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner">
-                  🤝
+                <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner text-amber-600">
+                  <span class="i-mdi-handshake w-10 h-10"></span>
                 </div>
                 <div>
                   <h3 class="text-lg font-black text-slate-800">Qard Hasan (Loan) Applications Paused</h3>
@@ -31,8 +31,8 @@
                       <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Available Credit Limit</p>
                       <h2 class="text-3xl font-black mt-1">₦ {{ n(eligibility.eligibility_with_score || eligibility.eligibility_adjusted || eligibility.eligibility) }}</h2>
                     </div>
-                    <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-emerald-500/30">
-                      💰
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-emerald-500/30 text-emerald-500">
+                      <span class="i-mdi-cash w-7 h-7"></span>
                     </div>
                   </div>
                   
@@ -55,8 +55,8 @@
                 <!-- Trust Score & Info -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div v-if="eligibility.attaqwa_score !== undefined" class="card p-4 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-indigo-100">
-                      🛡️
+                    <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-indigo-100 text-indigo-600">
+                      <span class="i-mdi-shield-check w-7 h-7"></span>
                     </div>
                     <div>
                       <p class="text-[10px] text-slate-400 font-bold uppercase">Trust Score</p>
@@ -68,8 +68,8 @@
                   </div>
 
                   <div v-if="eligibility.meeting_attendance_count !== undefined" class="card p-4 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-amber-100">
-                      📅
+                    <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-amber-100 text-amber-600">
+                      <span class="i-mdi-calendar w-7 h-7"></span>
                     </div>
                     <div>
                       <p class="text-[10px] text-slate-400 font-bold uppercase">Attendance</p>
@@ -105,7 +105,9 @@
                         <label class="text-[11px] text-slate-500 font-black uppercase tracking-widest">Repayment Period</label>
                         <div class="relative">
                           <input v-model.number="createForm.total_installments" type="number" min="1" :max="eligibility.recommended_duration" class="input pl-10 h-12 bg-slate-100" placeholder="e.g. 12" readonly disabled/>
-                          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">⏱️</span>
+                          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <span class="i-mdi-clock-outline w-5 h-5"></span>
+                          </span>
                         </div>
                         <p v-if="eligibility.recommended_duration" class="text-[9px] text-slate-400 font-black mt-1 uppercase tracking-wider">Policy Duration: {{ createForm.total_installments }} months</p>
                       </div>
@@ -120,7 +122,9 @@
                             <option value="weekly">Weekly</option>
                             <option value="daily">Daily</option>
                           </select>
-                          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔄</span>
+                          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <span class="i-mdi-refresh w-5 h-5"></span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -143,8 +147,8 @@
                               @focus="startGuarantorSearch(i)"
                               @input="searchGuarantors(createForm['guarantor' + i])"
                             />
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xl grayscale group-focus-within:grayscale-0 transition-all">
-                              {{ createForm['guarantor' + i] ? '✅' : '👤' }}
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xl grayscale group-focus-within:grayscale-0 transition-all flex items-center">
+                              <span :class="[createForm['guarantor' + i] ? 'i-mdi-check-circle text-emerald-500' : 'i-mdi-account text-slate-400', 'w-6 h-6']"></span>
                             </span>
                             <button v-if="createForm['guarantor' + i]" @click="createForm['guarantor' + i] = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-rose-500 transition-colors">
                               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -180,7 +184,9 @@
                     </div>
 
                     <div v-else class="p-4 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-start gap-3">
-                      <span class="text-xl">✨</span>
+                      <span class="text-xl text-emerald-600">
+                        <span class="i-mdi-sparkles w-6 h-6"></span>
+                      </span>
                       <div>
                         <p class="text-sm font-bold text-emerald-900">Instant Approval Eligible</p>
                         <p class="text-xs text-emerald-700 leading-relaxed mt-0.5">No guarantors required. Your loan will be credited automatically upon submission.</p>
@@ -213,8 +219,8 @@
 
               <!-- Notice when creation is not available -->
               <div class="card p-8 text-center space-y-4" v-else>
-                <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner grayscale">
-                  🔒
+                <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner grayscale text-slate-400">
+                  <span class="i-mdi-lock w-10 h-10"></span>
                 </div>
                 <div class="space-y-2">
                   <h3 class="text-lg font-black text-slate-800">Application Restricted</h3>
@@ -251,8 +257,8 @@
                   <ul class="divide-y divide-slate-50">
                     <li v-for="req in guarantorRequests" :key="req.id" class="p-5 hover:bg-slate-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-inner">
-                          🤝
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-inner text-indigo-600">
+                          <span class="i-mdi-handshake w-7 h-7"></span>
                         </div>
                         <div>
                           <p class="font-black text-slate-800">{{ req.member?.name || 'Member' }}</p>
@@ -295,8 +301,11 @@
           <!-- Card Header -->
           <div class="p-5 flex items-center justify-between bg-slate-50/50 border-b border-slate-100">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border transition-transform group-hover:scale-110" :class="loan.is_completed ? 'bg-emerald-50 border-emerald-100' : (['defaulted', 'rejected'].includes(loan.status) ? 'bg-rose-50 border-rose-100' : 'bg-white border-slate-200')">
-                {{ loan.is_completed ? '✅' : (loan.status === 'defaulted' ? '⚠️' : (loan.status === 'rejected' ? '❌' : '💳')) }}
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border transition-transform group-hover:scale-110" :class="loan.is_completed ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : (['defaulted', 'rejected'].includes(loan.status) ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-white border-slate-200 text-slate-400')">
+                <span v-if="loan.is_completed" class="i-mdi-check-circle w-7 h-7"></span>
+                <span v-else-if="loan.status === 'defaulted'" class="i-mdi-alert w-7 h-7"></span>
+                <span v-else-if="loan.status === 'rejected'" class="i-mdi-close-circle w-7 h-7"></span>
+                <span v-else class="i-mdi-credit-card-outline w-7 h-7"></span>
               </div>
               <div>
                 <h3 class="font-black text-slate-800">Qard Hasan (Loan)</h3>
@@ -368,7 +377,7 @@
             <!-- Rejection Notice -->
             <div v-if="loan.status === 'rejected'" class="p-4 rounded-[2rem] bg-rose-50 border border-rose-100 space-y-2">
               <div class="flex items-center gap-2 text-rose-700">
-                <span class="text-lg">❌</span>
+                <span class="text-lg"><span class="i-mdi-close-circle w-6 h-6"></span></span>
                 <h4 class="text-xs font-black uppercase tracking-widest">Application Rejected</h4>
               </div>
               <p class="text-[11px] text-rose-600 font-bold leading-relaxed italic">
@@ -379,8 +388,8 @@
             <!-- Agreement Section -->
             <div class="p-4 rounded-[2rem] border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 space-y-4" v-if="(loan.status === 'pending' || loan.signed_agreement) && loan.status !== 'rejected'">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-amber-100">
-                  📜
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-amber-100 text-amber-600">
+                  <span class="i-mdi-file-document-outline w-6 h-6"></span>
                 </div>
                 <div>
                   <h4 class="text-xs font-black text-amber-900 uppercase tracking-widest">Qard Hasan (Loan) Agreement</h4>
@@ -391,24 +400,24 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" v-if="loan.approved_at || loan.signed_agreement">
                 <a v-if="loan.agreement_template" :href="getImageUrl(loan.agreement_template)" target="_blank" class="flex items-center justify-center gap-2 h-11 bg-white border border-amber-200 rounded-xl text-[11px] font-black text-amber-900 uppercase tracking-widest hover:bg-amber-100 transition-colors">
-                  <span>📥</span> Download PDF
+                  <span><span class="i-mdi-download w-4 h-4"></span></span> Download PDF
                 </a>
                 <a v-else :href="getAgreementDownloadUrl(loan.id)" target="_blank" class="flex items-center justify-center gap-2 h-11 bg-white border border-amber-200 rounded-xl text-[11px] font-black text-amber-900 uppercase tracking-widest hover:bg-amber-100 transition-colors">
-                  <span>⚙️</span> Generate PDF
+                  <span><span class="i-mdi-cog w-4 h-4"></span></span> Generate PDF
                 </a>
 
                 <div v-if="loan.agreement_verified_at" class="h-11 bg-emerald-500 text-white rounded-xl flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100">
-                  <span>✅</span> Verified
+                  <span><span class="i-mdi-check-circle w-4 h-4"></span></span> Verified
                 </div>
                 <div v-else-if="loan.signed_agreement" class="h-11 bg-white border border-amber-200 rounded-xl flex items-center justify-center gap-2 text-[11px] font-black text-amber-600 uppercase tracking-widest italic relative">
                    <div class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
                    Reviewing...
-                   <button @click="triggerAgreementUpload(loan.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-[10px] shadow-sm">🔄</button>
+                   <button @click="triggerAgreementUpload(loan.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-[10px] shadow-sm text-slate-400"><span class="i-mdi-refresh w-3.5 h-3.5"></span></button>
                 </div>
                 <div v-else class="sm:col-span-2">
                   <input :id="'agreement-input-' + loan.id" type="file" accept="application/pdf,image/*" class="hidden" @change="(e) => onAgreementFileChange(e, loan.id)" />
                   <button @click="triggerAgreementUpload(loan.id)" class="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-amber-200 transition-all flex items-center justify-center gap-2" :disabled="uploadingAgreement[loan.id]">
-                    <span v-if="!uploadingAgreement[loan.id]">📤 Upload Signed Copy</span>
+                    <span v-if="!uploadingAgreement[loan.id]"><span class="i-mdi-upload w-4 h-4"></span> Upload Signed Copy</span>
                     <span v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   </button>
                 </div>
@@ -418,8 +427,8 @@
                 <p class="text-[9px] text-amber-700 font-bold mt-1">Available after committee approval</p>
               </div>
               
-              <p v-if="loan.agreement_rejection_reason" class="p-3 bg-rose-100 border border-rose-200 rounded-xl text-[10px] text-rose-700 font-bold italic">
-                ⚠️ Rejected: {{ loan.agreement_rejection_reason }}
+              <p v-if="loan.agreement_rejection_reason" class="p-3 bg-rose-100 border border-rose-200 rounded-xl text-[10px] text-rose-700 font-bold italic flex items-center gap-2">
+                <span class="i-mdi-alert w-4 h-4"></span> Rejected: {{ loan.agreement_rejection_reason }}
               </p>
             </div>
 
@@ -456,7 +465,7 @@
                 <ul class="space-y-2" v-if="loan.repayments?.length">
                   <li v-for="r in loan.repayments.slice(0,3)" :key="r.id" class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
                     <div class="flex items-center gap-2">
-                       <span class="text-emerald-500">💰</span>
+                       <span class="text-emerald-500 flex items-center"><span class="i-mdi-cash w-4 h-4"></span></span>
                        <span class="text-xs font-black text-slate-800">₦ {{ n(r.amount) }}</span>
                     </div>
                     <div>
@@ -476,8 +485,8 @@
         <div v-if="!loans.length" class="card p-6 text-center text-slate-500">No records found.</div>
 
         <div class="card p-8 text-center space-y-4">
-          <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner">
-            💼
+          <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner text-indigo-400">
+            <span class="i-mdi-briefcase-outline w-10 h-10"></span>
           </div>
           <div>
             <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Business Payments</h3>

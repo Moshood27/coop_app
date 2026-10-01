@@ -9,7 +9,7 @@
         <!-- Header/Status Icon -->
         <div class="pt-8 sm:pt-10 pb-4 sm:pb-6 flex flex-col items-center">
           <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
-             <span class="text-3xl sm:text-4xl">{{ statusIcon }}</span>
+             <span :class="[statusIcon, 'text-3xl sm:text-4xl w-10 h-10 sm:w-12 sm:h-12']"></span>
           </div>
           <h3 class="text-lg sm:text-xl font-black text-slate-800 text-center px-6 leading-tight">{{ txTitle }}</h3>
           <p class="text-2xl sm:text-3xl font-black mt-2 tracking-tight" :class="amountClass">
@@ -161,11 +161,11 @@ const txTitle = computed(() => {
 
 const statusIcon = computed(() => {
   const status = String(props.transaction.status || '').toLowerCase()
-  if (status.includes('fail') || status.includes('decline')) return '❌'
-  if (status.includes('pend')) return '⌛'
-  if (props.transaction.type === 'credit') return '✅'
-  if (props.transaction.type === 'debit') return '💸'
-  return '📝'
+  if (status.includes('fail') || status.includes('decline')) return 'i-mdi-close-circle'
+  if (status.includes('pend')) return 'i-mdi-clock-outline'
+  if (props.transaction.type === 'credit') return 'i-mdi-check-circle'
+  if (props.transaction.type === 'debit') return 'i-mdi-cash-minus'
+  return 'i-mdi-text-box-search'
 })
 
 const statusBgClass = computed(() => {

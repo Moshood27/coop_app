@@ -9,7 +9,9 @@
       </div>
 
       <div v-else-if="!meeting" class="bg-white p-10 rounded-3xl shadow-sm border border-slate-100 text-center">
-        <div class="text-5xl mb-4">🗓️</div>
+        <div class="text-5xl mb-4 text-emerald-200">
+          <span class="i-mdi-calendar w-16 h-16"></span>
+        </div>
         <h2 class="text-xl font-bold text-slate-800">No active or upcoming meeting</h2>
         <p class="text-slate-500 mt-2 text-sm">There is no meeting currently active or scheduled for your branch.</p>
         <button @click="fetchCurrentMeeting" class="mt-8 w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-100 uppercase tracking-widest text-xs active:scale-[0.98] transition-all">Refresh</button>
@@ -27,7 +29,10 @@
           <p class="text-slate-500 text-xs mt-1 relative z-10 leading-relaxed">{{ meeting.description }}</p>
           
           <div class="mt-4 flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest relative z-10">
-            <span>🕒 {{ meeting.start_time }} - {{ meeting.end_time }}</span>
+            <span class="flex items-center gap-1">
+              <span class="i-mdi-clock-outline w-3 h-3"></span>
+              {{ meeting.start_time }} - {{ meeting.end_time }}
+            </span>
           </div>
         </div>
 
@@ -50,12 +55,16 @@
               <span class="text-[9px] font-black text-emerald-600 uppercase">On Time Grace</span>
             </div>
           </div>
-          <div class="h-14 w-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl relative z-10">⏳</div>
+          <div class="h-14 w-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl relative z-10 text-emerald-600">
+            <span class="i-mdi-timer-sand w-8 h-8"></span>
+          </div>
         </div>
 
         <!-- Already Marked -->
         <div v-if="record && record.status === 'present'" class="bg-emerald-600 p-8 rounded-[2.5rem] text-center shadow-xl shadow-emerald-100 text-white">
-          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 backdrop-blur-md">✅</div>
+          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 backdrop-blur-md text-white">
+            <span class="i-mdi-check-circle w-10 h-10"></span>
+          </div>
           <h3 class="text-xl font-black uppercase tracking-tight">Attendance Marked</h3>
           <p class="text-emerald-50 text-xs mt-2 font-medium">You successfully marked your attendance at {{ formatTime(record.attended_at) }}.</p>
         </div>
@@ -66,7 +75,8 @@
           record.status === 'excused' ? 'bg-blue-600 shadow-blue-100' : 'bg-slate-600 shadow-slate-100'
         ]">
           <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 backdrop-blur-md">
-            {{ record.status === 'excused' ? '🙏' : '⏳' }}
+            <span v-if="record.status === 'excused'" class="i-mdi-account-voice w-5 h-5"></span>
+            <span v-else class="i-mdi-timer-sand w-5 h-5"></span>
           </div>
           <h3 class="text-xl font-black uppercase tracking-tight">
             {{ record.status === 'excused' ? 'Apology Approved' : 'Apology Pending' }}
@@ -86,7 +96,9 @@
         <div v-else class="space-y-4">
           <div v-if="meeting.status === 'ongoing'" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
             <div class="flex items-center gap-2 mb-6">
-               <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-lg">🔑</div>
+               <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-lg text-emerald-600">
+                 <span class="i-mdi-key w-5 h-5"></span>
+               </div>
                <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Verify Presence</h3>
             </div>
             
@@ -118,7 +130,9 @@
               </div>
 
               <div class="p-5 bg-slate-50 rounded-2xl flex items-center gap-4 border border-slate-100">
-                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm">📍</div>
+                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm text-emerald-600">
+                  <span class="i-mdi-map-marker w-7 h-7"></span>
+                </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-[11px] font-black text-slate-800 uppercase tracking-tight">GPS Location</p>
                   <p class="text-[10px] text-slate-500 font-medium">Required radius: {{ meeting.radius_meters }}m</p>
@@ -134,7 +148,10 @@
               <button @click="submitAttendance()" :disabled="submitting || (!appStatusStore.attendancePinEnabled ? !location : (!pin || !location))" 
                       class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 uppercase tracking-widest text-xs disabled:opacity-50 disabled:shadow-none active:scale-[0.98] transition-all mt-4">
                 <span v-if="submitting" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                <span v-else>📍 Mark Attendance</span>
+                <span class="flex items-center gap-2" v-else>
+                  <span class="i-mdi-map-marker w-5 h-5"></span>
+                  Mark Attendance
+                </span>
               </button>
 
               <div v-if="(hasBiometrics && appStatusStore.attendanceFingerprintEnabled) || (meeting.beacon_uuid && appStatusStore.attendanceBleBeaconEnabled)" class="relative py-4 flex items-center">
@@ -173,7 +190,9 @@
         <!-- Apology Form -->
         <div v-if="canSubmitApology && !inGracePeriod && (!record || record.status === 'absent')" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
              <div class="flex items-center gap-2 mb-4">
-               <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-lg">📝</div>
+               <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-lg text-blue-600">
+                 <span class="i-mdi-text-box-search w-5 h-5"></span>
+               </div>
                <h3 class="font-black text-slate-800 text-sm uppercase tracking-tight">Submit Apology</h3>
             </div>
             <p class="text-[11px] text-slate-500 mb-4">If you cannot attend or will be late, provide a reason here before the meeting starts to avoid fines.</p>
@@ -212,7 +231,9 @@
 
           <!-- Grace Period Info -->
           <div v-if="inGracePeriod && !record" class="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 flex items-start gap-4">
-            <div class="text-2xl">🍼</div>
+            <div class="text-2xl text-pink-600">
+              <span class="i-mdi-baby-face w-8 h-8"></span>
+            </div>
             <div>
               <h4 class="text-xs font-black text-emerald-800 uppercase tracking-tight">Automatic Grace Period</h4>
               <p class="text-[10px] text-emerald-600 font-medium mt-1">You are currently in the nursing mother grace period. You will not be charged for absence or lateness in this meeting.</p>
@@ -229,7 +250,9 @@
              
              <div class="flex items-center justify-between mb-4 relative z-10">
                <div class="flex items-center gap-3">
-                 <div class="w-10 h-10 bg-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-amber-200">👥</div>
+                 <div class="w-10 h-10 bg-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-amber-200 text-white">
+                   <span class="i-mdi-account-group w-6 h-6"></span>
+                 </div>
                  <div>
                    <h3 class="font-black text-slate-800 text-base uppercase tracking-tight leading-none">Admin Control</h3>
                    <p class="text-[9px] text-amber-600 font-black uppercase tracking-widest mt-1">Mark for Member</p>
@@ -294,21 +317,27 @@
                        <div class="text-[8px] font-black text-blue-400 uppercase mb-1">Male</div>
                        <div class="text-xs font-black text-slate-700">{{ meetingStats.gender.male.present }} / {{ meetingStats.gender.male.total }}</div>
                     </div>
-                    <div class="text-xl">👨</div>
+                    <div class="text-xl text-blue-600">
+                      <span class="i-mdi-account w-6 h-6"></span>
+                    </div>
                   </div>
                   <div class="bg-white p-4 rounded-3xl border border-amber-100 shadow-sm flex items-center justify-between">
                     <div>
                        <div class="text-[8px] font-black text-rose-400 uppercase mb-1">Female</div>
                        <div class="text-xs font-black text-slate-700">{{ meetingStats.gender.female.present }} / {{ meetingStats.gender.female.total }}</div>
                     </div>
-                    <div class="text-xl">👩</div>
+                    <div class="text-xl text-pink-600">
+                      <span class="i-mdi-account w-6 h-6"></span>
+                    </div>
                   </div>
                 </div>
               </div>
             </transition>
 
             <div v-if="meeting.status === 'scheduled'" class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 mb-6 relative z-10 flex items-center gap-3">
-               <span class="text-xl">⏳</span>
+               <span class="text-xl text-slate-400">
+                 <span class="i-mdi-timer-sand w-6 h-6"></span>
+               </span>
                <p class="text-[10px] font-bold text-amber-700 uppercase tracking-tight">Meeting has not started yet. You will be able to mark attendance once it's ongoing.</p>
             </div>
             
@@ -380,7 +409,9 @@
                        class="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer active:scale-90 transition-transform group">
                     <div class="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-lg overflow-hidden group-hover:border-amber-400">
                        <img v-if="m.passport_path" :src="`/storage/${m.passport_path}`" class="w-full h-full object-cover" />
-                       <span v-else>👤</span>
+                       <span class="text-slate-300" v-else>
+                         <span class="i-mdi-account w-6 h-6"></span>
+                       </span>
                     </div>
                     <span class="text-[8px] font-bold text-slate-500 uppercase truncate w-14 text-center">{{ m.name }}</span>
                   </div>
@@ -436,7 +467,9 @@
                  </div>
 
                  <div v-if="filteredSearchResults.length === 0" class="py-16 text-center bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-100">
-                    <div class="text-3xl mb-3 opacity-30">🔍</div>
+                    <div class="text-3xl mb-3 opacity-30 text-slate-400">
+                      <span class="i-mdi-magnify w-10 h-10"></span>
+                    </div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-8 leading-relaxed">
                        No members found matching your search. Try different keywords or scan their ID.
                     </p>
@@ -537,7 +570,9 @@
                <div class="grid grid-cols-1 gap-2">
                  <div v-for="rec in markedByMeList" :key="rec.id" class="flex items-center justify-between p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/50 group transition-all">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-xs shadow-sm ring-1 ring-emerald-100">👤</div>
+                      <div class="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-xs shadow-sm ring-1 ring-emerald-100 text-slate-400">
+                        <span class="i-mdi-account w-5 h-5"></span>
+                      </div>
                       <div>
                         <p class="text-[11px] font-black text-slate-800">{{ rec.user?.name }} {{ rec.user?.surname }}</p>
                         <div class="flex items-center gap-2">
@@ -582,8 +617,11 @@
                item.status === 'pending_excuse' ? 'bg-slate-50 text-slate-600' :
                item.status === 'fine_pending' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400'
              ]">
-               {{ item.status === 'present' ? '✅' : item.status === 'fine_paid' ? '💰' : 
-                  item.status === 'excused' ? '🙏' : item.status === 'pending_excuse' ? '⏳' : '❌' }}
+               <span v-if="item.status === 'present'" class="i-mdi-check-circle w-5 h-5 text-emerald-500"></span>
+               <span v-else-if="item.status === 'fine_paid'" class="i-mdi-cash w-5 h-5 text-amber-500"></span>
+               <span v-else-if="item.status === 'excused'" class="i-mdi-account-voice w-5 h-5 text-indigo-500"></span>
+               <span v-else-if="item.status === 'pending_excuse'" class="i-mdi-timer-sand w-5 h-5 text-amber-500"></span>
+               <span v-else class="i-mdi-close-circle w-5 h-5 text-rose-500"></span>
              </div>
              
              <div class="flex-1 min-w-0">
@@ -655,7 +693,9 @@
                 <div class="divide-y divide-slate-50">
                    <div v-for="rec in meetingReportData.records" :key="rec.id" class="grid grid-cols-4 px-2 py-4 items-center gap-2">
                       <div class="col-span-2 flex items-center gap-2">
-                         <div class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-[10px]">👤</div>
+                         <div class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-[10px] text-slate-400">
+                           <span class="i-mdi-account w-4 h-4"></span>
+                         </div>
                          <div class="min-w-0">
                             <p class="text-[10px] font-black text-slate-800 truncate">{{ rec.user_name }}</p>
                             <p class="text-[8px] text-slate-400 font-bold uppercase truncate">{{ rec.membership_number }} • {{ rec.branch }}</p>

@@ -5,8 +5,8 @@
     <div class="p-4 pb-32 space-y-6 max-w-2xl mx-auto">
       <!-- Feature Disabled Alert -->
       <div v-if="appStatusStore.features['shura-voting-active'] === false" class="card card-elevated p-8 rounded-[2rem] text-center space-y-4 shadow-sm">
-        <div class="w-20 h-20 bg-indigo-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner">
-          🔒
+        <div class="w-20 h-20 bg-indigo-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner text-indigo-400">
+          <span class="i-mdi-lock w-12 h-12"></span>
         </div>
         <div>
           <h3 class="text-xl font-black text-slate-800">Voting Restricted</h3>

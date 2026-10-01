@@ -22,7 +22,9 @@
       </div>
       
       <div v-else-if="projects.length === 0" class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-        <div class="text-4xl mb-4">🌟</div>
+        <div class="text-4xl mb-4 text-emerald-200 flex justify-center">
+          <span class="i-mdi-sparkles w-16 h-16"></span>
+        </div>
         <p class="text-slate-500 text-sm">No active projects at the moment.</p>
       </div>
 

@@ -58,7 +58,9 @@
 
       <!-- No Results State -->
       <div v-if="visibleSections.length === 0" class="bg-white p-12 rounded-[2rem] border border-slate-100 text-center space-y-4">
-        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-2xl">🔍</div>
+        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-2xl text-slate-400">
+          <span class="i-mdi-magnify w-8 h-8"></span>
+        </div>
         <div>
           <h3 class="font-bold text-slate-800">No results found</h3>
           <p class="text-xs text-slate-500 mt-1">We couldn't find any settings matching "{{ searchQuery }}"</p>
@@ -139,7 +141,9 @@
            </button>
 
            <div class="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4">
-              <div class="text-2xl mt-1">💡</div>
+              <div class="text-2xl mt-1 text-amber-600">
+                <span class="i-mdi-lightbulb-on w-6 h-6"></span>
+              </div>
               <div>
                  <h5 class="font-bold text-amber-900 text-sm">Screen Brightness</h5>
                  <p class="text-xs text-amber-800 opacity-80 mt-1 leading-relaxed">Increasing your screen brightness helps the scanner recognize your QR code faster.</p>
@@ -239,12 +243,24 @@
             <div class="flex flex-wrap gap-2">
               <div v-for="badge in profile.badges" :key="badge.id" 
                    class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl group relative cursor-help">
-                <span class="text-lg" v-if="badge.type === 'consistency_savings_12'">📅</span>
-                <span class="text-lg" v-else-if="badge.type === 'early_loan_repayment'">🚀</span>
-                <span class="text-lg" v-else-if="badge.type === 'savings_milestone_100k'">💰</span>
-                <span class="text-lg" v-else-if="badge.type === 'vtu_power_user'">⚡</span>
-                <span class="text-lg" v-else-if="badge.type === 'loan_master'">🎓</span>
-                <span class="text-lg" v-else>🏆</span>
+                <span class="text-lg text-emerald-600 flex items-center" v-if="badge.type === 'consistency_savings_12'">
+                  <span class="i-mdi-calendar w-5 h-5"></span>
+                </span>
+                <span class="text-lg text-emerald-600 flex items-center" v-else-if="badge.type === 'early_loan_repayment'">
+                  <span class="i-mdi-rocket-launch w-5 h-5"></span>
+                </span>
+                <span class="text-lg text-emerald-600 flex items-center" v-else-if="badge.type === 'savings_milestone_100k'">
+                  <span class="i-mdi-cash w-5 h-5"></span>
+                </span>
+                <span class="text-lg text-emerald-600 flex items-center" v-else-if="badge.type === 'vtu_power_user'">
+                  <span class="i-mdi-flash w-5 h-5"></span>
+                </span>
+                <span class="text-lg text-emerald-600 flex items-center" v-else-if="badge.type === 'loan_master'">
+                  <span class="i-mdi-school w-5 h-5"></span>
+                </span>
+                <span class="text-lg text-emerald-600 flex items-center" v-else>
+                  <span class="i-mdi-trophy w-5 h-5"></span>
+                </span>
                 <div class="min-w-0">
                   <p class="text-[10px] font-bold text-emerald-800 leading-none">{{ badge.name }}</p>
                 </div>

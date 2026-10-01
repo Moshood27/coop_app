@@ -31,7 +31,9 @@
         <div v-for="b in beneficiaries" :key="b.id" @click="editBeneficiary(b)" class="card p-5 group cursor-pointer active:bg-slate-50 hover:border-indigo-100 transition-all">
           <div class="flex items-start justify-between">
             <div class="flex gap-4">
-              <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-xl">👤</div>
+              <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-xl text-slate-400">
+                <span class="i-mdi-account w-7 h-7"></span>
+              </div>
               <div>
                 <h3 class="font-bold text-slate-800">{{ b.name }}</h3>
                 <p class="text-xs text-slate-500 font-medium">{{ b.relationship }} • {{ b.percentage }}% Allocation ({{ b.asset_type === 'all' ? 'General' : b.asset_type }})</p>
@@ -60,7 +62,9 @@
       </div>
 
       <div v-else class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
-        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📋</div>
+        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-slate-300">
+          <span class="i-mdi-clipboard-text w-8 h-8"></span>
+        </div>
         <p class="text-slate-500 font-medium mb-4">No beneficiaries listed yet.</p>
         <button @click="openAdd" class="btn-primary">Add your first next of kin</button>
       </div>

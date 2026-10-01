@@ -4,66 +4,88 @@
     <div v-if="appStatusStore.setTransactionPinEnabled && dashboardData.kpis && !dashboardData.kpis.has_pin"
          class="p-4 rounded-3xl bg-amber-50 border border-amber-200 flex items-center gap-3 cursor-pointer active:bg-amber-100 transition-all shadow-sm"
          @click="$router.push('/profile')">
-      <div class="text-2xl">🔑</div>
+      <div class="text-2xl text-amber-600">
+        <span class="i-mdi-key w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold text-amber-900">Transaction PIN not set</p>
         <p class="text-xs text-amber-700">You need a PIN to transfer or withdraw funds.</p>
       </div>
-      <div class="text-amber-400">➡️</div>
+      <div class="text-amber-400">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
 
     <!-- Attendance Reminder -->
     <div v-if="dashboardData.kpis && dashboardData.kpis.has_ongoing_meeting"
          class="p-4 rounded-3xl bg-emerald-900 text-white flex items-center gap-3 shadow-lg shadow-emerald-100 cursor-pointer active:bg-emerald-800 transition-all"
          @click="$router.push('/attendance')">
-      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-pulse">📍</div>
+      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-pulse">
+        <span class="i-mdi-map-marker w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold">Meeting Ongoing</p>
         <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Tap to mark attendance</p>
       </div>
-      <div class="text-white/40">➡️</div>
+      <div class="text-white/40">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
 
     <!-- Outstanding Fines Warning -->
     <div v-if="dashboardData.kpis && dashboardData.kpis.outstanding_fines > 0"
          class="p-4 rounded-3xl bg-rose-50 border border-rose-200 flex items-center gap-3 cursor-pointer active:bg-rose-100 transition-all shadow-sm"
          @click="$router.push('/passbook')">
-      <div class="text-2xl">⚠️</div>
+      <div class="text-2xl text-rose-600">
+        <span class="i-mdi-alert w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold text-rose-900">Outstanding Fines: ₦{{ formatMoney(dashboardData.kpis.outstanding_fines) }}</p>
         <p class="text-xs text-rose-700">These will be deducted from your next wallet funding.</p>
       </div>
-      <div class="text-rose-400">➡️</div>
+      <div class="text-rose-400">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
 
     <!-- Tahkim Dispute Warning -->
     <div v-if="kpis.active_disputes_count > 0"
          class="p-4 rounded-3xl bg-slate-900 text-white flex items-center gap-3 shadow-lg shadow-slate-200 cursor-pointer active:bg-slate-800 transition-all"
          @click="$router.push('/sharia-board/history')">
-      <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-xl">⚖️</div>
+      <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-xl text-white">
+        <span class="i-mdi-scale-balance w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold">Active Tahkim ({{ kpis.active_disputes_count }})</p>
         <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Sharia Board Mediation in progress</p>
       </div>
-      <div class="text-white/40">➡️</div>
+      <div class="text-white/40">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
 
     <!-- Shura Voting Banner -->
     <div v-if="appStatusStore.features['shura-voting-active']"
          class="p-4 rounded-3xl bg-indigo-600 text-white flex items-center gap-3 shadow-lg shadow-indigo-100 cursor-pointer active:bg-indigo-500 transition-all"
          @click="$router.push('/agm')">
-      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-bounce">🗳️</div>
+      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl animate-bounce">
+        <span class="i-mdi-vote w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold">AGM Voting Live</p>
         <p class="text-[10px] text-white/70 uppercase tracking-widest font-black">Cast your vote for the Shura Council</p>
       </div>
-      <div class="text-white/40">➡️</div>
+      <div class="text-white/40">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
 
     <!-- Migration Discrepancy Banner -->
     <div v-if="dashboardData.migration?.discrepancy_reported_at && !dashboardData.migration?.verified_at"
          class="p-4 rounded-3xl bg-blue-50 border border-blue-200 flex items-center gap-3 shadow-sm">
-      <div class="text-2xl">⏳</div>
+      <div class="text-2xl text-blue-600">
+        <span class="i-mdi-timer-sand w-6 h-6"></span>
+      </div>
       <div class="flex-1">
         <p class="text-sm font-bold text-blue-900">Balance Under Review</p>
         <p class="text-xs text-blue-700">You reported a discrepancy. Our officers are currently reconciling your records.</p>
@@ -76,7 +98,7 @@
          @click="$router.push('/loans')">
       <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
            :class="kpis.total_due_amount > 0 ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'">
-        {{ kpis.total_due_amount > 0 ? '🚨' : '🔔' }}
+        <span :class="[kpis.total_due_amount > 0 ? 'i-mdi-bell-ring' : 'i-mdi-bell', 'w-6 h-6']"></span>
       </div>
       <div class="flex-1">
         <div class="flex justify-between items-start">
@@ -96,7 +118,9 @@
           Expected to Pay: {{ currency }} {{ hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay) }}
         </p>
       </div>
-      <div class="text-slate-300">➡️</div>
+      <div class="text-slate-300">
+        <span class="i-mdi-chevron-right w-5 h-5"></span>
+      </div>
     </div>
   </div>
 </template>

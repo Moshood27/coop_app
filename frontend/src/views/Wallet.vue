@@ -47,7 +47,9 @@
       <div class="grid grid-cols-2 gap-3">
 
         <button v-if="appStatusStore.features['withdrawals-enabled']" @click="activeTab = 'withdraw'" class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center gap-2 active:bg-slate-50 transition-all">
-          <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-xl">🏦</div>
+          <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-xl text-amber-600">
+            <span class="i-mdi-bank w-7 h-7"></span>
+          </div>
           <span class="text-xs font-bold text-slate-700">Withdraw</span>
         </button>
       </div>
@@ -74,8 +76,8 @@
         <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center relative overflow-hidden">
           <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
           <div class="relative z-10 space-y-6">
-            <div class="w-20 h-20 bg-emerald-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner">
-              📱
+            <div class="w-20 h-20 bg-emerald-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner text-emerald-600">
+              <span class="i-mdi-cellphone w-10 h-10"></span>
             </div>
             <div>
               <h3 class="text-xl font-black text-slate-800">Merchant Pay (QR)</h3>
@@ -83,11 +85,11 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
               <button v-if="appStatusStore.features['merchant-pay-enabled']" @click="$router.push('/merchant/pay')" class="bg-emerald-700 text-white p-4 rounded-2xl font-bold shadow-lg shadow-emerald-700/20 active:scale-95 transition-all flex flex-col items-center gap-2">
-                <span class="text-xl">🔍</span>
+                <span class="text-xl"><span class="i-mdi-magnify w-6 h-6"></span></span>
                 <span class="text-xs uppercase tracking-widest">Scan & Pay</span>
               </button>
               <button v-if="appStatusStore.features['receive-qr-enabled']" @click="$router.push('/merchant/receive')" class="bg-white text-emerald-700 border-2 border-emerald-100 p-4 rounded-2xl font-bold active:scale-95 transition-all flex flex-col items-center gap-2">
-                <span class="text-xl">📥</span>
+                <span class="text-xl"><span class="i-mdi-download w-6 h-6"></span></span>
                 <span class="text-xs uppercase tracking-widest">Receive</span>
               </button>
             </div>

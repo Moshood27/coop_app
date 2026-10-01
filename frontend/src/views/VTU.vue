@@ -4,8 +4,8 @@
     <header class="header-fintech sticky top-0 z-50">
       <div class="flex items-center justify-between px-4 h-16">
         <div class="flex items-center gap-3">
-          <button @click="$router.back()" class="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
-            <span class="material-icons text-2xl">arrow_back</span>
+          <button @click="$router.back()" class="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform flex items-center justify-center">
+            <span class="i-mdi-arrow-left text-2xl w-6 h-6"></span>
           </button>
           <h1 class="text-lg font-bold text-slate-800">Airtime & Bills</h1>
         </div>
@@ -23,8 +23,8 @@
             <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Available Balance</p>
             <div class="flex items-center gap-2">
               <h2 class="text-3xl font-black text-slate-800 tracking-tight" :class="{'text-rose-600': netBalance < 0}">₦ {{ formatMoney(netBalance) }}</h2>
-              <button @click="loadWallet" class="p-1 text-slate-300 hover:text-emerald-600 transition-colors">
-                <span class="material-icons text-lg">refresh</span>
+              <button @click="loadWallet" class="p-1 text-slate-300 hover:text-emerald-600 transition-colors flex items-center justify-center">
+                <span class="i-mdi-refresh text-lg w-5 h-5"></span>
               </button>
             </div>
             <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && adminChargeBalance > 0" class="mt-1 text-slate-400 text-[9px] uppercase font-bold flex gap-2 items-center">
@@ -33,8 +33,8 @@
                <span class="text-rose-500">Charges: ₦ {{ formatMoney(adminChargeBalance) }}</span>
             </div>
           </div>
-          <router-link to="/wallet/topup" class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all">
-            <span class="material-icons">add</span>
+          <router-link to="/wallet/topup" class="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all flex items-center justify-center">
+            <span class="i-mdi-plus w-6 h-6"></span>
           </router-link>
         </div>
       </div>
@@ -47,7 +47,7 @@
             :class="tab === s.id ? 'bg-emerald-50' : 'hover:bg-slate-50'">
             <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all"
               :class="tab === s.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-slate-100 text-slate-500'">
-              <span class="material-icons text-2xl">{{ s.icon }}</span>
+              <span :class="['i-mdi-' + s.icon, 'text-2xl w-6 h-6']"></span>
             </div>
             <span class="text-[10px] font-bold text-center leading-tight" 
               :class="tab === s.id ? 'text-emerald-700' : 'text-slate-500'">{{ s.name }}</span>
@@ -84,7 +84,9 @@
               <label class="lbl">Recipient Phone Number</label>
               <div class="relative">
                 <input v-model="airtime.phone" type="tel" placeholder="0803 000 0000" class="inp py-4 px-5 text-base font-semibold" />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 material-icons">contact_phone</span>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 flex items-center">
+                  <span class="i-mdi-contact-phone w-6 h-6"></span>
+                </span>
               </div>
             </div>
 
@@ -103,7 +105,7 @@
 
             <button @click="buyAirtime" :disabled="loadingAirtime || !canBuyAirtime" 
               class="w-full bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
-              <span v-if="loadingAirtime" class="animate-spin material-icons">sync</span>
+              <span v-if="loadingAirtime" class="animate-spin flex items-center justify-center"><span class="i-mdi-sync w-6 h-6"></span></span>
               <span>{{ loadingAirtime ? 'Processing...' : 'Recharge Now' }}</span>
             </button>
           </div>
@@ -335,10 +337,10 @@ const netBalance = computed(() => {
 const tab = ref('airtime')
 
 const services = [
-  { id: 'airtime', name: 'Airtime', icon: 'phone_android' },
+  { id: 'airtime', name: 'Airtime', icon: 'cellphone' },
   { id: 'data', name: 'Data', icon: 'wifi' },
-  { id: 'electricity', name: 'Electricity', icon: 'bolt' },
-  { id: 'cable', name: 'TV Cable', icon: 'tv' },
+  { id: 'electricity', name: 'Electricity', icon: 'flash' },
+  { id: 'cable', name: 'TV Cable', icon: 'television' },
 ]
 
 const networks = [
