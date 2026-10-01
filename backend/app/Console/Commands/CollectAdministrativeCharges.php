@@ -26,6 +26,9 @@ class CollectAdministrativeCharges extends Command
      */
     public function handle(AdministrativeChargeService $service)
     {
+        // Increase memory limit for batch processing
+        ini_set('memory_limit', '512M');
+
         $this->info('--- Starting Administrative Charge Collection ---');
 
         // 1. Process Monthly Accruals

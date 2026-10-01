@@ -45,75 +45,84 @@ class AdministrativeChargeService
             'total_deducted_amount' => 0,
         ];
 
+        $processBatch = function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, &$stats) {
+            foreach ($users as $user) {
+                try {
+                    $stats['total_users']++;
+
+                    $amount = $user->is_distant ? $meetingFee : $sittingFee;
+
+                    DB::transaction(function () use ($user, $amount, $period, $sittingScheme, &$stats) {
+                        // Lock the user record to prevent concurrent processing
+                        $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+
+                        if (!$lockedUser) return;
+
+                        // Double check if already charged this month (in case another process just finished)
+                        if ($lockedUser->last_admin_charge_at && $lockedUser->last_admin_charge_at >= Carbon::now()->startOfMonth()) {
+                            return;
+                        }
+
+                        // Safety Check: Avoid double charging if they already paid this month (via old system or manual entry)
+                        if ($sittingScheme) {
+                            $alreadyPaid = Contribution::where('user_id', $lockedUser->id)
+                                ->where('scheme_id', $sittingScheme->id)
+                                ->where('status', 'success')
+                                ->where('paid_at', '>=', Carbon::now()->startOfMonth())
+                                ->exists();
+
+                            if ($alreadyPaid) {
+                                $lockedUser->update(['last_admin_charge_at' => Carbon::now()]);
+                                return;
+                            }
+                        }
+
+                        // 1. Accrue the charge
+                        $lockedUser->admin_charge_balance += $amount;
+                        $lockedUser->last_admin_charge_at = Carbon::now();
+                        $lockedUser->save();
+                        $stats['accrued']++;
+
+                        // 2. Auto-deduct (Mandatory if funds available)
+                        if ($lockedUser->admin_charge_balance > 0) {
+                            $this->attemptDeduction($lockedUser, $stats);
+                        }
+
+                        // 3. Notify about accumulation if not fully settled
+                        $lockedUser->refresh();
+                        if ($lockedUser->admin_charge_balance > 0) {
+                            $lockedUser->notifyMember(
+                                "Administrative Charge Accumulated",
+                                "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($lockedUser->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
+                                [
+                                    'type' => 'admin_charge_accumulation',
+                                    'amount' => $amount,
+                                    'total_pending' => $lockedUser->admin_charge_balance,
+                                    'period' => $period
+                                ]
+                            );
+                        }
+                    });
+                } catch (\Throwable $e) {
+                    Log::error("Failed to process monthly charge for user {$user->id}: " . $e->getMessage());
+                }
+            }
+        };
+
         // Process users who haven't been charged this month
-        User::whereNull('deceased_at')
+        $query = User::whereNull('deceased_at')
             ->where(function ($query) use ($period) {
                 $query->whereNull('last_admin_charge_at')
                       ->orWhere('last_admin_charge_at', '<', Carbon::now()->startOfMonth());
-            })
-            ->chunkById(100, function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, &$stats) {
-                foreach ($users as $user) {
-                    try {
-                        $stats['total_users']++;
-
-                        $amount = $user->is_distant ? $meetingFee : $sittingFee;
-
-                        DB::transaction(function () use ($user, $amount, $period, $sittingScheme, &$stats) {
-                            // Lock the user record to prevent concurrent processing
-                            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
-
-                            if (!$lockedUser) return;
-
-                            // Double check if already charged this month (in case another process just finished)
-                            if ($lockedUser->last_admin_charge_at && $lockedUser->last_admin_charge_at >= Carbon::now()->startOfMonth()) {
-                                return;
-                            }
-
-                            // Safety Check: Avoid double charging if they already paid this month (via old system or manual entry)
-                            if ($sittingScheme) {
-                                $alreadyPaid = Contribution::where('user_id', $lockedUser->id)
-                                    ->where('scheme_id', $sittingScheme->id)
-                                    ->where('status', 'success')
-                                    ->where('paid_at', '>=', Carbon::now()->startOfMonth())
-                                    ->exists();
-
-                                if ($alreadyPaid) {
-                                    $lockedUser->update(['last_admin_charge_at' => Carbon::now()]);
-                                    return;
-                                }
-                            }
-
-                            // 1. Accrue the charge
-                            $lockedUser->admin_charge_balance += $amount;
-                            $lockedUser->last_admin_charge_at = Carbon::now();
-                            $lockedUser->save();
-                            $stats['accrued']++;
-
-                            // 2. Auto-deduct (Mandatory if funds available)
-                            if ($lockedUser->admin_charge_balance > 0) {
-                                $this->attemptDeduction($lockedUser, $stats);
-                            }
-
-                            // 3. Notify about accumulation if not fully settled
-                            $lockedUser->refresh();
-                            if ($lockedUser->admin_charge_balance > 0) {
-                                $lockedUser->notifyMember(
-                                    "Administrative Charge Accumulated",
-                                    "A monthly administrative charge of ₦" . number_format($amount, 2) . " has been applied. Your total pending balance is ₦" . number_format($lockedUser->admin_charge_balance, 2) . ". Please fund your wallet for settlement.",
-                                    [
-                                        'type' => 'admin_charge_accumulation',
-                                        'amount' => $amount,
-                                        'total_pending' => $lockedUser->admin_charge_balance,
-                                        'period' => $period
-                                    ]
-                                );
-                            }
-                        });
-                    } catch (\Throwable $e) {
-                        Log::error("Failed to process monthly charge for user {$user->id}: " . $e->getMessage());
-                    }
-                }
             });
+
+        if (class_exists('Laravel\Telescope\Telescope')) {
+            \Laravel\Telescope\Telescope::withoutRecording(function () use ($query, $processBatch) {
+                $query->chunkById(100, $processBatch);
+            });
+        } else {
+            $query->chunkById(100, $processBatch);
+        }
 
         return $stats;
     }
@@ -129,28 +138,37 @@ class AdministrativeChargeService
             'total_deducted_amount' => 0,
         ];
 
-        User::whereNull('deceased_at')
-            ->where('admin_charge_balance', '>', 0)
-            ->where('balance', '>', 0)
-            ->chunkById(100, function ($users) use (&$stats) {
-                foreach ($users as $user) {
-                    try {
-                        $stats['total_users_checked']++;
-                        $beforeBalance = (float) $user->balance;
+        $settleBatch = function ($users) use (&$stats) {
+            foreach ($users as $user) {
+                try {
+                    $stats['total_users_checked']++;
+                    $beforeBalance = (float) $user->balance;
 
-                        if ($this->attemptDeduction($user)) {
-                            $user->refresh();
-                            $deducted = $beforeBalance - (float) $user->balance;
-                            if ($deducted > 0) {
-                                $stats['settled_users']++;
-                                $stats['total_deducted_amount'] += $deducted;
-                            }
+                    if ($this->attemptDeduction($user)) {
+                        $user->refresh();
+                        $deducted = $beforeBalance - (float) $user->balance;
+                        if ($deducted > 0) {
+                            $stats['settled_users']++;
+                            $stats['total_deducted_amount'] += $deducted;
                         }
-                    } catch (\Throwable $e) {
-                        Log::error("Failed to settle outstanding charges for user {$user->id}: " . $e->getMessage());
                     }
+                } catch (\Throwable $e) {
+                    Log::error("Failed to settle outstanding charges for user {$user->id}: " . $e->getMessage());
                 }
+            }
+        };
+
+        $query = User::whereNull('deceased_at')
+            ->where('admin_charge_balance', '>', 0)
+            ->where('balance', '>', 0);
+
+        if (class_exists('Laravel\Telescope\Telescope')) {
+            \Laravel\Telescope\Telescope::withoutRecording(function () use ($query, $settleBatch) {
+                $query->chunkById(100, $settleBatch);
             });
+        } else {
+            $query->chunkById(100, $settleBatch);
+        }
 
         return $stats;
     }
