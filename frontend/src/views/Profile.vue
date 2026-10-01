@@ -318,7 +318,9 @@
       <div v-if="isSectionVisible('membership_data')" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
         <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">Membership Data</p>
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-2xl">📑</div>
+          <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center">
+            <span class="i-mdi-file-document-outline w-8 h-8 text-teal-600"></span>
+          </div>
           <div class="flex-1">
             <h3 class="text-sm font-bold text-slate-800">My Enrolment Details</h3>
             <p class="text-xs text-slate-500">View your full membership data and download enrolment forms.</p>
@@ -354,7 +356,9 @@
       <div v-else-if="isSectionVisible('vendor')" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
         <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">Local Business</p>
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-2xl">🏪</div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+            <span class="i-mdi-store-outline w-8 h-8 text-emerald-600"></span>
+          </div>
           <div class="flex-1">
             <h3 class="text-sm font-bold text-slate-800">Become a Vendor</h3>
             <p class="text-xs text-slate-500">Sell your products to other members with cooperative financing.</p>
@@ -368,7 +372,9 @@
         <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-3">Islamic Finance</p>
         <div class="space-y-4">
           <button @click="$router.push('/wasiyyah')" class="w-full flex items-center gap-4 text-left group">
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-lg group-active:scale-90 transition-transform">📋</div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center group-active:scale-90 transition-transform">
+              <span class="i-mdi-clipboard-text-outline w-6 h-6 text-indigo-600"></span>
+            </div>
             <div class="flex-1">
               <h3 class="text-sm font-bold text-slate-800">Wasiyyah (Next of Kin)</h3>
               <p class="text-[11px] text-slate-500 font-medium">Manage your beneficiaries and legacy details.</p>
@@ -379,7 +385,9 @@
           </button>
           
           <button v-if="appStatusStore.features['junior-coop-enabled']" @click="$router.push('/junior-cooperative')" class="w-full flex items-center gap-4 text-left group pt-4 border-t border-slate-50">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg group-active:scale-90 transition-transform">👶</div>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-active:scale-90 transition-transform">
+              <span class="i-mdi-baby-face-outline w-6 h-6 text-blue-600"></span>
+            </div>
             <div class="flex-1">
               <h3 class="text-sm font-bold text-slate-800">Junior Cooperative</h3>
               <p class="text-[11px] text-slate-500 font-medium">Locked savings for your children's education.</p>
@@ -418,7 +426,7 @@
               <!-- Searchable bank picker -->
               <div class="mt-1 relative">
                 <div class="flex items-center gap-2 border rounded-xl bg-slate-50 px-3 py-2.5 focus-within:ring-2 focus-within:ring-emerald-200">
-                  <span class="text-slate-400">🏦</span>
+                  <span class="i-mdi-bank-outline w-5 h-5 text-slate-400"></span>
                   <input
                     v-model="bankSearch"
                     @focus="openBankDropdown"
@@ -709,7 +717,9 @@
     <div v-if="showNursingMotherModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
         <div class="flex items-center gap-3 mb-6">
-           <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm">🤱</div>
+           <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center shadow-sm">
+             <span class="i-mdi-baby-bottle-outline w-9 h-9 text-pink-600"></span>
+           </div>
            <div>
              <h3 class="text-xl font-black text-slate-800 tracking-tight">Apply for Grace</h3>
              <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Nursing Mother</p>

@@ -53,7 +53,9 @@
       </div>
 
       <div v-else class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
-        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🎯</div>
+        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-emerald-200">
+          <span class="i-mdi-target w-10 h-10"></span>
+        </div>
         <p class="text-slate-500 font-medium mb-4">No savings goals yet.</p>
         <button @click="openCreate" class="btn-primary">Create your first goal</button>
       </div>

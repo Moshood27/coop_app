@@ -152,20 +152,20 @@ onBeforeUnmount(() => {
       <div class="p-4 border-b">
         <div class="flex justify-between items-center mb-3">
           <div class="flex items-center space-x-2">
-            <button @click="$router.push('/dashboard')" class="p-1 -ml-1 text-gray-500 hover:text-emerald-600 transition" title="Back to Dashboard">
-              <span class="material-icons">arrow_back</span>
+            <button @click="$router.push('/dashboard')" class="p-1 -ml-1 text-gray-500 hover:text-emerald-600 transition flex items-center justify-center" title="Back to Dashboard">
+              <span class="i-mdi-arrow-left w-6 h-6"></span>
             </button>
             <h2 class="text-xl font-bold dark:text-white">Chat</h2>
           </div>
           <button v-if="user?.is_admin" 
                   @click="showBroadcastModal = true"
-                  class="p-1 text-emerald-600 hover:bg-emerald-50 rounded-full transition"
+                  class="p-1 text-emerald-600 hover:bg-emerald-50 rounded-full transition flex items-center justify-center"
                   title="Send Broadcast">
-            <span class="material-icons">campaign</span>
+            <span class="i-mdi-bullhorn w-6 h-6"></span>
           </button>
         </div>
         <div class="relative">
-          <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+          <span class="i-mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm w-4 h-4"></span>
           <input v-model="searchQuery" 
                  placeholder="Search chats..." 
                  class="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -173,8 +173,8 @@ onBeforeUnmount(() => {
       </div>
       <div class="flex-1 overflow-y-auto">
         <div v-if="loading" class="p-4 text-center text-gray-500">Loading rooms...</div>
-        <div v-else-if="filteredRooms.length === 0" class="p-8 text-center">
-          <span class="material-icons text-48 text-gray-300 mb-2">forum</span>
+        <div v-else-if="filteredRooms.length === 0" class="p-8 text-center flex flex-col items-center">
+          <span class="i-mdi-forum text-[3rem] text-gray-300 mb-2 w-12 h-12"></span>
           <p class="text-sm text-gray-500 mb-4">{{ searchQuery ? 'No chats match your search' : 'No active chats yet' }}</p>
           <button v-if="!searchQuery" 
                   @click="startSupportChat"
@@ -189,17 +189,17 @@ onBeforeUnmount(() => {
                       !isMember(room) ? 'opacity-80' : '']">
           
           <button v-if="isMember(room)" @click.stop="togglePin(room.id)" 
-                  :class="['absolute right-2 top-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition opacity-0 group-hover:opacity-100', 
+                  :class="['absolute right-2 top-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition opacity-0 group-hover:opacity-100 flex items-center justify-center', 
                            pinnedRoomIds.includes(room.id) ? 'opacity-100 text-emerald-600' : 'text-gray-400']">
-            <span class="material-icons text-xs">{{ pinnedRoomIds.includes(room.id) ? 'push_pin' : 'push_pin' }}</span>
+            <span class="i-mdi-pin text-xs w-3 h-3" :class="{'rotate-45': pinnedRoomIds.includes(room.id)}"></span>
           </button>
 
           <div class="flex items-center space-x-3">
             <div :class="['w-12 h-12 rounded-full flex items-center justify-center font-bold flex-shrink-0', 
                           room.type === 'official' ? 'bg-amber-100 text-amber-700' : 
                           room.type === 'support' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700']">
-              <span v-if="room.type === 'official'" class="material-icons text-xl">gavel</span>
-              <span v-else-if="room.type === 'support'" class="material-icons text-xl">help_outline</span>
+              <span v-if="room.type === 'official'" class="i-mdi-gavel text-xl w-6 h-6"></span>
+              <span v-else-if="room.type === 'support'" class="i-mdi-help-circle-outline text-xl w-6 h-6"></span>
               <span v-else>{{ room.name?.[0] || 'C' }}</span>
             </div>
             <div class="flex-1 min-w-0">
@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
                   selectedRoomId ? 'translate-x-0' : 'translate-x-full md:translate-x-0']">
       <IslamicChat v-if="selectedRoomId" :key="selectedRoomId" :room-id="selectedRoomId" :show-back="true" @back="selectedRoomId = null" />
       <div v-else class="h-full flex flex-col items-center justify-center text-gray-500">
-        <span class="material-icons text-64 mb-4">chat_bubble_outline</span>
+        <span class="i-mdi-chat-outline text-[4rem] mb-4 w-16 h-16 opacity-20"></span>
         <p>Select a conversation to start chatting</p>
       </div>
     </div>
@@ -256,8 +256,8 @@ onBeforeUnmount(() => {
           </button>
           <button @click="sendBroadcast" 
                   :disabled="sendingBroadcast || !broadcastBody.trim()"
-                  class="px-4 py-2 bg-emerald-600 text-white rounded-lg disabled:opacity-50 flex items-center">
-            <span v-if="sendingBroadcast" class="material-icons animate-spin text-sm mr-2">sync</span>
+                  class="px-4 py-2 bg-emerald-600 text-white rounded-lg disabled:opacity-50 flex items-center justify-center">
+            <span v-if="sendingBroadcast" class="i-mdi-sync animate-spin text-sm mr-2 w-4 h-4"></span>
             {{ sendingBroadcast ? 'Sending...' : 'Send Broadcast' }}
           </button>
         </div>

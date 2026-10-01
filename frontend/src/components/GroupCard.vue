@@ -1,7 +1,8 @@
 <template>
   <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer p-5 flex items-center gap-4">
-    <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
-      {{ group.icon || '🤝' }}
+    <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+      <span v-if="group.icon" class="text-2xl">{{ group.icon }}</span>
+      <span v-else class="i-mdi-handshake w-8 h-8 text-indigo-600"></span>
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">

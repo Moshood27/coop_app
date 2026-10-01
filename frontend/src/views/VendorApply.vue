@@ -85,7 +85,9 @@
           </div>
 
           <div class="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-start gap-4">
-            <div class="text-2xl mt-1">📍</div>
+            <div class="text-2xl mt-1">
+              <span class="i-mdi-map-marker w-6 h-6 text-emerald-600"></span>
+            </div>
             <p class="text-xs text-emerald-800 leading-relaxed font-medium">Providing an accurate address helps members trust your business and facilitates smoother logistics.</p>
           </div>
 
@@ -137,7 +139,9 @@
 
           <div v-if="resolvedAccountName" class="p-6 rounded-[2rem] bg-emerald-600 text-white shadow-lg shadow-emerald-200 animate-in zoom-in duration-300">
             <div class="flex items-center gap-4">
-               <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🏛️</div>
+               <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                 <span class="i-mdi-bank w-7 h-7 text-white/80"></span>
+               </div>
                <div>
                   <p class="text-[10px] font-black uppercase tracking-widest opacity-70">Verified Account Holder</p>
                   <p class="text-base font-black uppercase">{{ resolvedAccountName }}</p>

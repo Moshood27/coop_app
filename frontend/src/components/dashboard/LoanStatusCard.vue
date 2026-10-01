@@ -7,7 +7,9 @@
         <div class="flex items-center gap-3">
           <router-link v-if="appStatusStore.features['apply-for-loan']" to="/loans" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Apply for Qard Hasan (Loan)</router-link>
         </div>
-        <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">💎</div>
+        <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl text-emerald-600">
+          <span class="i-mdi-diamond w-6 h-6"></span>
+        </div>
       </div>
       
       <div class="flex items-end gap-1 mb-8 cursor-pointer" v-if="kpis.has_active_loan || kpis.total_due_amount > 0" @click="$router.push('/loans')">
@@ -46,12 +48,14 @@
       </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="💰" />
-        <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="📈" />
+        <StatPill label="Savings" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.savings_balance))" icon="i-mdi-cash" />
+        <StatPill label="Shares" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.shares_balance))" icon="i-mdi-chart-line" />
       </div>
       
       <div v-if="kpis.is_defaulted" class="mt-6 flex items-center gap-3 bg-rose-50 p-4 rounded-3xl border border-rose-100">
-        <div class="text-lg">🛑</div>
+        <div class="text-lg text-rose-600">
+          <span class="i-mdi-octagram w-6 h-6"></span>
+        </div>
         <div>
           <p class="text-[10px] text-rose-700 leading-tight font-medium">
             Your account is currently <span class="font-bold">in default</span> due to an unpaid Qard Hasan (Loan) repayment. You must clear your outstanding balance before you can access further credit.
@@ -65,12 +69,12 @@
 
     <!-- KPI row -->
     <div class="mt-4 grid grid-cols-2 gap-3">
-      <StatPill label="Contributions" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.contributions))" hint="Total" intent="success" icon="💰" />
-      <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="⚠️" @click="$router.push('/loans')" class="cursor-pointer" />
-      <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="📅" @click="$router.push('/loans')" class="cursor-pointer" />
-      <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="🪙" @click="$router.push('/gold')" class="cursor-pointer" />
-      <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="📊" @click="$router.push('/loans')" class="cursor-pointer" />
-      <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="⭐" @click="$router.push('/profile')" class="cursor-pointer" />
+      <StatPill label="Contributions" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.contributions))" hint="Total" intent="success" icon="i-mdi-hand-coin" />
+      <StatPill v-if="kpis.total_due_amount > 0" label="Overdue Amount" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.total_due_amount))" hint="Pay Now" intent="danger" icon="i-mdi-alert" @click="$router.push('/loans')" class="cursor-pointer" />
+      <StatPill v-else-if="kpis.expected_amount_to_pay > 0" label="Expected to Pay" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.expected_amount_to_pay))" hint="Cumulative" intent="info" icon="i-mdi-calendar" @click="$router.push('/loans')" class="cursor-pointer" />
+      <StatPill v-else-if="appStatusStore.features['gold-savings-beta']" label="Gold Balance" :value="(hideBalances ? '***.**' : kpis.gold_balance?.toFixed(4)) + ' g'" :hint="hideBalances ? '≈ ₦ ***' : (kpis.gold_value_naira ? '≈ ₦ ' + formatMoney(kpis.gold_value_naira) : 'Digital Gold')" intent="warning" icon="i-mdi-gold" @click="$router.push('/gold')" class="cursor-pointer" />
+      <StatPill label="Qard Hasan (Loan)" :value="currency + ' ' + (hideBalances ? '***,***.**' : formatMoney(kpis.loans))" hint="Outstanding" intent="danger" icon="i-mdi-chart-bar" @click="$router.push('/loans')" class="cursor-pointer" />
+      <StatPill label="Attaqwa Score" :value="String(kpis.attaqwa_score || 0)" hint="Credit Rating" intent="info" icon="i-mdi-star" @click="$router.push('/profile')" class="cursor-pointer" />
     </div>
   </div>
 </template>

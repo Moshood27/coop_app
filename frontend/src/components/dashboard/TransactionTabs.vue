@@ -42,7 +42,7 @@
                class="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 border-2 border-emerald-100 shadow-sm animate-bounce-in">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shrink-0">
-                🔔
+                <span class="i-mdi-bell w-6 h-6"></span>
               </div>
               <div>
                 <p class="font-bold text-slate-800 text-sm">{{ action.message }}</p>
@@ -128,8 +128,8 @@
             <p class="text-[10px] text-slate-400 uppercase font-black mb-1">AGM Fee</p>
             <div class="flex items-center gap-2">
               <p class="text-xl font-black text-slate-800">₦{{ formatMoney(passbookSummary.agm_fee_amount) }}</p>
-              <span :class="passbookSummary.agm_fee_paid ? 'text-emerald-500' : 'text-amber-500'" class="text-xs">
-                {{ passbookSummary.agm_fee_paid ? '✓' : '⌛' }}
+              <span :class="passbookSummary.agm_fee_paid ? 'text-emerald-500' : 'text-amber-500'" class="flex items-center">
+                <span :class="[passbookSummary.agm_fee_paid ? 'i-mdi-check-circle' : 'i-mdi-clock-outline', 'w-4 h-4']"></span>
               </span>
             </div>
           </div>
@@ -154,8 +154,8 @@
              class="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 overflow-hidden border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors group">
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <div :class="ux.status === 'success' ? 'bg-emerald-100 text-emerald-600' : (ux.status === 'failed' ? 'bg-rose-100 text-rose-600' : 'bg-yellow-100 text-yellow-600')"
-                 class="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0">
-              {{ ux.status === 'success' ? '✓' : (ux.status === 'failed' ? '✕' : '⌛') }}
+                 class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+              <span :class="[ux.status === 'success' ? 'i-mdi-check-circle' : (ux.status === 'failed' ? 'i-mdi-close-circle' : 'i-mdi-clock-outline'), 'w-6 h-6']"></span>
             </div>
             <div class="min-w-0 overflow-hidden">
               <p class="font-bold text-slate-800 text-sm capitalize truncate max-w-[180px] sm:max-w-none">{{ utilLabel(ux) }}</p>

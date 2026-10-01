@@ -4,7 +4,7 @@
       <template #right>
         <a :href="downloadUrl" target="_blank" class="p-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
           <span>Report</span>
-          <span class="text-[10px]">📥</span>
+          <span class="i-mdi-download w-4 h-4"></span>
         </a>
       </template>
     </AppHeader>

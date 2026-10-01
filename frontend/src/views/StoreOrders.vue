@@ -29,7 +29,9 @@
         </div>
         <div v-else>
           <div v-if="!items.length" class="py-20 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-            <div class="text-5xl mb-4">🛒</div>
+            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="i-mdi-cart text-5xl text-emerald-600"></span>
+            </div>
             <p class="text-slate-400 text-sm font-medium">You haven't placed any orders yet.</p>
             <button @click="$router.push('/store')" class="mt-6 px-6 py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/10">Start Shopping</button>
           </div>

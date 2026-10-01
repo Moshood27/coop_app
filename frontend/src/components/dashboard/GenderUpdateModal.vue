@@ -2,7 +2,9 @@
   <div v-if="isOpen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 sm:p-6">
     <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 border border-slate-100">
       <div class="p-6 sm:p-8">
-         <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-4 sm:mb-6 shadow-sm border border-emerald-100">👤</div>
+         <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm border border-emerald-100">
+           <span class="i-mdi-account w-10 h-10 text-emerald-600"></span>
+         </div>
          
          <h3 class="text-xl sm:text-2xl font-black text-slate-800 text-center mb-2 uppercase tracking-tight">Update Gender</h3>
          <p class="text-slate-500 text-center text-[10px] sm:text-xs mb-6 sm:mb-8 leading-relaxed font-medium">To provide you with tailored services and accurate records, please select your gender.</p>
@@ -14,7 +16,7 @@
              class="w-full p-4 sm:p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all flex items-center justify-between"
            >
              <span>Male</span>
-             <span v-if="selectedGender === 'male'" class="text-lg">✓</span>
+             <span v-if="selectedGender === 'male'" class="i-mdi-check w-5 h-5"></span>
            </button>
            
            <button 
@@ -23,7 +25,7 @@
              class="w-full p-4 sm:p-5 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all flex items-center justify-between"
            >
              <span>Female</span>
-             <span v-if="selectedGender === 'female'" class="text-lg">✓</span>
+             <span v-if="selectedGender === 'female'" class="i-mdi-check w-5 h-5"></span>
            </button>
          </div>
       </div>

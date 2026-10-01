@@ -6,7 +6,7 @@
       <div class="space-y-3">
         <a v-for="(p, i) in phones" :key="i" :href="wa(p.number)" target="_blank" class="flex items-center justify-between p-4 rounded-2xl border hover:bg-emerald-50 transition-colors group">
           <div class="flex items-center gap-3">
-            <span class="text-2xl group-hover:scale-110 transition-transform">🟢</span>
+            <span class="i-mdi-whatsapp text-2xl text-emerald-500 group-hover:scale-110 transition-transform"></span>
             <div>
               <p class="font-bold text-slate-800">{{ p.label }}</p>
               <p class="text-xs text-slate-500">Tap to chat on WhatsApp</p>

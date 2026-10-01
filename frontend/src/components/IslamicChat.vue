@@ -317,8 +317,8 @@ function hasBadge(user, type) {
     <!-- Header -->
     <div class="p-4 bg-white dark:bg-gray-800 border-b flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <button v-if="showBack" @click="emit('back')" class="md:hidden p-1 -ml-1 mr-1 text-gray-500 hover:text-emerald-600 transition">
-          <span class="material-icons">arrow_back</span>
+        <button v-if="showBack" @click="emit('back')" class="md:hidden p-1 -ml-1 mr-1 text-gray-500 hover:text-emerald-600 transition flex items-center justify-center">
+          <span class="i-mdi-arrow-left w-6 h-6"></span>
         </button>
         <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
           {{ room?.name?.[0] || 'C' }}
@@ -327,8 +327,8 @@ function hasBadge(user, type) {
           <h3 class="font-bold dark:text-white flex items-center max-w-[120px] sm:max-w-none">
             <span class="truncate">{{ room?.name || 'Cooperative Chat' }}</span>
             <span v-if="room?.type === 'private' && room?.users?.some(u => u.id !== userId && hasBadge(u, 'verified'))" 
-                  class="material-icons text-emerald-500 text-xs ml-1 flex-shrink-0" 
-                  title="Member Verified">verified</span>
+                  class="i-mdi-check-circle text-emerald-500 text-xs ml-1 flex-shrink-0 w-3.5 h-3.5" 
+                  title="Member Verified"></span>
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
             {{ room?.type }}
@@ -340,7 +340,7 @@ function hasBadge(user, type) {
       </div>
       <div class="flex items-center space-x-2">
         <div v-if="room?.metadata?.requires_2fa" class="flex items-center space-x-1 px-2 py-1 bg-amber-100 text-amber-700 text-[10px] rounded-full font-bold">
-          <span class="material-icons text-xs">lock</span>
+          <span class="i-mdi-lock text-xs w-3 h-3"></span>
           <span class="hidden xs:inline">SENSITIVE (2FA)</span>
           <span class="xs:hidden">2FA</span>
         </div>
@@ -356,13 +356,13 @@ function hasBadge(user, type) {
       <!-- Away Message / Status -->
       <div v-if="status.away_message" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs mb-4">
         <div class="flex items-center space-x-2">
-          <span class="material-icons text-sm">schedule</span>
+          <span class="i-mdi-clock-outline text-sm w-4 h-4"></span>
           <span>{{ status.away_message }}</span>
         </div>
       </div>
       <div v-if="status.is_prayer_time" class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs mb-4">
         <div class="flex items-center space-x-2">
-          <span class="material-icons text-sm">notifications_off</span>
+          <span class="i-mdi-bell-off text-sm w-4 h-4"></span>
           <span>Notifications are muted for prayer time. Assalamu Alaikum.</span>
         </div>
       </div>
@@ -377,21 +377,21 @@ function hasBadge(user, type) {
           
           <div v-if="msg.user_id !== userId" class="flex items-center space-x-1 mb-1 ml-2">
             <span class="text-[10px] font-bold text-gray-500">{{ msg.user?.name }}</span>
-            <span v-if="hasBadge(msg.user, 'verified')" class="material-icons text-[10px] text-emerald-500">verified</span>
+            <span v-if="hasBadge(msg.user, 'verified')" class="i-mdi-check-circle text-[10px] text-emerald-500 w-3 h-3"></span>
           </div>
 
           <div class="group relative flex items-center">
             <!-- Message Actions -->
             <div :class="['hidden group-hover:flex items-center space-x-1 absolute top-0 px-2 py-1 bg-white dark:bg-gray-800 rounded shadow-md border z-10', 
                           msg.user_id === userId ? 'right-full mr-2' : 'left-full ml-2']">
-              <button @click="setReply(msg)" class="text-gray-500 hover:text-emerald-600">
-                <span class="material-icons text-xs">reply</span>
+              <button @click="setReply(msg)" class="text-gray-500 hover:text-emerald-600 flex items-center justify-center">
+                <span class="i-mdi-reply text-xs w-3.5 h-3.5"></span>
               </button>
-              <button v-if="msg.user_id === userId && msg.type === 'text'" @click="startEdit(msg)" class="text-gray-500 hover:text-blue-600">
-                <span class="material-icons text-xs">edit</span>
+              <button v-if="msg.user_id === userId && msg.type === 'text'" @click="startEdit(msg)" class="text-gray-500 hover:text-blue-600 flex items-center justify-center">
+                <span class="i-mdi-pencil text-xs w-3.5 h-3.5"></span>
               </button>
-              <button v-if="msg.user_id === userId" @click="deleteMessage(msg.id)" class="text-gray-500 hover:text-red-600">
-                <span class="material-icons text-xs">delete</span>
+              <button v-if="msg.user_id === userId" @click="deleteMessage(msg.id)" class="text-gray-500 hover:text-red-600 flex items-center justify-center">
+                <span class="i-mdi-trash-can text-xs w-3.5 h-3.5"></span>
               </button>
             </div>
 
@@ -412,7 +412,7 @@ function hasBadge(user, type) {
               <!-- Transaction Card -->
               <div v-else-if="msg.type === 'transaction'" class="p-2 border rounded-lg bg-emerald-50 dark:bg-emerald-900/20 mt-1">
                 <div class="flex items-center space-x-2 text-emerald-700 dark:text-emerald-400 mb-2">
-                  <span class="material-icons text-sm">payments</span>
+                  <span class="i-mdi-cash-multiple text-sm w-4 h-4"></span>
                   <span class="font-bold text-xs uppercase">Transaction Request</span>
                 </div>
                 <p class="text-sm mb-3 dark:text-gray-200">{{ msg.body }}</p>
@@ -430,7 +430,7 @@ function hasBadge(user, type) {
               <div v-else-if="msg.type === 'peer_transfer'" class="p-2 border rounded-lg bg-emerald-100 dark:bg-emerald-800/40 mt-1 min-w-[200px]">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center space-x-1 text-emerald-800 dark:text-emerald-300">
-                    <span class="material-icons text-sm">check_circle</span>
+                    <span class="i-mdi-check-circle text-sm w-4 h-4"></span>
                     <span class="font-bold text-[10px] uppercase">Transfer Sent</span>
                   </div>
                   <span class="text-xs font-black text-emerald-700 dark:text-emerald-300">{{ msg.metadata?.amount }}</span>
@@ -441,7 +441,7 @@ function hasBadge(user, type) {
               <!-- Peer Request Card -->
               <div v-else-if="msg.type === 'peer_request'" class="p-2 border rounded-lg bg-amber-50 dark:bg-amber-900/20 mt-1">
                 <div class="flex items-center space-x-2 text-amber-700 dark:text-amber-400 mb-2">
-                  <span class="material-icons text-sm">request_quote</span>
+                  <span class="i-mdi-text-box-search text-sm w-4 h-4"></span>
                   <span class="font-bold text-xs uppercase">Payment Request</span>
                 </div>
                 <div class="flex justify-between items-center mb-2">
@@ -459,7 +459,7 @@ function hasBadge(user, type) {
               <!-- Bill Payment Card -->
               <div v-else-if="msg.type === 'bill_payment'" class="p-2 border rounded-lg bg-indigo-50 dark:bg-indigo-900/20 mt-1">
                 <div class="flex items-center space-x-2 text-indigo-700 dark:text-indigo-400 mb-2">
-                  <span class="material-icons text-sm">receipt_long</span>
+                  <span class="i-mdi-receipt text-sm w-4 h-4"></span>
                   <span class="font-bold text-xs uppercase">Bill Paid</span>
                 </div>
                 <div class="flex justify-between items-center">
@@ -474,7 +474,7 @@ function hasBadge(user, type) {
               <!-- Mudarabah Update Card -->
               <div v-else-if="msg.type === 'mudarabah_update'" class="p-2 border rounded-lg bg-blue-50 dark:bg-blue-900/20 mt-1">
                 <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-400 mb-2">
-                  <span class="material-icons text-sm">trending_up</span>
+                  <span class="i-mdi-chart-line text-sm w-4 h-4"></span>
                   <span class="font-bold text-xs uppercase">Investment Update</span>
                 </div>
                 <p class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">{{ msg.metadata?.project_name }}</p>
@@ -497,7 +497,7 @@ function hasBadge(user, type) {
               <!-- Approval Card -->
               <div v-else-if="msg.type === 'approval'" class="p-2 border rounded-lg bg-blue-50 dark:bg-blue-900/20 mt-1">
                 <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-400 mb-2">
-                  <span class="material-icons text-sm">verified</span>
+                  <span class="i-mdi-check-circle text-sm w-4 h-4"></span>
                   <span class="font-bold text-xs uppercase">E-Signature Required</span>
                 </div>
                 <p class="text-sm font-bold dark:text-gray-200">{{ msg.metadata?.title }}</p>
@@ -520,8 +520,7 @@ function hasBadge(user, type) {
               <div class="flex items-center justify-end space-x-1 text-[10px] opacity-70 mt-1">
                 <span v-if="msg.edited_at" class="mr-1 italic">(edited)</span>
                 <span>{{ new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
-                <span v-if="msg.user_id === userId" class="material-icons text-[10px]" :class="msg.metadata?.read_at ? 'text-blue-300' : 'text-gray-300'">
-                  {{ msg.metadata?.read_at ? 'done_all' : 'done' }}
+                <span v-if="msg.user_id === userId" class="i-mdi-check-all text-[10px] w-3 h-3" :class="msg.metadata?.read_at ? 'text-blue-300' : 'text-gray-300'">
                 </span>
               </div>
             </div>
@@ -542,7 +541,7 @@ function hasBadge(user, type) {
           <span class="font-bold text-emerald-600">Replying to {{ replyingTo.user_name }}:</span>
           <span class="ml-1 opacity-70">{{ replyingTo.body }}</span>
         </div>
-        <button @click="replyingTo = null" class="text-gray-500"><span class="material-icons text-sm">close</span></button>
+        <button @click="replyingTo = null" class="text-gray-500 flex items-center justify-center"><span class="i-mdi-close text-sm w-4 h-4"></span></button>
       </div>
 
       <!-- Edit Indicator -->
@@ -577,39 +576,39 @@ function hasBadge(user, type) {
           <button v-if="userRole !== 'member'" 
                   @click="sendFinAction('transaction')"
                   class="flex items-center space-x-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">payments</span>
+            <span class="i-mdi-cash-multiple text-sm w-4 h-4"></span>
             <span>Request Payment</span>
           </button>
           <button @click="sendFinAction('peer_transfer')"
                   class="flex items-center space-x-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">send</span>
+            <span class="i-mdi-send text-sm w-4 h-4"></span>
             <span>Send Money</span>
           </button>
           <button @click="sendFinAction('peer_request')"
                   class="flex items-center space-x-2 p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">request_quote</span>
+            <span class="i-mdi-text-box-search text-sm w-4 h-4"></span>
             <span>Request Money</span>
           </button>
           <button @click="sendFinAction('bill_payment')"
                   class="flex items-center space-x-2 p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">receipt_long</span>
+            <span class="i-mdi-receipt text-sm w-4 h-4"></span>
             <span>Pay Bill</span>
           </button>
           <button v-if="userRole !== 'member'" 
                   @click="sendFinAction('approval')"
                   class="flex items-center space-x-2 p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">draw</span>
+            <span class="i-mdi-pencil text-sm w-4 h-4"></span>
             <span>E-Signature</span>
           </button>
           <button @click="sendFinAction('inquiry')"
                   class="flex items-center space-x-2 p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 rounded-lg hover:bg-purple-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">help_outline</span>
+            <span class="i-mdi-help-circle-outline text-sm w-4 h-4"></span>
             <span>Inquiry</span>
           </button>
           <button v-if="userRole !== 'member'" 
                   @click="sendFinAction('mudarabah_update')"
                   class="flex items-center space-x-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition text-xs font-bold">
-            <span class="material-icons text-sm">trending_up</span>
+            <span class="i-mdi-chart-line text-sm w-4 h-4"></span>
             <span>Investment Update</span>
           </button>
         </div>
@@ -617,16 +616,16 @@ function hasBadge(user, type) {
 
       <div class="flex items-center space-x-2">
         <button @click="showFinActions = !showFinActions; showGreetings = false; showCanned = false" 
-                class="p-2 text-emerald-600 hover:text-emerald-700">
-          <span class="material-icons">add_circle</span>
+                class="p-2 text-emerald-600 hover:text-emerald-700 flex items-center justify-center">
+          <span class="i-mdi-plus-circle w-6 h-6"></span>
         </button>
         <button @click="showGreetings = !showGreetings; showCanned = false; showFinActions = false" 
-                class="p-2 text-gray-500 hover:text-emerald-600">
-          <span class="material-icons">sentiment_satisfied_alt</span>
+                class="p-2 text-gray-500 hover:text-emerald-600 flex items-center justify-center">
+          <span class="i-mdi-emoticon-happy-outline w-6 h-6"></span>
         </button>
         <button @click="showCanned = !showCanned; showGreetings = false; showFinActions = false" 
-                class="p-2 text-gray-500 hover:text-emerald-600">
-          <span class="material-icons">quickreply</span>
+                class="p-2 text-gray-500 hover:text-emerald-600 flex items-center justify-center">
+          <span class="i-mdi-message-reply-text w-6 h-6"></span>
         </button>
         <textarea v-model="input" 
                ref="inputEl"
@@ -637,8 +636,8 @@ function hasBadge(user, type) {
                class="flex-1 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none overflow-y-auto max-h-[120px]"></textarea>
         <button @click="send('text')" 
                 :disabled="sending || (!input.trim() && !attachment)"
-                class="p-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition-colors">
-          <span class="material-icons">{{ editingMessage ? 'check' : 'send' }}</span>
+                class="p-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center justify-center">
+          <span :class="[editingMessage ? 'i-mdi-check' : 'i-mdi-send', 'w-6 h-6']"></span>
         </button>
       </div>
     </div>

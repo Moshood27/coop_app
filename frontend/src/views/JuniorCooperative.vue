@@ -51,7 +51,9 @@
       </div>
 
       <div v-else class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
-        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">👶</div>
+        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="i-mdi-baby-face-outline w-8 h-8 text-blue-600"></span>
+        </div>
         <p class="text-slate-500 font-medium mb-4">No junior accounts yet.</p>
         <button @click="openCreate" class="btn-primary">Open an account for your child</button>
       </div>

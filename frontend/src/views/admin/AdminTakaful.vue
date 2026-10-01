@@ -37,7 +37,17 @@
             </div>
             <div class="card p-3 border-indigo-200 bg-indigo-50">
               <p class="text-xs uppercase text-indigo-700 font-bold">Status</p>
-              <p class="text-sm text-indigo-900">✅ {{ summary.contributions?.by_status?.success || 0 }} • ⌛ {{ summary.contributions?.by_status?.pending || 0 }} • ✕ {{ summary.contributions?.by_status?.failed || 0 }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <div class="flex items-center gap-1 text-[10px] text-emerald-700 font-bold bg-white px-1.5 py-0.5 rounded border border-emerald-100">
+                  <span class="i-mdi-check-circle w-3 h-3"></span> {{ summary.contributions?.by_status?.success || 0 }}
+                </div>
+                <div class="flex items-center gap-1 text-[10px] text-amber-700 font-bold bg-white px-1.5 py-0.5 rounded border border-amber-100">
+                  <span class="i-mdi-hourglass w-3 h-3"></span> {{ summary.contributions?.by_status?.pending || 0 }}
+                </div>
+                <div class="flex items-center gap-1 text-[10px] text-rose-700 font-bold bg-white px-1.5 py-0.5 rounded border border-rose-100">
+                  <span class="i-mdi-close-thick w-3 h-3"></span> {{ summary.contributions?.by_status?.failed || 0 }}
+                </div>
+              </div>
             </div>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">

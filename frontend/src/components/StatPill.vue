@@ -1,7 +1,8 @@
 <template>
   <div :class="pillClass">
     <div class="flex items-center gap-1.5 opacity-70">
-      <span v-if="icon" class="text-xs">{{ icon }}</span>
+      <span v-if="icon && icon.startsWith('i-mdi-')" :class="[icon, 'w-3 h-3']"></span>
+      <span v-else-if="icon" class="text-xs">{{ icon }}</span>
       <span class="text-[9px] uppercase tracking-wider font-bold truncate">{{ label }}</span>
     </div>
     <div class="min-w-0">

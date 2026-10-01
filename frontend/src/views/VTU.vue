@@ -152,7 +152,7 @@
 
             <button @click="buyData" :disabled="loadingData || !canBuyData" 
               class="w-full bg-emerald-700 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
-              <span v-if="loadingData" class="animate-spin material-icons">sync</span>
+              <span v-if="loadingData" class="animate-spin flex items-center justify-center"><span class="i-mdi-sync w-6 h-6"></span></span>
               <span>Buy Data</span>
             </button>
           </div>
@@ -204,13 +204,13 @@
               </div>
               <div v-if="verification.verified" class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
                 <p class="text-xs text-emerald-800 font-bold flex items-center gap-2">
-                  <span class="material-icons text-sm">check_circle</span>
+                  <span class="i-mdi-check-circle text-sm w-4 h-4"></span>
                   {{ verification.customerName }}
                 </p>
               </div>
               <div v-if="verification.error" class="mt-2 p-3 bg-red-50 rounded-xl border border-red-200">
                 <p class="text-xs text-red-800 font-bold flex items-center gap-2">
-                  <span class="material-icons text-sm">error</span>
+                  <span class="i-mdi-alert-circle text-sm w-4 h-4"></span>
                   {{ verification.error }}
                 </p>
               </div>
@@ -262,7 +262,7 @@
               </div>
               <div v-if="verification.error" class="mt-2 p-3 bg-red-50 rounded-xl border border-red-200">
                 <p class="text-xs text-red-800 font-bold flex items-center gap-2">
-                  <span class="material-icons text-sm">error</span>
+                  <span class="i-mdi-alert-circle text-sm w-4 h-4"></span>
                   {{ verification.error }}
                 </p>
               </div>

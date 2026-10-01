@@ -13,7 +13,7 @@
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1" v-if="loan">{{ loan.qard_id_string }}</p>
           </div>
           <button @click="close" class="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
-            ✕
+            <span class="i-mdi-close w-5 h-5"></span>
           </button>
         </div>
 
@@ -25,7 +25,7 @@
           </div>
 
           <div v-else-if="error" class="p-8 text-center bg-rose-50 rounded-3xl border border-rose-100">
-            <span class="text-3xl mb-3 block">⚠️</span>
+            <span class="i-mdi-alert text-3xl mb-3 flex justify-center text-rose-500"></span>
             <p class="text-sm font-bold text-rose-800">{{ error }}</p>
             <button @click="fetchSchedule" class="mt-4 text-xs font-black text-rose-700 underline">Try Again</button>
           </div>
@@ -87,7 +87,7 @@
 
             <div v-if="scheduleData.next_due" class="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between">
                <div class="flex items-center gap-3">
-                 <span class="text-xl">🔔</span>
+                 <span class="i-mdi-bell text-xl text-indigo-500"></span>
                  <div>
                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Next Due Installment</p>
                    <p class="text-sm font-black text-indigo-900">{{ formatDate(scheduleData.next_due.due_date) }} • ₦ {{ n(scheduleData.next_due.amount_due) }}</p>
@@ -106,7 +106,7 @@
             Close
           </button>
           <a v-if="scheduleData" :href="downloadUrl" target="_blank" class="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 text-xs">
-            <span>📥</span> Download PDF
+            <span class="i-mdi-download w-4 h-4"></span> Download PDF
           </a>
         </div>
       </div>

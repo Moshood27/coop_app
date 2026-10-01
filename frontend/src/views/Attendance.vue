@@ -729,7 +729,9 @@
        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBulkConfirmModal = false"></div>
        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
           <div class="p-8 text-center">
-             <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">📝</div>
+             <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
+               <span class="i-mdi-text-box-edit-outline w-10 h-10"></span>
+             </div>
              <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Bulk Mark Attendance</h3>
              <p class="text-slate-500 text-xs mt-2 font-medium">Review the impact before proceeding</p>
              
@@ -752,8 +754,8 @@
                 </div>
              </div>
              
-             <p v-if="bulkActionPreview.ineligible > 0" class="mt-4 text-[9px] font-bold text-amber-600 uppercase bg-amber-50 p-2 rounded-lg">
-                ⚠️ {{ bulkActionPreview.ineligible }} members are from different branches and you don't have override permission.
+             <p v-if="bulkActionPreview.ineligible > 0" class="mt-4 text-[9px] font-bold text-amber-600 uppercase bg-amber-50 p-2 rounded-lg flex items-center justify-center gap-1">
+                <span class="i-mdi-alert w-3 h-3 text-amber-500"></span> {{ bulkActionPreview.ineligible }} members are from different branches and you don't have override permission.
              </p>
           </div>
           
@@ -769,7 +771,9 @@
        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showUnmarkReasonModal = false"></div>
        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
           <div class="p-8">
-             <div class="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">↩️</div>
+             <div class="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
+               <span class="i-mdi-undo-variant w-10 h-10"></span>
+             </div>
              <h3 class="text-xl font-black text-slate-800 text-center uppercase tracking-tight">
                 {{ isBulkUnmark ? 'Bulk Unmark' : 'Unmark Attendance' }}
              </h3>

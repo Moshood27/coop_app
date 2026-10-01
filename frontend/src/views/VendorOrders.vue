@@ -19,7 +19,9 @@
       </div>
       
       <div v-else-if="orders.length === 0" class="bg-white rounded-[2rem] p-12 text-center border border-dashed border-slate-200">
-        <div class="text-4xl mb-4">{{ vendor.is_approved ? '📋' : '⏳' }}</div>
+        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span :class="vendor.is_approved ? 'i-mdi-clipboard-text-outline text-slate-400' : 'i-mdi-hourglass-outline text-amber-500'" class="w-8 h-8"></span>
+        </div>
         <h3 class="text-sm font-bold text-slate-800 mb-1">{{ vendor.is_approved ? 'No orders yet' : 'Approval Pending' }}</h3>
         <p class="text-xs text-slate-500">
           {{ vendor.is_approved ? 'When members buy your products, they will appear here.' : 'Once your vendor profile is approved, you can start receiving orders.' }}
@@ -54,7 +56,9 @@
           
           <div class="p-4 flex items-center justify-between">
             <a :href="'tel:' + order.user?.phone" class="flex items-center gap-2 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-              <span class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-xs">📞</span>
+              <span class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                <span class="i-mdi-phone w-4 h-4"></span>
+              </span>
               Contact Member
             </a>
             <button @click="openStatusModal(order)" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Status</button>
@@ -68,7 +72,9 @@
       <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-slide-up">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Update Order Status</h2>
-          <button @click="selectedOrder = null" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">✕</button>
+          <button @click="selectedOrder = null" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+            <span class="i-mdi-close w-5 h-5 text-slate-500"></span>
+          </button>
         </div>
         
         <p class="text-xs text-slate-500 mb-6 font-medium">Updating status for order <span class="font-bold text-slate-800">{{ selectedOrder.reference }}</span></p>
@@ -79,8 +85,8 @@
             :disabled="updating"
             class="w-full p-4 rounded-2xl border border-slate-100 flex items-center gap-4 active:bg-slate-50 transition-all text-left"
             :class="selectedOrder.status === status.id ? 'bg-emerald-50 border-emerald-200' : 'bg-white'">
-            <div :class="status.class" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg">
-              {{ status.icon }}
+            <div :class="status.class" class="w-10 h-10 rounded-xl flex items-center justify-center">
+              <span :class="status.icon" class="w-6 h-6"></span>
             </div>
             <div class="flex-1">
               <p class="text-sm font-bold text-slate-800">{{ status.label }}</p>
@@ -112,11 +118,11 @@ const selectedOrder = ref(null)
 const updating = ref(false)
 
 const availableStatuses = [
-  { id: 'processing', label: 'Processing', description: 'Currently preparing the order', icon: '⚙️', class: 'bg-blue-50 text-blue-600' },
-  { id: 'shipped', label: 'Shipped', description: 'Item has been handed to courier', icon: '🚚', class: 'bg-amber-50 text-amber-600' },
-  { id: 'delivered', label: 'Delivered', description: 'Item reached the customer', icon: '🏠', class: 'bg-emerald-50 text-emerald-600' },
-  { id: 'completed', label: 'Completed', description: 'Finalized and payout triggered', icon: '✅', class: 'bg-emerald-100 text-emerald-700' },
-  { id: 'cancelled', label: 'Cancelled', description: 'Order will not be fulfilled', icon: '✕', class: 'bg-rose-50 text-rose-600' },
+  { id: 'processing', label: 'Processing', description: 'Currently preparing the order', icon: 'i-mdi-cog', class: 'bg-blue-50 text-blue-600' },
+  { id: 'shipped', label: 'Shipped', description: 'Item has been handed to courier', icon: 'i-mdi-truck-delivery-outline', class: 'bg-amber-50 text-amber-600' },
+  { id: 'delivered', label: 'Delivered', description: 'Item reached the customer', icon: 'i-mdi-home', class: 'bg-emerald-50 text-emerald-600' },
+  { id: 'completed', label: 'Completed', description: 'Finalized and payout triggered', icon: 'i-mdi-check-circle', class: 'bg-emerald-100 text-emerald-700' },
+  { id: 'cancelled', label: 'Cancelled', description: 'Order will not be fulfilled', icon: 'i-mdi-close-circle', class: 'bg-rose-50 text-rose-600' },
 ]
 
 const formatMoney = (val) => {

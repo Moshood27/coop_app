@@ -36,7 +36,9 @@
                   <h3 class="font-bold text-slate-800 truncate">{{ v.name }}</h3>
                   <p class="text-xs text-slate-500">Owner: {{ v.owner?.name || 'Unknown' }}</p>
                   <p v-if="v.owner?.email" class="text-[10px] text-slate-400">{{ v.owner.email }}</p>
-                  <p v-if="v.phone" class="text-xs text-slate-500 mt-1">📞 {{ v.phone }}</p>
+                  <p v-if="v.phone" class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <span class="i-mdi-phone w-3 h-3 text-slate-400"></span> {{ v.phone }}
+                  </p>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0 ml-2">
                   <span v-if="v.is_approved" class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Approved</span>
@@ -108,7 +110,9 @@
     <div v-if="prompting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200 overflow-hidden border border-white/20">
         <div class="p-6">
-          <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-xl mb-4">✕</div>
+          <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-4">
+            <span class="i-mdi-close w-6 h-6"></span>
+          </div>
           <h3 class="text-lg font-black text-slate-800 mb-1">Decline Request</h3>
           <p class="text-sm text-slate-500 mb-4">Provide a reason for declining ₦{{ formatMoney(prompting.amount) }}.</p>
           <textarea v-model="declineReason" class="w-full border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all" rows="3" placeholder="e.g. Incomplete verification, Name mismatch..."></textarea>

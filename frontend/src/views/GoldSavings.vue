@@ -19,8 +19,8 @@
     <div class="p-4 pb-32 max-w-lg mx-auto space-y-4">
       <!-- Feature Disabled Alert -->
       <div v-if="!appStatusStore.features['gold-savings-beta']" class="bg-amber-50 border border-amber-200 p-8 rounded-[2rem] text-center space-y-4 shadow-sm">
-        <div class="w-20 h-20 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner">
-          ✨
+        <div class="w-20 h-20 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-inner text-amber-600">
+          <span class="i-mdi-sparkles w-12 h-12"></span>
         </div>
         <div>
           <h3 class="text-xl font-black text-slate-800">Exclusive Feature</h3>
