@@ -43,11 +43,13 @@ class UserObserver
         // If balance increased
         if ($user->wasChanged('balance') && $user->balance > $user->getOriginal('balance')) {
             // 1. Process outstanding fines
-            if ($user->outstanding_fines > 0) {
+            $autoFineEnabled = (bool) \App\Models\Setting::get('auto_fine_deduction_enabled', true);
+            if ($autoFineEnabled && $user->outstanding_fines > 0) {
                 $this->processOutstandingFines($user);
             }
 
             // 2. Process administrative charges (Sitting Fees)
+            // AdministrativeChargeService::attemptDeduction already checks the auto-deduction settings
             if ($user->admin_charge_balance > 0) {
                 app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($user);
             }
