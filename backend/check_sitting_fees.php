@@ -11,10 +11,12 @@ $kernel->bootstrap();
 
 echo "Checking Sitting Fee Settings:\n";
 $sittingFee = Setting::get('sitting_fee_amount');
-$monthlyFeesEnabled = Setting::get('monthly_fees_enabled');
+$sittingFeesEnabled = Setting::get('sitting_fees_enabled');
+$meetingFeesEnabled = Setting::get('meeting_fees_enabled');
 $meetingFee = Setting::get('meeting_fee_amount');
 
-echo "monthly_fees_enabled: " . var_export($monthlyFeesEnabled, true) . "\n";
+echo "sitting_fees_enabled: " . var_export($sittingFeesEnabled, true) . "\n";
+echo "meeting_fees_enabled: " . var_export($meetingFeesEnabled, true) . "\n";
 echo "sitting_fee_amount: " . var_export($sittingFee, true) . " (Default in code: 300)\n";
 echo "meeting_fee_amount: " . var_export($meetingFee, true) . " (Default in code: 1000)\n";
 

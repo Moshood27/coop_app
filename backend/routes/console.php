@@ -16,7 +16,7 @@ Artisan::command('inspire', function () {
 Schedule::command('app:send-wellness-check')->daily();
 Schedule::command('app:apply-monthly-fines')
     ->monthlyOn(5, '00:00')
-    ->when(fn() => Setting::get('monthly_fees_enabled', true));
+    ->when(fn() => Setting::get('sitting_fees_enabled', true) || Setting::get('meeting_fees_enabled', true));
 
 // Loan & Reminder Tasks
 Schedule::command('loans:send-default-reminders')
@@ -62,7 +62,7 @@ Schedule::command('admin-charges:collect')
     ->monthlyOn(1, '08:30')
     ->timezone('Africa/Lagos')
     ->withoutOverlapping()
-    ->when(fn() => Setting::get('monthly_fees_enabled', true));
+    ->when(fn() => Setting::get('sitting_fees_enabled', true) || Setting::get('meeting_fees_enabled', true));
 Schedule::command('zakat:check-nisab-hawl')
     ->daily()
     ->timezone('Africa/Lagos')

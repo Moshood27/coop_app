@@ -20,8 +20,11 @@ class AdministrativeChargeService
      */
     public function processMonthlyCharges(): array
     {
-        if (!Setting::get('monthly_fees_enabled', true)) {
-            Log::info('Monthly administrative charges are disabled in settings.');
+        $sittingEnabled = Setting::get('sitting_fees_enabled', Setting::get('monthly_fees_enabled', true));
+        $meetingEnabled = Setting::get('meeting_fees_enabled', Setting::get('monthly_fees_enabled', true));
+
+        if (!$sittingEnabled && !$meetingEnabled) {
+            Log::info('Monthly administrative charges (Sitting and Meeting fees) are disabled in settings.');
             return [
                 'total_users' => 0,
                 'accrued' => 0,
@@ -45,9 +48,13 @@ class AdministrativeChargeService
             'total_deducted_amount' => 0,
         ];
 
-        $processBatch = function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, &$stats) {
+        $processBatch = function ($users) use ($sittingFee, $meetingFee, $period, $sittingScheme, $sittingEnabled, $meetingEnabled, &$stats) {
             foreach ($users as $user) {
                 try {
+                    // Check if enabled for this specific user type
+                    $isEnabled = $user->is_distant ? $meetingEnabled : $sittingEnabled;
+                    if (!$isEnabled) continue;
+
                     $stats['total_users']++;
 
                     $amount = $user->is_distant ? $meetingFee : $sittingFee;
@@ -84,7 +91,7 @@ class AdministrativeChargeService
                         $stats['accrued']++;
 
                         // 2. Auto-deduct (Mandatory if funds available and enabled)
-                        if ($lockedUser->admin_charge_balance > 0 && Setting::get('auto_admin_charge_deduction_enabled', true)) {
+                        if ($lockedUser->admin_charge_balance > 0 && $this->isAutoDeductionEnabled($lockedUser)) {
                             $this->attemptDeduction($lockedUser, $stats);
                         }
 
@@ -144,7 +151,7 @@ class AdministrativeChargeService
                     $stats['total_users_checked']++;
                     $beforeBalance = (float) $user->balance;
 
-                    if (Setting::get('auto_admin_charge_deduction_enabled', true) && $this->attemptDeduction($user)) {
+                    if ($this->isAutoDeductionEnabled($user) && $this->attemptDeduction($user)) {
                         $user->refresh();
                         $deducted = $beforeBalance - (float) $user->balance;
                         if ($deducted > 0) {
@@ -178,6 +185,10 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
+        if (!$this->isAutoDeductionEnabled($user)) {
+            return false;
+        }
+
         return DB::transaction(function () use ($user, &$stats) {
             // Lock the user record to prevent concurrent deductions
             $user = User::where('id', $user->id)->lockForUpdate()->first();
@@ -438,8 +449,7 @@ class AdministrativeChargeService
             // 3. Administrative Charges (Sitting Fees)
             try {
                 $adminDue = (float) $user->admin_charge_balance;
-                $autoAdminEnabled = (bool) Setting::get('auto_admin_charge_deduction_enabled', true);
-                if ($autoAdminEnabled && $adminDue > 0 && $currentAmount > 0 && !in_array('SITTING', $excludeSchemesUpper)) {
+                if ($this->isAutoDeductionEnabled($user) && $adminDue > 0 && $currentAmount > 0 && !in_array('SITTING', $excludeSchemesUpper)) {
                     $adminDeduction = min($adminDue, $currentAmount);
 
                     $scheme = Scheme::where('name', 'SITTING')->first();
@@ -543,7 +553,7 @@ class AdministrativeChargeService
 
             // 2. Process pending administrative charges
             $adminChargeDeducted = 0;
-            if (Setting::get('auto_admin_charge_deduction_enabled', true) && $user->admin_charge_balance > 0) {
+            if ($this->isAutoDeductionEnabled($user) && $user->admin_charge_balance > 0) {
                 $beforeAdminCharge = (float) $user->balance;
                 if ($this->attemptDeduction($user)) {
                     $user->refresh();
@@ -561,4 +571,15 @@ class AdministrativeChargeService
             ];
         });
     }
+    /**
+     * Check if auto-deduction is enabled for a specific user type.
+     */
+    public function isAutoDeductionEnabled(User $user): bool
+    {
+        $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
+
+        // Fallback to old setting for backward compatibility during transition if needed
+        return (bool) Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
+    }
+
 }
