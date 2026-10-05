@@ -374,12 +374,9 @@ const kpis = computed(() => {
 
   const txs = Array.isArray(d.transactions) ? d.transactions : []
   const utils = Array.isArray(d.utility_transactions) ? d.utility_transactions : []
-  const totalContrib = txs.reduce((sum, t) => sum + Number(t.amount || 0), 0)
   const outstandingLoans = txs.filter(t => (t.type === 'loan' || String(t.scheme?.name || '').toLowerCase().includes('loan')))
     .reduce((sum, t) => sum + Number(t.balance || 0), 0)
   const utilSpent = utils.reduce((sum, u) => sum + Number(u.amount || 0), 0)
-
-  //return { contributions: totalContrib, loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
 
   return {  loans: outstandingLoans, utilities: utilSpent, attaqwa_score: d.attaqwa_score || 0, is_defaulted: false, defaulted_amount: 0, total_due_amount: 0, has_active_loan: false, loan_limit: 0, savings_balance: 0, shares_balance: 0, next_due_date: null, next_due_amount: 0, total_loan_principal: 0, total_loan_paid: 0 }
 })
