@@ -43,11 +43,14 @@ try {
     DB::rollBack();
     echo "Transaction rolled back.\n";
 
-    echo "\nVerifying table structure for attendance_records:\n";
-    $columns = DB::select("DESCRIBE attendance_records");
-    foreach ($columns as $column) {
-        if ($column->Field === 'id') {
-            echo "Field: {$column->Field}, Type: {$column->Type}, Null: {$column->Null}, Key: {$column->Key}, Default: " . ($column->Default ?? 'NULL') . ", Extra: {$column->Extra}\n";
+    echo "\nVerifying table structure for all fixed tables:\n";
+    $tablesToCheck = ['attendance_records', 'investment_record_details', 'loan', 'members', 'units'];
+    foreach ($tablesToCheck as $tableName) {
+        $columns = DB::select("DESCRIBE {$tableName}");
+        foreach ($columns as $column) {
+            if ($column->Field === 'id') {
+                echo "Table: {$tableName}, Field: {$column->Field}, Type: {$column->Type}, Key: {$column->Key}, Extra: {$column->Extra}\n";
+            }
         }
     }
 
