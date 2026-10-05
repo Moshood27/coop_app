@@ -170,12 +170,20 @@ class AppStatusSettings extends Page
                             ->required()
                             ->helperText('Monthly fee for distant members from branch.'),
                         Toggle::make('sitting_fees_enabled')
-                            ->label('Enable Sitting Fee (Regular)')
+                            ->label('Enable Sitting Fee Accrual (Regular)')
                             ->helperText('Automatically accrue sitting fees on the 1st of every month.')
                             ->default(true),
+                        Toggle::make('auto_sitting_fine_deduction_enabled')
+                            ->label('Enable Sitting Fee Auto-Deduction')
+                            ->helperText('If disabled, accrued sitting fees will not be automatically debited.')
+                            ->default(true),
                         Toggle::make('meeting_fees_enabled')
-                            ->label('Enable Meeting Fee (Distant)')
+                            ->label('Enable Meeting Fee Accrual (Distant)')
                             ->helperText('Automatically accrue meeting fees on the 1st of every month.')
+                            ->default(true),
+                        Toggle::make('auto_meeting_fine_deduction_enabled')
+                            ->label('Enable Meeting Fee Auto-Deduction')
+                            ->helperText('If disabled, accrued meeting fees will not be automatically debited.')
                             ->default(true),
                     ])->columns(2),
                 Section::make('Forced Update')
@@ -387,23 +395,15 @@ class AppStatusSettings extends Page
                             ->label('Enable Admin-Initiated Member Funding')
                             ->helperText('Allow administrators to top-up member wallets via payment gateway and manage member DVAs.')
                             ->default(true),
-                        Toggle::make('auto_sitting_fine_deduction_enabled')
-                            ->label('Enable Auto-Deduction of Sitting fine')
-                            ->helperText('If disabled, sitting fines (monthly fees) will accumulate but not be automatically debited from regular member wallets.')
-                            ->default(true),
-                        Toggle::make('auto_meeting_fine_deduction_enabled')
-                            ->label('Enable Auto-Deduction of Meeting fine')
-                            ->helperText('If disabled, meeting fines (monthly fees) will accumulate but not be automatically debited from distant member wallets.')
-                            ->default(true),
                         Toggle::make('auto_fine_deduction_enabled')
-                            ->label('Enable Auto-Deduction of Fines')
-                            ->helperText('If disabled, meeting lateness and absence fines will accumulate but not be automatically debited from member wallets.')
+                            ->label('Enable Auto-Deduction of Attendance Fines (Lateness/Absence)')
+                            ->helperText('If disabled, meeting lateness and absence fines will accumulate but not be automatically debited.')
                             ->default(true),
                         Toggle::make('display_admin_charge_in_wallet')
                             ->label('Display Admin Charges in Wallet')
                             ->helperText('If enabled, pending administrative charges will be displayed as a debt in the member wallet balance.')
                             ->default(true),
-                    ])->columns(3),
+                    ])->columns(2),
                 Section::make('Wallet Settings')
                     ->description('Manage wallet maintenance and transaction charges.')
                     ->schema([
