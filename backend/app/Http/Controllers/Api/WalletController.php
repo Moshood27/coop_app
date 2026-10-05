@@ -132,6 +132,7 @@ class WalletController extends Controller
             'special_savings_available_for_withdrawal' => (float) $specialSavingsAvailable,
             'available_for_withdrawal' => (float) ($breakdown['available_for_withdrawal'] ?? 0),
             'admin_charge_balance' => (float) ($user->admin_charge_balance ?? 0),
+            'outstanding_fines' => (float) ($user->outstanding_fines ?? 0),
             'breakdown' => $breakdown,
             'virtual_account' => [
                 'paystack_customer_code' => $user->paystack_customer_code,
@@ -1143,5 +1144,29 @@ class WalletController extends Controller
             'status' => $wr->status,
             'reference' => $wr->reference,
         ]);
+    }
+
+    public function payAdminCharge(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $service = app(\App\Services\AdministrativeChargeService::class);
+            $result = $service->settleAdminChargeManually($user);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function payFines(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $service = app(\App\Services\AttendanceService::class);
+            $result = $service->settleFinesManually($user);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 }

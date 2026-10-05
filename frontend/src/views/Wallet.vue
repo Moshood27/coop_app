@@ -28,10 +28,16 @@
         </div>
         <h2 class="text-4xl font-bold mt-1 relative z-10" :class="{'text-rose-300': netBalance < 0}">₦ {{ hideBalances ? '***,***.**' : formatMoney(netBalance) }}</h2>
         
-        <div v-if="appStatusStore.features['display-admin-charge-in-wallet'] && wallet.admin_charge_balance > 0" class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center">
+        <div v-if="(appStatusStore.features['display-admin-charge-in-wallet'] && wallet.admin_charge_balance > 0) || wallet.outstanding_fines > 0" class="mt-2 text-emerald-100/80 text-[10px] uppercase font-bold relative z-10 flex gap-2 items-center flex-wrap">
            <span>Gross: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.balance) }}</span>
-           <span>|</span>
-           <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.admin_charge_balance) }}</span>
+           <template v-if="appStatusStore.features['display-admin-charge-in-wallet'] && wallet.admin_charge_balance > 0">
+             <span>|</span>
+             <span class="text-rose-200">Charges: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.admin_charge_balance) }}</span>
+           </template>
+           <template v-if="wallet.outstanding_fines > 0">
+             <span>|</span>
+             <span class="text-amber-200">Fines: ₦ {{ hideBalances ? '***,***.**' : formatMoney(wallet.outstanding_fines) }}</span>
+           </template>
         </div>
 
         <div class="mt-2 text-emerald-100 text-xs flex justify-between gap-2 relative z-10">
@@ -449,7 +455,24 @@
               {{ payingAdminCharge ? 'Paying…' : 'Pay Now' }}
             </button>
           </div>
-          <p class="text-[11px] text-rose-600 mt-3 leading-relaxed opacity-80 italic">A monthly administrative charge of ₦300 applies. You can enable auto-deduction in settings.</p>
+          <p class="text-[11px] text-rose-600 mt-3 leading-relaxed opacity-80 italic">A monthly administrative charge applies. You can enable auto-deduction in settings.</p>
+        </div>
+
+        <!-- Outstanding Fines Section -->
+        <div v-if="wallet.outstanding_fines > 0" class="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 shadow-sm relative overflow-hidden">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-amber-100 rounded-full -mr-12 -mt-12 opacity-50"></div>
+          <div class="relative z-10 flex justify-between items-center">
+            <div>
+              <h3 class="font-bold text-amber-900">Outstanding Fines</h3>
+              <p class="text-2xl font-black text-amber-700 mt-1">₦ {{ formatMoney(wallet.outstanding_fines) }}</p>
+              <p class="text-[10px] text-amber-500 font-bold uppercase mt-1 tracking-wider">Lateness & Absence Fines</p>
+            </div>
+            <button @click="payFines" :disabled="payingFines" 
+                    class="bg-amber-600 text-white px-5 py-3 rounded-2xl text-xs font-black uppercase shadow-lg active:scale-95 disabled:opacity-50 transition-all">
+              {{ payingFines ? 'Paying…' : 'Pay Now' }}
+            </button>
+          </div>
+          <p class="text-[11px] text-amber-600 mt-3 leading-relaxed opacity-80 italic">Fines for meeting lateness or absence. You can enable auto-deduction in settings.</p>
         </div>
       </div>
 
@@ -874,14 +897,18 @@ watch(() => appStatusStore.paymentGateways?.primary, (newVal) => {
 })
 const searchQuery = ref('')
 
-const wallet = ref({ balance: 0, virtual_account: {}, admin_charge_balance: 0 })
+const wallet = ref({ balance: 0, virtual_account: {}, admin_charge_balance: 0, outstanding_fines: 0 })
 const refreshingBalance = ref(false)
 const transactions = ref([])
 const showTxModal = ref(false)
 const selectedTx = ref(null)
 const netBalance = computed(() => {
-  if (!appStatusStore.features['display-admin-charge-in-wallet']) return wallet.value.balance
-  return wallet.value.balance - (wallet.value.admin_charge_balance || 0)
+  let bal = wallet.value.balance
+  if (appStatusStore.features['display-admin-charge-in-wallet']) {
+    bal -= (wallet.value.admin_charge_balance || 0)
+  }
+  bal -= (wallet.value.outstanding_fines || 0)
+  return bal
 })
 const filteredTransactions = computed(() => {
   if (!searchQuery.value) return transactions.value
@@ -918,6 +945,30 @@ const payAdminCharge = async () => {
     showNotice(e.response?.data?.message || 'Failed to pay administrative charge', 'error')
   } finally {
     payingAdminCharge.value = false
+  }
+}
+
+// Fines payment state
+const payingFines = ref(false)
+const payFines = async () => {
+  if (wallet.value.outstanding_fines <= 0) return
+  if (wallet.value.balance < wallet.value.outstanding_fines) {
+    showNotice('Insufficient wallet balance to pay outstanding fines.', 'error')
+    return
+  }
+  
+  if (!confirm(`Are you sure you want to pay ₦${formatMoney(wallet.value.outstanding_fines)} for outstanding fines?`)) return
+
+  payingFines.value = true
+  try {
+    const resp = await axios.post('/api/wallet/fines/pay')
+    showNotice(resp.data.message || 'Fines paid successfully', 'success')
+    await loadWallet()
+  } catch (e) {
+    console.error(e)
+    showNotice(e.response?.data?.message || 'Failed to pay fines', 'error')
+  } finally {
+    payingFines.value = false
   }
 }
 

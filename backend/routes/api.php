@@ -276,6 +276,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'throttle:api'])->group(functio
     Route::get('/wallet/withdrawals', [\App\Http\Controllers\Api\WalletController::class, 'withdrawals']);
     Route::post('/wallet/withdrawals/{id}/cancel', [\App\Http\Controllers\Api\WalletController::class, 'cancelWithdrawal'])->middleware('throttle:5,1');
     Route::post('/wallet/admin-charge/pay', [\App\Http\Controllers\Api\WalletController::class, 'payAdminCharge']);
+    Route::post('/wallet/fines/pay', [\App\Http\Controllers\Api\WalletController::class, 'payFines']);
     // Normalized per-scheme balances (read-only)
     Route::get('/scheme-balances', [\App\Http\Controllers\Api\WalletController::class, 'mySchemeBalances']);
 

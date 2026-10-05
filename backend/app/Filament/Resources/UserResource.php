@@ -1597,6 +1597,40 @@ class UserResource extends Resource
                         }
                     })
                     ->requiresConfirmation(),
+                Action::make('settleFinesFromWallet')
+                    ->label('Settle Fines from Wallet')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn (User $record) => (float)$record->outstanding_fines > 0)
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount to Settle')
+                            ->numeric()
+                            ->prefix('₦')
+                            ->default(fn (User $record) => (float)$record->outstanding_fines)
+                            ->required(),
+                        Forms\Components\Placeholder::make('wallet_balance')
+                            ->label('Available Wallet Balance')
+                            ->content(fn (User $record) => '₦' . number_format($record->balance, 2)),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        try {
+                            $service = app(AttendanceService::class);
+                            $service->settleFinesManually($record, (float)$data['amount']);
+
+                            Notification::make()
+                                ->title('Fines settled from wallet')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Error')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->requiresConfirmation(),
                 Action::make('clearPaystackDVA')
                     ->label('Clear Paystack DVA')
                     ->icon('heroicon-o-trash')

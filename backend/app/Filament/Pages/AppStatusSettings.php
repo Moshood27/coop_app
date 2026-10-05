@@ -87,6 +87,8 @@ class AppStatusSettings extends Page
             'admin_attendance_stats_enabled' => (bool) Setting::get('admin_attendance_stats_enabled', true),
             'admin_allocation_enabled' => (bool) Setting::get('admin_allocation_enabled', true),
             'admin_member_funding_enabled' => (bool) Setting::get('admin_member_funding_enabled', true),
+            'auto_admin_charge_deduction_enabled' => (bool) Setting::get('auto_admin_charge_deduction_enabled', true),
+            'auto_fine_deduction_enabled' => (bool) Setting::get('auto_fine_deduction_enabled', true),
             'display_admin_charge_in_wallet' => (bool) Setting::get('display_admin_charge_in_wallet', true),
             'opening_balance_verification_enabled' => (bool) Setting::get('opening_balance_verification_enabled', true),
             'sitting_fee_amount' => Setting::get('sitting_fee_amount', config('cooperative.admin_charges.amount', 300)),
@@ -378,6 +380,14 @@ class AppStatusSettings extends Page
                         Toggle::make('admin_member_funding_enabled')
                             ->label('Enable Admin-Initiated Member Funding')
                             ->helperText('Allow administrators to top-up member wallets via payment gateway and manage member DVAs.')
+                            ->default(true),
+                        Toggle::make('auto_admin_charge_deduction_enabled')
+                            ->label('Enable Auto-Deduction of Admin Charges')
+                            ->helperText('If disabled, administrative charges will accumulate but not be automatically debited from member wallets.')
+                            ->default(true),
+                        Toggle::make('auto_fine_deduction_enabled')
+                            ->label('Enable Auto-Deduction of Fines')
+                            ->helperText('If disabled, meeting lateness and absence fines will accumulate but not be automatically debited from member wallets.')
                             ->default(true),
                         Toggle::make('display_admin_charge_in_wallet')
                             ->label('Display Admin Charges in Wallet')

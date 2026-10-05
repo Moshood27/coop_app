@@ -83,8 +83,8 @@ class AdministrativeChargeService
                         $lockedUser->save();
                         $stats['accrued']++;
 
-                        // 2. Auto-deduct (Mandatory if funds available)
-                        if ($lockedUser->admin_charge_balance > 0) {
+                        // 2. Auto-deduct (Mandatory if funds available and enabled)
+                        if ($lockedUser->admin_charge_balance > 0 && Setting::get('auto_admin_charge_deduction_enabled', true)) {
                             $this->attemptDeduction($lockedUser, $stats);
                         }
 
@@ -144,7 +144,7 @@ class AdministrativeChargeService
                     $stats['total_users_checked']++;
                     $beforeBalance = (float) $user->balance;
 
-                    if ($this->attemptDeduction($user)) {
+                    if (Setting::get('auto_admin_charge_deduction_enabled', true) && $this->attemptDeduction($user)) {
                         $user->refresh();
                         $deducted = $beforeBalance - (float) $user->balance;
                         if ($deducted > 0) {
@@ -401,7 +401,8 @@ class AdministrativeChargeService
             // 2. Fines Recovery
             try {
                 $finesDue = (float) $user->outstanding_fines;
-                if ($finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
+                $autoFineEnabled = (bool) Setting::get('auto_fine_deduction_enabled', true);
+                if ($autoFineEnabled && $finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
                     $fineDeduction = min($finesDue, $currentAmount);
 
                     $user->decrement('outstanding_fines', $fineDeduction);
@@ -437,7 +438,8 @@ class AdministrativeChargeService
             // 3. Administrative Charges (Sitting Fees)
             try {
                 $adminDue = (float) $user->admin_charge_balance;
-                if ($adminDue > 0 && $currentAmount > 0 && !in_array('SITTING', $excludeSchemesUpper)) {
+                $autoAdminEnabled = (bool) Setting::get('auto_admin_charge_deduction_enabled', true);
+                if ($autoAdminEnabled && $adminDue > 0 && $currentAmount > 0 && !in_array('SITTING', $excludeSchemesUpper)) {
                     $adminDeduction = min($adminDue, $currentAmount);
 
                     $scheme = Scheme::where('name', 'SITTING')->first();
@@ -541,7 +543,7 @@ class AdministrativeChargeService
 
             // 2. Process pending administrative charges
             $adminChargeDeducted = 0;
-            if ($user->admin_charge_balance > 0) {
+            if (Setting::get('auto_admin_charge_deduction_enabled', true) && $user->admin_charge_balance > 0) {
                 $beforeAdminCharge = (float) $user->balance;
                 if ($this->attemptDeduction($user)) {
                     $user->refresh();

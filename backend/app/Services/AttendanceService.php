@@ -8,6 +8,7 @@ use App\Models\CharityEntry;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -105,7 +106,8 @@ class AttendanceService
             $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
             $isPaid = false;
-            if ((float) $lockedUser->balance >= $amount) {
+            $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
+            if ($autoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 
@@ -196,8 +198,9 @@ class AttendanceService
 
             $status = 'fine_pending';
             $paidAt = null;
+            $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
 
-            if ((float) $lockedUser->balance >= $amount) {
+            if ($autoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 
@@ -315,6 +318,87 @@ class AttendanceService
                     }
                 }
             }
+        });
+    }
+
+    /**
+     * Settle outstanding fines manually from user wallet.
+     */
+    public function settleFinesManually(User $user, ?float $amount = null): array
+    {
+        return DB::transaction(function () use ($user, $amount) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+
+            if (!$lockedUser) {
+                throw new \Exception("Member not found.");
+            }
+
+            $due = (float) $lockedUser->outstanding_fines;
+
+            if ($due <= 0) {
+                throw new \Exception("Member has no outstanding fines.");
+            }
+
+            $amountToPay = $amount ?? $due;
+            $amountToPay = min($amountToPay, $due);
+
+            if ($amountToPay <= 0) {
+                throw new \Exception("Invalid payment amount.");
+            }
+
+            if ((float) $lockedUser->balance < $amountToPay) {
+                throw new \Exception("Insufficient wallet balance. Available: ₦" . number_format($lockedUser->balance, 2));
+            }
+
+            // Deduct from wallet
+            $lockedUser->decrement('balance', $amountToPay);
+            $lockedUser->decrement('outstanding_fines', $amountToPay);
+
+            $reference = 'FINE-SETTLE-' . $lockedUser->id . '-' . time();
+
+            WalletTransaction::create([
+                'user_id' => $lockedUser->id,
+                'type' => 'debit',
+                'amount' => $amountToPay,
+                'reference' => $reference,
+                'source' => 'attendance_fine_collection',
+                'meta' => [
+                    'description' => 'Manual fine settlement',
+                    'manual' => true,
+                    'remaining_due' => (float)$lockedUser->outstanding_fines
+                ]
+            ]);
+
+            // Record in Charity Ledger
+            CharityEntry::create([
+                'user_id' => $lockedUser->id,
+                'source' => 'Manual Fine Settlement',
+                'amount' => $amountToPay,
+                'note' => "Manual settlement of outstanding fines",
+                'status' => 'processed',
+                'processed_at' => now(),
+            ]);
+
+            // Update attendance records
+            $this->settleOutstandingFines($lockedUser, $amountToPay);
+
+            $lockedUser->refresh();
+
+            $lockedUser->notifyMember(
+                "Fines Settled",
+                "₦" . number_format($amountToPay, 2) . " has been manually deducted from your wallet for outstanding fines.",
+                [
+                    'type' => 'fine_manual_settlement',
+                    'amount' => $amountToPay,
+                    'remaining' => $lockedUser->outstanding_fines
+                ]
+            );
+
+            return [
+                'success' => true,
+                'amount_paid' => $amountToPay,
+                'remaining_due' => (float) $lockedUser->outstanding_fines,
+            ];
         });
     }
 
