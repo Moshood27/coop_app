@@ -50,7 +50,7 @@ $stats = [
 
 foreach ($txs as $tx) {
     try {
-        DB::transaction(function () use ($tx, $dryRun, &$stats) {
+        DB::transaction(function () use ($tx, $dryRun, &$stats, $month) {
             $user = User::find($tx->user_id);
             if (!$user) {
                 echo "User not found for TX ID {$tx->id}\n";
