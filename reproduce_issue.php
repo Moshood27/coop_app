@@ -24,11 +24,11 @@ try {
     echo "Initial Outstanding Fines: {$user->outstanding_fines}\n";
     echo "Initial Admin Charge Balance: {$user->admin_charge_balance}\n";
 
-    // 2. Enable all relevant settings
-    Setting::set('auto_fine_deduction_enabled', true);
-    Setting::set('auto_meeting_fine_deduction_enabled', true);
-    Setting::set('auto_sitting_fine_deduction_enabled', true);
-    Setting::set('auto_admin_charge_deduction_enabled', true);
+    // 2. Disable all relevant settings
+    Setting::set('auto_fine_deduction_enabled', false);
+    Setting::set('auto_meeting_fine_deduction_enabled', false);
+    Setting::set('auto_sitting_fine_deduction_enabled', false);
+    Setting::set('auto_admin_charge_deduction_enabled', false);
 
     echo "Settings after disabling:\n";
     echo "auto_fine_deduction_enabled: " . var_export(Setting::get('auto_fine_deduction_enabled'), true) . " (bool): " . var_export((bool)Setting::get('auto_fine_deduction_enabled'), true) . "\n";

@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\WalletTransaction;
 use App\Models\Contribution;
 use App\Models\Scheme;
+use App\Models\CharityEntry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
