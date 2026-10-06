@@ -9,6 +9,12 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
+config(['database.connections.mysql.host' => '127.0.0.1']);
+config(['database.connections.mysql.port' => '33060']);
+config(['cache.default' => 'array']);
+config(['session.driver' => 'array']);
+config(['queue.default' => 'sync']);
+
 $userId = 1784;
 $user = User::find($userId);
 
