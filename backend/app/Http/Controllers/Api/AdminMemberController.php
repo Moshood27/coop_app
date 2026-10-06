@@ -641,60 +641,64 @@ class AdminMemberController extends Controller
 
         $reference = 'WALLET_ALLOC_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
-        DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested, $notes) {
-            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+        try {
+            DB::transaction(function () use ($user, $data, $request, $reference, $totalRequested, $notes) {
+                $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
-            if ($lockedUser->balance < $totalRequested) {
-                throw new \Exception('Insufficient wallet balance.');
-            }
+                if ($lockedUser->balance < $totalRequested) {
+                    throw new \Exception('Insufficient wallet balance.');
+                }
 
-            $items = [];
-            foreach ($data['allocations'] as $alloc) {
-                if ($alloc['amount'] <= 0) continue;
+                $items = [];
+                foreach ($data['allocations'] as $alloc) {
+                    if ($alloc['amount'] <= 0) continue;
 
-                $scheme = Scheme::find($alloc['scheme_id']);
+                    $scheme = Scheme::find($alloc['scheme_id']);
 
-                // 1. Create contribution record
-                $lockedUser->contributions()->create([
-                    'scheme_id' => $scheme->id,
-                    'amount' => $alloc['amount'],
-                    'status' => 'success',
-                    'paid_at' => now(),
-                    'payment_method' => 'wallet',
+                    // 1. Create contribution record
+                    $lockedUser->contributions()->create([
+                        'scheme_id' => $scheme->id,
+                        'amount' => $alloc['amount'],
+                        'status' => 'success',
+                        'paid_at' => now(),
+                        'payment_method' => 'wallet',
+                        'reference' => $reference,
+                        'notes' => $notes,
+                    ]);
+
+                    // 2. Sync scheme balance
+                    $lockedUser->syncSchemeBalance($scheme->name);
+
+                    $items[] = [
+                        'scheme_id' => $scheme->id,
+                        'scheme_name' => $scheme->name,
+                        'amount' => $alloc['amount'],
+                        'category' => 'deposit',
+                    ];
+                }
+
+                // 3. Deduct from wallet total
+                $lockedUser->decrement('balance', $totalRequested);
+
+                // 4. Create wallet transaction record
+                $lockedUser->walletTransactions()->create([
+                    'amount' => $totalRequested,
+                    'type' => 'debit',
                     'reference' => $reference,
-                    'notes' => $notes,
+                    'source' => 'wallet_allocation',
+                    'meta' => [
+                        'admin_id' => $request->user()->id,
+                        'description' => "Allocation to multiple schemes (by Admin)",
+                        'notes' => $notes,
+                        'distribution' => $items,
+                    ]
                 ]);
+            });
 
-                // 2. Sync scheme balance
-                $lockedUser->syncSchemeBalance($scheme->name);
-
-                $items[] = [
-                    'scheme_id' => $scheme->id,
-                    'scheme_name' => $scheme->name,
-                    'amount' => $alloc['amount'],
-                    'category' => 'deposit',
-                ];
-            }
-
-            // 3. Deduct from wallet total
-            $lockedUser->decrement('balance', $totalRequested);
-
-            // 4. Create wallet transaction record
-            $lockedUser->walletTransactions()->create([
-                'amount' => $totalRequested,
-                'type' => 'debit',
-                'reference' => $reference,
-                'source' => 'wallet_allocation',
-                'meta' => [
-                    'admin_id' => $request->user()->id,
-                    'description' => "Allocation to multiple schemes (by Admin)",
-                    'notes' => $notes,
-                    'distribution' => $items,
-                ]
-            ]);
-        });
-
-        return response()->json(['message' => 'Wallet funds allocated successfully.']);
+            return response()->json(['message' => 'Wallet funds allocated successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
