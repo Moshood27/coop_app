@@ -166,67 +166,71 @@ class AdminMemberController extends Controller
 
         $contributions = [];
 
-        DB::transaction(function () use ($user, $data, $request, &$contributions) {
-            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+        try {
+            DB::transaction(function () use ($user, $data, $request, &$contributions) {
+                $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
-            if (!empty($data['split_50_50'])) {
-                $halfAmount = $data['amount'] / 2;
+                if (!empty($data['split_50_50'])) {
+                    $halfAmount = $data['amount'] / 2;
 
-                // Find Savings and Shares schemes
-                $savingsScheme = Scheme::where('name', 'Ordinary Savings')
-                    ->orWhere('name', 'Savings')
-                    ->first();
-                $sharesScheme = Scheme::where('name', 'Shares')
-                    ->orWhere('name', 'Share Capital')
-                    ->first();
+                    // Find Savings and Shares schemes
+                    $savingsScheme = Scheme::where('name', 'Ordinary Savings')
+                        ->orWhere('name', 'Savings')
+                        ->first();
+                    $sharesScheme = Scheme::where('name', 'Shares')
+                        ->orWhere('name', 'Share Capital')
+                        ->first();
 
-                if (!$savingsScheme || !$sharesScheme) {
-                    throw new \Exception('Savings or Shares scheme not found for split.');
-                }
+                    if (!$savingsScheme || !$sharesScheme) {
+                        throw new \Exception('Savings or Shares scheme not found for split.');
+                    }
 
-                foreach ([$savingsScheme, $sharesScheme] as $scheme) {
-                    $con = $lockedUser->contributions()->create([
-                        'scheme_id' => $scheme->id,
-                        'amount' => $halfAmount,
+                    foreach ([$savingsScheme, $sharesScheme] as $scheme) {
+                        $con = $lockedUser->contributions()->create([
+                            'scheme_id' => $scheme->id,
+                            'amount' => $halfAmount,
+                            'status' => 'success',
+                            'paid_at' => Carbon::parse($data['paid_at']),
+                            'payment_method' => $data['method'],
+                            'reference' => ($data['reference'] ?? ('SPL-'.strtoupper(Str::random(8)))) . '-' . strtoupper(substr($scheme->name, 0, 3)),
+                            'notes' => ($data['notes'] ?? '') . " (Split 50/50)",
+                            'metadata' => [
+                                'admin_id' => $request->user()->id,
+                                'type' => 'manual_distribution_split'
+                            ]
+                        ]);
+                        $lockedUser->syncSchemeBalance($scheme->name);
+                        $contributions[] = $con;
+                    }
+                } else {
+                    $contribution = $lockedUser->contributions()->create([
+                        'scheme_id' => $data['scheme_id'],
+                        'amount' => $data['amount'],
                         'status' => 'success',
                         'paid_at' => Carbon::parse($data['paid_at']),
                         'payment_method' => $data['method'],
-                        'reference' => ($data['reference'] ?? ('SPL-'.strtoupper(Str::random(8)))) . '-' . strtoupper(substr($scheme->name, 0, 3)),
-                        'notes' => ($data['notes'] ?? '') . " (Split 50/50)",
+                        'reference' => $data['reference'] ?? ('MAN-'.strtoupper(Str::random(10))),
+                        'notes' => $data['notes'] ?? null,
                         'metadata' => [
                             'admin_id' => $request->user()->id,
-                            'type' => 'manual_distribution_split'
+                            'type' => 'manual_distribution'
                         ]
                     ]);
+
+                    // Sync scheme balance
+                    $scheme = Scheme::find($data['scheme_id']);
                     $lockedUser->syncSchemeBalance($scheme->name);
-                    $contributions[] = $con;
+                    $contributions[] = $contribution;
                 }
-            } else {
-                $contribution = $lockedUser->contributions()->create([
-                    'scheme_id' => $data['scheme_id'],
-                    'amount' => $data['amount'],
-                    'status' => 'success',
-                    'paid_at' => Carbon::parse($data['paid_at']),
-                    'payment_method' => $data['method'],
-                    'reference' => $data['reference'] ?? ('MAN-'.strtoupper(Str::random(10))),
-                    'notes' => $data['notes'] ?? null,
-                    'metadata' => [
-                        'admin_id' => $request->user()->id,
-                        'type' => 'manual_distribution'
-                    ]
-                ]);
+            });
 
-                // Sync scheme balance
-                $scheme = Scheme::find($data['scheme_id']);
-                $lockedUser->syncSchemeBalance($scheme->name);
-                $contributions[] = $contribution;
-            }
-        });
-
-        return response()->json([
-            'message' => 'Funds distributed successfully.',
-            'contributions' => $contributions
-        ]);
+            return response()->json([
+                'message' => 'Funds distributed successfully.',
+                'contributions' => $contributions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -245,20 +249,24 @@ class AdminMemberController extends Controller
             'status' => 'required|string|in:pending,success,failed',
         ]);
 
-        DB::transaction(function () use ($contribution, $data) {
-            $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
-            $oldScheme = $contribution->scheme;
-            $contribution->update($data);
+        try {
+            DB::transaction(function () use ($contribution, $data) {
+                $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
+                $oldScheme = $contribution->scheme;
+                $contribution->update($data);
 
-            // Sync balances
-            if ($oldScheme) $lockedUser->syncSchemeBalance($oldScheme->name);
-            $newScheme = Scheme::find($data['scheme_id']);
-            if ($newScheme && (!$oldScheme || $newScheme->id !== $oldScheme->id)) {
-                $lockedUser->syncSchemeBalance($newScheme->name);
-            }
-        });
+                // Sync balances
+                if ($oldScheme) $lockedUser->syncSchemeBalance($oldScheme->name);
+                $newScheme = Scheme::find($data['scheme_id']);
+                if ($newScheme && (!$oldScheme || $newScheme->id !== $oldScheme->id)) {
+                    $lockedUser->syncSchemeBalance($newScheme->name);
+                }
+            });
 
-        return response()->json(['message' => 'Contribution updated successfully.', 'contribution' => $contribution->fresh()]);
+            return response()->json(['message' => 'Contribution updated successfully.', 'contribution' => $contribution->fresh()]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -268,18 +276,21 @@ class AdminMemberController extends Controller
     {
         $this->authorizeAdminAccess($request->user(), $contribution->user);
 
-        DB::transaction(function () use ($contribution) {
-            $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
-            $schemeName = $contribution->scheme?->name;
+        try {
+            DB::transaction(function () use ($contribution) {
+                $lockedUser = User::where('id', $contribution->user_id)->lockForUpdate()->first();
+                $schemeName = $contribution->scheme?->name;
+                $contribution->delete();
 
-            $contribution->delete();
+                if ($schemeName) {
+                    $lockedUser->syncSchemeBalance($schemeName);
+                }
+            });
 
-            if ($schemeName) {
-                $lockedUser->syncSchemeBalance($schemeName);
-            }
-        });
-
-        return response()->json(['message' => 'Contribution deleted successfully.']);
+            return response()->json(['message' => 'Contribution deleted successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
