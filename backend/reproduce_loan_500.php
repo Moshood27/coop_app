@@ -21,15 +21,16 @@ if (!$admin || !$member) {
 }
 
 // Ensure member has an active loan to trigger the exception
-$member->loans()->updateOrCreate(['status' => 'active'], [
-    'amount' => 1000,
+$member->qardHasans()->updateOrCreate(['status' => 'active'], [
+    'qard_id_string' => 'QH-REPRO-' . time(),
+    'principal_amount' => 1000,
     'total_installments' => 10,
+    'per_installment' => 100,
     'interval' => 'monthly',
     'repayment_start_date' => now(),
-    'reference' => 'REPRO-TEST-' . time()
 ]);
 
-echo "Member #{$member->id} active loan count: " . $member->loans()->whereIn('status', ['active', 'defaulted'])->count() . "\n";
+echo "Member #{$member->id} active loan count: " . $member->qardHasans()->whereIn('status', ['active', 'defaulted'])->count() . "\n";
 
 $request = Request::create("/api/admin/members/{$member->id}/loans", 'POST', [
     'amount' => 3000000,

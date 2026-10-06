@@ -881,46 +881,50 @@ class AdminMemberController extends Controller
 
         $amount = round((float) $data['amount'], 2);
 
-        DB::transaction(function () use ($loan, $amount, $data, $request) {
-            $lockedUser = User::where('id', $loan->user_id)->lockForUpdate()->first();
-            $lockedLoan = QardHasan::where('id', $loan->id)->lockForUpdate()->first();
+        try {
+            DB::transaction(function () use ($loan, $amount, $data, $request) {
+                $lockedUser = User::where('id', $loan->user_id)->lockForUpdate()->first();
+                $lockedLoan = QardHasan::where('id', $loan->id)->lockForUpdate()->first();
 
-            if ($data['method'] === 'wallet') {
-                if ($lockedUser->balance < $amount) {
-                    throw new \Exception('Insufficient wallet balance.');
+                if ($data['method'] === 'wallet') {
+                    if ($lockedUser->balance < $amount) {
+                        throw new \Exception('Insufficient wallet balance.');
+                    }
+                    $lockedUser->decrement('balance', $amount);
+                    $lockedUser->walletTransactions()->create([
+                        'amount' => $amount,
+                        'type' => 'debit',
+                        'reference' => 'LRP-' . strtoupper(Str::random(12)),
+                        'source' => 'loan_repayment',
+                        'meta' => [
+                            'loan_id' => $lockedLoan->id,
+                            'admin_id' => $request->user()->id,
+                            'description' => "Loan Repayment for QH-{$lockedLoan->id} (by Admin)",
+                            'notes' => $data['notes'] ?? null
+                        ]
+                    ]);
                 }
-                $lockedUser->decrement('balance', $amount);
-                $lockedUser->walletTransactions()->create([
+
+                $lockedLoan->repayments()->create([
                     'amount' => $amount,
-                    'type' => 'debit',
-                    'reference' => 'LRP-' . strtoupper(Str::random(12)),
-                    'source' => 'loan_repayment',
-                    'meta' => [
-                        'loan_id' => $lockedLoan->id,
-                        'admin_id' => $request->user()->id,
-                        'description' => "Loan Repayment for QH-{$lockedLoan->id} (by Admin)",
-                        'notes' => $data['notes'] ?? null
-                    ]
+                    'payment_method' => $data['method'],
+                    'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
+                    'paid_at' => Carbon::parse($data['paid_at']),
+                    'notes' => $data['notes'] ?? null,
+                    'status' => 'success',
                 ]);
-            }
 
-            $lockedLoan->repayments()->create([
-                'amount' => $amount,
-                'payment_method' => $data['method'],
-                'reference' => 'QH-REP-' . strtoupper(Str::random(12)),
-                'paid_at' => Carbon::parse($data['paid_at']),
-                'notes' => $data['notes'] ?? null,
-                'status' => 'success',
-            ]);
+                $lockedLoan->increment('paid_amount', $amount);
 
-            $lockedLoan->increment('paid_amount', $amount);
+                if ($lockedLoan->paid_amount >= $lockedLoan->principal_amount) {
+                    $lockedLoan->update(['status' => 'completed', 'completed_at' => now()]);
+                }
+            });
 
-            if ($lockedLoan->paid_amount >= $lockedLoan->principal_amount) {
-                $lockedLoan->update(['status' => 'completed', 'completed_at' => now()]);
-            }
-        });
-
-        return response()->json(['message' => 'Loan repayment recorded successfully.']);
+            return response()->json(['message' => 'Loan repayment recorded successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -1019,39 +1023,45 @@ class AdminMemberController extends Controller
             'repayment_start_date' => ['nullable', 'date'],
         ]);
 
-        $loan = DB::transaction(function () use ($user, $data, $request) {
-            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+        try {
+            $loan = DB::transaction(function () use ($user, $data, $request) {
+                $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
-            if ($lockedUser->hasActiveLoan()) {
-                throw new \Exception('Member already has an active loan.');
-            }
+                if ($lockedUser->hasActiveLoan()) {
+                    throw new \Exception('Member already has an active loan.');
+                }
 
-            $perInstallment = round($data['amount'] / $data['total_installments'], 2);
+                $perInstallment = round($data['amount'] / $data['total_installments'], 2);
 
-            return QardHasan::create([
-                'user_id' => $lockedUser->id,
-                'qard_id_string' => 'ADM-' . strtoupper(Str::random(8)),
-                'principal_amount' => $data['amount'],
-                'total_installments' => $data['total_installments'],
-                'per_installment' => $perInstallment,
-                'interval' => $data['interval'],
-                'status' => 'active',
-                'description' => $data['description'] ?? 'Admin created loan',
-                'repayment_start_date' => $data['repayment_start_date'] ?? null,
-                'disbursed_at' => now(),
-                'approved_at' => now(),
-                'approved_by' => $request->user()->id,
-                'received_at' => now(),
-            ]);
-        });
+                return QardHasan::create([
+                    'user_id' => $lockedUser->id,
+                    'qard_id_string' => 'ADM-' . strtoupper(Str::random(8)),
+                    'principal_amount' => $data['amount'],
+                    'total_installments' => $data['total_installments'],
+                    'per_installment' => $perInstallment,
+                    'interval' => $data['interval'],
+                    'status' => 'active',
+                    'description' => $data['description'] ?? 'Admin created loan',
+                    'repayment_start_date' => $data['repayment_start_date'] ?? null,
+                    'disbursed_at' => now(),
+                    'approved_at' => now(),
+                    'approved_by' => $request->user()->id,
+                    'received_at' => now(),
+                ]);
+            });
 
-        // Log the action
-        Log::info("Admin {$request->user()->id} created loan for member {$user->id}", ['amount' => $data['amount']]);
+            // Log the action
+            Log::info("Admin {$request->user()->id} created loan for member {$user->id}", ['amount' => $data['amount']]);
 
-        return response()->json([
-            'message' => 'Loan created successfully.',
-            'loan' => $loan,
-        ], 201);
+            return response()->json([
+                'message' => 'Loan created successfully.',
+                'loan' => $loan,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     /**

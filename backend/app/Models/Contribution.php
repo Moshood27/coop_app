@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Validation\ValidationException;
 
 class Contribution extends Model
 {
@@ -55,7 +56,7 @@ class Contribution extends Model
     {
         static::creating(function (self $model) {
             if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at ?? now())) {
-                throw new \Exception("Cannot create contribution for a closed month.");
+                throw ValidationException::withMessages(['paid_at' => "Cannot create contribution for a closed month."]);
             }
             if (empty($model->reference)) {
                 $model->reference = self::generateReference();
@@ -79,10 +80,10 @@ class Contribution extends Model
 
         static::updating(function (self $model) {
             if (MonthClosing::isDateClosed($model->getOriginal('paid_at') ?? $model->getOriginal('created_at'))) {
-                throw new \Exception("Cannot update contribution in a closed month.");
+                throw ValidationException::withMessages(['paid_at' => "Cannot update contribution in a closed month."]);
             }
             if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at)) {
-                throw new \Exception("Cannot move contribution to a closed month.");
+                throw ValidationException::withMessages(['paid_at' => "Cannot move contribution to a closed month."]);
             }
             if ($model->isDirty('status') && $model->status === 'success' && empty($model->paid_at)) {
                 $model->paid_at = now();
@@ -103,7 +104,7 @@ class Contribution extends Model
 
         static::deleting(function (self $model) {
             if (MonthClosing::isDateClosed($model->paid_at ?? $model->created_at)) {
-                throw new \Exception("Cannot delete contribution in a closed month.");
+                throw ValidationException::withMessages(['paid_at' => "Cannot delete contribution in a closed month."]);
             }
         });
 
