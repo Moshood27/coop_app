@@ -848,9 +848,9 @@ class AdminMemberController extends Controller
     /**
      * Update a wallet transaction.
      */
-    public function updateWalletTransaction(Request $request, WalletTransaction $transaction)
+    public function updateWalletTransaction(Request $request, WalletTransaction $walletTransaction)
     {
-        $this->authorizeAdminAccess($request->user(), $transaction->user);
+        $this->authorizeAdminAccess($request->user(), $walletTransaction->user);
 
         $data = $request->validate([
             'amount' => 'required|numeric',
@@ -861,40 +861,40 @@ class AdminMemberController extends Controller
             'status' => 'nullable|string',
         ]);
 
-        $meta = $transaction->meta ?? [];
+        $meta = $walletTransaction->meta ?? [];
         if (isset($data['description'])) $meta['notes'] = $data['description'];
         if (isset($data['status'])) $meta['status'] = $data['status'];
 
-        $transaction->update([
+        $walletTransaction->update([
             'amount' => $data['amount'],
             'type' => $data['type'],
-            'reference' => $data['reference'] ?? $transaction->reference,
-            'source' => $data['source'] ?? $transaction->source,
+            'reference' => $data['reference'] ?? $walletTransaction->reference,
+            'source' => $data['source'] ?? $walletTransaction->source,
             'meta' => $meta,
         ]);
 
-        return response()->json(['message' => 'Transaction updated successfully.', 'transaction' => $transaction]);
+        return response()->json(['message' => 'Transaction updated successfully.', 'transaction' => $walletTransaction]);
     }
 
     /**
      * Delete a wallet transaction.
      */
-    public function deleteWalletTransaction(Request $request, WalletTransaction $transaction)
+    public function deleteWalletTransaction(Request $request, WalletTransaction $walletTransaction)
     {
-        $this->authorizeAdminAccess($request->user(), $transaction->user);
-        $transaction->delete();
+        $this->authorizeAdminAccess($request->user(), $walletTransaction->user);
+        $walletTransaction->delete();
         return response()->json(['message' => 'Transaction deleted successfully.']);
     }
 
     /**
      * Refund a charge or fine transaction.
      */
-    public function refundWalletTransaction(Request $request, WalletTransaction $transaction)
+    public function refundWalletTransaction(Request $request, WalletTransaction $walletTransaction)
     {
-        $this->authorizeAdminAccess($request->user(), $transaction->user);
+        $this->authorizeAdminAccess($request->user(), $walletTransaction->user);
 
         try {
-            app(AdministrativeChargeService::class)->refundTransaction($transaction);
+            app(AdministrativeChargeService::class)->refundTransaction($walletTransaction);
             return response()->json(['message' => 'Transaction refunded successfully.']);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);

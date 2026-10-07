@@ -581,6 +581,11 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/vendor
 });
 
 Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/members')->group(function () {
+    // Wallet Transaction Management (Move to top to avoid shadowing by /{user} routes)
+    Route::post('/wallet-transactions/{walletTransaction}/refund', [\App\Http\Controllers\Api\AdminMemberController::class, 'refundWalletTransaction'])->name('admin.members.wallet-transactions.refund');
+    Route::patch('/wallet-transactions/{walletTransaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateWalletTransaction'])->name('admin.members.wallet-transactions.update');
+    Route::delete('/wallet-transactions/{walletTransaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteWalletTransaction'])->name('admin.members.wallet-transactions.delete');
+
     Route::get('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'index']);
     Route::post('/', [\App\Http\Controllers\Api\AdminMemberController::class, 'store']);
     Route::get('/{user}', [\App\Http\Controllers\Api\AdminMemberController::class, 'show']);
@@ -604,11 +609,6 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     // Contribution CRUD
     Route::patch('/contributions/{contribution}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateContribution']);
     Route::delete('/contributions/{contribution}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteContribution']);
-
-    // Wallet CRUD
-    Route::patch('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateWalletTransaction']);
-    Route::delete('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteWalletTransaction']);
-    Route::post('/wallet-transactions/{transaction}/refund', [\App\Http\Controllers\Api\AdminMemberController::class, 'refundWalletTransaction']);
 
     // Loan CRUD & Repayment
     Route::patch('/loans/{loan}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateLoan']);
