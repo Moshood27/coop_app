@@ -188,7 +188,7 @@
               </div>
               <div class="flex gap-1">
                 <button v-if="isRefundable(tx)" @click="confirmRefund(tx)" class="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-100" title="Refund Transaction">
-                  <span class="i-mdi-arrow-u-left-top text-sm"></span>
+                  <span class="i-mdi-undo-variant text-sm"></span>
                 </button>
                 <button @click="editTransaction(tx)" class="w-8 h-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-amber-50 hover:text-amber-600">
                   <span class="i-mdi-pencil text-sm"></span>

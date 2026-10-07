@@ -24,7 +24,7 @@
       <!-- Year-End Close -->
       <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-calendar-end"></span></div>
+          <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-calendar"></span></div>
           <div>
             <h3 class="text-sm font-black text-slate-800">Year-End Close</h3>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Transfer net P&L to retained earnings</p>
@@ -47,7 +47,7 @@
       <!-- Auto Reversals -->
       <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-arrow-u-left-top"></span></div>
+          <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-undo-variant"></span></div>
           <div>
             <h3 class="text-sm font-black text-slate-800">Auto-Reversals</h3>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Reverse flagged journals</p>
@@ -66,7 +66,7 @@
       <!-- Monthly Balances Rebuild -->
       <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-database-refresh"></span></div>
+          <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-sync"></span></div>
           <div>
             <h3 class="text-sm font-black text-slate-800">Rebuild Monthly Balances</h3>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Aggregate ledger by month</p>
@@ -86,7 +86,7 @@
       <!-- FX Revaluation (Scaffold) -->
       <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-cash-sync"></span></div>
+          <div class="w-10 h-10 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-xl"><span class="i-mdi-cash-multiple"></span></div>
           <div>
             <h3 class="text-sm font-black text-slate-800">FX Revaluation (Scaffold)</h3>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Prepare for multi-currency rollout</p>
