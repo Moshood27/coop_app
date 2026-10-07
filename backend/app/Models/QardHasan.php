@@ -321,12 +321,12 @@ class QardHasan extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function approvedBy()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed();
     }
 
     public function repayments()
@@ -342,6 +342,7 @@ class QardHasan extends Model
     public function guarantors()
     {
         return $this->belongsToMany(User::class, 'qard_hasan_guarantors', 'qard_hasan_id', 'guarantor_id')
+            ->withTrashed()
             ->withTimestamps()
             ->withPivot(['status', 'token', 'responded_at', 'nudge_count', 'last_nudged_at', 'escalated_at']);
     }
