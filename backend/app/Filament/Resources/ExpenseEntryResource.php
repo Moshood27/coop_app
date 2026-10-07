@@ -281,7 +281,7 @@ class ExpenseEntryResource extends Resource
                         return "{$count} / {$required}";
                     })
                     ->badge()
-                    ->color(fn (ExpenseEntry $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
+                    ->color(fn ($state, ExpenseEntry $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
                     ->toggleable(),
                 ImageColumn::make('receipt_path')->label('Receipt')->circular()->toggleable(),
                 TextColumn::make('creator.full_name')
@@ -387,30 +387,35 @@ class ExpenseEntryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_expense_entry');
+        return auth()->user()?->can('view_any_expense_entry') ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_expense_entry');
+        return auth()->user()?->can('create_expense_entry') ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_expense_entry');
+        return auth()->user()?->can('update_expense_entry') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_expense_entry');
+        return auth()->user()?->can('delete_expense_entry') ?? false;
     }
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
+        $user = auth()->user();
+        if (!$user) {
+            return parent::getEloquentQuery()->whereRaw('1=0');
+        }
+
         return parent::getEloquentQuery()
             ->when(
-                auth()->user()->roles()->where('name', 'Branch Manager')->exists(),
-                fn ($query) => $query->whereHas('creator', fn ($q) => $q->where('branch_id', auth()->user()->branch_id))
+                $user->roles()->where('name', 'Branch Manager')->exists(),
+                fn ($query) => $query->whereHas('creator', fn ($q) => $q->where('branch_id', $user->branch_id))
             );
     }
 

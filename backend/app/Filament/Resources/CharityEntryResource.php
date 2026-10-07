@@ -114,7 +114,7 @@ class CharityEntryResource extends Resource
                         return "{$count} / {$required}";
                     })
                     ->badge()
-                    ->color(fn (CharityEntry $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
+                    ->color(fn ($state, CharityEntry $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
                     ->toggleable(),
                 TextColumn::make('note')->limit(50),
             ])
@@ -270,31 +270,36 @@ class CharityEntryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_charity_entry');
+        return auth()->user()?->can('view_any_charity_entry') ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_charity_entry');
+        return auth()->user()?->can('create_charity_entry') ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_charity_entry');
+        return auth()->user()?->can('update_charity_entry') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_charity_entry');
+        return auth()->user()?->can('delete_charity_entry') ?? false;
     }
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
+        $user = auth()->user();
+        if (!$user) {
+            return parent::getEloquentQuery()->whereRaw('1=0');
+        }
+
         return parent::getEloquentQuery()
             ->when(
-                auth()->user()->hasRole('Branch Manager'),
-                fn ($query) => $query->where(function ($q) {
-                    $q->whereHas('user', fn ($uq) => $uq->where('branch_id', auth()->user()->branch_id))
+                $user->hasRole('Branch Manager'),
+                fn ($query) => $query->where(function ($q) use ($user) {
+                    $q->whereHas('user', fn ($uq) => $uq->where('branch_id', $user->branch_id))
                       ->orWhereNull('user_id');
                 })
             );

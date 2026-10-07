@@ -75,7 +75,7 @@ class FeatureToggleResource extends Resource
                 TextColumn::make('display_scope')
                     ->label('Scope')
                     ->badge()
-                    ->color(fn (Feature $record): string => $record->scope === 'global' ? 'success' : 'warning')
+                    ->color(fn ($state, Feature $record): string => $record->scope === 'global' ? 'success' : 'warning')
                     ->sortable(['scope']),
                 ToggleColumn::make('value')
                     ->label('Status')

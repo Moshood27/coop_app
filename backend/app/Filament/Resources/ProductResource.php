@@ -80,7 +80,7 @@ class ProductResource extends Resource
                     ->default(true),
                 Forms\Components\Toggle::make('is_approved')
                     ->label('Approved')
-                    ->disabled(fn () => ! (auth()->user()->is_admin || auth()->user()->hasAnyRole(['super_admin', 'Branch Manager'])))
+                    ->disabled(fn () => ! (auth()->user()?->is_admin || auth()->user()?->hasAnyRole(['super_admin', 'Branch Manager'])))
                     ->default(true), // Admin-created products should be approved by default
                 Forms\Components\Placeholder::make('selling_price_preview')
                     ->label('Selling Price (auto)')
@@ -117,8 +117,8 @@ class ProductResource extends Resource
                     ->numeric()
                     ->sortable()
                     ->toggleable()
-                    ->color(fn ($record) => $record->track_stock && $record->stock_quantity <= 5 ? 'danger' : null)
-                    ->icon(fn ($record) => $record->track_stock && $record->stock_quantity <= 5 ? 'heroicon-o-exclamation-triangle' : null),
+                    ->color(fn ($state, $record) => $record->track_stock && $record->stock_quantity <= 5 ? 'danger' : null)
+                    ->icon(fn ($state, $record) => $record->track_stock && $record->stock_quantity <= 5 ? 'heroicon-o-exclamation-triangle' : null),
                 TextColumn::make('cost_price')->label('Cost')->money('ngn', true)->sortable(),
                 TextColumn::make('markup_percent')->label('Markup %')->formatStateUsing(fn ($state) => number_format((float)$state, 2) . '%')->sortable(),
                 TextColumn::make('selling_price')->label('Selling')->money('ngn', true)->sortable(),
@@ -216,22 +216,22 @@ class ProductResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_product');
+        return auth()->user()?->can('view_any_product') ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_product');
+        return auth()->user()?->can('create_product') ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_product');
+        return auth()->user()?->can('update_product') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_product');
+        return auth()->user()?->can('delete_product') ?? false;
     }
 
     public static function getPages(): array
