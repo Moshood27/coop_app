@@ -444,6 +444,10 @@ class ContributionResource extends Resource
     {
         $user = auth()->user();
 
+        if (!$user) {
+            return parent::getEloquentQuery()->whereRaw('1=0');
+        }
+
         // If the user is a Super Admin, let them see everything
         if ($user->hasRole('super_admin')) {
             return parent::getEloquentQuery();

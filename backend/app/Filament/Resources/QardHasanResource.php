@@ -284,8 +284,8 @@ class QardHasanResource extends Resource
                 TextColumn::make('defaulted_at')->label('Defaulted At')->dateTime()->sortable()->toggleable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn ($record, $state) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'DEFAULTED' : strtoupper($state))
-                    ->color(fn ($record, $state) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'danger' : match ($state) {
+                    ->formatStateUsing(fn ($state, $record) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'DEFAULTED' : strtoupper($state))
+                    ->color(fn ($state, $record) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'danger' : match ($state) {
                         'pending' => 'warning',
                         'active', 'completed' => 'success',
                         'cancelled', 'rejected' => 'danger',
@@ -300,7 +300,7 @@ class QardHasanResource extends Resource
                 TextColumn::make('period_of_default')
                     ->label('Period of Default')
                     ->getStateUsing(fn (QardHasan $record) => $record->period_of_default)
-                    ->color(fn (QardHasan $record) => $record->getOverdueDays() > 7 ? 'danger' : ($record->getOverdueDays() > 0 ? 'warning' : 'gray'))
+                    ->color(fn ($state, QardHasan $record) => $record->getOverdueDays() > 7 ? 'danger' : ($record->getOverdueDays() > 0 ? 'warning' : 'gray'))
                     ->toggleable(),
                 IconColumn::make('agreement_verified_at')
                     ->label('Agreement Verified')
@@ -316,7 +316,7 @@ class QardHasanResource extends Resource
                         return "{$count} / {$required}";
                     })
                     ->badge()
-                    ->color(fn (QardHasan $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
+                    ->color(fn ($state, QardHasan $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
                     ->toggleable(),
             ])
             ->filters([
@@ -1243,7 +1243,7 @@ class QardHasanResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_qard_hasan');
+        return auth()->user()?->can('view_any_qard_hasan') ?? false;
     }
 
     public static function canCreate(): bool
@@ -1255,12 +1255,12 @@ class QardHasanResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_qard_hasan');
+        return auth()->user()?->can('update_qard_hasan') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_qard_hasan');
+        return auth()->user()?->can('delete_qard_hasan') ?? false;
     }
 
     public static function getEloquentQuery(): Builder
@@ -1273,6 +1273,10 @@ class QardHasanResource extends Resource
     {
         $user = auth()->user();
         $query = parent::getEloquentQuery();
+
+        if (!$user) {
+            return $query->whereRaw('1=0');
+        }
 
         // If the user is a Super Admin, let them see everything (within their scope if any)
         if ($user->hasRole('super_admin')) {
