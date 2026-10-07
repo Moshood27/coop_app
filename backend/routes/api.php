@@ -608,6 +608,7 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     // Wallet CRUD
     Route::patch('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateWalletTransaction']);
     Route::delete('/wallet-transactions/{transaction}', [\App\Http\Controllers\Api\AdminMemberController::class, 'deleteWalletTransaction']);
+    Route::post('/wallet-transactions/{transaction}/refund', [\App\Http\Controllers\Api\AdminMemberController::class, 'refundWalletTransaction']);
 
     // Loan CRUD & Repayment
     Route::patch('/loans/{loan}', [\App\Http\Controllers\Api\AdminMemberController::class, 'updateLoan']);

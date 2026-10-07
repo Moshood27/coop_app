@@ -833,6 +833,12 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $user);
 
         $transactions = $user->walletTransactions()
+            ->select('wallet_transactions.*')
+            ->addSelect([
+                'refunded_id' => WalletTransaction::select('id')
+                    ->whereColumn('reference', DB::raw("CONCAT('REFUND-', wallet_transactions.reference)"))
+                    ->limit(1)
+            ])
             ->orderByDesc('created_at')
             ->paginate(20);
 
@@ -878,6 +884,21 @@ class AdminMemberController extends Controller
         $this->authorizeAdminAccess($request->user(), $transaction->user);
         $transaction->delete();
         return response()->json(['message' => 'Transaction deleted successfully.']);
+    }
+
+    /**
+     * Refund a charge or fine transaction.
+     */
+    public function refundWalletTransaction(Request $request, WalletTransaction $transaction)
+    {
+        $this->authorizeAdminAccess($request->user(), $transaction->user);
+
+        try {
+            app(AdministrativeChargeService::class)->refundTransaction($transaction);
+            return response()->json(['message' => 'Transaction refunded successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**

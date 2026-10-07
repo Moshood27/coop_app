@@ -187,6 +187,9 @@
                 </p>
               </div>
               <div class="flex gap-1">
+                <button v-if="isRefundable(tx)" @click="confirmRefund(tx)" class="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center hover:bg-rose-100" title="Refund Transaction">
+                  <span class="i-mdi-arrow-u-left-top text-sm"></span>
+                </button>
                 <button @click="editTransaction(tx)" class="w-8 h-8 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center hover:bg-amber-50 hover:text-amber-600">
                   <span class="i-mdi-pencil text-sm"></span>
                 </button>
@@ -546,6 +549,31 @@ const fetchTransactions = async (page = 1) => {
 const loadMoreTransactions = () => {
   if (pagination.value.next_page_url) {
     fetchTransactions(pagination.value.current_page + 1)
+  }
+}
+
+const isRefundable = (tx) => {
+  const eligibleSources = ['admin_charge', 'attendance_fine_collection', 'attendance_fine', 'maintenance_charge']
+  return tx.type === 'debit' && eligibleSources.includes(tx.source) && !tx.refunded_id
+}
+
+const confirmRefund = async (tx) => {
+  const ok = await confirm('This will credit the member wallet, restore pending balances/fines, and notify the member. Are you sure you want to refund this transaction?', {
+    title: 'Refund Transaction',
+    confirmText: 'Yes, Refund',
+    cancelText: 'Cancel'
+  })
+  if (!ok) return
+  
+  submitting.value = true
+  try {
+    await axios.post(`/api/admin/members/wallet-transactions/${tx.id}/refund`)
+    alert('Transaction refunded successfully', 'Success')
+    fetchData()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Failed to refund transaction', 'Error')
+  } finally {
+    submitting.value = false
   }
 }
 

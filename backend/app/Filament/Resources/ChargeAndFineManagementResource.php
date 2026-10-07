@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ChargeAndFineManagementResource\Pages;
+use App\Services\AdministrativeChargeService;
 use App\Models\WalletTransaction;
 use App\Models\User;
 use App\Models\Contribution;
@@ -177,92 +178,12 @@ class ChargeAndFineManagementResource extends Resource
                     ->hidden(fn (WalletTransaction $record) => $record->refunded_id !== null)
                     ->action(function (WalletTransaction $record) {
                         try {
-                            DB::transaction(function () use ($record) {
-                                $user = $record->user;
-                                if (!$user) throw new \Exception("User not found.");
-
-                                $amount = $record->amount;
-
-                                // 1. Handle Admin Charge
-                                if ($record->source === 'admin_charge') {
-                                    $contribution = Contribution::where('user_id', $user->id)
-                                        ->where('reference', $record->reference)
-                                        ->first();
-
-                                    if ($contribution) {
-                                        $contribution->delete();
-                                    }
-
-                                    $user->increment('balance', $amount);
-                                    $user->increment('admin_charge_balance', $amount);
-                                }
-                                // 2. Handle Fine Collection
-                                elseif (in_array($record->source, ['attendance_fine_collection', 'attendance_fine'])) {
-                                    // Delete charity entry if exists
-                                    CharityEntry::where('user_id', $user->id)
-                                        ->where('amount', $amount)
-                                        ->whereBetween('created_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
-                                        ->delete();
-
-                                    // Revert attendance records
-                                    $attendanceRecords = AttendanceRecord::where('user_id', $user->id)
-                                        ->where(function($q) use ($record) {
-                                            $q->whereBetween('fine_paid_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
-                                              ->orWhere(function($sq) use ($record) {
-                                                  $sq->where('lateness_fine_paid', true)
-                                                     ->whereBetween('updated_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)]);
-                                              });
-                                        })
-                                        ->get();
-
-                                    foreach ($attendanceRecords as $attRecord) {
-                                        if ($attRecord->status === 'fine_paid') {
-                                            $attRecord->update(['status' => 'fine_pending', 'fine_paid_at' => null]);
-                                        }
-                                        if ($attRecord->lateness_fine_paid) {
-                                            $attRecord->update(['lateness_fine_paid' => false]);
-                                        }
-                                    }
-
-                                    $user->increment('balance', $amount);
-                                    $user->increment('outstanding_fines', $amount);
-                                }
-                                // 3. Handle Maintenance Charge
-                                else {
-                                    $user->increment('balance', $amount);
-                                }
-
-                                // Create Refund Transaction
-                                WalletTransaction::create([
-                                    'user_id' => $user->id,
-                                    'type' => 'credit',
-                                    'amount' => $amount,
-                                    'reference' => 'REFUND-' . $record->reference,
-                                    'source' => 'refund',
-                                    'meta' => [
-                                        'original_tx_id' => $record->id,
-                                        'original_source' => $record->source,
-                                        'description' => "Refund for " . ucwords(str_replace('_', ' ', $record->source)),
-                                        'admin_id' => auth()->id(),
-                                    ]
-                                ]);
-
-                                // Notify Member
-                                $title = "Refund Processed";
-                                $message = "A refund of ₦" . number_format($amount, 2) . " has been credited to your wallet for: " . ucwords(str_replace('_', ' ', $record->source));
-
-                                $user->notifyMember($title, $message, [
-                                    'type' => 'refund',
-                                    'amount' => $amount,
-                                    'source' => $record->source
-                                ], ['mail', 'push', 'database']);
-                            });
+                            app(AdministrativeChargeService::class)->refundTransaction($record);
 
                             Notification::make()
                                 ->title('Refunded successfully')
                                 ->success()
                                 ->send();
-
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Error during refund')
