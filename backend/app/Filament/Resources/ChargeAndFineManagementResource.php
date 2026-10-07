@@ -16,6 +16,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Filament\Tables\Filters\SelectFilter;
@@ -194,7 +196,58 @@ class ChargeAndFineManagementResource extends Resource
                     }),
             ])
             ->bulkActions([
-                // Bulk refund could be dangerous, so let's stick to individual for now or add confirmation
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('bulk_refund')
+                        ->label('Bulk Refund')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Bulk Refund Transactions')
+                        ->modalDescription('This will credit the member wallets, restore pending balances/fines, and notify the members for ALL selected transactions. Are you sure?')
+                        ->action(function (Collection $records) {
+                            $count = 0;
+                            $errors = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $record) {
+                                // Check if already refunded to avoid unnecessary service calls
+                                $alreadyRefunded = WalletTransaction::where('reference', 'REFUND-' . $record->reference)->exists();
+                                if ($alreadyRefunded || $record->refunded_id !== null) {
+                                    $skipped++;
+                                    continue;
+                                }
+
+                                try {
+                                    app(AdministrativeChargeService::class)->refundTransaction($record);
+                                    $count++;
+                                } catch (\Exception $e) {
+                                    $errors++;
+                                }
+                            }
+
+                            if ($count > 0) {
+                                Notification::make()
+                                    ->title($count . ' transactions refunded successfully')
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($errors > 0) {
+                                Notification::make()
+                                    ->title($errors . ' transactions failed to refund')
+                                    ->danger()
+                                    ->send();
+                            }
+
+                            if ($skipped > 0) {
+                                Notification::make()
+                                    ->title($skipped . ' transactions were already refunded and skipped')
+                                    ->info()
+                                    ->send();
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                ]),
             ]);
     }
 
