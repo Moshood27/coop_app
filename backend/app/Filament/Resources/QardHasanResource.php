@@ -125,7 +125,7 @@ class QardHasanResource extends Resource
                         $principal = (float) ($get('principal_amount') ?? 0);
                         if ($principal <= 0) return 100; // No limit if principal not set yet
                         $date = $record?->received_at ?? $record?->approved_at ?? now();
-                        return DurationHelper::getLoanDuration($principal, $date);
+                        return min(600, DurationHelper::getLoanDuration($principal, $date));
                     })
                     ->required()
                     ->reactive()

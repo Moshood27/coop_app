@@ -228,7 +228,7 @@ class AdminMemberController extends Controller
                 'message' => 'Funds distributed successfully.',
                 'contributions' => $contributions
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
@@ -264,7 +264,7 @@ class AdminMemberController extends Controller
             });
 
             return response()->json(['message' => 'Contribution updated successfully.', 'contribution' => $contribution->fresh()]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
@@ -288,7 +288,7 @@ class AdminMemberController extends Controller
             });
 
             return response()->json(['message' => 'Contribution deleted successfully.']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
@@ -707,7 +707,7 @@ class AdminMemberController extends Controller
             });
 
             return response()->json(['message' => 'Wallet funds allocated successfully.']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
@@ -937,7 +937,7 @@ class AdminMemberController extends Controller
             });
 
             return response()->json(['message' => 'Loan repayment recorded successfully.']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
@@ -1016,7 +1016,7 @@ class AdminMemberController extends Controller
             DB::commit();
 
             return response()->json(['message' => 'Member deleted successfully.']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error("Member deletion failed: " . $e->getMessage());
             return response()->json(['message' => 'Failed to delete member.'], 500);
