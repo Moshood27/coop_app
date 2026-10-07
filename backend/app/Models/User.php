@@ -32,6 +32,11 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable, WebAuthnAuthentication, SoftDeletes;
 
+    /**
+     * Temporary flag to skip automatic debt collection (e.g., during refunds)
+     */
+    public bool $skip_auto_collection = false;
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -31,6 +31,11 @@ class UserObserver
      */
     public function updated(User $user): void
     {
+        // Skip auto-collection if flag is set
+        if ($user->skip_auto_collection) {
+            return;
+        }
+
         // Trigger real-time dashboard update if any balance changed
         // This ensures numbers stay fresh even if no notification message is sent
         if ($user->wasChanged([

@@ -595,10 +595,14 @@ class AdministrativeChargeService
         }
 
         return DB::transaction(function () use ($record) {
-            $user = $record->user;
+            // Re-fetch user with lock to ensure fresh data and prevent race conditions
+            $user = User::where('id', $record->user_id)->lockForUpdate()->first();
             if (!$user) throw new \Exception("User not found.");
 
-            $amount = $record->amount;
+            // Set flag to skip auto-deductions during the refund process
+            $user->skip_auto_collection = true;
+
+            $amount = (float)$record->amount;
 
             // 1. Handle Admin Charge
             if ($record->source === 'admin_charge') {
@@ -623,13 +627,20 @@ class AdministrativeChargeService
                     ->whereBetween('created_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
                     ->delete();
 
+                // If it was a fine collection, delete the associated Contribution if exists
+                if ($record->source === 'attendance_fine_collection') {
+                    Contribution::where('user_id', $user->id)
+                        ->where('reference', $record->reference)
+                        ->delete();
+                }
+
                 // We do NOT revert attendance records or increment outstanding_fines here
                 // to ensure the refund reflects in the member's "Available Balance".
                 // If an admin wants to re-fine, they can do so manually.
 
                 $user->increment('balance', $amount);
             }
-            // 3. Handle Maintenance Charge
+            // 3. Handle Maintenance Charge or other charges
             else {
                 $user->increment('balance', $amount);
             }
@@ -645,19 +656,25 @@ class AdministrativeChargeService
                 'meta' => [
                     'original_tx_id' => $record->id,
                     'original_source' => $record->source,
-                    'description' => "Refund for " . ucwords(str_replace('_', ' ', $record->source)),
+                    'description' => "Refund for " . ucwords(str_replace('_', ' ', (string)$record->source)),
                     'admin_id' => auth()->id(),
                 ]
             ]);
 
             // Notify Member
             $title = "Refund Processed";
-            $message = "A refund of ₦" . number_format($amount, 2) . " has been credited to your wallet for: " . ucwords(str_replace('_', ' ', $record->source));
+            $sourceName = ucwords(str_replace('_', ' ', (string)$record->source));
+            $message = "A refund of ₦" . number_format($amount, 2) . " has been credited to your wallet for: " . $sourceName;
+
+            // Refresh user to get final balance for notification
+            $user->refresh();
 
             $user->notifyMember($title, $message, [
                 'type' => 'refund',
                 'amount' => $amount,
-                'source' => $record->source
+                'balance' => $user->balance,
+                'source' => $record->source,
+                'reference' => 'REFUND-' . $record->reference,
             ], ['mail', 'push', 'database']);
 
             return true;

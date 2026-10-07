@@ -27,7 +27,8 @@ class WalletTransactionObserver
             }
 
             // Auto-process pending administrative charges if it was a credit (wallet funding)
-            if ($isCredit && $tx->user) {
+            // Skip for refunds to avoid immediate re-deduction
+            if ($isCredit && $tx->source !== 'refund' && $tx->user) {
                 app(\App\Services\AdministrativeChargeService::class)->attemptDeduction($tx->user);
 
                 // Auto-recover overdue loans if enabled
