@@ -51,7 +51,7 @@ class WithdrawalRequestResource extends Resource
                             ->reactive()
                             ->afterStateUpdated(function ($state, Forms\Set $set) {
                                 if ($state) {
-                                    $user = User::find($state);
+                                    $user = User::withTrashed()->find($state);
                                     if ($user) {
                                         $set('bank_name', $user->bank_name);
                                         $set('account_number', $user->account_number);
@@ -133,6 +133,7 @@ class WithdrawalRequestResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user' => fn($q) => $q->withTrashed()]))
             ->columns([
                 TextColumn::make('created_at')->label('Requested')->since()->sortable(),
                 TextColumn::make('user.full_name')
@@ -193,6 +194,11 @@ class WithdrawalRequestResource extends Resource
                 TextColumn::make('processed_at')->label('Processed')->dateTime()->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('Member')
+                    ->relationship('user', 'name', fn ($query) => $query->withTrashed())
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => 'Pending',

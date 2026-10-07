@@ -48,7 +48,7 @@ class WalletTransactionResource extends Resource
                             ->helperText(function (Forms\Get $get) {
                                 $userId = $get('user_id');
                                 if (!$userId) return null;
-                                $user = \App\Models\User::find($userId);
+                                $user = \App\Models\User::withTrashed()->find($userId);
                                 if ($user && !$user->hasActiveLoan()) {
                                     $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
                                     return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Note: This member has no active loan record.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Check Loans</a>");
@@ -119,6 +119,7 @@ class WalletTransactionResource extends Resource
         return $table
             ->poll('10s')
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user' => fn($q) => $q->withTrashed()]))
             ->columns([
                 TextColumn::make('created_at')->label('Time')->dateTime()->sortable(),
                 TextColumn::make('user.full_name')
@@ -187,7 +188,7 @@ class WalletTransactionResource extends Resource
                     ]),
                 SelectFilter::make('user_id')
                     ->label('Member')
-                    ->relationship('user', 'name')
+                    ->relationship('user', 'name', fn ($query) => $query->withTrashed())
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                     ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 SelectFilter::make('branch_id')

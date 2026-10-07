@@ -45,7 +45,7 @@ class ContributionResource extends Resource
                             ->helperText(function (Forms\Get $get) {
                                 $userId = $get('user_id');
                                 if (!$userId) return null;
-                                $user = \App\Models\User::find($userId);
+                                $user = \App\Models\User::withTrashed()->find($userId);
                                 if ($user && !$user->hasActiveLoan()) {
                                     $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
                                     return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ This member has no active or defaulted loan record. If you are entering a loan repayment, please ensure a loan record exists for this user.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Check/Create Loan Record</a>");
@@ -58,7 +58,7 @@ class ContributionResource extends Resource
                             ->content(function (Forms\Get $get) {
                                 $userId = $get('user_id');
                                 if (!$userId) return null;
-                                $user = \App\Models\User::find($userId);
+                                $user = \App\Models\User::withTrashed()->find($userId);
                                 if (!$user) return null;
 
                                 $passportUrl = $user->passport_path ? \Illuminate\Support\Facades\Storage::url($user->passport_path) : 'https://ui-avatars.com/api/?name=' . urlencode($user->full_name) . '&color=7F9CF5&background=EBF4FF';
@@ -141,7 +141,7 @@ class ContributionResource extends Resource
 
                                                 $scheme = \App\Models\Scheme::find($schemeId);
                                                 if ($scheme && $scheme->name === 'Loan Repayment') {
-                                                    $user = \App\Models\User::find($userId);
+                                                    $user = \App\Models\User::withTrashed()->find($userId);
                                                     if ($user && !$user->hasActiveLoan()) {
                                                         $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
                                                         return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
@@ -232,7 +232,7 @@ class ContributionResource extends Resource
 
                                         $scheme = \App\Models\Scheme::find($schemeId);
                                         if ($scheme && $scheme->name === 'Loan Repayment') {
-                                            $user = \App\Models\User::find($userId);
+                                            $user = \App\Models\User::withTrashed()->find($userId);
                                             if ($user && !$user->hasActiveLoan()) {
                                                 $loanUrl = \App\Filament\Resources\QardHasanResource::getUrl('index', ['tableFilters[user_id][value]' => $userId]);
                                                 return new \Illuminate\Support\HtmlString("<span class=\"text-danger-600 font-bold\">⚠️ Warning: \"Loan Repayment\" selected but no active/defaulted loan record found for this member. This record will not be automatically deducted from any loan.</span><br/><a href=\"{$loanUrl}\" target=\"_blank\" class=\"text-primary-600 underline text-sm\">Manage Loans</a>");
@@ -327,6 +327,7 @@ class ContributionResource extends Resource
         return $table
             ->poll('10s')
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user' => fn($q) => $q->withTrashed()]))
             ->columns([
                 TextColumn::make('paid_at')
                     ->label('Date')
@@ -371,6 +372,11 @@ class ContributionResource extends Resource
                 TextColumn::make('reference')->label('Ref')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('Member')
+                    ->relationship('user', 'name', fn ($query) => $query->withTrashed())
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                    ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 Tables\Filters\SelectFilter::make('scheme_id')
                     ->label('Scheme')
                     ->options(Scheme::getSortedOptions(withTrashed: true))
@@ -445,7 +451,7 @@ class ContributionResource extends Resource
 
         // Otherwise, only show records belonging to the user's branch
         return parent::getEloquentQuery()->whereHas('user', function ($query) use ($user) {
-            $query->where('branch_id', $user->branch_id);
+            $query->withTrashed()->where('branch_id', $user->branch_id);
         });
     }
 

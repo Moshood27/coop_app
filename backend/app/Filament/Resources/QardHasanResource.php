@@ -68,7 +68,7 @@ class QardHasanResource extends Resource
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                        $user = User::find($state);
+                        $user = User::withTrashed()->find($state);
                         if ($user) {
                             $adj = $user->adjustedLoanEligibility();
                             $principal = $adj['eligibility_adjusted'] ?? 0;
@@ -322,7 +322,7 @@ class QardHasanResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Member')
-                    ->relationship('user', 'name')
+                    ->relationship('user', 'name', fn ($q) => $q->withTrashed())
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
                     ->searchable(['surname', 'name', 'other_names', 'membership_number']),
                 Tables\Filters\SelectFilter::make('status')
