@@ -26,16 +26,8 @@ class UserObserver
         } catch (\Throwable $e) {}
     }
 
-    /**
-     * Handle the User "updated" event.
-     */
     public function updated(User $user): void
     {
-        // Skip auto-collection if flag is set (either on instance or globally)
-        if ($user->skip_auto_collection || User::$global_skip_auto_collection) {
-            return;
-        }
-
         // Trigger real-time dashboard update if any balance changed
         // This ensures numbers stay fresh even if no notification message is sent
         if ($user->wasChanged([
@@ -43,6 +35,11 @@ class UserObserver
             'shares_capital', 'takaful_balance', 'outstanding_fines'
         ])) {
             event(new \App\Events\UserAccountUpdated($user));
+        }
+
+        // Skip auto-collection if flag is set (either on instance or globally)
+        if ($user->skip_auto_collection || User::$global_skip_auto_collection) {
+            return;
         }
 
         // If balance increased
