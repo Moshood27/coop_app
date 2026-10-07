@@ -88,6 +88,11 @@ class QardHasan extends Model
             return $this->installmentSchedule[$cacheKey] = [];
         }
 
+        // Safety cap for installment schedule generation
+        if ($total > 1200) {
+            $total = 1200;
+        }
+
         $per = (float) $this->per_installment;
         if ($per <= 0) {
             $per = round(((float) $this->principal_amount) / max($total, 1), 2);

@@ -147,6 +147,9 @@ class ImportController extends Controller
             $qardString = $row['qard_id_string'] ?? null;
             $principal = $this->toFloat($row['principal_amount'] ?? null);
             $totalInstallments = $this->toInt($row['total_installments'] ?? null) ?: 1;
+            if ($totalInstallments > 1200) {
+                throw new \InvalidArgumentException('total_installments exceeds safety limit of 1200');
+            }
             $interval = $row['interval'] ?? 'monthly';
             $adminFeeFlat = $this->toFloat($row['admin_fee_flat'] ?? null) ?? 0;
             $adminFeePct = $this->toFloat($row['admin_fee_pct'] ?? null) ?? 0;

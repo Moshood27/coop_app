@@ -1032,7 +1032,7 @@ class AdminMemberController extends Controller
 
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],
-            'total_installments' => ['required', 'integer', 'min:1'],
+            'total_installments' => ['required', 'integer', 'min:1', 'max:600'],
             'interval' => ['required', 'in:daily,weekly,monthly'],
             'description' => ['nullable', 'string'],
             'repayment_start_date' => ['nullable', 'date'],
@@ -1072,7 +1072,11 @@ class AdminMemberController extends Controller
                 'message' => 'Loan created successfully.',
                 'loan' => $loan,
             ], 201);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error("Error creating loan: " . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e
+            ]);
             return response()->json([
                 'message' => $e->getMessage(),
             ], 400);
