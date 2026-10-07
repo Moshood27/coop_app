@@ -37,6 +37,11 @@ class User extends Authenticatable implements FilamentUser, WebAuthnAuthenticata
      */
     public bool $skip_auto_collection = false;
 
+    /**
+     * Global flag to skip automatic debt collection across all instances in the current request.
+     */
+    public static bool $global_skip_auto_collection = false;
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

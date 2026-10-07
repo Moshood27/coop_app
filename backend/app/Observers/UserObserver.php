@@ -31,9 +31,8 @@ class UserObserver
      */
     public function updated(User $user): void
     {
-        \Log::info("UserObserver triggered for User {$user->id}. skip_auto_collection: " . ($user->skip_auto_collection ? 'true' : 'false'));
-        // Skip auto-collection if flag is set
-        if ($user->skip_auto_collection) {
+        // Skip auto-collection if flag is set (either on instance or globally)
+        if ($user->skip_auto_collection || User::$global_skip_auto_collection) {
             return;
         }
 

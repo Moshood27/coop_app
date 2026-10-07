@@ -26,6 +26,11 @@ class WalletTransactionObserver
                 $tx->updateQuietly(['ledger_journal_id' => $journal->id]);
             }
 
+            // Skip if global skip flag is set
+            if (\App\Models\User::$global_skip_auto_collection) {
+                return;
+            }
+
             // Auto-process pending administrative charges if it was a credit (wallet funding)
             // Skip for refunds to avoid immediate re-deduction
             if ($isCredit && $tx->source !== 'refund' && $tx->user) {

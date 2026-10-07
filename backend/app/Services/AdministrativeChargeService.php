@@ -186,7 +186,7 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
-        if (!$this->isAutoDeductionEnabled($user)) {
+        if ($user->skip_auto_collection || User::$global_skip_auto_collection || !$this->isAutoDeductionEnabled($user)) {
             return false;
         }
 
@@ -594,90 +594,96 @@ class AdministrativeChargeService
             throw new \Exception("This transaction has already been refunded.");
         }
 
-        return DB::transaction(function () use ($record) {
-            // Re-fetch user with lock to ensure fresh data and prevent race conditions
-            $user = User::where('id', $record->user_id)->lockForUpdate()->first();
-            if (!$user) throw new \Exception("User not found.");
+        User::$global_skip_auto_collection = true;
 
-            // Set flag to skip auto-deductions during the refund process
-            $user->skip_auto_collection = true;
+        try {
+            return DB::transaction(function () use ($record) {
+                // Re-fetch user with lock to ensure fresh data and prevent race conditions
+                $user = User::where('id', $record->user_id)->lockForUpdate()->first();
+                if (!$user) throw new \Exception("User not found.");
 
-            $amount = (float)$record->amount;
+                // Set flag to skip auto-deductions during the refund process
+                $user->skip_auto_collection = true;
 
-            // 1. Handle Admin Charge
-            if ($record->source === 'admin_charge') {
-                $contribution = Contribution::where('user_id', $user->id)
-                    ->where('reference', $record->reference)
-                    ->first();
+                $amount = (float)$record->amount;
 
-                if ($contribution) {
-                    $contribution->delete();
-                }
-
-                $user->increment('balance', $amount);
-                // We do NOT increment admin_charge_balance here because a refund
-                // usually means the charge was a discrepancy or double charge.
-                // Incrementing it would make it unavailable in the member's "Available Balance".
-            }
-            // 2. Handle Fine Collection
-            elseif (in_array($record->source, ['attendance_fine_collection', 'attendance_fine'])) {
-                // Delete charity entry if exists
-                CharityEntry::where('user_id', $user->id)
-                    ->where('amount', $amount)
-                    ->whereBetween('created_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
-                    ->delete();
-
-                // If it was a fine collection, delete the associated Contribution if exists
-                if ($record->source === 'attendance_fine_collection') {
-                    Contribution::where('user_id', $user->id)
+                // 1. Handle Admin Charge
+                if ($record->source === 'admin_charge') {
+                    $contribution = Contribution::where('user_id', $user->id)
                         ->where('reference', $record->reference)
+                        ->first();
+
+                    if ($contribution) {
+                        $contribution->delete();
+                    }
+
+                    $user->increment('balance', $amount);
+                    // We do NOT increment admin_charge_balance here because a refund
+                    // usually means the charge was a discrepancy or double charge.
+                    // Incrementing it would make it unavailable in the member's "Available Balance".
+                }
+                // 2. Handle Fine Collection
+                elseif (in_array($record->source, ['attendance_fine_collection', 'attendance_fine'])) {
+                    // Delete charity entry if exists
+                    CharityEntry::where('user_id', $user->id)
+                        ->where('amount', $amount)
+                        ->whereBetween('created_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
                         ->delete();
+
+                    // If it was a fine collection, delete the associated Contribution if exists
+                    if ($record->source === 'attendance_fine_collection') {
+                        Contribution::where('user_id', $user->id)
+                            ->where('reference', $record->reference)
+                            ->delete();
+                    }
+
+                    // We do NOT revert attendance records or increment outstanding_fines here
+                    // to ensure the refund reflects in the member's "Available Balance".
+                    // If an admin wants to re-fine, they can do so manually.
+
+                    $user->increment('balance', $amount);
+                }
+                // 3. Handle Maintenance Charge or other charges
+                else {
+                    $user->increment('balance', $amount);
                 }
 
-                // We do NOT revert attendance records or increment outstanding_fines here
-                // to ensure the refund reflects in the member's "Available Balance".
-                // If an admin wants to re-fine, they can do so manually.
+                // Create Refund Transaction
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'type' => 'credit',
+                    'amount' => $amount,
+                    'reference' => 'REFUND-' . $record->reference,
+                    'source' => 'refund',
+                    'withdrawable' => true,
+                    'meta' => [
+                        'original_tx_id' => $record->id,
+                        'original_source' => $record->source,
+                        'description' => "Refund for " . ucwords(str_replace('_', ' ', (string)$record->source)),
+                        'admin_id' => auth()->id(),
+                    ]
+                ]);
 
-                $user->increment('balance', $amount);
-            }
-            // 3. Handle Maintenance Charge or other charges
-            else {
-                $user->increment('balance', $amount);
-            }
+                // Notify Member
+                $title = "Refund Processed";
+                $sourceName = ucwords(str_replace('_', ' ', (string)$record->source));
+                $message = "A refund of ₦" . number_format($amount, 2) . " has been credited to your wallet for: " . $sourceName;
 
-            // Create Refund Transaction
-            WalletTransaction::create([
-                'user_id' => $user->id,
-                'type' => 'credit',
-                'amount' => $amount,
-                'reference' => 'REFUND-' . $record->reference,
-                'source' => 'refund',
-                'withdrawable' => true,
-                'meta' => [
-                    'original_tx_id' => $record->id,
-                    'original_source' => $record->source,
-                    'description' => "Refund for " . ucwords(str_replace('_', ' ', (string)$record->source)),
-                    'admin_id' => auth()->id(),
-                ]
-            ]);
+                // Refresh user to get final balance for notification
+                $user->refresh();
 
-            // Notify Member
-            $title = "Refund Processed";
-            $sourceName = ucwords(str_replace('_', ' ', (string)$record->source));
-            $message = "A refund of ₦" . number_format($amount, 2) . " has been credited to your wallet for: " . $sourceName;
+                $user->notifyMember($title, $message, [
+                    'type' => 'refund',
+                    'amount' => $amount,
+                    'balance' => $user->balance,
+                    'source' => $record->source,
+                    'reference' => 'REFUND-' . $record->reference,
+                ], ['mail', 'push', 'database']);
 
-            // Refresh user to get final balance for notification
-            $user->refresh();
-
-            $user->notifyMember($title, $message, [
-                'type' => 'refund',
-                'amount' => $amount,
-                'balance' => $user->balance,
-                'source' => $record->source,
-                'reference' => 'REFUND-' . $record->reference,
-            ], ['mail', 'push', 'database']);
-
-            return true;
-        });
+                return true;
+            });
+        } finally {
+            User::$global_skip_auto_collection = false;
+        }
     }
 }
