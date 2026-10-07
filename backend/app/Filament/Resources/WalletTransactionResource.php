@@ -287,30 +287,35 @@ class WalletTransactionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_wallet_transaction');
+        return auth()->user()?->can('view_any_wallet_transaction') ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_wallet_transaction');
+        return auth()->user()?->can('create_wallet_transaction') ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_wallet_transaction');
+        return auth()->user()?->can('update_wallet_transaction') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_wallet_transaction');
+        return auth()->user()?->can('delete_wallet_transaction') ?? false;
     }
 
     public static function getEloquentQuery(): Builder
     {
+        $user = auth()->user();
+        if (!$user) {
+            return parent::getEloquentQuery()->whereRaw('1=0');
+        }
+
         return parent::getEloquentQuery()
             ->when(
-                auth()->user()->hasRole('Branch Manager'),
-                fn (Builder $query) => $query->whereHas('user', fn (Builder $q) => $q->where('branch_id', auth()->user()->branch_id))
+                $user->hasRole('Branch Manager'),
+                fn (Builder $query) => $query->whereHas('user', fn (Builder $q) => $q->where('branch_id', $user->branch_id))
             );
     }
 }

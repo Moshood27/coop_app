@@ -252,7 +252,7 @@ class QardHasanResource extends Resource
                     ->label('Attendance (S/C)')
                     ->badge()
                     ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . ($record->user?->audited_attendance_count ?? 0))
-                    ->color(function ($record) {
+                    ->color(function ($state, $record) {
                         $required = (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8));
                         $current = $record->user?->audited_attendance_count ?? 0;
                         return $current >= $required ? 'success' : 'danger';
@@ -1116,7 +1116,7 @@ class QardHasanResource extends Resource
                             ->label('Meeting Attendance (Snapshot / Current Audited)')
                             ->badge()
                             ->getStateUsing(fn (QardHasan $record) => "{$record->meeting_attendance_count} / " . ($record->user?->audited_attendance_count ?? 0))
-                            ->color(function ($record) {
+                            ->color(function ($state, $record) {
                                 $required = (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8));
                                 $current = $record->user?->audited_attendance_count ?? 0;
                                 return $current >= $required ? 'success' : 'danger';
@@ -1124,8 +1124,8 @@ class QardHasanResource extends Resource
                             ->hint(fn() => "Required: " . (int) \App\Models\Setting::get('required_loan_meetings', config('cooperative.attendance.required_loan_meetings', 8))),
                         TextEntry::make('status')
                             ->badge()
-                            ->formatStateUsing(fn ($record, $state) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'DEFAULTED' : strtoupper($state))
-                            ->color(fn ($record, $state) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'danger' : match ($state) {
+                            ->formatStateUsing(fn ($state, $record) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'DEFAULTED' : strtoupper($state))
+                            ->color(fn ($state, $record) => (($record->defaulted_at && $record->defaulted_at->lte(now())) || $state === 'defaulted') ? 'danger' : match ($state) {
                                 'pending' => 'warning',
                                 'active', 'completed' => 'success',
                                 'cancelled', 'rejected' => 'danger',
@@ -1144,7 +1144,7 @@ class QardHasanResource extends Resource
                         TextEntry::make('overdue_days')
                             ->label('Days Overdue')
                             ->getStateUsing(fn (QardHasan $record) => DurationHelper::format($record->getOverdueDays()))
-                            ->color(fn ($record) => $record->getOverdueDays() > 0 ? 'danger' : null),
+                            ->color(fn ($state, $record) => $record->getOverdueDays() > 0 ? 'danger' : null),
                     ])->columns(2),
                 InfoSection::make('Multi-Sig Approvals')
                     ->schema([

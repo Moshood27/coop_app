@@ -47,12 +47,10 @@ class FinanceSnapshot extends BaseWidget
             ->pluck('total')
             ->toArray();
 
-        $activePortfolio = QardHasan::query()
+        $activePortfolio = (float) QardHasan::query()
             ->whereIn('status', ['active', 'defaulted'])
-            ->get()
-            ->sum(function ($q) {
-                return (float) $q->principal_amount - (float) $q->paid_amount;
-            });
+            ->selectRaw('SUM(COALESCE(principal_amount, 0) - COALESCE(paid_amount, 0)) as total')
+            ->value('total');
 
         $totalLiability = (float) User::sum('balance');
 
@@ -61,10 +59,16 @@ class FinanceSnapshot extends BaseWidget
         $pendingWithdrawals = WithdrawalRequest::where('status', 'pending')->count();
         $pendingAmount = (float) WithdrawalRequest::where('status', 'pending')->sum('amount');
 
-        $overdueCount = QardHasan::whereIn('status', ['active', 'defaulted'])
-            ->get()
-            ->filter(fn($q) => $q->getOverdueDays() > 0)
-            ->count();
+        $overdueCount = 0;
+        QardHasan::whereIn('status', ['active', 'defaulted'])
+            ->select(['id', 'status', 'principal_amount', 'paid_amount', 'total_installments', 'per_installment', 'interval', 'repayment_start_date', 'received_at', 'approved_at', 'created_at', 'defaulted_at'])
+            ->chunk(100, function ($loans) use (&$overdueCount) {
+                foreach ($loans as $loan) {
+                    if ($loan->getOverdueDays() > 0) {
+                        $overdueCount++;
+                    }
+                }
+            });
 
         $totalGold = (float) User::sum('gold_balance');
         $goldPriceData = (new GoldSilverPriceService())->getGoldPriceData();

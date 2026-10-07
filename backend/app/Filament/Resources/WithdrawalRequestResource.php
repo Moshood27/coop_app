@@ -189,7 +189,7 @@ class WithdrawalRequestResource extends Resource
                         return "{$count} / {$required}";
                     })
                     ->badge()
-                    ->color(fn (WithdrawalRequest $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
+                    ->color(fn ($state, WithdrawalRequest $record) => $record->isHighValue() ? ($record->hasSufficientApprovals() ? 'success' : 'warning') : 'gray')
                     ->toggleable(),
                 TextColumn::make('processed_at')->label('Processed')->dateTime()->toggleable(),
             ])
@@ -477,27 +477,31 @@ class WithdrawalRequestResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_withdrawal_request');
+        return auth()->user()?->can('view_any_withdrawal_request') ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_withdrawal_request');
+        return auth()->user()?->can('create_withdrawal_request') ?? false;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->can('update_withdrawal_request');
+        return auth()->user()?->can('update_withdrawal_request') ?? false;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->can('delete_withdrawal_request');
+        return auth()->user()?->can('delete_withdrawal_request') ?? false;
     }
 
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
+
+        if (!$user) {
+            return parent::getEloquentQuery()->whereRaw('1=0');
+        }
 
         // If the user is a Super Admin, let them see everything
         if ($user->hasRole('super_admin')) {
