@@ -8,7 +8,6 @@ use App\Models\WalletTransaction;
 use App\Models\Contribution;
 use App\Models\Scheme;
 use App\Models\CharityEntry;
-use App\Models\AttendanceRecord;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -612,7 +611,9 @@ class AdministrativeChargeService
                 }
 
                 $user->increment('balance', $amount);
-                $user->increment('admin_charge_balance', $amount);
+                // We do NOT increment admin_charge_balance here because a refund
+                // usually means the charge was a discrepancy or double charge.
+                // Incrementing it would make it unavailable in the member's "Available Balance".
             }
             // 2. Handle Fine Collection
             elseif (in_array($record->source, ['attendance_fine_collection', 'attendance_fine'])) {
@@ -622,28 +623,11 @@ class AdministrativeChargeService
                     ->whereBetween('created_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
                     ->delete();
 
-                // Revert attendance records
-                $attendanceRecords = AttendanceRecord::where('user_id', $user->id)
-                    ->where(function ($q) use ($record) {
-                        $q->whereBetween('fine_paid_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)])
-                            ->orWhere(function ($sq) use ($record) {
-                                $sq->where('lateness_fine_paid', true)
-                                    ->whereBetween('updated_at', [$record->created_at->subSeconds(10), $record->created_at->addSeconds(10)]);
-                            });
-                    })
-                    ->get();
-
-                foreach ($attendanceRecords as $attRecord) {
-                    if ($attRecord->status === 'fine_paid') {
-                        $attRecord->update(['status' => 'fine_pending', 'fine_paid_at' => null]);
-                    }
-                    if ($attRecord->lateness_fine_paid) {
-                        $attRecord->update(['lateness_fine_paid' => false]);
-                    }
-                }
+                // We do NOT revert attendance records or increment outstanding_fines here
+                // to ensure the refund reflects in the member's "Available Balance".
+                // If an admin wants to re-fine, they can do so manually.
 
                 $user->increment('balance', $amount);
-                $user->increment('outstanding_fines', $amount);
             }
             // 3. Handle Maintenance Charge
             else {
@@ -657,6 +641,7 @@ class AdministrativeChargeService
                 'amount' => $amount,
                 'reference' => 'REFUND-' . $record->reference,
                 'source' => 'refund',
+                'withdrawable' => true,
                 'meta' => [
                     'original_tx_id' => $record->id,
                     'original_source' => $record->source,
