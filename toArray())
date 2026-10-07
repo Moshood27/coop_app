@@ -1,2 +1,1 @@
-
-Warning: PHP Startup: Unable to load dynamic library 'C:\Program Files\Herd\resources\app.asar.unpacked\resources\bin\phpherd\php_herd-8.4.dll' (tried: C:\Program Files\Herd\resources\app.asar.unpacked\resources\bin\phpherd\php_herd-8.4.dll (The specified module could not be found), ext\php_C:\Program Files\Herd\resources\app.asar.unpacked\resources\bin\phpherd\php_herd-8.4.dll.dll (The specified module could not be found)) in Unknown on line 0
+Terminate batch job (Y/N)? 
