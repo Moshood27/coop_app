@@ -4,11 +4,15 @@ use App\Models\User;
 use App\Models\Setting;
 use App\Models\WalletTransaction;
 use App\Services\AdministrativeChargeService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class MeetingFineAutoDeductionTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_meeting_fine_is_not_deducted_when_auto_deduction_is_disabled_for_distant_member()
     {
         // 1. Setup a distant user with outstanding fines
@@ -23,21 +27,21 @@ class MeetingFineAutoDeductionTest extends TestCase
         Setting::set('auto_fine_deduction_enabled', true); // Leave this ON to show the conflict
 
         // 3. Simulate wallet funding (Paystack style)
-        // We'll mimic what WebhookController does: increment balance and call applyDeductions
+        $ref = 'TEST_REF_' . Str::random(8);
 
-        DB::transaction(function () use ($user) {
+        DB::transaction(function () use ($user, $ref) {
             $user->increment('balance', 5000);
 
             WalletTransaction::create([
                 'user_id' => $user->id,
                 'type' => 'credit',
                 'amount' => 5000,
-                'reference' => 'TEST_PAYSTACK_REF',
+                'reference' => $ref,
                 'source' => 'paystack_dva',
             ]);
 
             $chargeService = app(AdministrativeChargeService::class);
-            $chargeService->applyDeductionsFromWallet($user, 5000, true, 'TEST_PAYSTACK_REF');
+            $chargeService->applyDeductionsFromWallet($user, 5000, true, $ref);
         });
 
         $user->refresh();
