@@ -46,7 +46,13 @@ class WalletTransaction extends Model
                 if ((bool) \App\Models\Setting::get('auto_overdue_recovery_enabled', true)) {
                     AutoRecoverOverdueLoans::dispatch((int) $tx->user_id, $tx->id)->afterCommit();
                 }
-                RecoverOutstandingFines::dispatch((int) $tx->user_id, $tx->id)->afterCommit();
+
+                $autoFineEnabled = (bool) \App\Models\Setting::get('auto_fine_deduction_enabled', true);
+                $typeAutoDeduct = $tx->user ? app(\App\Services\AdministrativeChargeService::class)->isAutoDeductionEnabled($tx->user) : true;
+
+                if ($autoFineEnabled && $typeAutoDeduct) {
+                    RecoverOutstandingFines::dispatch((int) $tx->user_id, $tx->id)->afterCommit();
+                }
             }
         });
     }

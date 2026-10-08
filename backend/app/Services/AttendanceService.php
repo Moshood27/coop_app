@@ -9,6 +9,7 @@ use App\Models\Meeting;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Models\Setting;
+use App\Services\AdministrativeChargeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -107,7 +108,9 @@ class AttendanceService
 
             $isPaid = false;
             $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
-            if ($autoDeduct && (float) $lockedUser->balance >= $amount) {
+            $typeAutoDeduct = app(AdministrativeChargeService::class)->isAutoDeductionEnabled($lockedUser);
+
+            if ($autoDeduct && $typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 
@@ -199,8 +202,9 @@ class AttendanceService
             $status = 'fine_pending';
             $paidAt = null;
             $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
+            $typeAutoDeduct = app(AdministrativeChargeService::class)->isAutoDeductionEnabled($lockedUser);
 
-            if ($autoDeduct && (float) $lockedUser->balance >= $amount) {
+            if ($autoDeduct && $typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 

@@ -414,7 +414,9 @@ class AdministrativeChargeService
             try {
                 $finesDue = (float) $user->outstanding_fines;
                 $autoFineEnabled = (bool) Setting::get('auto_fine_deduction_enabled', true);
-                if ($autoFineEnabled && $finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
+                $typeAutoDeduct = $this->isAutoDeductionEnabled($user);
+
+                if ($autoFineEnabled && $typeAutoDeduct && $finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
                     $fineDeduction = min($finesDue, $currentAmount);
 
                     $user->decrement('outstanding_fines', $fineDeduction);
