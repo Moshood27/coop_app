@@ -45,27 +45,36 @@ return [
             'root' => storage_path('app/public'),
             'url' => env('FILESYSTEM_DISK_PUBLIC') === 'local' || env('FILESYSTEM_DISK_PUBLIC') === null
                 ? rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'
-                : env('PUBLIC_ASSET_URL'),
+                : env('PUBLIC_ASSET_URL', env('CLOUDFLARE_R2_URL')),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
-            // S3/R2 specific options if driver is s3
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // S3/R2 specific options (R2 is compatible with S3 driver)
+            'key' => env('CLOUDFLARE_R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('AWS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('CLOUDFLARE_R2_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('CLOUDFLARE_R2_ENDPOINT', env('AWS_ENDPOINT')),
+            'use_path_style_endpoint' => env('CLOUDFLARE_R2_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', true)),
         ],
 
         // Directly write to the public/ directory (document root)
         'public_root' => [
-            'driver' => 'local',
+            'driver' => env('FILESYSTEM_DISK_PUBLIC_ROOT', 'local'),
             'root' => public_path(''),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/'),
+            'url' => env('FILESYSTEM_DISK_PUBLIC_ROOT') === 'local' || env('FILESYSTEM_DISK_PUBLIC_ROOT') === null
+                ? rtrim(env('APP_URL', 'http://localhost'), '/')
+                : env('PUBLIC_ASSET_URL', env('CLOUDFLARE_R2_URL')),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+            // S3/R2 specific options
+            'key' => env('CLOUDFLARE_R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('AWS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('CLOUDFLARE_R2_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('CLOUDFLARE_R2_ENDPOINT', env('AWS_ENDPOINT')),
+            'use_path_style_endpoint' => env('CLOUDFLARE_R2_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', true)),
         ],
 
         's3' => [
@@ -87,6 +96,7 @@ return [
             'secret' => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
             'region' => 'auto',
             'bucket' => env('CLOUDFLARE_R2_BUCKET', ''),
+            'url' => env('CLOUDFLARE_R2_URL'),
             'endpoint' => env('CLOUDFLARE_R2_ENDPOINT'),
             'use_path_style_endpoint' => env('CLOUDFLARE_R2_USE_PATH_STYLE_ENDPOINT', true),
             'throw' => true,
