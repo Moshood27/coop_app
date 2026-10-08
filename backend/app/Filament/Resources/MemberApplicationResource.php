@@ -215,7 +215,7 @@ class MemberApplicationResource extends Resource
                 Tables\Columns\ImageColumn::make('passport_path')
                     ->label('Photo')
                     ->circular()
-                    ->disk('public_root')
+                    ->disk('public')
                     ->getStateUsing(function ($record) {
                         if (empty($record->passport_path)) {
                             return null;

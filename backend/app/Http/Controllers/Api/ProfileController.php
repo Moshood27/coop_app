@@ -248,34 +248,34 @@ class ProfileController extends Controller
 
         $file = $request->file('passport');
 
-        // Ensure upload directory exists under public/upload for direct serving
-        $destDir = public_path('upload');
-        if (!is_dir($destDir)) {
-            @mkdir($destDir, 0755, true);
-        }
-
         // Create a deterministic-ish filename: user-<id>-<timestamp>.<ext>
         $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
         $filename = 'user-' . $user->id . '-' . time() . '.' . $ext;
+        $relativePath = 'upload/' . $filename;
 
-        // Move file to public/upload
-        $file->move($destDir, $filename);
+        // Store file using the 'public' disk (which can be local or cloud)
+        Storage::disk('public')->put($relativePath, file_get_contents($file->getRealPath()));
 
-        // Optionally remove previous public upload if it was in public/upload
+        // Optionally remove previous passport if it exists
         if (!empty($user->passport_path)) {
-            $oldPath = public_path($user->passport_path);
-            if (str_starts_with($user->passport_path, 'upload/') && is_file($oldPath)) {
-                @unlink($oldPath);
+            if (Storage::disk('public')->exists($user->passport_path)) {
+                Storage::disk('public')->delete($user->passport_path);
+            }
+            // Fallback for old direct public/upload path
+            elseif (str_starts_with($user->passport_path, 'upload/')) {
+                $oldPublicPath = public_path($user->passport_path);
+                if (is_file($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
             }
         }
 
-        $relativePath = 'upload/' . $filename;
         $user->passport_path = $relativePath;
         $user->save();
 
         return response()->json([
             'message' => 'Passport uploaded successfully.',
-            'passport_url' => '/' . ltrim($relativePath, '/'),
+            'passport_url' => Storage::disk('public')->url($relativePath),
             'passport_path' => $relativePath,
         ]);
     }

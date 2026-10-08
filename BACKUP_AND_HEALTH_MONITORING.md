@@ -17,7 +17,7 @@ The application uses `spatie/laravel-backup` to ensure data safety and disaster 
     The drivers are registered in `AppServiceProvider.php`.
 
 ### Configuration
-Configuration is located in `backend/config/backup.php`.
+Configuration is located in `backend/config/backup.php`. Large directories like `storage/app/public` and `public/upload` are excluded from the main ZIP backup to ensure scalability. Instead, they are backed up incrementally (see below).
 
 **Required Environment Variables:**
 ```env
@@ -42,7 +42,8 @@ BACKUP_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 
 ### Manual Commands
 Run these commands from the `backend` directory:
-- **Run Backup**: `php artisan backup:run` (Backs up database and files)
+- **Run Backup**: `php artisan backup:run` (Backs up database and small files)
+- **Incremental File Sync**: `php artisan backup:sync-r2` (Syncs large upload folders to R2 incrementally)
 - **Database Only**: `php artisan backup:run --only-db`
 - **Clean Old Backups**: `php artisan backup:clean` (Removes old backups based on rotation strategy)
 - **List Backups**: `php artisan backup:list` (Shows the status of all configured backup destinations)
@@ -51,6 +52,7 @@ Run these commands from the `backend` directory:
 Backups are automatically scheduled in `backend/routes/console.php`:
 - `backup:clean`: Daily at 01:00 AM.
 - `backup:run`: Daily at 02:00 AM.
+- `backup:sync-r2`: Daily at 02:30 AM (Incremental filesystem sync).
 
 ---
 
@@ -127,7 +129,6 @@ The optimization is scheduled in `backend/routes/console.php`:
 
 In the event of a total server failure:
 1. Re-provision the server using `BUILD_AND_DEPLOY.md`.
-2. Retrieve the latest backup from Cloudflare R2, Google Drive, or local storage.
-3. Use `php artisan backup:run --only-db` (manually or via restore script) to restore the database.
-4. Unzip the backup archive using the `BACKUP_ARCHIVE_PASSWORD`.
-5. Restore the `storage/app/public` files.
+2. Retrieve the latest DB backup from Cloudflare R2, Google Drive, or local storage.
+3. Restore the database using the ZIP archive and `BACKUP_ARCHIVE_PASSWORD`.
+4. Restore the `storage/app/public` and `public/upload` files by syncing back from R2 using `rclone` (e.g., `rclone sync r2:<bucket>/storage storage/app/public`).

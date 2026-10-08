@@ -93,5 +93,6 @@ Schedule::command('chat:expire-sensitive-files')->daily();
 Schedule::command('db:optimize')->weeklyOn(0, '03:00');
 Schedule::command('backup:clean')->daily()->at('01:00');
 Schedule::command('backup:run')->daily()->at('02:00');
+Schedule::command('backup:sync-r2')->daily()->at('02:30');
 Schedule::command('health:check')->everyFifteenMinutes();
 Schedule::command(\Spatie\Health\Commands\ScheduleCheckHeartbeatCommand::class)->everyMinute();

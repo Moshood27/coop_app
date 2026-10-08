@@ -39,6 +39,10 @@ return [
                     base_path('vendor'),
                     base_path('node_modules'),
                     storage_path('framework'),
+                    storage_path('app/public'),
+                    storage_path('app/backup-temp'),
+                    storage_path('logs'),
+                    public_path('upload'),
                 ],
 
                 /*

@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     icu-libs \
     mysql-client \
     curl \
-    libxml2-dev
+    libxml2-dev \
+    rclone
 
 # 2. Configure and install PHP extensions
 # Cleaned up redundancy and added pcntl for Laravel Reverb
@@ -52,4 +53,5 @@ RUN mkdir -p storage/app/public storage/framework/cache storage/framework/sessio
     && php artisan storage:link
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod +x scripts/backup-incremental.sh \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache

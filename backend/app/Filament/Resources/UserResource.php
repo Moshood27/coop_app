@@ -103,7 +103,7 @@ class UserResource extends Resource
                                         Forms\Components\FileUpload::make('passport_path')
                                             ->label('Passport / Profile Photo')
                                             ->image()
-                                            ->disk('public_root')
+                                            ->disk('public')
                                             ->directory('upload')
                                             ->visibility('public')
                                             ->fetchFileInformation(false)
