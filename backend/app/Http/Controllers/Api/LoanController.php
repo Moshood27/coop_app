@@ -607,36 +607,46 @@ class LoanController extends Controller
                 // Wallet path: deduct and mark repayment successful immediately
                 $reference = 'QHREP-WALLET-' . now()->format('YmdHis') . '-' . $user->id . '-' . Str::upper(Str::random(5));
 
-                // Create repayment record
-                $rep = QardHasanRepayment::create([
-                    'qard_hasan_id' => $q->id,
-                    'amount' => $appliedAmount,
-                    'payment_method' => 'wallet',
-                    'reference' => $reference,
-                    'status' => 'success',
-                    'paid_at' => now(),
-                ]);
+                $rep = DB::transaction(function () use ($user, $q, $appliedAmount, $reference) {
+                    $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+                    if (!$lockedUser || (float)$lockedUser->balance < $appliedAmount) {
+                        throw new \Exception('Insufficient wallet balance');
+                    }
 
-                // Deduct wallet and record transaction
-                $user->decrement('balance', $appliedAmount);
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'type' => 'debit',
-                    'amount' => $appliedAmount,
-                    'reference' => $reference,
-                    'source' => 'loan_repayment',
-                    'meta' => [
+                    // Create repayment record
+                    $rep = QardHasanRepayment::create([
                         'qard_hasan_id' => $q->id,
-                        'qard_id_string' => $q->qard_id_string,
-                    ],
-                ]);
+                        'amount' => $appliedAmount,
+                        'payment_method' => 'wallet',
+                        'reference' => $reference,
+                        'status' => 'success',
+                        'paid_at' => now(),
+                    ]);
 
-                // Update aggregates
-                $q->paid_amount = (float) $q->paid_amount + $appliedAmount;
-                if ($q->paid_amount >= $q->principal_amount) {
-                    $q->status = 'completed';
-                }
-                $q->save();
+                    // Deduct wallet and record transaction
+                    $lockedUser->decrement('balance', $appliedAmount);
+                    WalletTransaction::create([
+                        'user_id' => $lockedUser->id,
+                        'type' => 'debit',
+                        'amount' => $appliedAmount,
+                        'reference' => $reference,
+                        'source' => 'loan_repayment',
+                        'meta' => [
+                            'qard_hasan_id' => $q->id,
+                            'qard_id_string' => $q->qard_id_string,
+                        ],
+                    ]);
+
+                    // Update aggregates
+                    $q->paid_amount = (float) $q->paid_amount + $appliedAmount;
+                    if ($q->paid_amount >= $q->principal_amount) {
+                        $q->status = 'completed';
+                    }
+                    $q->save();
+
+                    return $rep;
+                });
+
                 $q->refresh();
 
                 // Best-effort: email receipt to user (do not block on failure)

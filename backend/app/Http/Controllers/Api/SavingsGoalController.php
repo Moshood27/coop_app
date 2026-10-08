@@ -76,8 +76,13 @@ class SavingsGoalController extends Controller
         $reference = 'GOAL_DEPOSIT_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
         DB::transaction(function () use ($user, $goal, $amount, $reference) {
+            $lockedUser = \App\Models\User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->balance < $amount) {
+                throw new \Exception('Insufficient wallet balance');
+            }
+
             // Deduct from wallet
-            $user->decrement('balance', $amount);
+            $lockedUser->decrement('balance', $amount);
 
             // Credit to goal
             $goal->increment('saved_amount', $amount);

@@ -266,8 +266,14 @@ class StoreOrderController extends Controller
         }
 
         $order = DB::transaction(function () use ($user, $lineItems, $grandTotal, $grandCost, $grandProfit, $reference, $note) {
-            // Deduct wallet first to avoid race conditions
-            $user->decrement('balance', $grandTotal);
+            // Lock the user record to prevent race conditions and ensure fresh balance
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->balance < $grandTotal) {
+                throw new \Exception('Insufficient Coop Balance');
+            }
+
+            // Deduct wallet first
+            $lockedUser->decrement('balance', $grandTotal);
 
             $meta = [];
             if (!empty($note)) {
@@ -427,8 +433,14 @@ class StoreOrderController extends Controller
         $reference = 'MURABAHAPAY_' . now()->format('YmdHis') . '_' . $user->id . '_' . $order->id;
 
         DB::transaction(function () use ($user, $order, &$meta, &$schedule, $toApply, $reference) {
+            // Lock the user record to prevent race conditions and ensure fresh balance
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->balance < $toApply) {
+                throw new \Exception('Insufficient Coop Balance');
+            }
+
             // Debit wallet
-            $user->decrement('balance', $toApply);
+            $lockedUser->decrement('balance', $toApply);
 
             $remainingToApply = $toApply;
             $covered = [];

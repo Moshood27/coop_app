@@ -252,8 +252,13 @@ class SadaqahController extends Controller
         $reference = 'SADAQAH_W_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($user, $project, $amount, $reference, $isAnonymous) {
+            $lockedUser = \App\Models\User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->balance < $amount) {
+                throw new \Exception('Insufficient wallet balance.');
+            }
+
             // Deduct from wallet
-            $user->decrement('balance', $amount);
+            $lockedUser->decrement('balance', $amount);
 
             // Record wallet transaction
             \App\Models\WalletTransaction::create([

@@ -177,11 +177,16 @@ class GoldController extends Controller
         $grams = round($netAmount / $buyPrice, 6);
 
         DB::transaction(function () use ($user, $request, $grams, $buyPrice, $scheme, $fee, $priceData) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->balance < $request->amount_naira) {
+                throw new \Exception('Insufficient wallet balance.');
+            }
+
             // Deduct full amount from wallet
-            $user->decrement('balance', $request->amount_naira);
+            $lockedUser->decrement('balance', $request->amount_naira);
 
             // Add to gold balance
-            $user->increment('gold_balance', $grams);
+            $lockedUser->increment('gold_balance', $grams);
 
             // Record wallet transaction
             WalletTransaction::create([
@@ -263,11 +268,16 @@ class GoldController extends Controller
         $netAmount = round($grossAmount - $fee, 2);
 
         DB::transaction(function () use ($user, $request, $netAmount, $sellPrice, $fee, $priceData) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || (float)$lockedUser->gold_balance < $request->grams) {
+                throw new \Exception('Insufficient gold balance.');
+            }
+
             // Deduct from gold balance
-            $user->decrement('gold_balance', $request->grams);
+            $lockedUser->decrement('gold_balance', $request->grams);
 
             // Add net amount to wallet balance
-            $user->increment('balance', $netAmount);
+            $lockedUser->increment('balance', $netAmount);
 
             // Record wallet transaction
             WalletTransaction::create([

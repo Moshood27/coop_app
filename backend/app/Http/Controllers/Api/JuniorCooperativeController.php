@@ -78,7 +78,12 @@ class JuniorCooperativeController extends Controller
         }
 
         DB::transaction(function () use ($user, $account, $request) {
-            $user->decrement('balance', $request->amount);
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || $lockedUser->balance < $request->amount) {
+                throw new \Exception('Insufficient wallet balance');
+            }
+
+            $lockedUser->decrement('balance', $request->amount);
             $account->increment('balance', $request->amount);
 
             $reference = 'JUNIOR_DEP_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
@@ -123,7 +128,12 @@ class JuniorCooperativeController extends Controller
         }
 
         DB::transaction(function () use ($user, $account, $request) {
-            $account->decrement('balance', $request->amount);
+            $lockedAccount = JuniorAccount::where('id', $account->id)->lockForUpdate()->first();
+            if (!$lockedAccount || $lockedAccount->balance < $request->amount) {
+                throw new \Exception('Insufficient junior account balance');
+            }
+
+            $lockedAccount->decrement('balance', $request->amount);
             $user->increment('balance', $request->amount);
 
             $reference = 'JUNIOR_WTH_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
