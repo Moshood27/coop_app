@@ -37,6 +37,12 @@ class SyncToR2Command extends Command
 
         $process = Process::timeout(3600) // 1 hour timeout for large syncs
             ->path(base_path())
+            ->env([
+                'R2_ACCESS_KEY_ID' => env('CLOUDFLARE_R2_ACCESS_KEY_ID'),
+                'R2_SECRET_ACCESS_KEY' => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
+                'R2_ENDPOINT' => env('CLOUDFLARE_R2_ENDPOINT'),
+                'R2_BUCKET' => env('CLOUDFLARE_R2_BUCKET'),
+            ])
             ->run(['bash', 'scripts/backup-incremental.sh']);
 
         if ($process->successful()) {
