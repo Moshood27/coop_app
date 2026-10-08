@@ -10,6 +10,11 @@ services:
     networks:
       - attaqwa-network
       - gateway-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - app
 
@@ -29,6 +34,11 @@ services:
     networks:
       - attaqwa-network
       - gateway-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       db: # Updated from mysql to db
         condition: service_healthy
@@ -47,6 +57,11 @@ services:
       - old-db-data:/var/lib/mysql # Points to the volume with your data
     networks:
       - attaqwa-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
       interval: 10s
@@ -58,6 +73,11 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD:-ANIbaba1122?}
     networks:
       - attaqwa-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   worker:
     build:
@@ -74,6 +94,11 @@ services:
     networks:
       - attaqwa-network
       - gateway-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - db # Updated from mysql to db
       - app
@@ -94,6 +119,11 @@ services:
     networks:
       - attaqwa-network
       - gateway-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - app
 
@@ -112,6 +142,11 @@ services:
     networks:
       - attaqwa-network
       - gateway-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - db
       - app
@@ -133,6 +168,11 @@ services:
       UPLOAD_LIMIT: 64M
     networks:
       - attaqwa-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       db:
         condition: service_healthy
