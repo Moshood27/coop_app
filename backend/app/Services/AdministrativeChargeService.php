@@ -380,6 +380,12 @@ class AdministrativeChargeService
     public function applyDeductionsFromWallet(User $user, float $grossAmount, bool $applyMaintenanceCharge = true, string $referenceBase = 'INFLOW', array $excludeSchemes = []): array
     {
         return DB::transaction(function () use ($user, $grossAmount, $applyMaintenanceCharge, $referenceBase, $excludeSchemes) {
+            // Lock the user record to prevent concurrent processing and ensure fresh data
+            $user = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$user) {
+                return ['net_amount' => $grossAmount, 'deductions' => []];
+            }
+
             $deductions = [];
             $currentAmount = $grossAmount;
 
@@ -524,6 +530,12 @@ class AdministrativeChargeService
     public function applyManualTransaction(User $user, float $amount, string $type, ?string $note = null): array
     {
         return DB::transaction(function () use ($user, $amount, $type, $note) {
+            // Lock the user record to prevent concurrent processing
+            $user = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$user) {
+                throw new \Exception("User not found.");
+            }
+
             $maintenanceCharge = $this->calculateMaintenanceCharge($amount);
 
             if ($type === 'credit') {
