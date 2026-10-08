@@ -90,8 +90,14 @@ class SweepMurabahaInstallments extends Command
                     $reference = 'MURASWEEP_' . now()->format('YmdHis') . '_' . $user->id . '_' . $order->id;
 
                     DB::transaction(function () use ($user, $order, &$meta, &$schedule, $toApply, $reference) {
+                        // Lock the user record to prevent race conditions and ensure fresh balance
+                        $lockedUser = \App\Models\User::where('id', $user->id)->lockForUpdate()->first();
+                        if (!$lockedUser || (float)$lockedUser->balance < $toApply) {
+                            throw new \Exception('Insufficient wallet balance for auto-sweep');
+                        }
+
                         // Debit wallet
-                        $user->decrement('balance', $toApply);
+                        $lockedUser->decrement('balance', $toApply);
 
                         $remainingToApply = $toApply;
                         $covered = [];
