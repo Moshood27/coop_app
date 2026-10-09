@@ -15,7 +15,10 @@ function verifyFix() {
     echo "Verifying Fix...\n";
 
     // Setup distant user
-    $user = User::factory()->create([
+    $user = User::create([
+        'name' => 'Test User',
+        'email' => 'test_' . time() . '_' . rand(0, 1000) . '@example.com',
+        'password' => bcrypt('password'),
         'is_distant' => true,
         'balance' => 0,
         'outstanding_fines' => 1000,

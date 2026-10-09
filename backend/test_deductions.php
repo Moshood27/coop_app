@@ -15,7 +15,10 @@ function testDeduction($isDistant, $settingKey, $settingValue, $globalFineValue)
     echo "Testing: is_distant=" . ($isDistant ? 'YES' : 'NO') . ", $settingKey=" . ($settingValue ? 'ON' : 'OFF') . ", auto_fine_deduction_enabled=" . ($globalFineValue ? 'ON' : 'OFF') . "\n";
 
     // Setup
-    $user = User::factory()->create([
+    $user = User::create([
+        'name' => 'Test User ' . ($isDistant ? 'Distant' : 'Regular'),
+        'email' => 'test_' . time() . '_' . rand(0, 1000) . '@example.com',
+        'password' => bcrypt('password'),
         'is_distant' => $isDistant,
         'balance' => 0,
         'outstanding_fines' => 1000,
@@ -65,7 +68,14 @@ testDeduction(false, 'auto_sitting_fine_deduction_enabled', false, true);
 
 // Case 4: Refund test
 echo "Testing Refund scenario...\n";
-$user = User::factory()->create(['balance' => 0, 'admin_charge_balance' => 500, 'is_distant' => true]);
+$user = User::create([
+    'name' => 'Refund Test User',
+    'email' => 'refund_' . time() . '_' . rand(0, 1000) . '@example.com',
+    'password' => bcrypt('password'),
+    'balance' => 0,
+    'admin_charge_balance' => 500,
+    'is_distant' => true
+]);
 Setting::set('auto_meeting_fine_deduction_enabled', '1');
 $tx = WalletTransaction::create([
     'user_id' => $user->id,

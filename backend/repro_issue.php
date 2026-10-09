@@ -12,7 +12,10 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 // 1. Setup - Create a distant member
-$user = User::factory()->create([
+$user = User::create([
+    'name' => 'Repro User',
+    'email' => 'repro_' . time() . '_' . rand(0, 1000) . '@example.com',
+    'password' => bcrypt('password'),
     'is_distant' => true,
     'balance' => 0,
     'outstanding_fines' => 1000,
