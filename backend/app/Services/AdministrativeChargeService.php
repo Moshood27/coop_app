@@ -186,6 +186,7 @@ class AdministrativeChargeService
      */
     public function attemptDeduction(User $user, array &$stats = []): bool
     {
+        // respect skip flags and check if auto-deduction is enabled globally and for this user type
         if ($user->skip_auto_collection || User::$global_skip_auto_collection || !$this->isAutoDeductionEnabled($user)) {
             return false;
         }
@@ -195,6 +196,11 @@ class AdministrativeChargeService
             $user = User::where('id', $user->id)->lockForUpdate()->first();
 
             if (!$user) return false;
+
+            // Re-check skip flags on the locked instance just in case, but global flag is static
+            if ($user->skip_auto_collection || User::$global_skip_auto_collection) {
+                return false;
+            }
 
             $due = (float) $user->admin_charge_balance;
             if ($due <= 0) return true;
@@ -593,8 +599,13 @@ class AdministrativeChargeService
     {
         $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
 
-        // Fallback to old setting for backward compatibility during transition if needed
-        return (bool) Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
+        // Check the specific setting for the user type (distant vs regular)
+        $typeEnabled = (bool) Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
+
+        // Check the global fine deduction toggle (Meeting fees are often considered fines/mandatory charges)
+        $globalFineEnabled = (bool) Setting::get('auto_fine_deduction_enabled', true);
+
+        return $typeEnabled && $globalFineEnabled;
     }
 
     /**
