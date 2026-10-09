@@ -45,10 +45,7 @@ class UserObserver
         // If balance increased
         if ($user->wasChanged('balance') && $user->balance > $user->getOriginal('balance')) {
             // 1. Process outstanding fines
-            $autoFineEnabled = (bool) \App\Models\Setting::get('auto_fine_deduction_enabled', true);
-            $typeAutoDeduct = app(\App\Services\AdministrativeChargeService::class)->isAutoDeductionEnabled($user);
-
-            if ($autoFineEnabled && $typeAutoDeduct && $user->outstanding_fines > 0) {
+            if ($user->outstanding_fines > 0 && app(\App\Services\AdministrativeChargeService::class)->isAutoDeductionEnabled($user)) {
                 $this->processOutstandingFines($user);
             }
 

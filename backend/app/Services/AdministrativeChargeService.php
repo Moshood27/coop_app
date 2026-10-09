@@ -21,8 +21,8 @@ class AdministrativeChargeService
      */
     public function processMonthlyCharges(): array
     {
-        $sittingEnabled = Setting::get('sitting_fees_enabled', Setting::get('monthly_fees_enabled', true));
-        $meetingEnabled = Setting::get('meeting_fees_enabled', Setting::get('monthly_fees_enabled', true));
+        $sittingEnabled = $this->castToBool(Setting::get('sitting_fees_enabled', Setting::get('monthly_fees_enabled', true)));
+        $meetingEnabled = $this->castToBool(Setting::get('meeting_fees_enabled', Setting::get('monthly_fees_enabled', true)));
 
         if (!$sittingEnabled && !$meetingEnabled) {
             Log::info('Monthly administrative charges (Sitting and Meeting fees) are disabled in settings.');
@@ -598,16 +598,30 @@ class AdministrativeChargeService
         $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
 
         // Check the specific setting for the user type (distant vs regular)
-        $typeEnabled = Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
+        $typeEnabled = Setting::get($settingKey);
+        if ($typeEnabled === null) {
+            $typeEnabled = Setting::get('auto_admin_charge_deduction_enabled', true);
+        }
 
         // Check the global fine deduction toggle (Meeting fees are often considered fines/mandatory charges)
         $globalFineEnabled = Setting::get('auto_fine_deduction_enabled', true);
 
-        // Robust boolean conversion for values that might be stored as strings '0'/'1' or 'false'/'true'
-        $isTypeEnabled = filter_var($typeEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool)$typeEnabled;
-        $isGlobalEnabled = filter_var($globalFineEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool)$globalFineEnabled;
+        return $this->castToBool($typeEnabled) && $this->castToBool($globalFineEnabled);
+    }
 
-        return $isTypeEnabled && $isGlobalEnabled;
+    /**
+     * Robustly cast a setting value to boolean.
+     */
+    private function castToBool($value): bool
+    {
+        if (is_bool($value)) return $value;
+        if (is_numeric($value)) return (float)$value != 0;
+        if (is_string($value)) {
+            $v = strtolower(trim($value));
+            if ($v === '1' || $v === 'true' || $v === 'on' || $v === 'yes') return true;
+            if ($v === '0' || $v === 'false' || $v === 'off' || $v === 'no' || $v === '') return false;
+        }
+        return (bool)$value;
     }
 
     /**

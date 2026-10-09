@@ -32,10 +32,7 @@ class RecoverOutstandingFines implements ShouldQueue
             return;
         }
 
-        $autoFineEnabled = (bool) \App\Models\Setting::get('auto_fine_deduction_enabled', true);
-        $typeAutoDeduct = app(\App\Services\AdministrativeChargeService::class)->isAutoDeductionEnabled($user);
-
-        if (!$autoFineEnabled || !$typeAutoDeduct) {
+        if (!app(\App\Services\AdministrativeChargeService::class)->isAutoDeductionEnabled($user)) {
             return;
         }
 
