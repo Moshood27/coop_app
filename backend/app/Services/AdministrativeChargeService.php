@@ -595,6 +595,12 @@ class AdministrativeChargeService
      */
     public function isAutoDeductionEnabled(User $user): bool
     {
+        // Check the global fine deduction toggle first (Meeting fees are considered mandatory charges/fines)
+        $globalFineEnabled = Setting::get('auto_fine_deduction_enabled', true);
+        if (!$this->castToBool($globalFineEnabled)) {
+            return false;
+        }
+
         $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
 
         // Check the specific setting for the user type (distant vs regular)
@@ -603,10 +609,7 @@ class AdministrativeChargeService
             $typeEnabled = Setting::get('auto_admin_charge_deduction_enabled', true);
         }
 
-        // Check the global fine deduction toggle (Meeting fees are often considered fines/mandatory charges)
-        $globalFineEnabled = Setting::get('auto_fine_deduction_enabled', true);
-
-        return $this->castToBool($typeEnabled) && $this->castToBool($globalFineEnabled);
+        return $this->castToBool($typeEnabled);
     }
 
     /**
@@ -614,14 +617,16 @@ class AdministrativeChargeService
      */
     private function castToBool($value): bool
     {
-        if (is_bool($value)) return $value;
-        if (is_numeric($value)) return (float)$value != 0;
-        if (is_string($value)) {
-            $v = strtolower(trim($value));
-            if ($v === '1' || $v === 'true' || $v === 'on' || $v === 'yes') return true;
-            if ($v === '0' || $v === 'false' || $v === 'off' || $v === 'no' || $v === '') return false;
+        if (is_bool($value)) {
+            return $value;
         }
-        return (bool)$value;
+
+        if ($value === null) {
+            return false;
+        }
+
+        // Use filter_var for standard boolean interpretation of strings like "0", "1", "true", "false", "off", "on"
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
