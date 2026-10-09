@@ -595,17 +595,19 @@ class AdministrativeChargeService
      */
     public function isAutoDeductionEnabled(User $user): bool
     {
-        // Check the global fine deduction toggle first (Meeting fees are considered mandatory charges/fines)
+        // 1. Check the global fine deduction toggle (App Status)
+        // Meeting fees are considered mandatory charges/fines in this context.
         $globalFineEnabled = Setting::get('auto_fine_deduction_enabled', true);
         if (!$this->castToBool($globalFineEnabled)) {
             return false;
         }
 
+        // 2. Check the specific setting for the user type (distant vs regular)
         $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
-
-        // Check the specific setting for the user type (distant vs regular)
         $typeEnabled = Setting::get($settingKey);
+
         if ($typeEnabled === null) {
+            // Fallback to legacy general toggle if specific one isn't set
             $typeEnabled = Setting::get('auto_admin_charge_deduction_enabled', true);
         }
 
@@ -614,6 +616,7 @@ class AdministrativeChargeService
 
     /**
      * Robustly cast a setting value to boolean.
+     * Handles common string and numeric representations from the database.
      */
     private function castToBool($value): bool
     {
@@ -625,7 +628,22 @@ class AdministrativeChargeService
             return false;
         }
 
-        // Use filter_var for standard boolean interpretation of strings like "0", "1", "true", "false", "off", "on"
+        // Explicitly handle common falsy values to avoid issues with truthy strings like "false" or "off"
+        if ($value === 0 || $value === '0' || $value === 0.0 || $value === '0.0') {
+            return false;
+        }
+
+        if (is_string($value)) {
+            $v = strtolower(trim($value));
+            if ($v === 'false' || $v === 'off' || $v === 'no' || $v === '') {
+                return false;
+            }
+            if ($v === 'true' || $v === 'on' || $v === 'yes' || $v === '1') {
+                return true;
+            }
+        }
+
+        // Fallback to standard PHP filter for other cases
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
