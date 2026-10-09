@@ -107,10 +107,9 @@ class AttendanceService
             $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
 
             $isPaid = false;
-            $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
             $typeAutoDeduct = app(AdministrativeChargeService::class)->isAutoDeductionEnabled($lockedUser);
 
-            if ($autoDeduct && $typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
+            if ($typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 
@@ -201,10 +200,9 @@ class AttendanceService
 
             $status = 'fine_pending';
             $paidAt = null;
-            $autoDeduct = (bool) Setting::get('auto_fine_deduction_enabled', true);
             $typeAutoDeduct = app(AdministrativeChargeService::class)->isAutoDeductionEnabled($lockedUser);
 
-            if ($autoDeduct && $typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
+            if ($typeAutoDeduct && (float) $lockedUser->balance >= $amount) {
                 // Deduct from balance
                 $lockedUser->decrement('balance', $amount);
 

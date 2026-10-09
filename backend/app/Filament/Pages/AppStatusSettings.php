@@ -396,8 +396,8 @@ class AppStatusSettings extends Page
                             ->helperText('Allow administrators to top-up member wallets via payment gateway and manage member DVAs.')
                             ->default(true),
                         Toggle::make('auto_fine_deduction_enabled')
-                            ->label('Enable Auto-Deduction of Attendance Fines (Lateness/Absence)')
-                            ->helperText('If disabled, meeting lateness and absence fines will accumulate but not be automatically debited.')
+                            ->label('Enable Auto-Deduction of Meeting Fees & Attendance Fines')
+                            ->helperText('Global App Status: If disabled, meeting fees and attendance fines (lateness/absence) will accumulate but not be automatically debited.')
                             ->default(true),
                         Toggle::make('display_admin_charge_in_wallet')
                             ->label('Display Admin Charges in Wallet')

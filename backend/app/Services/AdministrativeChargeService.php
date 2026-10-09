@@ -425,10 +425,8 @@ class AdministrativeChargeService
             // 2. Fines Recovery
             try {
                 $finesDue = (float) $user->outstanding_fines;
-                $autoFineEnabled = (bool) Setting::get('auto_fine_deduction_enabled', true);
-                $typeAutoDeduct = $this->isAutoDeductionEnabled($user);
 
-                if ($autoFineEnabled && $typeAutoDeduct && $finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
+                if ($this->isAutoDeductionEnabled($user) && $finesDue > 0 && $currentAmount > 0 && !in_array('FINE', $excludeSchemesUpper)) {
                     $fineDeduction = min($finesDue, $currentAmount);
 
                     $user->decrement('outstanding_fines', $fineDeduction);
@@ -574,7 +572,7 @@ class AdministrativeChargeService
 
             // 2. Process pending administrative charges
             $adminChargeDeducted = 0;
-            if ($this->isAutoDeductionEnabled($user) && $user->admin_charge_balance > 0) {
+            if (!$user->skip_auto_collection && !User::$global_skip_auto_collection && $this->isAutoDeductionEnabled($user) && $user->admin_charge_balance > 0) {
                 $beforeAdminCharge = (float) $user->balance;
                 if ($this->attemptDeduction($user)) {
                     $user->refresh();
@@ -600,12 +598,16 @@ class AdministrativeChargeService
         $settingKey = $user->is_distant ? 'auto_meeting_fine_deduction_enabled' : 'auto_sitting_fine_deduction_enabled';
 
         // Check the specific setting for the user type (distant vs regular)
-        $typeEnabled = (bool) Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
+        $typeEnabled = Setting::get($settingKey, Setting::get('auto_admin_charge_deduction_enabled', true));
 
         // Check the global fine deduction toggle (Meeting fees are often considered fines/mandatory charges)
-        $globalFineEnabled = (bool) Setting::get('auto_fine_deduction_enabled', true);
+        $globalFineEnabled = Setting::get('auto_fine_deduction_enabled', true);
 
-        return $typeEnabled && $globalFineEnabled;
+        // Robust boolean conversion for values that might be stored as strings '0'/'1' or 'false'/'true'
+        $isTypeEnabled = filter_var($typeEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool)$typeEnabled;
+        $isGlobalEnabled = filter_var($globalFineEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool)$globalFineEnabled;
+
+        return $isTypeEnabled && $isGlobalEnabled;
     }
 
     /**
