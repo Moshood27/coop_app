@@ -34,22 +34,46 @@ $meetings = DB::table('meetings')
 
 echo "Found " . $meetings->count() . " meetings in October 2026\n";
 
-echo "--- Overlap Analysis ---\n";
+echo "--- Detail Analysis for Meeting 34 ---\n";
 
-$meeting33Users = DB::table('attendance_records')->where('meeting_id', 33)->pluck('user_id');
-$meeting34Users = DB::table('attendance_records')->where('meeting_id', 34)->pluck('user_id');
+$debits = DB::table('wallet_transactions')
+    ->where('meta->meeting_id', 34)
+    ->where('type', 'debit')
+    ->get();
 
-$overlap = $meeting33Users->intersect($meeting34Users);
-echo "Users in both meetings: " . $overlap->count() . "\n";
-
-$meeting33Debits = DB::table('wallet_transactions')->where('meta->meeting_id', 33)->where('type', 'debit')->pluck('user_id');
-$meeting34Debits = DB::table('wallet_transactions')->where('meta->meeting_id', 34)->where('type', 'debit')->pluck('user_id');
-
-$debitOverlap = $meeting33Debits->intersect($meeting34Debits);
-echo "Users debited for both: " . $debitOverlap->count() . "\n";
-foreach ($debitOverlap as $uid) {
-    echo "  User ID: $uid debited twice.\n";
+foreach ($debits->take(5) as $debit) {
+    $user = DB::table('users')->where('id', $debit->user_id)->first();
+    echo "User ID: {$user->id}, Name: {$user->name}\n";
+    echo "  Debit: ID {$debit->id}, Source: {$debit->source}, Amount: {$debit->amount}\n";
+    echo "  User Outstanding Fines: {$user->outstanding_fines}\n";
+    
+    $refund = DB::table('wallet_transactions')
+        ->where('user_id', $debit->user_id)
+        ->where('type', 'credit')
+        ->where('meta->original_tx_id', $debit->id)
+        ->first();
+    
+    if ($refund) {
+        echo "  Refund: ID {$refund->id}, Source: {$refund->source}, Meta: " . $refund->meta . "\n";
+    } else {
+        echo "  NO REFUND FOUND for this Tx.\n";
+    }
+    
+    $record = DB::table('attendance_records')
+        ->where('meeting_id', 34)
+        ->where('user_id', $user->id)
+        ->first();
+    echo "  Attendance Record Status: " . ($record->status ?? 'N/A') . "\n";
 }
 
-$meeting34OnlyDebits = $meeting34Debits->diff($meeting33Debits);
-echo "Users debited ONLY for Meeting 34: " . $meeting34OnlyDebits->count() . "\n";
+echo "\n--- Sample of Pending Fines ---\n";
+$pending = DB::table('attendance_records')
+    ->where('meeting_id', 34)
+    ->where('status', 'fine_pending')
+    ->take(5)
+    ->get();
+
+foreach ($pending as $p) {
+    $user = DB::table('users')->where('id', $p->user_id)->first();
+    echo "User ID: {$user->id}, Outstanding Fines: {$user->outstanding_fines}, Fine Amount: {$p->fine_amount}\n";
+}
