@@ -73,13 +73,13 @@ DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
         ->where('type', 'debit')
         ->get();
 
-    // Also check by description
-    $debitsByDesc = DB::table('wallet_transactions')
-        ->where('description', 'like', '%' . $meeting->name . '%')
+    // Also check by reference
+    $debitsByRef = DB::table('wallet_transactions')
+        ->where('reference', 'like', '%' . $meeting->name . '%')
         ->where('type', 'debit')
         ->whereNotIn('id', $debits->pluck('id'))
         ->get();
-    $debits = $debits->concat($debitsByDesc);
+    $debits = $debits->concat($debitsByRef);
 
     echo "Found " . $debits->count() . " debits to refund.\n";
 
@@ -88,8 +88,8 @@ DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
         $refunded = DB::table('wallet_transactions')
             ->where('user_id', $debit->user_id)
             ->where('type', 'credit')
-            ->where('description', 'like', '%Refund%')
-            ->where('description', 'like', '%' . $meeting->name . '%')
+            ->where('source', 'refund')
+            ->where('reference', 'like', '%' . $meeting->name . '%')
             ->exists();
 
         if ($refunded) {
@@ -104,7 +104,7 @@ DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
                     'amount' => $debit->amount,
                     'type' => 'credit',
                     'source' => 'refund',
-                    'description' => "Refund for duplicate meeting: {$meeting->name}",
+                    'reference' => "Refund for duplicate meeting: {$meeting->name}",
                     'created_at' => $now,
                     'updated_at' => $now,
                     'meta' => json_encode(['original_tx_id' => $debit->id, 'meeting_id' => $meetingIdToDelete])

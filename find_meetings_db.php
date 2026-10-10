@@ -28,19 +28,20 @@ if (!isset($app)) {
 echo "--- Duplicate Meeting Search ---\n";
 
 $meetingNamePart = 'At-taqwa Islamic Cooperative';
-$date = '2026-10-04';
 
 $meetings = DB::table('meetings')
     ->where('name', 'like', '%' . $meetingNamePart . '%')
-    ->whereDate('date', $date)
+    ->whereYear('date', 2026)
+    ->whereMonth('date', 10)
     ->get();
 
-echo "Found " . $meetings->count() . " meetings matching '$meetingNamePart' on $date\n";
+echo "Found " . $meetings->count() . " meetings matching '$meetingNamePart' in October 2026\n";
 
 foreach ($meetings as $meeting) {
     echo "--------------------------------------------------\n";
     echo "Meeting ID: {$meeting->id}\n";
     echo "Name: {$meeting->name}\n";
+    echo "Date: {$meeting->date}\n";
     echo "Status: {$meeting->status}\n";
     echo "Fine Amount: {$meeting->fine_amount}\n";
     
@@ -60,16 +61,16 @@ foreach ($meetings as $meeting) {
         
     echo "Wallet Debits: " . $debits->count() . " Total: " . $debits->sum('amount') . "\n";
 
-    // Also check for debits by description if meta is missing
-    $debitsByDesc = DB::table('wallet_transactions')
-        ->where('description', 'like', '%' . $meeting->name . '%')
+    // Also check for debits by reference or source if meta is missing
+    $debitsByRef = DB::table('wallet_transactions')
+        ->where('reference', 'like', '%' . $meeting->name . '%')
         ->where('type', 'debit')
         ->whereNotIn('id', $debits->pluck('id'))
         ->get();
     
-    if ($debitsByDesc->count() > 0) {
-        echo "Wallet Debits (by description): " . $debitsByDesc->count() . " Total: " . $debitsByDesc->sum('amount') . "\n";
-        $debits = $debits->concat($debitsByDesc);
+    if ($debitsByRef->count() > 0) {
+        echo "Wallet Debits (by reference): " . $debitsByRef->count() . " Total: " . $debitsByRef->sum('amount') . "\n";
+        $debits = $debits->concat($debitsByRef);
     }
     
     // Check for refunds
@@ -77,8 +78,8 @@ foreach ($meetings as $meeting) {
         $refund = DB::table('wallet_transactions')
             ->where('user_id', $debit->user_id)
             ->where('type', 'credit')
-            ->where('description', 'like', '%Refund%')
-            ->where('description', 'like', '%' . $meeting->name . '%')
+            ->where('source', 'refund')
+            ->where('reference', 'like', '%' . $meeting->name . '%')
             ->first();
             
         if ($refund) {
