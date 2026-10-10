@@ -13,7 +13,7 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 config(['database.connections.mysql.host' => '127.0.0.1']);
-config(['database.connections.mysql.port' => '33060']);
+config(['database.connections.mysql.port' => '3306']);
 config(['database.connections.mysql.username' => 'sail_attaqwa']);
 config(['database.connections.mysql.password' => 'pass_attaqwa']);
 
