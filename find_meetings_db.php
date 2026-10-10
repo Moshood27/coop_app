@@ -34,46 +34,11 @@ $meetings = DB::table('meetings')
 
 echo "Found " . $meetings->count() . " meetings in October 2026\n";
 
-echo "--- Detail Analysis for Meeting 34 ---\n";
-
-$debits = DB::table('wallet_transactions')
-    ->where('meta->meeting_id', 34)
-    ->where('type', 'debit')
+echo "--- Charity Ledger Check ---\n";
+$charityEntries = DB::table('charity_ledger')
+    ->where('note', 'like', '%(ID: 34)%')
     ->get();
-
-foreach ($debits->take(5) as $debit) {
-    $user = DB::table('users')->where('id', $debit->user_id)->first();
-    echo "User ID: {$user->id}, Name: {$user->name}\n";
-    echo "  Debit: ID {$debit->id}, Source: {$debit->source}, Amount: {$debit->amount}\n";
-    echo "  User Outstanding Fines: {$user->outstanding_fines}\n";
-    
-    $refund = DB::table('wallet_transactions')
-        ->where('user_id', $debit->user_id)
-        ->where('type', 'credit')
-        ->where('meta->original_tx_id', $debit->id)
-        ->first();
-    
-    if ($refund) {
-        echo "  Refund: ID {$refund->id}, Source: {$refund->source}, Meta: " . $refund->meta . "\n";
-    } else {
-        echo "  NO REFUND FOUND for this Tx.\n";
-    }
-    
-    $record = DB::table('attendance_records')
-        ->where('meeting_id', 34)
-        ->where('user_id', $user->id)
-        ->first();
-    echo "  Attendance Record Status: " . ($record->status ?? 'N/A') . "\n";
-}
-
-echo "\n--- Sample of Pending Fines ---\n";
-$pending = DB::table('attendance_records')
-    ->where('meeting_id', 34)
-    ->where('status', 'fine_pending')
-    ->take(5)
-    ->get();
-
-foreach ($pending as $p) {
-    $user = DB::table('users')->where('id', $p->user_id)->first();
-    echo "User ID: {$user->id}, Outstanding Fines: {$user->outstanding_fines}, Fine Amount: {$p->fine_amount}\n";
+echo "Found " . $charityEntries->count() . " charity entries for Meeting 34.\n";
+foreach ($charityEntries as $ce) {
+    echo "  Entry ID: {$ce->id}, User ID: {$ce->user_id}, Amount: {$ce->amount}, Note: {$ce->note}\n";
 }
