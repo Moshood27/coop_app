@@ -34,27 +34,22 @@ $meetings = DB::table('meetings')
 
 echo "Found " . $meetings->count() . " meetings in October 2026\n";
 
-foreach ($meetings as $meeting) {
-    echo "--------------------------------------------------\n";
-    echo "Meeting ID: {$meeting->id}\n";
-    echo "Name: {$meeting->name}\n";
-    echo "Date: {$meeting->date}\n";
-    echo "Status: {$meeting->status}\n";
-    echo "Fine Amount: {$meeting->fine_amount}\n";
-    
-    $attendance = DB::table('attendance_records')->where('meeting_id', $meeting->id)->get();
-    $pendingFines = $attendance->where('status', 'fine_pending');
-    $paidFines = $attendance->where('status', 'fine_paid');
-    
-    echo "Attendance Count: " . $attendance->count() . "\n";
-    echo "Pending Fines: " . $pendingFines->count() . "\n";
-    echo "Paid Fines: " . $paidFines->count() . "\n";
-    
-    // Check for debits in wallet_transactions
-    $debits = DB::table('wallet_transactions')
-        ->where('meta->meeting_id', $meeting->id)
-        ->where('type', 'debit')
-        ->get();
-        
-    echo "Wallet Debits: " . $debits->count() . " Total: " . $debits->sum('amount') . "\n";
+echo "--- Overlap Analysis ---\n";
+
+$meeting33Users = DB::table('attendance_records')->where('meeting_id', 33)->pluck('user_id');
+$meeting34Users = DB::table('attendance_records')->where('meeting_id', 34)->pluck('user_id');
+
+$overlap = $meeting33Users->intersect($meeting34Users);
+echo "Users in both meetings: " . $overlap->count() . "\n";
+
+$meeting33Debits = DB::table('wallet_transactions')->where('meta->meeting_id', 33)->where('type', 'debit')->pluck('user_id');
+$meeting34Debits = DB::table('wallet_transactions')->where('meta->meeting_id', 34)->where('type', 'debit')->pluck('user_id');
+
+$debitOverlap = $meeting33Debits->intersect($meeting34Debits);
+echo "Users debited for both: " . $debitOverlap->count() . "\n";
+foreach ($debitOverlap as $uid) {
+    echo "  User ID: $uid debited twice.\n";
 }
+
+$meeting34OnlyDebits = $meeting34Debits->diff($meeting33Debits);
+echo "Users debited ONLY for Meeting 34: " . $meeting34OnlyDebits->count() . "\n";
