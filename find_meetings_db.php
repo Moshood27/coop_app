@@ -13,7 +13,7 @@ $paths = [
 foreach ($paths as $path) {
     if (file_exists($path)) {
         require $path;
-        $base = dirname($path);
+        $base = dirname(dirname($path)); // Go up from vendor to backend root
         $app = require_once $base . '/bootstrap/app.php';
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
@@ -38,26 +38,53 @@ $meetings = DB::table('meetings')
 echo "Found " . $meetings->count() . " meetings matching '$meetingNamePart' on $date\n";
 
 foreach ($meetings as $meeting) {
-    echo "ID: {$meeting->id}, Name: {$meeting->name}, Status: {$meeting->status}, Fine: {$meeting->fine_amount}\n";
+    echo "--------------------------------------------------\n";
+    echo "Meeting ID: {$meeting->id}\n";
+    echo "Name: {$meeting->name}\n";
+    echo "Status: {$meeting->status}\n";
+    echo "Fine Amount: {$meeting->fine_amount}\n";
     
     $attendance = DB::table('attendance_records')->where('meeting_id', $meeting->id)->get();
-    $pending = $attendance->where('status', 'fine_pending')->count();
-    $paid = $attendance->where('status', 'fine_paid')->count();
+    $pendingFines = $attendance->where('status', 'fine_pending');
+    $paidFines = $attendance->where('status', 'fine_paid');
     
-    echo "  Attendance: " . $attendance->count() . " (Pending Fines: $pending, Paid Fines: $paid)\n";
+    echo "Attendance Count: " . $attendance->count() . "\n";
+    echo "Pending Fines: " . $pendingFines->count() . "\n";
+    echo "Paid Fines: " . $paidFines->count() . "\n";
     
     // Check for debits in wallet_transactions
     $debits = DB::table('wallet_transactions')
         ->where('meta->meeting_id', $meeting->id)
-        ->orWhere('description', 'like', '%' . $meeting->name . '%')
         ->where('type', 'debit')
         ->get();
         
-    echo "  Debits: " . $debits->count() . " Total Amount: " . $debits->sum('amount') . "\n";
+    echo "Wallet Debits: " . $debits->count() . " Total: " . $debits->sum('amount') . "\n";
+
+    // Also check for debits by description if meta is missing
+    $debitsByDesc = DB::table('wallet_transactions')
+        ->where('description', 'like', '%' . $meeting->name . '%')
+        ->where('type', 'debit')
+        ->whereNotIn('id', $debits->pluck('id'))
+        ->get();
     
-    if ($debits->count() > 0) {
-        foreach ($debits as $tx) {
-            echo "    Tx ID: {$tx->id}, User: {$tx->user_id}, Amount: {$tx->amount}\n";
+    if ($debitsByDesc->count() > 0) {
+        echo "Wallet Debits (by description): " . $debitsByDesc->count() . " Total: " . $debitsByDesc->sum('amount') . "\n";
+        $debits = $debits->concat($debitsByDesc);
+    }
+    
+    // Check for refunds
+    foreach ($debits as $debit) {
+        $refund = DB::table('wallet_transactions')
+            ->where('user_id', $debit->user_id)
+            ->where('type', 'credit')
+            ->where('description', 'like', '%Refund%')
+            ->where('description', 'like', '%' . $meeting->name . '%')
+            ->first();
+            
+        if ($refund) {
+             echo "  User {$debit->user_id}: Debited {$debit->amount}, Refunded {$refund->amount}\n";
+        } else {
+             echo "  User {$debit->user_id}: Debited {$debit->amount}, NOT REFUNDED\n";
         }
     }
 }
