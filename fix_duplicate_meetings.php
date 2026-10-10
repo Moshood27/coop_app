@@ -26,15 +26,11 @@ if (!isset($app)) {
 }
 
 $dryRun = true; // Set to false to apply changes
-$meetingIdToDelete = null; // MUST BE SET AFTER DIAGNOSTIC
+$meetingIdToDelete = 34; // Set to 34 based on diagnostic
 
 echo "--- Fix Duplicate Meetings ---\n";
 echo "Dry Run: " . ($dryRun ? "YES" : "NO") . "\n";
-
-if (!$meetingIdToDelete) {
-    echo "ERROR: \$meetingIdToDelete is not set. Run find_meetings_db.php first to identify the meeting ID to delete.\n";
-    exit(1);
-}
+echo "Target Meeting ID: $meetingIdToDelete\n";
 
 DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
     $meeting = DB::table('meetings')->where('id', $meetingIdToDelete)->first();
@@ -42,82 +38,70 @@ DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
         die("Meeting ID $meetingIdToDelete not found.\n");
     }
 
-    echo "Target Meeting: {$meeting->name} (ID: {$meeting->id})\n";
+    echo "Meeting Name: {$meeting->name}\n";
 
-    // 1. Identify attendance records and fines
-    $attendance = DB::table('attendance_records')->where('meeting_id', $meetingIdToDelete)->get();
-    echo "Found " . $attendance->count() . " attendance records.\n";
+    // 1. Handle Attendance Records and Fines
+    $records = DB::table('attendance_records')->where('meeting_id', $meetingIdToDelete)->get();
+    echo "Found " . $records->count() . " attendance records.\n";
     
-    foreach ($attendance as $record) {
+    foreach ($records as $record) {
         if ($record->status === 'fine_pending') {
-            echo "  Cancelling pending fine for User ID: {$record->user_id}\n";
+            echo "  User ID: {$record->user_id} - Cancelling pending fine (" . ($record->fine_amount ?? 0) . ")\n";
             if (!$dryRun) {
-                DB::table('attendance_records')->where('id', $record->id)->delete();
-                // If there's an outstanding_fines column in users table, we should decrement it?
-                // Looking at User.php, it has outstanding_fines.
-                // However, if the fine was never paid, decrementing might be necessary if it was already added.
-                // Usually fines are added when the meeting is audited.
                 DB::table('users')->where('id', $record->user_id)->decrement('outstanding_fines', $record->fine_amount ?? 0);
             }
-        } elseif ($record->status === 'fine_paid') {
-            echo "  User ID: {$record->user_id} already paid the fine. Should we refund?\n";
-            // The issue description says "delete one with is pending fine for members" 
-            // and "check if member is debited and not refunded then credit that member".
-            // If they paid a fine, it's a debit.
         }
     }
 
-    // 2. Identify wallet transactions linked to this meeting
+    // 2. Handle Wallet Transactions (Refunds)
     $debits = DB::table('wallet_transactions')
         ->where('meta->meeting_id', $meetingIdToDelete)
         ->where('type', 'debit')
         ->get();
-
-    // Also check by reference
-    $debitsByRef = DB::table('wallet_transactions')
-        ->where('reference', 'like', '%' . $meeting->name . '%')
-        ->where('type', 'debit')
-        ->whereNotIn('id', $debits->pluck('id'))
-        ->get();
-    $debits = $debits->concat($debitsByRef);
-
-    echo "Found " . $debits->count() . " debits to refund.\n";
+    
+    echo "Found " . $debits->count() . " wallet debits to refund.\n";
 
     foreach ($debits as $debit) {
-        // Check if already refunded
+        // Check if already refunded (by us or someone else)
         $refunded = DB::table('wallet_transactions')
             ->where('user_id', $debit->user_id)
             ->where('type', 'credit')
             ->where('source', 'refund')
-            ->where('reference', 'like', '%' . $meeting->name . '%')
+            ->where('meta->original_tx_id', $debit->id)
             ->exists();
 
         if ($refunded) {
-            echo "  User ID: {$debit->user_id} already refunded for debit ID: {$debit->id}\n";
+            echo "  User ID: {$debit->user_id} - Already refunded for Tx ID: {$debit->id}\n";
         } else {
-            echo "  Refunding User ID: {$debit->user_id} Amount: {$debit->amount}\n";
+            echo "  User ID: {$debit->user_id} - Refunding " . $debit->amount . "\n";
             if (!$dryRun) {
-                // Perform refund
                 $now = Carbon::now();
                 DB::table('wallet_transactions')->insert([
                     'user_id' => $debit->user_id,
                     'amount' => $debit->amount,
                     'type' => 'credit',
                     'source' => 'refund',
-                    'reference' => "Refund for duplicate meeting: {$meeting->name}",
+                    'reference' => "REFUND_MTG_{$meetingIdToDelete}_" . Str::random(5),
                     'created_at' => $now,
                     'updated_at' => $now,
-                    'meta' => json_encode(['original_tx_id' => $debit->id, 'meeting_id' => $meetingIdToDelete])
+                    'meta' => json_encode(['original_tx_id' => $debit->id, 'meeting_id' => $meetingIdToDelete, 'reason' => 'Duplicate meeting cleanup'])
                 ]);
-                
-                // Update user wallet balance if applicable
                 DB::table('users')->where('id', $debit->user_id)->increment('balance', $debit->amount);
             }
         }
     }
 
-    // 3. Delete the meeting
-    echo "Deleting meeting ID: $meetingIdToDelete\n";
+    // 3. Handle Charity Entries
+    $charityEntries = DB::table('charity_entries')
+        ->where('note', 'like', "%(ID: {$meetingIdToDelete})%")
+        ->get();
+    echo "Found " . $charityEntries->count() . " charity entries to remove.\n";
+    if (!$dryRun && $charityEntries->count() > 0) {
+        DB::table('charity_entries')->whereIn('id', $charityEntries->pluck('id'))->delete();
+    }
+
+    // 4. Delete the meeting and its attendance records
+    echo "Deleting meeting and attendance records...\n";
     if (!$dryRun) {
         DB::table('attendance_records')->where('meeting_id', $meetingIdToDelete)->delete();
         DB::table('meetings')->where('id', $meetingIdToDelete)->delete();
