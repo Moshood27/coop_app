@@ -25,17 +25,14 @@ if (!isset($app)) {
     die("Could not find autoloader. Paths checked: " . implode(', ', $paths) . "\n");
 }
 
-echo "--- Duplicate Meeting Search ---\n";
-
-$meetingNamePart = 'At-taqwa Islamic Cooperative';
+echo "--- All Meetings in October 2026 ---\n";
 
 $meetings = DB::table('meetings')
-    ->where('name', 'like', '%' . $meetingNamePart . '%')
     ->whereYear('date', 2026)
     ->whereMonth('date', 10)
     ->get();
 
-echo "Found " . $meetings->count() . " meetings matching '$meetingNamePart' in October 2026\n";
+echo "Found " . $meetings->count() . " meetings in October 2026\n";
 
 foreach ($meetings as $meeting) {
     echo "--------------------------------------------------\n";
@@ -60,32 +57,4 @@ foreach ($meetings as $meeting) {
         ->get();
         
     echo "Wallet Debits: " . $debits->count() . " Total: " . $debits->sum('amount') . "\n";
-
-    // Also check for debits by reference or source if meta is missing
-    $debitsByRef = DB::table('wallet_transactions')
-        ->where('reference', 'like', '%' . $meeting->name . '%')
-        ->where('type', 'debit')
-        ->whereNotIn('id', $debits->pluck('id'))
-        ->get();
-    
-    if ($debitsByRef->count() > 0) {
-        echo "Wallet Debits (by reference): " . $debitsByRef->count() . " Total: " . $debitsByRef->sum('amount') . "\n";
-        $debits = $debits->concat($debitsByRef);
-    }
-    
-    // Check for refunds
-    foreach ($debits as $debit) {
-        $refund = DB::table('wallet_transactions')
-            ->where('user_id', $debit->user_id)
-            ->where('type', 'credit')
-            ->where('source', 'refund')
-            ->where('reference', 'like', '%' . $meeting->name . '%')
-            ->first();
-            
-        if ($refund) {
-             echo "  User {$debit->user_id}: Debited {$debit->amount}, Refunded {$refund->amount}\n";
-        } else {
-             echo "  User {$debit->user_id}: Debited {$debit->amount}, NOT REFUNDED\n";
-        }
-    }
 }
