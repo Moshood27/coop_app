@@ -25,7 +25,7 @@ if (!isset($app)) {
     die("Could not find autoloader.\n");
 }
 
-$dryRun = true; // Set to false to apply changes
+$dryRun = false; // Set to false to apply changes
 $meetingIdToDelete = 34; // Set to 34 based on diagnostic
 
 echo "--- Fix Duplicate Meetings ---\n";
@@ -92,12 +92,12 @@ DB::transaction(function () use ($meetingIdToDelete, $dryRun) {
     }
 
     // 3. Handle Charity Entries
-    $charityEntries = DB::table('charity_entries')
+    $charityEntries = DB::table('charity_ledger')
         ->where('note', 'like', "%(ID: {$meetingIdToDelete})%")
         ->get();
     echo "Found " . $charityEntries->count() . " charity entries to remove.\n";
     if (!$dryRun && $charityEntries->count() > 0) {
-        DB::table('charity_entries')->whereIn('id', $charityEntries->pluck('id'))->delete();
+        DB::table('charity_ledger')->whereIn('id', $charityEntries->pluck('id'))->delete();
     }
 
     // 4. Delete the meeting and its attendance records
