@@ -15,7 +15,8 @@ if (!$autoload) {
 }
 
 require $autoload;
-$app_path = dirname($autoload) . '/bootstrap/app.php';
+$baseDir = dirname(dirname($autoload));
+$app_path = $baseDir . '/bootstrap/app.php';
 $app = require_once $app_path;
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
