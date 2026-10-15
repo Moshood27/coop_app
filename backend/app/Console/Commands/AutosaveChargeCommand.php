@@ -32,8 +32,11 @@ class AutosaveChargeCommand extends Command
         $specificUser = $this->option('user');
 
         $query = User::query()
+            ->with('virtualAccount')
             ->where('autosave_enabled', true)
-            ->whereNotNull('paystack_authorization_code')
+            ->whereHas('virtualAccount', function ($q) {
+                $q->whereNotNull('paystack_authorization_code');
+            })
             ->whereNotNull('email');
 
         if (!$forceToday) {

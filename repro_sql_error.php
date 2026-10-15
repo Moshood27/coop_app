@@ -9,10 +9,13 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 try {
-    echo "Running query that failed in the issue description...\n";
+    echo "Running fixed query...\n";
     $count = User::query()
+        ->with('virtualAccount')
         ->where('autosave_enabled', true)
-        ->whereNotNull('paystack_authorization_code')
+        ->whereHas('virtualAccount', function($q) {
+            $q->whereNotNull('paystack_authorization_code');
+        })
         ->whereNotNull('email')
         ->count();
     
