@@ -26,6 +26,12 @@ try {
         }
     }
 
+    $distinctEnabled = DB::table('users')->select('autosave_enabled', DB::raw('count(*) as count'))->groupBy('autosave_enabled')->get();
+    echo "Distinct autosave_enabled values:\n";
+    foreach ($distinctEnabled as $row) {
+        echo "- Value: '{$row->autosave_enabled}', Count: {$row->count}\n";
+    }
+
     echo "\nChecking user_virtual_accounts table...\n";
     $totalVAs = DB::table('user_virtual_accounts')->count();
     echo "Total virtual accounts: $totalVAs\n";
