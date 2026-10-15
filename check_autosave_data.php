@@ -19,14 +19,12 @@ if (getenv('DB_HOST') === false) {
 
 try {
     echo "Checking users table...\n";
-    $totalUsers = DB::table('users')->count();
-    echo "Total users: $totalUsers\n";
-
-    $autosaveEnabledCount = DB::table('users')->where('autosave_enabled', true)->count();
-    echo "Users with autosave_enabled=true: $autosaveEnabledCount\n";
-
-    $emailNotNullCount = DB::table('users')->whereNotNull('email')->count();
-    echo "Users with email not null: $emailNotNullCount\n";
+    $columns = DB::select("DESCRIBE users");
+    foreach ($columns as $column) {
+        if (str_contains($column->Field, 'autosave')) {
+            echo "{$column->Field} - {$column->Type} - Null: {$column->Null} - Default: {$column->Default}\n";
+        }
+    }
 
     echo "\nChecking user_virtual_accounts table...\n";
     $totalVAs = DB::table('user_virtual_accounts')->count();
