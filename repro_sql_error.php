@@ -3,12 +3,25 @@
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-require __DIR__ . '/backend/vendor/autoload.php';
-$app = require_once __DIR__ . '/backend/bootstrap/app.php';
+echo "Current DIR: " . __DIR__ . "\n";
+echo "Working DIR: " . getcwd() . "\n";
+
+$autoload = file_exists(__DIR__ . '/vendor/autoload.php') 
+    ? __DIR__ . '/vendor/autoload.php' 
+    : (file_exists(__DIR__ . '/backend/vendor/autoload.php') ? __DIR__ . '/backend/vendor/autoload.php' : null);
+
+if (!$autoload) {
+    die("Could not find vendor/autoload.php\n");
+}
+
+require $autoload;
+$app_path = dirname($autoload) . '/bootstrap/app.php';
+$app = require_once $app_path;
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 try {
+    echo "Using User model from: " . (new ReflectionClass(User::class))->getFileName() . "\n";
     echo "Running fixed query...\n";
     $count = User::query()
         ->with('virtualAccount')
