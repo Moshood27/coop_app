@@ -187,7 +187,7 @@
           <!-- Actions -->
           <div class="grid grid-cols-[1fr_auto] gap-3">
             <button 
-              @click="shareAsImage" 
+              @click="shareReceipt" 
               :disabled="generatingImage"
               class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
             >
@@ -195,11 +195,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0 10.628a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
                 </svg>
-                Share Image
+                Share
               </template>
               <div v-else class="flex items-center gap-2">
                 <div class="w-4 h-4 border-2 border-slate-700 border-t-transparent rounded-full animate-spin"></div>
-                Generating...
+                Preparing...
               </div>
             </button>
             
@@ -491,28 +491,70 @@ const generateReceiptImage = async () => {
   }
 }
 
-const shareAsImage = async () => {
+const shareReceipt = async () => {
   const dataUrl = await generateReceiptImage()
-  if (!dataUrl) return
+  
+  // Prepare text version as fallback or caption
+  const title = txTitle.value
+  const amount = formatMoney(props.transaction.amount)
+  const ref = props.transaction.reference || props.transaction.id
+  const dateStr = props.transaction.created_at 
+    ? new Date(props.transaction.created_at).toLocaleDateString('en-NG', { dateStyle: 'medium' })
+    : 'N/A'
+
+  let text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${props.transaction.status || 'Successful'}\nDate: ${dateStr}`
+  
+  if (props.transaction.meta?.to_name || props.transaction.meta?.to_membership) {
+    text += `\nRecipient: ${props.transaction.meta.to_name || props.transaction.meta.to_membership}`
+  }
+  if (isWalletAllocation.value && allocationItems.value.length) {
+    text += `\n\nAllocation Details:`
+    allocationItems.value.forEach(item => {
+      text += `\n- ${allocationLabel(item)}: ₦${formatMoney(item.amount || 0)}`
+    })
+  }
+  text += `\n\nhttps://attaqwacooposg.com/`
+
+  if (!dataUrl) {
+    // If image generation failed, fallback to text-only share
+    if (navigator.share) {
+      await navigator.share({ title: 'Transaction Receipt', text }).catch(() => copy(text))
+    } else {
+      copy(text)
+    }
+    return
+  }
   
   try {
     const blob = await (await fetch(dataUrl)).blob()
-    const filename = `Receipt_${props.transaction.reference || props.transaction.id}.png`
+    const filename = `Receipt_${ref}.png`
     const file = new File([blob], filename, { type: 'image/png' })
     
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
+    if (navigator.share) {
+      const shareData = {
         title: 'Transaction Receipt',
-      })
+        text: text,
+      }
+      
+      // Try to include file if browser supports it
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        shareData.files = [file]
+      }
+      
+      await navigator.share(shareData)
     } else {
+      // Fallback to direct download
       const link = document.createElement('a')
       link.href = dataUrl
       link.download = filename
       link.click()
     }
   } catch (err) {
-    console.error('Image share failed', err)
+    console.error('Share failed', err)
+    // Final fallback to text-only if something went wrong with file share
+    try {
+      if (navigator.share) await navigator.share({ title: 'Transaction Receipt', text })
+    } catch (_) {}
   }
 }
 
