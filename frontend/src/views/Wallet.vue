@@ -806,7 +806,6 @@
         :transaction="selectedTx"
         @close="showTxModal = false"
         @download="downloadReceipt"
-        @share="shareReceipt"
       />
 
       <!-- Reusable Notice Modal -->
@@ -1427,22 +1426,6 @@ const downloadReceipt = (tx) => {
   if (url) window.open(url, '_blank')
 }
 
-const shareReceipt = async (tx) => {
-  const title = titleFor(tx)
-  const amount = formatMoney(tx.amount)
-  const ref = tx.reference || tx.id
-  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx.status || 'Successful'}\nDate: ${new Date(tx.created_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}`
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'Transaction Receipt', text, url: window.location.origin })
-    } else {
-      await navigator.clipboard.writeText(text)
-      showNotice('Success', 'Receipt details copied to clipboard', 'success')
-    }
-  } catch (_) {
-    try { await navigator.clipboard.writeText(text) } catch (_) {}
-  }
-}
 
 watch([toType, toValue, branchId], () => {
   recipient.value = null

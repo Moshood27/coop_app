@@ -185,65 +185,74 @@
           </div>
 
           <!-- Actions -->
-          <div v-if="!showShareOptions" class="grid grid-cols-2 gap-3">
-            <button @click="showShareOptions = true" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0 10.628a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
-              </svg>
-              Share
+          <div class="grid grid-cols-[1fr_auto] gap-3">
+            <button 
+              @click="shareAsImage" 
+              :disabled="generatingImage"
+              class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
+            >
+              <template v-if="!generatingImage">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0 10.628a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
+                </svg>
+                Share Image
+              </template>
+              <div v-else class="flex items-center gap-2">
+                <div class="w-4 h-4 border-2 border-slate-700 border-t-transparent rounded-full animate-spin"></div>
+                Generating...
+              </div>
             </button>
+            
+            <button 
+              @click="showShareOptions = !showShareOptions"
+              class="flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 w-14 rounded-2xl font-bold transition-all active:scale-95"
+              title="More Options"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+            </button>
+          </div>
+
+          <div v-if="showShareOptions" class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300 py-2">
+            <div class="grid grid-cols-2 gap-3">
+              <button 
+                @click="shareAsPdf"
+                class="flex items-center justify-center gap-2 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-3 rounded-2xl font-bold transition-all active:scale-95"
+              >
+                <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <span class="text-xs">Share PDF</span>
+              </button>
+              
+              <button 
+                @click="shareAsText"
+                class="flex items-center justify-center gap-2 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-3 rounded-2xl font-bold transition-all active:scale-95"
+              >
+                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3h9m-9 3h9m-6.75-12h7.5a2.25 2.25 0 012.25 2.25v13.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25V4.5A2.25 2.25 0 017.5 2.25z" />
+                  </svg>
+                </div>
+                <span class="text-xs">Share Text</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-1">
             <button @click="downloadTransaction" class="flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-100 active:scale-95">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 3v13.5" />
               </svg>
               Receipt
             </button>
-          </div>
-
-          <div v-else class="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div class="grid grid-cols-2 gap-3">
-              <button 
-                @click="shareAsImage" 
-                :disabled="generatingImage"
-                class="flex flex-col items-center justify-center gap-1 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-4 rounded-2xl font-bold transition-all active:scale-95"
-              >
-                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-1">
-                  <svg v-if="!generatingImage" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                  </svg>
-                  <div v-else class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <span class="text-xs">Image</span>
-              </button>
-              
-              <button 
-                @click="shareAsPdf"
-                class="flex flex-col items-center justify-center gap-1 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-4 rounded-2xl font-bold transition-all active:scale-95"
-              >
-                <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 mb-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                </div>
-                <span class="text-xs">PDF</span>
-              </button>
-            </div>
-
-            <button @click="shareAsText" class="w-full flex items-center justify-center gap-2 py-3 text-slate-500 font-bold text-xs hover:text-slate-700 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3h9m-9 3h9m-6.75-12h7.5a2.25 2.25 0 012.25 2.25v13.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25V4.5A2.25 2.25 0 017.5 2.25z" />
-              </svg>
-              Share as Text
-            </button>
-
-            <button @click="showShareOptions = false" class="w-full py-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-slate-600 transition-colors">
-              Back
+            <button @click="close" class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:text-slate-600 transition-colors">
+              Close
             </button>
           </div>
-          
-          <button @click="close" class="w-full text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] py-2 hover:text-slate-600 transition-colors">
-            Close
-          </button>
         </div>
       </div>
     </div>
@@ -263,7 +272,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'download', 'share'])
+const emit = defineEmits(['close', 'download'])
 
 const close = () => emit('close')
 
@@ -495,7 +504,6 @@ const shareAsImage = async () => {
       await navigator.share({
         files: [file],
         title: 'Transaction Receipt',
-        text: `Transaction receipt for ₦${formatMoney(props.transaction.amount)}`
       })
     } else {
       const link = document.createElement('a')
@@ -570,10 +578,6 @@ const shareAsText = () => {
   } else {
     copy(text)
   }
-}
-
-const shareTransaction = () => {
-  showShareOptions.value = true
 }
 
 const downloadTransaction = () => emit('download', props.transaction)

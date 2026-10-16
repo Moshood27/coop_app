@@ -186,7 +186,6 @@
       :transaction="selectedTx"
       @close="showTxModal = false"
       @download="downloadReceipt"
-      @share="shareReceipt"
     />
 
     <!-- Custom Notice Modal -->
@@ -331,23 +330,6 @@ const downloadReceipt = (tx) => {
   }
 }
 
-const shareReceipt = async (tx) => {
-  const title = tx?.title || 'Transaction'
-  const amount = formatMoney(tx?.amount)
-  const ref = tx?.reference || tx?.id
-  const created = tx?.created_at ? new Date(tx.created_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }) : ''
-  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx?.status || 'Successful'}${created ? `\nDate: ${created}` : ''}`
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'Transaction Receipt', text, url: window.location.origin })
-    } else {
-      await navigator.clipboard.writeText(text)
-      showNotice('Success', 'Receipt details copied to clipboard', 'success')
-    }
-  } catch (_) {
-    try { await navigator.clipboard.writeText(text) } catch (_) {}
-  }
-}
 
 const buildPreviewTxFromResponse = (resp) => {
   if (!resp) return null

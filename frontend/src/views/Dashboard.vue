@@ -94,7 +94,6 @@
       :transaction="selectedTx"
       @close="showTxModal = false"
       @download="downloadReceipt"
-      @share="shareReceipt"
       @copy="(text) => showNotice('success', 'Copied', 'Reference copied to clipboard')"
     />
 
@@ -229,26 +228,6 @@ const downloadReceipt = (tx) => {
   }
 }
 
-const shareReceipt = async (tx) => {
-  const title = tx.title || 'Transaction'
-  const amount = formatMoney(tx.amount)
-  const ref = tx.reference || tx.id
-  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${tx.status || 'Successful'}\nDate: ${formatDate(tx.created_at)}`
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: 'Transaction Receipt',
-        text: text,
-        url: window.location.origin
-      })
-    } catch (err) {
-      copy(text)
-    }
-  } else {
-    copy(text)
-  }
-}
 
 const fetchRegGuarantorRequests = async () => {
   try {
