@@ -22,6 +22,79 @@
 
         <!-- Details -->
         <div class="px-6 sm:px-8 pb-6 sm:pb-8 space-y-4 overflow-y-auto flex-1">
+          <!-- Hidden Printable Receipt for Image Generation -->
+          <div ref="receiptRef" class="fixed -left-[9999px] top-0 w-[450px] bg-white p-8 font-sans border border-slate-100" style="font-family: 'Inter', sans-serif;">
+            <div class="flex flex-col items-center">
+              <!-- Header with Logo -->
+              <div class="flex items-center gap-2 mb-6">
+                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.877 4.877 0 0012 9c-1.38 0-2.63.571-3.525 1.485V21" />
+                  </svg>
+                </div>
+                <span class="text-xl font-black text-slate-800 tracking-tight">Cooperative</span>
+              </div>
+
+              <!-- Status Icon -->
+              <div class="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
+                 <span :class="[statusIcon, 'text-4xl w-12 h-12']"></span>
+              </div>
+              
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">{{ txTitle }}</h3>
+              <p class="text-4xl font-black tracking-tight" :class="amountClass">
+                 {{ amountPrefix }} ₦{{ formatMoney(transaction.amount) }}
+              </p>
+              
+              <div class="mt-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border" :class="statusBadgeClass">
+                {{ transaction.status || 'Successful' }}
+              </div>
+
+              <div class="mt-8 w-full space-y-4 border-y border-slate-100 py-8">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Reference</span>
+                  <span class="text-sm font-black text-slate-700 font-mono">{{ transaction.reference || transaction.id }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Date & Time</span>
+                  <span class="text-sm font-black text-slate-700">{{ formatDate(transaction.created_at) }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Channel / Source</span>
+                  <span class="text-sm font-black text-slate-700">{{ sourceLabel }}</span>
+                </div>
+                
+                <div v-if="transaction.meta?.to_name || transaction.meta?.to_membership" class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Recipient</span>
+                  <span class="text-sm font-black text-slate-700">{{ transaction.meta.to_name || transaction.meta.to_membership }}</span>
+                </div>
+                <div v-if="transaction.meta?.from_name || transaction.meta?.from_membership" class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Sender</span>
+                  <span class="text-sm font-black text-slate-700">{{ transaction.meta.from_name || transaction.meta.from_membership }}</span>
+                </div>
+              </div>
+
+              <!-- Allocation Details (Matches PDF/UI) -->
+              <div v-if="isWalletAllocation && allocationItems.length" class="w-full mt-6 bg-slate-50 rounded-[2rem] p-6 space-y-4 border border-slate-100">
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Allocation Details</div>
+                <div class="divide-y divide-slate-200">
+                  <div v-for="(item, idx) in allocationItems" :key="idx" class="py-3 flex items-center justify-between">
+                    <div class="text-xs font-bold text-slate-700">
+                      {{ allocationLabel(item) }}
+                    </div>
+                    <div class="text-xs font-black text-slate-800">₦{{ formatMoney(item.amount || 0) }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-12 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Generated from Cooperative Portal</p>
+                <div class="text-[8px] text-slate-300 max-w-[250px] mx-auto">
+                  This transaction is subject to the terms and conditions of the cooperative. For support, contact the office with the reference number above.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="bg-slate-50/50 rounded-[2rem] p-4 sm:p-6 space-y-4 border border-slate-100">
             <div class="flex justify-between items-center">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference</span>
@@ -112,8 +185,8 @@
           </div>
 
           <!-- Actions -->
-          <div class="grid grid-cols-2 gap-3">
-            <button @click="shareTransaction" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95">
+          <div v-if="!showShareOptions" class="grid grid-cols-2 gap-3">
+            <button @click="showShareOptions = true" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0 10.628a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
               </svg>
@@ -124,6 +197,47 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 3v13.5" />
               </svg>
               Receipt
+            </button>
+          </div>
+
+          <div v-else class="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div class="grid grid-cols-2 gap-3">
+              <button 
+                @click="shareAsImage" 
+                :disabled="generatingImage"
+                class="flex flex-col items-center justify-center gap-1 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-4 rounded-2xl font-bold transition-all active:scale-95"
+              >
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-1">
+                  <svg v-if="!generatingImage" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  <div v-else class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <span class="text-xs">Image</span>
+              </button>
+              
+              <button 
+                @click="shareAsPdf"
+                class="flex flex-col items-center justify-center gap-1 bg-white border-2 border-slate-100 hover:border-emerald-200 text-slate-700 p-4 rounded-2xl font-bold transition-all active:scale-95"
+              >
+                <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 mb-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <span class="text-xs">PDF</span>
+              </button>
+            </div>
+
+            <button @click="shareAsText" class="w-full flex items-center justify-center gap-2 py-3 text-slate-500 font-bold text-xs hover:text-slate-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3h9m-9 3h9m-6.75-12h7.5a2.25 2.25 0 012.25 2.25v13.5a2.25 2.25 0 01-2.25 2.25h-7.5a2.25 2.25 0 01-2.25-2.25V4.5A2.25 2.25 0 017.5 2.25z" />
+              </svg>
+              Share as Text
+            </button>
+
+            <button @click="showShareOptions = false" class="w-full py-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-slate-600 transition-colors">
+              Back
             </button>
           </div>
           
@@ -139,6 +253,7 @@
 <script setup>
 import { computed, ref, watch, onMounted } from 'vue'
 import axios from '../../http'
+import { toPng } from 'html-to-image'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -335,7 +450,107 @@ const formatDate = (date) => {
   })
 }
 
-const shareTransaction = () => emit('share', props.transaction)
+const showShareOptions = ref(false)
+const receiptRef = ref(null)
+const generatingImage = ref(false)
+
+const getReceiptDownloadUrl = () => {
+  if (props.transaction.isUtility) return null
+  const id = props.transaction.id
+  const token = localStorage.getItem('token') || localStorage.getItem('admin_token')
+  const baseUrl = axios.defaults.baseURL || ''
+  return `${baseUrl}/api/wallet/transactions/${id}/receipt?token=${encodeURIComponent(token)}`
+}
+
+const generateReceiptImage = async () => {
+  if (!receiptRef.value) return null
+  try {
+    generatingImage.value = true
+    // Wait for icons and styles to settle
+    await new Promise(resolve => setTimeout(resolve, 200))
+    const dataUrl = await toPng(receiptRef.value, {
+      backgroundColor: '#ffffff',
+      pixelRatio: 2,
+      cacheBust: true,
+    })
+    return dataUrl
+  } catch (err) {
+    console.error('Failed to generate receipt image', err)
+    return null
+  } finally {
+    generatingImage.value = false
+  }
+}
+
+const shareAsImage = async () => {
+  const dataUrl = await generateReceiptImage()
+  if (!dataUrl) return
+  
+  try {
+    const blob = await (await fetch(dataUrl)).blob()
+    const filename = `Receipt_${props.transaction.reference || props.transaction.id}.png`
+    const file = new File([blob], filename, { type: 'image/png' })
+    
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Transaction Receipt',
+        text: `Transaction receipt for ₦${formatMoney(props.transaction.amount)}`
+      })
+    } else {
+      const link = document.createElement('a')
+      link.href = dataUrl
+      link.download = filename
+      link.click()
+    }
+  } catch (err) {
+    console.error('Image share failed', err)
+  }
+}
+
+const shareAsPdf = async () => {
+  const url = getReceiptDownloadUrl()
+  if (!url) return
+  
+  try {
+    const response = await fetch(url)
+    const blob = await response.blob()
+    const filename = `Receipt_${props.transaction.reference || props.transaction.id}.pdf`
+    const file = new File([blob], filename, { type: 'application/pdf' })
+    
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Transaction Receipt',
+      })
+    } else {
+      window.open(url, '_blank')
+    }
+  } catch (err) {
+    window.open(url, '_blank')
+  }
+}
+
+const shareAsText = () => {
+  const title = txTitle.value
+  const amount = formatMoney(props.transaction.amount)
+  const ref = props.transaction.reference || props.transaction.id
+  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${props.transaction.status || 'Successful'}\nDate: ${formatDate(props.transaction.created_at)}`
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'Transaction Details',
+      text: text,
+    }).catch(() => copy(text))
+  } else {
+    copy(text)
+  }
+}
+
+const shareTransaction = () => {
+  showShareOptions.value = true
+}
+
 const downloadTransaction = () => emit('download', props.transaction)
 </script>
 
