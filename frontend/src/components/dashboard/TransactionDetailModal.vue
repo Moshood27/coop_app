@@ -535,7 +535,32 @@ const shareAsText = () => {
   const title = txTitle.value
   const amount = formatMoney(props.transaction.amount)
   const ref = props.transaction.reference || props.transaction.id
-  const text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${props.transaction.status || 'Successful'}\nDate: ${formatDate(props.transaction.created_at)}`
+  
+  // Use a cleaner date for sharing (Medium date style)
+  const dateStr = props.transaction.created_at 
+    ? new Date(props.transaction.created_at).toLocaleDateString('en-NG', { dateStyle: 'medium' })
+    : 'N/A'
+
+  let text = `${title}\nAmount: ₦${amount}\nRef: ${ref}\nStatus: ${props.transaction.status || 'Successful'}\nDate: ${dateStr}`
+  
+  // Include Sender/Recipient for transfers
+  if (props.transaction.meta?.to_name || props.transaction.meta?.to_membership) {
+    text += `\nRecipient: ${props.transaction.meta.to_name || props.transaction.meta.to_membership}`
+  }
+  if (props.transaction.meta?.from_name || props.transaction.meta?.from_membership) {
+    text += `\nSender: ${props.transaction.meta.from_name || props.transaction.meta.from_membership}`
+  }
+  
+  // Add allocation details if it's a wallet allocation
+  if (isWalletAllocation.value && allocationItems.value.length) {
+    text += `\n\nAllocation Details:`
+    allocationItems.value.forEach(item => {
+      text += `\n- ${allocationLabel(item)}: ₦${formatMoney(item.amount || 0)}`
+    })
+  }
+
+  // Add website link
+  text += `\n\nhttps://attaqwacooposg.com/`
   
   if (navigator.share) {
     navigator.share({
