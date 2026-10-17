@@ -15,6 +15,12 @@ WORKDIR /var/www/html
 COPY docker/nginx/conf.d/app.pro.conf /etc/nginx/conf.d/default.conf
 COPY docker/nginx/conf.d/.htpasswd /etc/nginx/conf.d/.htpasswd
 
+# Ensure Nginx logs to files instead of stdout/stderr so Fail2Ban on host can monitor them
+RUN unlink /var/log/nginx/access.log && \
+    unlink /var/log/nginx/error.log && \
+    touch /var/log/nginx/access.log /var/log/nginx/error.log && \
+    chmod 666 /var/log/nginx/access.log /var/log/nginx/error.log
+
 # Copy Laravel public assets
 COPY backend/public /var/www/html/public
 

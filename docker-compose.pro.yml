@@ -8,6 +8,7 @@ services:
     volumes:
       - ./backend/storage/app/public:/var/www/html/storage/app/public
       - ./backend/public/upload:/var/www/html/public/upload
+      - ./logs/nginx:/var/log/nginx
     networks:
       - attaqwa-network
       - gateway-network

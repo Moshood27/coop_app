@@ -1,0 +1,12 @@
+[nginx-probes]
+enabled = true
+port = http,https
+filter = nginx-probes
+# Path to the mounted nginx access log on the HOST machine.
+# If using the standard setup from harden-server.sh, it should be:
+logpath = /var/log/nginx/access.log
+# Block after 3 attempts in 10 minutes
+maxretry = 3
+findtime = 600
+# Ban for 1 hour initially
+bantime = 3600
