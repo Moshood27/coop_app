@@ -1,5 +1,5 @@
 # Production PHP-FPM image for ATTAQWA
-FROM php:8.5-fpm-alpine
+FROM php:8.5.12-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
