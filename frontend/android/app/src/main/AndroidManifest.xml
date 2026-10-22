@@ -61,10 +61,12 @@
         <service
             android:name="org.altbeacon.beacon.service.BeaconService"
             android:foregroundServiceType="location"
-            android:exported="false" />
+            android:exported="false"
+        />
         <service
             android:name="org.altbeacon.beacon.service.ScanJob"
             android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="false" />
+            android:exported="false"
+        />
     </application>
 </manifest>

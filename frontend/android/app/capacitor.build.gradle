@@ -9,19 +9,10 @@ android {
 
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
-    implementation project(':capacitor-mlkit-barcode-scanning')
-    implementation project(':capacitor-app')
-    implementation project(':capacitor-browser')
-    implementation project(':capacitor-clipboard')
-    implementation project(':capacitor-device')
-    implementation project(':capacitor-geolocation')
-    implementation project(':capacitor-local-notifications')
-    implementation project(':capacitor-push-notifications')
-    implementation project(':capacitor-splash-screen')
-    implementation project(':capgo-capacitor-native-biometric')
+
 
 }
-apply from: "../../node_modules/cordova-plugin-ibeacon/src/android/cordova-plugin-ibeacon.gradle"
+
 
 if (hasProperty('postBuildExtras')) {
   postBuildExtras()
