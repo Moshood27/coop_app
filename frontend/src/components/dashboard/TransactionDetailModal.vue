@@ -498,23 +498,30 @@ const shareReceipt = async () => {
   
   try {
     const blob = await (await fetch(dataUrl)).blob()
-    const filename = `Receipt_${ref}.png`
+    // Sanitize filename to avoid issues with special characters
+    const safeRef = String(ref).replace(/[^a-z0-9]/gi, '_')
+    const filename = `Receipt_${safeRef}.png`
     const file = new File([blob], filename, { type: 'image/png' })
     
-    if (navigator.share) {
-      const shareData = {
-        title: 'Transaction Receipt',
-        text: text,
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        // Try sharing file with text (caption)
+        // NOTE: Some apps/OS interpret 'text' as a separate .txt file when sharing with 'files'.
+        // If this causes issues, the catch block will try sharing just the file.
+        await navigator.share({
+          files: [file],
+          title: 'Transaction Receipt',
+          text: text
+        })
+      } catch (shareErr) {
+        // Fallback to sharing just the file if combined share failed
+        await navigator.share({
+          files: [file],
+          title: `Receipt: ₦${amount} (${title})`
+        })
       }
-      
-      // Try to include file if browser supports it
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        shareData.files = [file]
-      }
-      
-      await navigator.share(shareData)
     } else {
-      // Fallback to direct download
+      // Fallback to direct download if file sharing is not supported by navigator.share
       const link = document.createElement('a')
       link.href = dataUrl
       link.download = filename
@@ -522,10 +529,11 @@ const shareReceipt = async () => {
     }
   } catch (err) {
     console.error('Share failed', err)
-    // Final fallback to text-only if something went wrong with file share
-    try {
-      if (navigator.share) await navigator.share({ title: 'Transaction Receipt', text })
-    } catch (_) {}
+    // Final fallback to direct download if something went wrong
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = `Receipt_${ref}.png`
+    link.click()
   }
 }
 
@@ -536,7 +544,9 @@ const shareAsPdf = async () => {
   try {
     const response = await fetch(url)
     const blob = await response.blob()
-    const filename = `Receipt_${props.transaction.reference || props.transaction.id}.pdf`
+    const ref = props.transaction.reference || props.transaction.id
+    const safeRef = String(ref).replace(/[^a-z0-9]/gi, '_')
+    const filename = `Receipt_${safeRef}.pdf`
     const file = new File([blob], filename, { type: 'application/pdf' })
     
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
