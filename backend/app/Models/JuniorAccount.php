@@ -25,4 +25,9 @@ class JuniorAccount extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(WalletTransaction::class, 'user_id', 'user_id');
+    }
 }
