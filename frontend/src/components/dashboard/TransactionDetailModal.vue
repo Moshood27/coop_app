@@ -7,7 +7,7 @@
       <!-- Modal Content -->
       <div class="relative w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[90vh] flex flex-col">
         <!-- Header/Status Icon -->
-        <div class="pt-8 sm:pt-10 pb-4 sm:pb-6 flex flex-col items-center">
+        <div class="pt-8 sm:pt-10 pb-4 sm:pb-6 flex flex-col items-center gap-1">
           <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
              <span :class="[statusIcon, 'text-3xl sm:text-4xl w-10 h-10 sm:w-12 sm:h-12']"></span>
           </div>
@@ -25,7 +25,7 @@
           <!-- Hidden Printable Receipt for Image Generation -->
           <div style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; opacity: 0;" aria-hidden="true">
             <div ref="receiptRef" class="bg-white p-8 font-sans border border-slate-100" style="width: 450px; font-family: 'Inter', sans-serif;">
-              <div class="flex flex-col items-center">
+              <div class="flex flex-col items-center gap-2">
                 <!-- Header with Logo -->
                 <div class="flex items-center gap-2 mb-6">
                   <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
