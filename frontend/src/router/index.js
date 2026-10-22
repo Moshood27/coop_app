@@ -74,6 +74,7 @@ const AdminPassbookManagement = () => import('../views/admin/AdminPassbookManage
 const AdminWalletManagement = () => import('../views/admin/AdminWalletManagement.vue')
 const AdminLoanManagement = () => import('../views/admin/AdminLoanManagement.vue')
 const AdminFineManagement = () => import('../views/admin/AdminFineManagement.vue')
+const AdminJuniorCooperative = () => import('../views/admin/AdminJuniorCooperative.vue')
 // Accounting (new)
 const AdminBankReconciliation = () => import('../views/admin/AdminBankReconciliation.vue')
 const AdminFixedAssets = () => import('../views/admin/AdminFixedAssets.vue')
@@ -169,6 +170,7 @@ const routes = [
   { path: '/admin/members/:id/wallet', name: 'admin.members.wallet', component: AdminWalletManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/loans', name: 'admin.members.loans', component: AdminLoanManagement, meta: { requiresAdmin: true } },
   { path: '/admin/members/:id/fines', name: 'admin.members.fines', component: AdminFineManagement, meta: { requiresAdmin: true } },
+  { path: '/admin/members/:id/junior-cooperative', name: 'admin.members.junior', component: AdminJuniorCooperative, meta: { requiresAdmin: true } },
   // Accounting routes (admin)
   { path: '/admin/accounting/bank-reconciliation', name: 'admin.accounting.bank', component: AdminBankReconciliation, meta: { requiresAdmin: true } },
   { path: '/admin/accounting/fixed-assets', name: 'admin.accounting.assets', component: AdminFixedAssets, meta: { requiresAdmin: true } },

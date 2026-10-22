@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 use App\Models\JuniorAccount;
@@ -165,6 +166,155 @@ class JuniorCooperativeController extends Controller
         // Fetch transactions for this user where the meta contains this junior_account_id
         // Since meta is json/array, we can use whereJsonContains or filter in PHP
         $transactions = $request->user()->walletTransactions()
+            ->where('source', 'junior_cooperative')
+            ->get()
+            ->filter(function ($tx) use ($id) {
+                return isset($tx->meta['junior_account_id']) && $tx->meta['junior_account_id'] == $id;
+            })
+            ->values();
+
+        return response()->json([
+            'account' => $account,
+            'transactions' => $transactions
+        ]);
+    }
+
+    // --- Admin Endpoints ---
+
+    public function adminIndex(Request $request, User $user)
+    {
+        return response()->json([
+            'accounts' => $user->juniorAccounts,
+            'balance' => $user->balance,
+            'admin_charge_balance' => (float) ($user->admin_charge_balance ?? 0),
+        ]);
+    }
+
+    public function adminStore(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'child_name' => 'required|string|max:255',
+            'child_dob' => 'required|date',
+            'locked_until' => 'nullable|date',
+            'purpose' => 'required|string|max:255',
+        ]);
+
+        $account = $user->juniorAccounts()->create($validated);
+
+        return response()->json([
+            'message' => 'Junior account created successfully',
+            'account' => $account
+        ], 201);
+    }
+
+    public function adminUpdate(Request $request, User $user, $id)
+    {
+        $account = $user->juniorAccounts()->findOrFail($id);
+
+        $validated = $request->validate([
+            'child_name' => 'sometimes|required|string|max:255',
+            'child_dob' => 'sometimes|required|date',
+            'locked_until' => 'nullable|date',
+            'purpose' => 'sometimes|required|string|max:255',
+        ]);
+
+        $account->update($validated);
+
+        return response()->json([
+            'message' => 'Junior account updated successfully',
+            'account' => $account
+        ]);
+    }
+
+    public function adminDeposit(Request $request, User $user, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $account = $user->juniorAccounts()->findOrFail($id);
+
+        if ($user->balance < $request->amount) {
+            return response()->json(['message' => 'Insufficient member wallet balance'], 400);
+        }
+
+        DB::transaction(function () use ($user, $account, $request) {
+            $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$lockedUser || $lockedUser->balance < $request->amount) {
+                throw new \Exception('Insufficient wallet balance');
+            }
+
+            $lockedUser->decrement('balance', $request->amount);
+            $account->increment('balance', $request->amount);
+
+            $reference = 'JUNIOR_DEP_ADM_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+
+            $user->walletTransactions()->create([
+                'type' => 'debit',
+                'amount' => $request->amount,
+                'reference' => $reference,
+                'source' => 'junior_cooperative',
+                'meta' => [
+                    'junior_account_id' => $account->id,
+                    'description' => "Admin Deposit to Junior account: {$account->child_name}"
+                ]
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Deposit successful',
+            'account' => $account->fresh(),
+            'wallet_balance' => $user->fresh()->balance
+        ]);
+    }
+
+    public function adminWithdraw(Request $request, User $user, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $account = $user->juniorAccounts()->findOrFail($id);
+
+        if ($account->balance < $request->amount) {
+            return response()->json(['message' => 'Insufficient junior account balance'], 400);
+        }
+
+        DB::transaction(function () use ($user, $account, $request) {
+            $lockedAccount = JuniorAccount::where('id', $account->id)->lockForUpdate()->first();
+            if (!$lockedAccount || $lockedAccount->balance < $request->amount) {
+                throw new \Exception('Insufficient junior account balance');
+            }
+
+            $lockedAccount->decrement('balance', $request->amount);
+            $user->increment('balance', $request->amount);
+
+            $reference = 'JUNIOR_WTH_ADM_' . now()->format('YmdHis') . '_' . $user->id . '_' . bin2hex(random_bytes(3));
+
+            $user->walletTransactions()->create([
+                'type' => 'credit',
+                'amount' => $request->amount,
+                'reference' => $reference,
+                'source' => 'junior_cooperative',
+                'meta' => [
+                    'junior_account_id' => $account->id,
+                    'description' => "Admin Withdrawal from Junior account: {$account->child_name}"
+                ]
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Withdrawal successful',
+            'account' => $account->fresh(),
+            'wallet_balance' => $user->fresh()->balance
+        ]);
+    }
+
+    public function adminHistory(Request $request, User $user, $id)
+    {
+        $account = $user->juniorAccounts()->findOrFail($id);
+
+        $transactions = $user->walletTransactions()
             ->where('source', 'junior_cooperative')
             ->get()
             ->filter(function ($tx) use ($id) {

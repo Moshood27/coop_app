@@ -598,6 +598,14 @@ Route::middleware(['auth:sanctum', 'inactivity', 'admin'])->prefix('admin/member
     Route::post('/{user}/allocate-wallet', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateWallet']);
     Route::post('/{user}/allocate-from-admin', [\App\Http\Controllers\Api\AdminMemberController::class, 'allocateFromAdminWallet']);
     Route::post('/{user}/assign-virtual-account', [\App\Http\Controllers\Api\AdminMemberController::class, 'assignVirtualAccount']);
+
+    // Admin Junior Cooperative Management
+    Route::get('/{user}/junior-cooperative', [JuniorCooperativeController::class, 'adminIndex']);
+    Route::post('/{user}/junior-cooperative', [JuniorCooperativeController::class, 'adminStore']);
+    Route::patch('/{user}/junior-cooperative/{id}', [JuniorCooperativeController::class, 'adminUpdate']);
+    Route::post('/{user}/junior-cooperative/{id}/deposit', [JuniorCooperativeController::class, 'adminDeposit']);
+    Route::post('/{user}/junior-cooperative/{id}/withdraw', [JuniorCooperativeController::class, 'adminWithdraw']);
+    Route::get('/{user}/junior-cooperative/{id}/history', [JuniorCooperativeController::class, 'adminHistory']);
     Route::post('/{user}/initialize-funding', [\App\Http\Controllers\Api\AdminMemberController::class, 'initializeWalletFunding']);
     Route::post('/{user}/initialize-scheme-funding', [\App\Http\Controllers\Api\AdminMemberController::class, 'initializeSchemeFunding']);
     Route::get('/{user}/loans', [\App\Http\Controllers\Api\AdminMemberController::class, 'loans']);

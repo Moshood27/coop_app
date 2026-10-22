@@ -10,7 +10,7 @@ use App\Filament\Resources\MeetingResource;
 use App\Filament\Resources\ChatRoomResource;
 use App\Filament\Resources\ChatRoomResource\Widgets\ChatStatsWidget;
 use App\Filament\Resources\ChatAuditResource;
-use App\Filament\Resources\JuniorAccountResource;
+use App\Filament\Resources\JuniorAccountManagementResource;
 use App\Filament\Resources\StaffResource;
 use App\Filament\Resources\AuditTrailResource;
 use App\Filament\Resources\WhitelistedIpResource;
@@ -84,13 +84,13 @@ class AdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->registration(Register::class)
             ->passwordReset()
-            ->brandName(config('brand.name') . ' DEBUG')
+            ->brandName(config('brand.name'))
             ->brandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo.svg'))
             ->brandLogoHeight('3rem')
             ->darkModeBrandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo-dark.svg'))
             ->favicon(asset('images/'.config('brand.slug', 'attaqwa').'-favicon.svg'))
             ->colors([
-                'primary' => Color::Red,
+                'primary' => Color::Emerald,
                 'gray' => Color::Slate,
                 'info' => Color::Blue,
                 'success' => Color::Emerald,
@@ -152,7 +152,7 @@ class AdminPanelProvider extends PanelProvider
                 ChatRoomResource::class,
                 ChatAuditResource::class,
                 StaffResource::class,
-                JuniorAccountResource::class,
+                JuniorAccountManagementResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
