@@ -17,44 +17,19 @@ class JuniorAccountResource extends Resource
 {
     protected static ?string $model = JuniorAccount::class;
 
-    protected static ?string $navigationGroup = 'Core Cooperative';
+    protected static ?string $navigationIcon = 'heroicon-o-home';
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $navigationLabel = 'Junior Accounts';
+
+    protected static ?string $slug = 'junior-accounts';
 
     protected static ?string $recordTitleAttribute = 'child_name';
 
     public static function canViewAny(): bool
     {
         return true;
-    }
-
-    public static function canCreate(): bool
-    {
-        return auth()->user()->can('create_junior_account');
-    }
-
-    public static function canEdit($record): bool
-    {
-        return auth()->user()->can('update_junior_account');
-    }
-
-    public static function canDelete($record): bool
-    {
-        return auth()->user()->can('delete_junior_account');
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $user = auth()->user();
-        $query = parent::getEloquentQuery()->with(['parent.branch']);
-
-        if ($user->hasRole('super_admin')) {
-            return $query;
-        }
-
-        return $query->whereHas('parent', function ($q) use ($user) {
-            $q->where('branch_id', $user->branch_id);
-        });
     }
 
     public static function form(Form $form): Form
