@@ -1,6 +1,8 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { toast } from 'vue3-toastify'
 import './style.css'
+import 'vue3-toastify/dist/index.css'
 
 /**
  * Silence noisy browser extension errors (e.g. MetaMask, Grammarly)
@@ -222,6 +224,23 @@ router.isReady().then(async () => {
 })
 
 app.mount('#app')
+
+// Global toast listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('toast', (e) => {
+    const { type, text } = e.detail || {}
+    if (!text) return
+    const options = {
+      autoClose: 3000,
+      position: 'top-right',
+    }
+    if (type === 'success') toast.success(text, options)
+    else if (type === 'error') toast.error(text, options)
+    else if (type === 'info') toast.info(text, options)
+    else if (type === 'warning') toast.warning(text, options)
+    else toast(text, options)
+  })
+}
 
 // Signal app ready and hide native splash (Capacitor) once mounted
 setTimeout(async () => {
