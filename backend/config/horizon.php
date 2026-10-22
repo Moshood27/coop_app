@@ -237,9 +237,13 @@ return [
                 'maxProcesses' => 5,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
+                'memory' => 128,
+                'maxJobs' => 500,
+                'maxTime' => 3600,
             ],
             'supervisor-webhooks' => [
                 'maxProcesses' => 3,
+                'memory' => 128,
             ],
         ],
 
