@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\JuniorAccount;
+use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class JuniorAccountPolicy
+{
+    use HandlesAuthorization;
+
+    public function viewAny(User $user): bool
+    {
+        return $user->can('view_any_junior_account');
+    }
+
+    public function view(User $user, JuniorAccount $juniorAccount): bool
+    {
+        return $user->can('view_junior_account');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->can('create_junior_account');
+    }
+
+    public function update(User $user, JuniorAccount $juniorAccount): bool
+    {
+        return $user->can('update_junior_account');
+    }
+
+    public function delete(User $user, JuniorAccount $juniorAccount): bool
+    {
+        return $user->can('delete_junior_account');
+    }
+
+    public function restore(User $user, JuniorAccount $juniorAccount): bool
+    {
+        return $user->can('restore_junior_account');
+    }
+
+    public function forceDelete(User $user, JuniorAccount $juniorAccount): bool
+    {
+        return $user->can('force_delete_junior_account');
+    }
+}

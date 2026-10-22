@@ -25,7 +25,7 @@ class JuniorAccountResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_junior_account');
+        return true;
     }
 
     public static function canCreate(): bool
