@@ -84,7 +84,7 @@ class AdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->registration(Register::class)
             ->passwordReset()
-            ->brandName(config('brand.name'))
+            ->brandName(config('brand.name') . ' DEBUG')
             ->brandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo.svg'))
             ->brandLogoHeight('3rem')
             ->darkModeBrandLogo(asset('images/'.config('brand.slug', 'attaqwa').'-logo-dark.svg'))
