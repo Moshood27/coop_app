@@ -13,7 +13,7 @@ Project layout (relevant parts):
 Prerequisites
 - Docker Desktop 4.x (includes Docker Compose v2)
 - A container registry account (e.g., Docker Hub, GHCR, ECR)
-- Node.js 20+ and npm (for building the frontend/mobile shell)
+- Node.js 22+ and npm (for building the frontend/mobile shell)
 - Android Studio for Android builds; Xcode for iOS builds (on macOS)
 
 1) Configure environment
@@ -27,7 +27,7 @@ Prerequisites
 - First run will generate vendor and cache. With Sail, that happens in-container.
 
 2) Build Docker images (dev stack via Sail)
-The included Compose files under backend/ use Laravel Sail and a Node 20 container for the Vue dev server. Build the images locally:
+The included Compose files under backend/ use Laravel Sail and a Node 22 container for the Vue dev server. Build the images locally:
 - docker compose -f backend/docker-compose.yml build
   - This builds the laravel.test service image based on Laravel Sail’s runtime (image name: sail-8.5/app)
   - MySQL/Redis/Mailpit use official images (no build).
@@ -40,7 +40,7 @@ Decide your registry/image names and tag, for example:
   - docker tag sail-8.5/app ${REG}/cooperative-backend:${TAG}
   - docker push ${REG}/cooperative-backend:${TAG}
 Notes
-- The frontend service in the provided dev Compose uses node:20-alpine and runs npm run dev (no custom image). If you want a production frontend image, see section 6.
+- The frontend service in the provided dev Compose uses node:22-alpine and runs npm run dev (no custom image). If you want a production frontend image, see section 6.
 - MySQL/Redis are public images; you typically don’t re-push them.
 
 4) Run stack using your pushed backend image (optional)
@@ -66,7 +66,7 @@ Replace REGISTRY and TAG accordingly. Remove build so Compose pulls your pushed 
 For production web deployment (not required for mobile app), you can build the Vue app and serve with Nginx. Example Dockerfile (place it at frontend/Dockerfile if you decide to use it):
 
 # Build stage
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
