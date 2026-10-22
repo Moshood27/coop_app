@@ -234,7 +234,7 @@
 <script setup>
 import { computed, ref, watch, onMounted } from 'vue'
 import axios from '../../http'
-import { toPng } from 'html-to-image'
+import { toBlob } from 'html-to-image'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -448,12 +448,29 @@ const generateReceiptImage = async () => {
     generatingImage.value = true
     // Wait for icons and styles to settle
     await new Promise(resolve => setTimeout(resolve, 200))
-    const dataUrl = await toPng(receiptRef.value, {
+    
+    // Try html-to-image first
+    try {
+      const blob = await toBlob(receiptRef.value, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true,
+        skipFonts: true,
+      })
+      if (blob) return blob
+    } catch (e) {
+      console.warn('html-to-image failed, trying html2canvas', e)
+    }
+
+    // Fallback to html2canvas
+    const { default: html2canvas } = await import('html2canvas')
+    const canvas = await html2canvas(receiptRef.value, {
       backgroundColor: '#ffffff',
-      pixelRatio: 2,
-      cacheBust: true,
+      scale: 2,
+      useCORS: true,
+      logging: false,
     })
-    return dataUrl
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
   } catch (err) {
     console.error('Failed to generate receipt image', err)
     return null
@@ -463,12 +480,13 @@ const generateReceiptImage = async () => {
 }
 
 const shareReceipt = async () => {
-  const dataUrl = await generateReceiptImage()
+  const blob = await generateReceiptImage()
   
   // Prepare text version as fallback or caption
   const title = txTitle.value
   const amount = formatMoney(props.transaction.amount)
   const ref = props.transaction.reference || props.transaction.id
+  const safeRef = String(ref).replace(/[^a-z0-9]/gi, '_')
   const dateStr = props.transaction.created_at 
     ? new Date(props.transaction.created_at).toLocaleDateString('en-NG', { dateStyle: 'medium' })
     : 'N/A'
@@ -486,7 +504,7 @@ const shareReceipt = async () => {
   }
   text += `\n\nhttps://attaqwacooposg.com/`
 
-  if (!dataUrl) {
+  if (!blob) {
     // If image generation failed, fallback to text-only share
     if (navigator.share) {
       await navigator.share({ title: 'Transaction Receipt', text }).catch(() => copy(text))
@@ -497,43 +515,69 @@ const shareReceipt = async () => {
   }
   
   try {
-    const blob = await (await fetch(dataUrl)).blob()
-    // Sanitize filename to avoid issues with special characters
-    const safeRef = String(ref).replace(/[^a-z0-9]/gi, '_')
     const filename = `Receipt_${safeRef}.png`
     const file = new File([blob], filename, { type: 'image/png' })
     
+    let shared = false
+    
+    // 1. Try native Web Share (best for mobile browsers)
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        // Try sharing file with text (caption)
-        // NOTE: Some apps/OS interpret 'text' as a separate .txt file when sharing with 'files'.
-        // If this causes issues, the catch block will try sharing just the file.
         await navigator.share({
           files: [file],
           title: 'Transaction Receipt',
           text: text
         })
+        shared = true
       } catch (shareErr) {
         // Fallback to sharing just the file if combined share failed
-        await navigator.share({
-          files: [file],
-          title: `Receipt: ₦${amount} (${title})`
-        })
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Receipt: ₦${amount} (${title})`
+          })
+          shared = true
+        } catch (sErr) {
+          console.error('File share failed', sErr)
+        }
       }
-    } else {
-      // Fallback to direct download if file sharing is not supported by navigator.share
+    }
+    
+    // 2. Try Clipboard API (Best for Desktop browsers like Chrome)
+    if (!shared && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ])
+        // If native share is available for text, also trigger it for convenience
+        if (navigator.share) {
+          navigator.share({ title: 'Transaction Receipt', text }).catch(() => {})
+        }
+        window.alert('Receipt image copied to clipboard. You can now paste it in your chat app.')
+        shared = true
+      } catch (clipErr) {
+        console.warn('Clipboard write failed', clipErr)
+      }
+    }
+
+    // 3. Fallback to direct download
+    if (!shared) {
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.href = dataUrl
+      link.href = url
       link.download = filename
       link.click()
+      URL.revokeObjectURL(url)
     }
   } catch (err) {
-    console.error('Share failed', err)
-    // Final fallback to direct download if something went wrong
+    console.error('Share process failed', err)
+    // Final fallback to direct download
+    const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.href = dataUrl
-    link.download = `Receipt_${ref}.png`
+    link.href = url
+    link.download = `Receipt_${safeRef}.png`
     link.click()
+    URL.revokeObjectURL(url)
   }
 }
 
