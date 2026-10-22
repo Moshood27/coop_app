@@ -66,8 +66,5 @@
       "cordova-plugin-ibeacon": {},
       "cordova-plugin-device": {}
     }
-  },
-  "optionalDependencies": {
-    "@rolldown/binding-win32-x64-msvc": "file:rolldown-binding-win32-x64-msvc-1.1.4.tgz"
   }
 }
