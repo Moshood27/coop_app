@@ -23,22 +23,42 @@
         <!-- Details -->
         <div class="px-6 sm:px-8 pb-6 sm:pb-8 space-y-4 overflow-y-auto flex-1">
           <!-- Hidden Printable Receipt for Image Generation -->
-          <div ref="receiptRef" class="fixed -left-[9999px] top-0 w-[450px] bg-white p-8 font-sans border border-slate-100" style="font-family: 'Inter', sans-serif;">
-            <div class="flex flex-col items-center">
-              <!-- Header with Logo -->
-              <div class="flex items-center gap-2 mb-6">
-                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.877 4.877 0 0012 9c-1.38 0-2.63.571-3.525 1.485V21" />
+          <div style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; opacity: 0;" aria-hidden="true">
+            <div ref="receiptRef" class="bg-white p-8 font-sans border border-slate-100" style="width: 450px; font-family: 'Inter', sans-serif;">
+              <div class="flex flex-col items-center">
+                <!-- Header with Logo -->
+                <div class="flex items-center gap-2 mb-6">
+                  <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.877 4.877 0 0012 9c-1.38 0-2.63.571-3.525 1.485V21" />
+                    </svg>
+                  </div>
+                  <span class="text-xl font-black text-slate-800 tracking-tight">Cooperative</span>
+                </div>
+
+                <!-- Status Icon (Inline SVGs for reliable capture) -->
+                <div class="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
+                  <!-- Close Circle -->
+                  <svg v-if="statusIcon === 'i-mdi-close-circle'" viewBox="0 0 24 24" class="w-12 h-12 fill-current">
+                    <path d="M12,2C6.47,2 2,6.47 2,12C2,17.53 6.47,22 12,22C17.53,22 22,17.53 22,12C22,6.47 17.53,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
+                  </svg>
+                  <!-- Clock Outline -->
+                  <svg v-else-if="statusIcon === 'i-mdi-clock-outline'" viewBox="0 0 24 24" class="w-12 h-12 fill-current">
+                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                  </svg>
+                  <!-- Check Circle -->
+                  <svg v-else-if="statusIcon === 'i-mdi-check-circle'" viewBox="0 0 24 24" class="w-12 h-12 fill-current">
+                    <path d="M12,2C6.47,2 2,6.47 2,12C2,17.53 6.47,22 12,22C17.53,22 22,17.53 22,12C22,6.47 17.53,2 12,2M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8L10,17Z" />
+                  </svg>
+                  <!-- Cash Minus -->
+                  <svg v-else-if="statusIcon === 'i-mdi-cash-minus'" viewBox="0 0 24 24" class="w-12 h-12 fill-current">
+                    <path d="M3,6H21V18H3V6M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M7,8A2,2 0 0,1 5,10V14A2,2 0 0,1 7,16H17V14.1C18.16,13.78 19,12.72 19,11.5V10A2,2 0 0,1 17,8H7M23,10V12H15V10H23Z" />
+                  </svg>
+                  <!-- Text Box Search -->
+                  <svg v-else viewBox="0 0 24 24" class="w-12 h-12 fill-current">
+                    <path d="M12,20H4V4H20V12H22V4A2,2 0 0,0 20,2H4A2,2 0 0,0 2,4V20A2,2 0 0,0 4,22H12V20M18.91,15.89L15.5,12.5C14.71,13.13 13.71,13.5 12.5,13.5A3.5,3.5 0 0,1 9,10A3.5,3.5 0 0,1 12.5,6.5A3.5,3.5 0 0,1 16,10C16,11.21 15.63,12.21 15,13L18.41,16.41L17,17.83L13.59,14.41C12.8,15.04 11.8,15.41 10.5,15.41A5.41,5.41 0 0,1 5.09,10A5.41,5.41 0 0,1 10.5,4.59A5.41,5.41 0 0,1 15.91,10C15.91,11.3 15.54,12.3 14.91,13.09L18.33,16.5L16.91,17.91L20.33,21.33L21.75,19.91L18.91,15.89Z" />
                   </svg>
                 </div>
-                <span class="text-xl font-black text-slate-800 tracking-tight">Cooperative</span>
-              </div>
-
-              <!-- Status Icon -->
-              <div class="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-inner" :class="statusBgClass">
-                 <span :class="[statusIcon, 'text-4xl w-12 h-12']"></span>
-              </div>
               
               <h3 class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">{{ txTitle }}</h3>
               <p class="text-4xl font-black tracking-tight" :class="amountClass">
@@ -94,8 +114,9 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="bg-slate-50/50 rounded-[2rem] p-4 sm:p-6 space-y-4 border border-slate-100">
+        <div class="bg-slate-50/50 rounded-[2rem] p-4 sm:p-6 space-y-4 border border-slate-100">
             <div class="flex justify-between items-center">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference</span>
               <!-- Right side container is shrinkable so long refs don't break layout -->
@@ -447,7 +468,7 @@ const generateReceiptImage = async () => {
   try {
     generatingImage.value = true
     // Wait for icons and styles to settle
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await new Promise(resolve => setTimeout(resolve, 300))
     
     // Try html-to-image first
     try {
@@ -457,7 +478,7 @@ const generateReceiptImage = async () => {
         cacheBust: true,
         skipFonts: true,
       })
-      if (blob) return blob
+      if (blob && blob.size > 1000) return blob
     } catch (e) {
       console.warn('html-to-image failed, trying html2canvas', e)
     }
@@ -468,7 +489,8 @@ const generateReceiptImage = async () => {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
-      logging: false,
+      logging: true,
+      foreignObjectRendering: true
     })
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
   } catch (err) {
