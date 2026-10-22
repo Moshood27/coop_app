@@ -33,7 +33,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.877 4.877 0 0012 9c-1.38 0-2.63.571-3.525 1.485V21" />
                     </svg>
                   </div>
-                  <span class="text-xl font-black text-slate-800 tracking-tight">Cooperative</span>
+                  <span class="text-xl font-black text-slate-800 tracking-tight">{{ brand.name }}</span>
                 </div>
 
                 <!-- Status Icon (Inline SVGs for reliable capture) -->
@@ -107,9 +107,9 @@
               </div>
 
               <div class="mt-12 text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Generated from Cooperative Portal</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Generated from {{ brand.name }} Portal</p>
                 <div class="text-[8px] text-slate-300 max-w-[250px] mx-auto">
-                  This transaction is subject to the terms and conditions of the cooperative. For support, contact the office with the reference number above.
+                  This transaction is subject to the terms and conditions of the {{ brand.name }}. For support, contact the office with the reference number above.
                 </div>
               </div>
             </div>
@@ -256,6 +256,7 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import axios from '../../http'
 import { toBlob } from 'html-to-image'
+import brand from '../../brand'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -524,7 +525,7 @@ const shareReceipt = async () => {
       text += `\n- ${allocationLabel(item)}: ₦${formatMoney(item.amount || 0)}`
     })
   }
-  text += `\n\nhttps://attaqwacooposg.com/`
+  text += `\n\n${import.meta.env.VITE_BACKEND_ORIGIN || 'https://attaqwacooposg.com'}/`
 
   if (!blob) {
     // If image generation failed, fallback to text-only share

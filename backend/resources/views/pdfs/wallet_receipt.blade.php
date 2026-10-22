@@ -161,6 +161,6 @@
         </div>
     @endif
 
-    <p class="footer">For support, contact the cooperative office with this reference: <strong>{{ $tx->reference ?? ('TX' . $tx->id) }}</strong>.</p>
+    <p class="footer">For support, contact the {{ config('app.name') }} office with this reference: <strong>{{ $tx->reference ?? ('TX' . $tx->id) }}</strong>.</p>
 </body>
 </html>
