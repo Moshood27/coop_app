@@ -12,10 +12,10 @@
              <span :class="[statusIcon, 'text-3xl sm:text-4xl w-10 h-10 sm:w-12 sm:h-12']"></span>
           </div>
           <h3 class="text-lg sm:text-xl font-black text-slate-800 text-center px-6 leading-tight">{{ txTitle }}</h3>
-          <p class="text-2xl sm:text-3xl font-black mt-2 tracking-tight" :class="amountClass">
+          <p class="text-2xl sm:text-3xl font-black mt-2 tracking-tight leading-tight" :class="amountClass">
              {{ amountPrefix }} ₦{{ formatMoney(transaction.amount) }}
           </p>
-          <div class="mt-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border border-slate-50" :class="statusBadgeClass">
+          <div class="mt-6 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border border-slate-50" :class="statusBadgeClass">
             {{ transaction.status || 'Successful' }}
           </div>
         </div>
@@ -61,11 +61,11 @@
                 </div>
               
               <h3 class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">{{ txTitle }}</h3>
-              <p class="text-4xl font-black tracking-tight" :class="amountClass">
+              <p class="text-4xl font-black tracking-tight leading-tight" :class="amountClass">
                  {{ amountPrefix }} ₦{{ formatMoney(transaction.amount) }}
               </p>
               
-              <div class="mt-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border" :class="statusBadgeClass">
+              <div class="mt-8 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border" :class="statusBadgeClass">
                 {{ transaction.status || 'Successful' }}
               </div>
 
