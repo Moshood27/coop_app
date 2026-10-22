@@ -24,6 +24,9 @@ RUN unlink /var/log/nginx/access.log && \
 # Copy Laravel public assets
 COPY backend/public /var/www/html/public
 
+# Copy PWA icons from root icons directory
+COPY icons /var/www/html/public/icons
+
 # Copy built frontend assets to the /app subdirectory
 COPY --from=frontend-builder /app/dist /var/www/html/public/app
 
