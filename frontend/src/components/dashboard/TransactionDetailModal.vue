@@ -548,8 +548,7 @@ const shareReceipt = async () => {
       try {
         await navigator.share({
           files: [file],
-          title: 'Transaction Receipt',
-          text: text
+          title: 'Transaction Receipt'
         })
         shared = true
       } catch (shareErr) {
@@ -572,10 +571,7 @@ const shareReceipt = async () => {
         await navigator.clipboard.write([
           new ClipboardItem({ [blob.type]: blob })
         ])
-        // If native share is available for text, also trigger it for convenience
-        if (navigator.share) {
-          navigator.share({ title: 'Transaction Receipt', text }).catch(() => {})
-        }
+        // If native share is available for text, we skip it as user wants only image
         window.alert('Receipt image copied to clipboard. You can now paste it in your chat app.')
         shared = true
       } catch (clipErr) {
